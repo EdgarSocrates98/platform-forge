@@ -337,7 +337,35 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     if sub == "supply":
         from platformforge.security import analyze_supply
         return _emit(analyze_supply(args.path), args)
+    if sub == "catalog":
+        from platformforge.product import analyze_catalog
+        return _emit(analyze_catalog(args.path), args)
+    if sub == "crossplane":
+        from platformforge.product import analyze_crossplane
+        return _emit(analyze_crossplane(args.path), args)
     return _emit({"error": f"unknown analyze domain {sub}"}, args, 1)
+
+
+def cmd_product(args: argparse.Namespace) -> int:
+    from platformforge import product as P
+    sub = args.product_cmd
+    if sub == "maturity":
+        sig = json.loads(Path(args.signals).read_text())
+        return _emit(P.maturity(sig.get("signals", sig),
+                                sig.get("evidence")), args)
+    if sub == "scorecard":
+        doc = json.loads(Path(args.findings).read_text())
+        findings = doc.get("findings", doc)
+        from platformforge.product.scorecards import scorecard
+        return _emit(scorecard(findings), args)
+    if sub == "backstage":
+        g = _load_graph_or_refuse(args.repo)
+        if g is None:
+            return _emit({"refusal": "PF-GRAPH-NOGRAPH",
+                          "unlock": "platformforge graph build <facts.json>"},
+                         args, 2)
+        return _emit(P.to_backstage(g), args)
+    return _emit({"error": f"unknown product verb {sub}"}, args, 1)
 
 
 def cmd_observe(args: argparse.Namespace) -> int:
@@ -495,7 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("analyze_cmd",
                     choices=["iac", "plan", "state", "drift", "k8s",
                              "gitops", "gha", "iam", "sbom", "secrets",
-                             "supply"])
+                             "supply", "catalog", "crossplane"])
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")
@@ -520,6 +548,14 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--by", default="cost_center")
     sp.set_defaults(func=cmd_finops)
+
+    sp = sub.add_parser("product", help="platform product verbs")
+    _add_common(sp)
+    sp.add_argument("product_cmd",
+                    choices=["maturity", "scorecard", "backstage"])
+    sp.add_argument("--signals", default="", help="JSON signals doc")
+    sp.add_argument("--findings", default="", help="findings JSON doc")
+    sp.set_defaults(func=cmd_product)
     return p
 
 

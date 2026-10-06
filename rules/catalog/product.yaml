@@ -1,0 +1,33 @@
+# Platform-product rules — catalog hygiene and golden-path posture.
+rules:
+  - rule_id: PF-CAT-001
+    domain: product
+    title: "Catalog entity without owner"
+    severity: medium
+    applies_to: {fact_kind: catalog.entity}
+    conditions:
+      all:
+        - {path: attrs.owner, op: absent}
+        - {path: attrs.entity_kind, op: in, value: [Component, API, Resource]}
+    message: "unowned entities decay silently — no one is paged for them"
+
+  - rule_id: PF-CAT-002
+    domain: product
+    title: "Catalog entity without lifecycle"
+    severity: low
+    applies_to: {fact_kind: catalog.entity}
+    conditions:
+      all:
+        - {path: attrs.lifecycle, op: absent}
+        - {path: attrs.entity_kind, op: equals, value: Component}
+    message: "lifecycle (experimental/production/deprecated) drives routing"
+
+  - rule_id: PF-XR-001
+    domain: product
+    title: "Managed resource with Delete policy"
+    severity: medium
+    applies_to: {fact_kind: platform.managed_resource}
+    conditions:
+      all:
+        - {path: attrs.deletion_policy, op: equals, value: Delete}
+    message: "deleting the claim destroys the resource — Orphan where data lives"
