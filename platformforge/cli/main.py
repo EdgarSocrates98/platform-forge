@@ -410,6 +410,16 @@ def cmd_mcp(args: argparse.Namespace) -> int:
     return _emit({"error": f"unknown mcp verb {sub}"}, args, 1)
 
 
+def cmd_lab(args: argparse.Namespace) -> int:
+    from platformforge import lab
+    if args.lab_cmd == "list":
+        return _emit({"scenarios": lab.list_scenarios()}, args)
+    if args.lab_cmd == "run-all":
+        out = lab.runner.run_all()
+        return _emit(out, args, 0 if not out["failed"] else 2)
+    return _emit(lab.run(args.path or ""), args)
+
+
 def cmd_observe(args: argparse.Namespace) -> int:
     from platformforge import observe as O
     sub = args.observe_cmd
@@ -618,6 +628,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--host", default="generic",
                     choices=["claude", "codex", "devin", "copilot", "generic"])
     sp.set_defaults(func=cmd_mcp)
+
+    sp = sub.add_parser("lab", help="Forge Lab scenarios")
+    _add_common(sp)
+    sp.add_argument("lab_cmd", choices=["list", "run", "run-all"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.set_defaults(func=cmd_lab)
     return p
 
 
