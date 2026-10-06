@@ -252,6 +252,52 @@ def cmd_sdd(args: argparse.Namespace) -> int:
     return _emit({"error": f"unknown sdd verb {sub}"}, args, 1)
 
 
+def _load_graph_or_refuse(repo: str):
+    from platformforge.graph import load
+    try:
+        return load(repo)
+    except FileNotFoundError:
+        return None
+
+
+def cmd_graph(args: argparse.Namespace) -> int:
+    from platformforge import graph as G
+    sub = args.graph_cmd
+    if sub == "build":
+        doc = json.loads(Path(args.facts).read_text())
+        facts = doc.get("facts", doc)
+        builder = G.GraphBuilder().from_facts(facts)
+        p = G.save(builder.graph, args.repo)
+        return _emit({"wrote": str(p), **builder.graph.stats()}, args)
+    if sub == "snapshots":
+        return _emit({"snapshots": G.snapshots(args.repo)}, args)
+    g = _load_graph_or_refuse(args.repo)
+    if g is None:
+        return _emit({"refusal": "PF-GRAPH-NOGRAPH",
+                      "unlock": "platformforge graph build <facts.json>"}, args, 2)
+    if sub == "stats":
+        return _emit(g.stats(), args)
+    if sub == "gaps":
+        return _emit(G.gaps(g), args)
+    if sub == "cycles":
+        return _emit({"cycles": G.cycles(g)}, args)
+    if sub == "deps":
+        return _emit({args.node: G.dependencies(g, args.node)}, args)
+    if sub == "dependents":
+        return _emit({args.node: G.dependents(g, args.node)}, args)
+    if sub == "blast":
+        return _emit(G.blast_radius(g, args.node), args)
+    if sub == "paths":
+        return _emit({"paths": G.paths(g, args.src, args.dst)}, args)
+    if sub == "diff":
+        def _resolve(ref: str):
+            if (Path(args.repo) / ".platformforge/graph" / f"{ref}.json").exists():
+                return G.load(args.repo, ref)
+            return G.load_snapshot(args.repo, ref)
+        return _emit(G.diff(_resolve(args.before), _resolve(args.after)), args)
+    return _emit({"error": f"unknown graph verb {sub}"}, args, 1)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="platformforge",
                                 description="Agentic Platform Engineering intelligence")
@@ -332,6 +378,19 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--override", action="store_true")
     sp.add_argument("--override-reason", default="")
     sp.set_defaults(func=cmd_sdd)
+
+    sp = sub.add_parser("graph", help="Graphfy platform graph")
+    _add_common(sp)
+    sp.add_argument("graph_cmd",
+                    choices=["build", "stats", "deps", "dependents", "blast",
+                             "paths", "gaps", "cycles", "diff", "snapshots"])
+    sp.add_argument("facts", nargs="?", default="")
+    sp.add_argument("--node", default="")
+    sp.add_argument("--src", default="")
+    sp.add_argument("--dst", default="")
+    sp.add_argument("--before", default="")
+    sp.add_argument("--after", default="")
+    sp.set_defaults(func=cmd_graph)
     return p
 
 
