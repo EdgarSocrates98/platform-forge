@@ -152,6 +152,76 @@ def cmd_knowledge(args: argparse.Namespace) -> int:
                  args, 2 if (args.strict and bad) else 0)
 
 
+def _index(args) -> "SearchIndex":
+    from platformforge.tokensave.index import SearchIndex
+    return SearchIndex(Path(args.repo) / ".platformforge" / "index.db")
+
+
+def cmd_tokens(args: argparse.Namespace) -> int:
+    from platformforge.tokensave.index import SearchIndex
+    from platformforge.tokensave.ledger import TokenLedger
+    from platformforge.tokensave.packs import ContextPackBuilder
+    from platformforge.tokensave.budget import Budget
+    idx = _index(args)
+    out = {}
+    if args.tokens_cmd == "index":
+        out = {"index": idx.index_workspace(args.repo)}
+    elif args.tokens_cmd == "search":
+        out = {"hits": idx.search(args.query, args.limit)}
+    elif args.tokens_cmd == "pack":
+        ledger = TokenLedger(args.repo)
+        pack = ContextPackBuilder(idx, ledger).build(
+            task=args.task,
+            budget=Budget(input_budget=args.input_budget),
+            changed_files=args.changed or [])
+        out = pack
+    elif args.tokens_cmd == "stats":
+        out = idx.stats() | {"fingerprint": idx.fingerprint()}
+    elif args.tokens_cmd == "ledger":
+        out = TokenLedger(args.repo).report()
+    return _emit(out, args)
+
+
+def cmd_rtk(args: argparse.Namespace) -> int:
+    """Compact a command output file (or stdin) — never run unless asked."""
+    from platformforge.core.store import ArtifactStore
+    from platformforge.rtk import compact_output
+    if args.file == "-":
+        output = sys.stdin.read()
+    else:
+        output = Path(args.file).read_text(errors="replace")
+    store = ArtifactStore(args.repo)
+    res = compact_output(args.command or "", output,
+                         exit_code=args.exit_code, store=store)
+    return _emit(res.to_dict(), args)
+
+
+def cmd_rtk_expand(args: argparse.Namespace) -> int:
+    from platformforge.core.store import ArtifactStore
+    from platformforge.rtk.compact import expand
+    out = expand(ArtifactStore(args.repo), args.artifact,
+                 start=args.start, end=args.end, pattern=args.pattern)
+    return _emit(out, args)
+
+
+def cmd_caveman(args: argparse.Namespace) -> int:
+    from platformforge.caveman import compress
+    text = Path(args.file).read_text() if args.file != "-" else sys.stdin.read()
+    out, receipt = compress(text, mode=args.mode, context_risk=args.context_risk)
+    return _emit({"compressed": out, "receipt": receipt.to_dict()}, args)
+
+
+def cmd_economy(args: argparse.Namespace) -> int:
+    from platformforge.economy import EconomyEngine
+    return _emit(EconomyEngine(args.repo).report(), args)
+
+
+def cmd_route(args: argparse.Namespace) -> int:
+    from platformforge.routing import TaskSignal, route
+    sig = TaskSignal.from_dict(json.loads(args.signal))
+    return _emit(route(sig), args)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="platformforge",
                                 description="Agentic Platform Engineering intelligence")
@@ -173,6 +243,50 @@ def build_parser() -> argparse.ArgumentParser:
     verb("judge", cmd_judge, "apply rule catalog to facts",
          lambda sp: (sp.add_argument("facts"), sp.add_argument("--catalog", nargs="*")))
     verb("knowledge", cmd_knowledge, "knowledge freshness check")
+
+    sp = sub.add_parser("tokens", help="tokensave: index/search/pack/stats/ledger")
+    _add_common(sp)
+    sp.add_argument("tokens_cmd",
+                    choices=["index", "search", "pack", "stats", "ledger"])
+    sp.add_argument("--task", default="")
+    sp.add_argument("--query", default="")
+    sp.add_argument("--limit", type=int, default=20)
+    sp.add_argument("--changed", nargs="*")
+    sp.add_argument("--input-budget", type=int, default=None)
+    sp.set_defaults(func=cmd_tokens)
+
+    sp = sub.add_parser("rtk", help="compact command output (rtk)")
+    _add_common(sp)
+    sp.add_argument("rtk_cmd", choices=["compact", "expand"], nargs="?",
+                    default="compact")
+    sp.add_argument("file", nargs="?", default="-",
+                    help="output file to compact ('-' = stdin)")
+    sp.add_argument("--command", default="", help="command that produced output")
+    sp.add_argument("--exit-code", type=int, default=0)
+    sp.add_argument("--artifact", default="")
+    sp.add_argument("--start", type=int)
+    sp.add_argument("--end", type=int)
+    sp.add_argument("--pattern", default=None)
+    def _rtk_dispatch(a):
+        return cmd_rtk_expand(a) if a.rtk_cmd == "expand" else cmd_rtk(a)
+    sp.set_defaults(func=_rtk_dispatch)
+
+    sp = sub.add_parser("caveman", help="compress text (caveman)")
+    _add_common(sp)
+    sp.add_argument("file", help="file to compress ('-' = stdin)")
+    sp.add_argument("--mode", choices=["off", "lite", "full", "auto"],
+                    default="lite")
+    sp.add_argument("--context-risk", default="normal")
+    sp.set_defaults(func=cmd_caveman)
+
+    sp = sub.add_parser("economy", help="economy engine report")
+    _add_common(sp)
+    sp.set_defaults(func=cmd_economy)
+
+    sp = sub.add_parser("route", help="adaptive routing decision")
+    _add_common(sp)
+    sp.add_argument("signal", help="JSON TaskSignal")
+    sp.set_defaults(func=cmd_route)
     return p
 
 

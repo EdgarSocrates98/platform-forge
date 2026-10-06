@@ -1,0 +1,45 @@
+# Adaptive routing table — data, not judgment. First match sets the mode;
+# every match can add agents. The engine-level policy (deterministic-first,
+# security reviewer on sensitive work) lives in platformforge/routing/router.py.
+schema: platformforge/routing/v1
+routes:
+  - name: lint-is-deterministic
+    when: {task_type: lint}
+    mode: deterministic
+    agents: []
+    reason: "lint runs on rules+facts; no model needed"
+
+  - name: incident-coordination
+    when: {task_type: incident}
+    mode: coordinated
+    agents: [incident-coordinator]
+    then: "pull specialists for domains present in evidence"
+    reason: "incidents need correlation, timeline and blast radius"
+
+  - name: security-mandatory-review
+    when: {security_sensitive: true}
+    add_agents: [security-reviewer]
+    reason: "security-sensitive work always gets a security reviewer"
+
+  - name: platform-architecture
+    when: {task_type: architecture, blast_radius: [platform, org]}
+    mode: coordinated
+    agents: [platform-coordinator, architecture-reviewer]
+    reason: "cross-boundary design needs coordination + review"
+
+  - name: production-change-risk
+    when: {task_type: change, production: true}
+    mode: coordinated
+    agents: [change-risk-reviewer]
+    reason: "production changes get blast radius + risk review"
+
+  - name: cost-question
+    when: {task_type: analysis, domains: [finops]}
+    mode: specialist
+    agents: [finops-coordinator]
+    reason: "cost decomposition needs the finops graph walk"
+
+  - name: k8s-moderate
+    when: {task_type: analysis, domains: [kubernetes]}
+    mode: specialist
+    agents: [kubernetes-specialist]
