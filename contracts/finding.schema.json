@@ -6,7 +6,7 @@
   "required": ["finding_id", "rule_id", "severity", "status", "evidence"],
   "properties": {
     "finding_id": {"type": "string", "pattern": "^PF-F-[0-9]+$"},
-    "rule_id": {"type": "string", "pattern": "^PF-[A-Z]+-[A-Z0-9-]*[0-9]+$"},
+    "rule_id": {"type": "string", "pattern": "^PF-[A-Z0-9]+(-[A-Z0-9]+)*-[0-9]+$"},
     "severity": {"type": "string", "enum": ["info", "low", "medium", "high", "critical"]},
     "status": {"type": "string", "enum": ["violated", "passed", "unresolved", "not-applicable"]},
     "title": {"type": "string"},
