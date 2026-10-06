@@ -222,6 +222,36 @@ def cmd_route(args: argparse.Namespace) -> int:
     return _emit(route(sig), args)
 
 
+def cmd_sdd(args: argparse.Namespace) -> int:
+    from platformforge.sdd import SDDProject
+    proj = SDDProject(args.repo)
+    sub = args.sdd_cmd
+    if sub == "init":
+        return _emit({"initialized": str(proj._feature_dir(args.feature))}, args)
+    if sub in ("discover", "define", "design", "contract", "plan", "review",
+               "learn", "build", "verify"):
+        body: object = json.loads(args.body) if args.body.strip().startswith("{") \
+            else (args.body or f"# {sub} for {args.feature}\n")
+        art = proj.write_artifact(args.feature, sub, body)
+        return _emit({"wrote": art.path.name, "phase": sub,
+                      "upstream": art.upstream}, args)
+    if sub == "status":
+        return _emit(proj.status(args.feature), args)
+    if sub == "check":
+        out = proj.check(args.feature)
+        return _emit(out, args, 2 if (args.strict and not out["ok"]) else 0)
+    if sub == "stamp":
+        return _emit(proj.stamp(args.feature, args.phase), args)
+    if sub == "ship":
+        verify = json.loads(args.verify) if args.verify else None
+        out = proj.ship(args.feature, verify=verify,
+                        risk_accepted=args.risk_accepted,
+                        override=args.override,
+                        override_reason=args.override_reason)
+        return _emit(out, args, 0 if out["shipped"] else 2)
+    return _emit({"error": f"unknown sdd verb {sub}"}, args, 1)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="platformforge",
                                 description="Agentic Platform Engineering intelligence")
@@ -287,6 +317,21 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("signal", help="JSON TaskSignal")
     sp.set_defaults(func=cmd_route)
+
+    sp = sub.add_parser("sdd", help="native SDD lifecycle")
+    _add_common(sp)
+    sp.add_argument("sdd_cmd",
+                    choices=["init", "discover", "define", "design", "contract",
+                             "plan", "build", "review", "verify", "ship",
+                             "learn", "status", "check", "stamp"])
+    sp.add_argument("--feature", required=True)
+    sp.add_argument("--body", default="", help="artifact body or JSON")
+    sp.add_argument("--phase", default=None, help="stamp single phase")
+    sp.add_argument("--verify", default="", help="verify JSON for ship gate")
+    sp.add_argument("--risk-accepted", action="store_true")
+    sp.add_argument("--override", action="store_true")
+    sp.add_argument("--override-reason", default="")
+    sp.set_defaults(func=cmd_sdd)
     return p
 
 

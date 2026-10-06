@@ -1,0 +1,266 @@
+{
+  "contracts/capability.schema.json": {
+    "mtime": 1791327171.7410479,
+    "seen": 1791327718.9823813,
+    "ast_hash": "1091a4fcdcfa029921b75da08e484981",
+    "semantic_hash": ""
+  },
+  "contracts/context-pack.schema.json": {
+    "mtime": 1791327198.9932485,
+    "seen": 1791327718.9823854,
+    "ast_hash": "44ead224af3d0c34a01741a69d7020b3",
+    "semantic_hash": ""
+  },
+  "contracts/fact.schema.json": {
+    "mtime": 1791327148.0918758,
+    "seen": 1791327718.9823868,
+    "ast_hash": "f3a110f8e2ca28c9df07b9eee801dfb8",
+    "semantic_hash": ""
+  },
+  "contracts/finding.schema.json": {
+    "mtime": 1791327676.5220242,
+    "seen": 1791327718.982388,
+    "ast_hash": "e1d149b3c5cfb65f06986393d1cfb9fb",
+    "semantic_hash": ""
+  },
+  "contracts/graph.schema.json": {
+    "mtime": 1791327170.5970395,
+    "seen": 1791327718.982389,
+    "ast_hash": "a27066193ee85d6e974d7b9d5000759e",
+    "semantic_hash": ""
+  },
+  "contracts/receipt.schema.json": {
+    "mtime": 1791327169.3870306,
+    "seen": 1791327718.9823897,
+    "ast_hash": "e52c6513efb54e9e08b10d28f486a10e",
+    "semantic_hash": ""
+  },
+  "contracts/recommendation.schema.json": {
+    "mtime": 1791327151.6249013,
+    "seen": 1791327718.9823909,
+    "ast_hash": "5eeb5aa9ba3f00d3f574b1816abd4937",
+    "semantic_hash": ""
+  },
+  "contracts/refusal.schema.json": {
+    "mtime": 1791327150.4308927,
+    "seen": 1791327718.9823916,
+    "ast_hash": "f2073498200a53289f7b3003ae10c02a",
+    "semantic_hash": ""
+  },
+  "contracts/slo-contract.schema.json": {
+    "mtime": 1791327200.3752587,
+    "seen": 1791327718.9823925,
+    "ast_hash": "9205e623b5547d20238af18ca350f74f",
+    "semantic_hash": ""
+  },
+  "platformforge/__init__.py": {
+    "mtime": 1791327418.9019444,
+    "seen": 1791327718.9823933,
+    "ast_hash": "02151328b1b1733b38062efd4000d88d",
+    "semantic_hash": ""
+  },
+  "platformforge/cli/__init__.py": {
+    "mtime": 1791327574.3352067,
+    "seen": 1791327718.9823942,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "platformforge/cli/main.py": {
+    "mtime": 1791327704.0312889,
+    "seen": 1791327718.9823952,
+    "ast_hash": "c9819734b1bebdd41710e5b6806647fc",
+    "semantic_hash": ""
+  },
+  "platformforge/core/__init__.py": {
+    "mtime": 1791327422.857976,
+    "seen": 1791327718.982396,
+    "ast_hash": "a8156d02c7aa9e92ada46d4cb8084144",
+    "semantic_hash": ""
+  },
+  "platformforge/core/hashing.py": {
+    "mtime": 1791327424.0529854,
+    "seen": 1791327718.9823966,
+    "ast_hash": "7f98452ecacbdcfe26e10b7c16c95107",
+    "semantic_hash": ""
+  },
+  "platformforge/core/receipts.py": {
+    "mtime": 1791327457.5702543,
+    "seen": 1791327718.9823978,
+    "ast_hash": "e27f3679761a2f184503e8ab384ea7de",
+    "semantic_hash": ""
+  },
+  "platformforge/core/redaction.py": {
+    "mtime": 1791327458.894265,
+    "seen": 1791327718.9823985,
+    "ast_hash": "d71e98cfba8d93121a1d91d744981226",
+    "semantic_hash": ""
+  },
+  "platformforge/core/store.py": {
+    "mtime": 1791327425.2539952,
+    "seen": 1791327718.9823995,
+    "ast_hash": "b4667899e9fc1618fafedec2ffd47154",
+    "semantic_hash": ""
+  },
+  "platformforge/core/workspace.py": {
+    "mtime": 1791327489.6595137,
+    "seen": 1791327718.9824004,
+    "ast_hash": "64f0728db828fd218cb6b3780841d805",
+    "semantic_hash": ""
+  },
+  "platformforge/knowledge/__init__.py": {
+    "mtime": 1791327487.1994936,
+    "seen": 1791327718.9824014,
+    "ast_hash": "841ea95c82dfe789e770ebb56a69226e",
+    "semantic_hash": ""
+  },
+  "platformforge/knowledge/registry.py": {
+    "mtime": 1791327488.4995043,
+    "seen": 1791327718.982402,
+    "ast_hash": "2070c359e95766446799e72cdee30aa5",
+    "semantic_hash": ""
+  },
+  "platformforge/models/__init__.py": {
+    "mtime": 1791327420.2989554,
+    "seen": 1791327718.9824028,
+    "ast_hash": "2074dec4c6cd38a0770f8381d6a1080c",
+    "semantic_hash": ""
+  },
+  "platformforge/models/base.py": {
+    "mtime": 1791327615.4915476,
+    "seen": 1791327718.9824038,
+    "ast_hash": "b6853e912dc73543a8a97f31a993d8c2",
+    "semantic_hash": ""
+  },
+  "platformforge/rules/__init__.py": {
+    "mtime": 1791327537.4739034,
+    "seen": 1791327718.982405,
+    "ast_hash": "5cbaf3a472daa813f1bc6739d41e64d8",
+    "semantic_hash": ""
+  },
+  "platformforge/rules/engine.py": {
+    "mtime": 1791327661.6619327,
+    "seen": 1791327718.982406,
+    "ast_hash": "d5a3f851f4c4067485a22b25153b4a5c",
+    "semantic_hash": ""
+  },
+  "pyproject.toml": {
+    "mtime": 1791327334.3362777,
+    "seen": 1791327718.9824066,
+    "ast_hash": "7424875bf6ee703d748ec382f148cd53",
+    "semantic_hash": ""
+  },
+  "tests/__init__.py": {
+    "mtime": 1791327576.793227,
+    "seen": 1791327718.9824073,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "tests/test_core.py": {
+    "mtime": 1791327602.3334384,
+    "seen": 1791327718.9824085,
+    "ast_hash": "04c2c90c0ef7b21068fafae0ed6365c4",
+    "semantic_hash": ""
+  },
+  "AGENTIC-OS.md": {
+    "mtime": 1791327062.4312694,
+    "seen": 1791327718.9824092,
+    "ast_hash": "98ca4a36417bb2f0d9e92e16fb4669dc",
+    "semantic_hash": ""
+  },
+  "ARCHITECTURE.md": {
+    "mtime": 1791326989.004923,
+    "seen": 1791327718.98241,
+    "ast_hash": "c72080a1d44c12299d35e56dcc74572d",
+    "semantic_hash": ""
+  },
+  "CAPABILITIES.md": {
+    "mtime": 1791327026.3720229,
+    "seen": 1791327718.9824107,
+    "ast_hash": "cde820e31701c2793f3c3f0d97460dc7",
+    "semantic_hash": ""
+  },
+  "CREDITS.md": {
+    "mtime": 1791327203.2722802,
+    "seen": 1791327718.9824119,
+    "ast_hash": "0bafa251698cdf2a9746a0b2da2e40dd",
+    "semantic_hash": ""
+  },
+  "DOMAIN-MAP.md": {
+    "mtime": 1791327027.5250306,
+    "seen": 1791327718.9824126,
+    "ast_hash": "a3ca6489ce4e523a5a2a6cc4a638ee64",
+    "semantic_hash": ""
+  },
+  "ECONOMY.md": {
+    "mtime": 1791327061.243261,
+    "seen": 1791327718.9824133,
+    "ast_hash": "18227960792bc29839b91f00065acf87",
+    "semantic_hash": ""
+  },
+  "GRAPHFY.md": {
+    "mtime": 1791327086.4744368,
+    "seen": 1791327718.9824142,
+    "ast_hash": "392fbd5be2543e12896f41022456c634",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1791327350.4494035,
+    "seen": 1791327718.9824152,
+    "ast_hash": "c91a2b95c8020cd37fbf33cc8163ab86",
+    "semantic_hash": ""
+  },
+  "RESEARCH.md": {
+    "mtime": 1791326987.7767656,
+    "seen": 1791327718.9824162,
+    "ast_hash": "18ee60e103143212df5b80a5b1dd933a",
+    "semantic_hash": ""
+  },
+  "ROADMAP.md": {
+    "mtime": 1791327120.6596785,
+    "seen": 1791327718.9824169,
+    "ast_hash": "34164993a5998aabadbcacc70e382394",
+    "semantic_hash": ""
+  },
+  "SDD.md": {
+    "mtime": 1791327087.672445,
+    "seen": 1791327718.9824176,
+    "ast_hash": "9aadb9afb5fb5e3eff793985e0aa414c",
+    "semantic_hash": ""
+  },
+  "SOURCES.md": {
+    "mtime": 1791327201.8722699,
+    "seen": 1791327718.9824188,
+    "ast_hash": "0ace9670cf97af6229f32191edb58a57",
+    "semantic_hash": ""
+  },
+  "docs/adr/0001-deterministic-core-first.md": {
+    "mtime": 1791327121.8096867,
+    "seen": 1791327718.9824202,
+    "ast_hash": "7511bac19bf7f7687a25af578d663d4d",
+    "semantic_hash": ""
+  },
+  "docs/adr/0002-graphfy-as-spine.md": {
+    "mtime": 1791327122.955695,
+    "seen": 1791327718.982421,
+    "ast_hash": "132239c9a6830b318f0bfd569e92ef20",
+    "semantic_hash": ""
+  },
+  "docs/adr/0003-economy-by-architecture.md": {
+    "mtime": 1791327124.099703,
+    "seen": 1791327718.982422,
+    "ast_hash": "8bd8f0344ec82a7d1b304632fad6609b",
+    "semantic_hash": ""
+  },
+  "docs/discovery/forge-audit.md": {
+    "mtime": 1791326905.046239,
+    "seen": 1791327718.982423,
+    "ast_hash": "75fc1e5e58a4c76551ebc002014420cd",
+    "semantic_hash": ""
+  },
+  "knowledge/sources.yaml": {
+    "mtime": 1791326951.8365324,
+    "seen": 1791327718.9824245,
+    "ast_hash": "5275bf303b5b1d638f45eb76975788af",
+    "semantic_hash": ""
+  }
+}
