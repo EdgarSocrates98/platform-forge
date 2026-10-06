@@ -16,11 +16,13 @@ from platformforge.mcp.registry import CAPABILITIES
 def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
     """Resolve handler to the same functions cmd_* use."""
     if handler == "cli:inspect":
-        from platformforge.cli.main import cmd_inspect
         import argparse
+
+        from platformforge.cli.main import cmd_inspect
         ns = argparse.Namespace(repo=inp.get("repo", repo), format="json",
                                 strict=False)
-        import io, contextlib
+        import contextlib
+        import io
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             cmd_inspect(ns)
@@ -156,7 +158,7 @@ def call_tool(name: str, arguments: dict[str, Any] | None = None,
     except FileNotFoundError as e:
         return {"refusal": "platform.evidence.unresolved",
                 "detail": str(e), "tool": name}
-    except Exception as e:  # bounded error, never traceback over MCP
+    except Exception as e:  # noqa: BLE001 — bounded error, never traceback over MCP
         return {"error": type(e).__name__, "detail": str(e)[:500],
                 "tool": name}
     out = _bound(result, cap, repo)

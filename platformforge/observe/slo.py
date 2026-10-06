@@ -7,7 +7,6 @@ hedged number.
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,7 +29,7 @@ class SloContract:
     burn_rate_alerts: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "SloContract":
+    def from_dict(cls, d: dict[str, Any]) -> SloContract:
         if not _WINDOW_RE.match(d.get("window", "")):
             raise ValueError(f"bad window: {d.get('window')!r} (use 30d/24h/60m)")
         return cls(service=d["service"], sli=d["sli"], target=float(d["target"]),
@@ -38,7 +37,7 @@ class SloContract:
                    burn_rate_alerts=d.get("burn_rate_alerts") or [])
 
     @classmethod
-    def load(cls, path: str | Path) -> "SloContract":
+    def load(cls, path: str | Path) -> SloContract:
         doc = yaml.safe_load(Path(path).read_text())
         return cls.from_dict(doc)
 

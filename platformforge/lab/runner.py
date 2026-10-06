@@ -65,7 +65,7 @@ def run(scenario_id: str) -> dict[str, Any]:
         fn = _resolve(_ANALYZERS[dom])
         try:
             facts += fn(d / "fixture")["facts"]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — analyzer failure is a lab error, not a crash
             errors.append(f"{dom}: {e}")
     rule_facts = [Fact.from_dict(f) for f in facts]
     rules = load_catalog(CATALOG)

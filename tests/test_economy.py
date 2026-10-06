@@ -1,6 +1,5 @@
 """Phase 2 gate: TokenSave, RTK, Caveman, routing, economy."""
 
-import json
 from pathlib import Path
 
 from platformforge.caveman import compress
@@ -9,8 +8,7 @@ from platformforge.economy import EconomyEngine
 from platformforge.routing import TaskSignal, route
 from platformforge.rtk import compact_output, detect_command
 from platformforge.rtk.compact import expand
-from platformforge.tokensave import (Budget, ContextPackBuilder, SearchIndex,
-                                     TokenLedger)
+from platformforge.tokensave import Budget, ContextPackBuilder, SearchIndex, TokenLedger
 from platformforge.tokensave.budget import check_input_budget
 
 

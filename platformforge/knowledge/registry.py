@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -39,13 +39,13 @@ class SourceEntry:
     notes: str = ""
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "SourceEntry":
+    def from_dict(cls, d: dict[str, Any]) -> SourceEntry:
         known = {f for f in cls.__dataclass_fields__}
         return cls(**{k: v for k, v in d.items() if k in known})
 
     def freshness(self, today: date | None = None) -> str:
         """current|fresh|stale|deprecated|superseded|conflicted|unresolved."""
-        today = today or date.today()
+        today = today or datetime.now(UTC).date()
         if self.deprecated:
             return FreshnessStatus.DEPRECATED
         if self.superseded_by:
@@ -75,7 +75,7 @@ class SourceRegistry:
         }
 
     @classmethod
-    def default(cls) -> "SourceRegistry":
+    def default(cls) -> SourceRegistry:
         return cls(Path(__file__).resolve().parents[2] / "knowledge" / "sources.yaml")
 
     def get(self, source_id: str) -> SourceEntry | None:
@@ -97,7 +97,7 @@ class SourceRegistry:
 
 def knowledge_age_days(retrieved_at: str, today: date | None = None) -> int | None:
     try:
-        return ((today or date.today()) - date.fromisoformat(str(retrieved_at)[:10])).days
+        return ((today or datetime.now(UTC).date()) - date.fromisoformat(str(retrieved_at)[:10])).days
     except ValueError:
         return None
 

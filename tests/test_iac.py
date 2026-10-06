@@ -2,10 +2,10 @@
 
 import json
 
+from platformforge.graph import GraphBuilder
 from platformforge.iac import analyze_hcl, analyze_plan, analyze_state, drift
 from platformforge.models import Fact
 from platformforge.rules import RuleEngine, load_catalog
-from platformforge.graph import GraphBuilder
 
 TF = """
 resource "aws_s3_bucket" "data" {
@@ -102,7 +102,7 @@ def test_iac_rules_fire(tmp_path):
     facts = [Fact.from_dict(x) for x in analyze_hcl(f)["facts"]]
     rules = load_catalog(
         __import__("pathlib").Path(__file__).parents[1] / "rules/catalog")
-    findings, skipped = RuleEngine(rules).evaluate(facts)
+    findings, _skipped = RuleEngine(rules).evaluate(facts)
     violated = {f.rule_id for f in findings if f.status == "violated"}
     assert "PF-IAC-001" in violated   # public bucket ACL
     assert "PF-IAC-002" in violated   # 0.0.0.0/0 ingress

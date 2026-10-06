@@ -27,12 +27,8 @@ def analyze_crossplane(path: str | Path) -> dict[str, Any]:
                 spec = doc.get("spec") or {}
                 name = meta.get("name", "?")
                 loc = f"{f}::{name}"
-                if "crossplane.io" not in api and \
-                        not api.startswith("apiextensions.crossplane.io"):
-                    # managed resources carry their own groups (e.g.
-                    # *.aws.crossplane.io) — detect via api suffix
-                    if ".crossplane.io" not in api:
-                        continue
+                if "crossplane.io" not in api:
+                    continue
                 if kind == "CompositeResourceDefinition":
                     attrs = {"xrd": name,
                              "group": spec.get("group"),

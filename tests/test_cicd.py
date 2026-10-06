@@ -81,8 +81,8 @@ def test_flux(tmp_path):
     doc = analyze_gitops(tmp_path)
     kinds = {f["attrs"]["flux_kind"] for f in doc["facts"]}
     assert kinds == {"GitRepository", "Kustomization"}
-    ks = [f for f in doc["facts"]
-          if f["attrs"]["flux_kind"] == "Kustomization"][0]
+    ks = next(f for f in doc["facts"]
+               if f["attrs"]["flux_kind"] == "Kustomization")
     assert ks["attrs"]["prune"] is True
     assert ks["attrs"]["source_ref"] == "GitRepository/platform"
 

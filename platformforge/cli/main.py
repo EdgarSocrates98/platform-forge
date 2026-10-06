@@ -11,9 +11,12 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from platformforge import __version__
+
+if TYPE_CHECKING:
+    from platformforge.tokensave.index import SearchIndex
 
 DETAIL_LEVELS = ("summary", "normal", "full")
 
@@ -152,16 +155,15 @@ def cmd_knowledge(args: argparse.Namespace) -> int:
                  args, 2 if (args.strict and bad) else 0)
 
 
-def _index(args) -> "SearchIndex":
+def _index(args) -> SearchIndex:
     from platformforge.tokensave.index import SearchIndex
     return SearchIndex(Path(args.repo) / ".platformforge" / "index.db")
 
 
 def cmd_tokens(args: argparse.Namespace) -> int:
-    from platformforge.tokensave.index import SearchIndex
+    from platformforge.tokensave.budget import Budget
     from platformforge.tokensave.ledger import TokenLedger
     from platformforge.tokensave.packs import ContextPackBuilder
-    from platformforge.tokensave.budget import Budget
     idx = _index(args)
     out = {}
     if args.tokens_cmd == "index":
@@ -420,6 +422,34 @@ def cmd_lab(args: argparse.Namespace) -> int:
     return _emit(lab.run(args.path or ""), args)
 
 
+def cmd_capability(args: argparse.Namespace) -> int:
+    """Capability registry projection — same source as the MCP adapter."""
+    from platformforge.mcp.registry import CAPABILITIES
+    sub = args.capability_cmd
+    if sub == "list":
+        return _emit({"capabilities": [
+            {"name": c.name, "description": c.description,
+             "bounds": {"max_results": c.max_results,
+                        "max_bytes": c.max_bytes,
+                        "detail_levels": list(c.detail_levels)}}
+            for c in CAPABILITIES.values()]}, args)
+    if sub == "describe":
+        c = CAPABILITIES.get(args.name or "")
+        if not c:
+            return _emit({"refusal": "platform.capability.unresolved",
+                          "name": args.name,
+                          "unlock": "platformforge capability list"},
+                         args, 2)
+        return _emit({"name": c.name, "description": c.description,
+                      "input_schema": c.input_schema, "handler": c.handler,
+                      "bounds": {"max_results": c.max_results,
+                                 "max_bytes": c.max_bytes}}, args)
+    if sub == "manifest":
+        from platformforge.forge import capability_manifest
+        return _emit(capability_manifest(args.repo), args)
+    return _emit({"error": f"unknown capability verb {sub}"}, args, 1)
+
+
 def cmd_forge(args: argparse.Namespace) -> int:
     from platformforge import forge as FG
     sub = args.forge_cmd
@@ -659,6 +689,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--src", default="")
     sp.add_argument("--dst", default="")
     sp.set_defaults(func=cmd_forge)
+
+    sp = sub.add_parser("capability", help="capability registry")
+    _add_common(sp)
+    sp.add_argument("capability_cmd",
+                    choices=["list", "describe", "manifest"])
+    sp.add_argument("--name", default="")
+    sp.set_defaults(func=cmd_capability)
     return p
 
 

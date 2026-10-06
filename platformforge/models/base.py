@@ -119,7 +119,7 @@ class Fact:
         return d
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Fact":
+    def from_dict(cls, d: dict[str, Any]) -> Fact:
         return cls(**d)
 
 

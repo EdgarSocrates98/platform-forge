@@ -36,7 +36,7 @@ dev = [
 
 [project.scripts]
 platformforge = "platformforge.cli.main:main"
-platformforge-mcp = "platformforge.adapters.mcp_server:main"
+platformforge-mcp = "platformforge.mcp.server:main"
 
 [project.urls]
 Homepage = "https://github.com/EdgarSocrates98/platform-forge"

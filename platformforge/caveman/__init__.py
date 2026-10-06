@@ -8,4 +8,4 @@ a receipt with before/after measurements.
 
 from platformforge.caveman.compress import CompressionReceipt, compress
 
-__all__ = ["compress", "CompressionReceipt"]
+__all__ = ["CompressionReceipt", "compress"]

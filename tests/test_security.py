@@ -5,8 +5,7 @@ import json
 from platformforge.graph import GraphBuilder
 from platformforge.models import Fact
 from platformforge.rules import RuleEngine, load_catalog
-from platformforge.security import (analyze_iam_policy, analyze_sbom,
-                                    analyze_supply, scan_secrets)
+from platformforge.security import analyze_iam_policy, analyze_sbom, analyze_supply, scan_secrets
 
 POLICY = {"Version": "2012-10-17", "Statement": [
     {"Effect": "Allow", "Action": "*", "Resource": "*",

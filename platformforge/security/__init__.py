@@ -5,5 +5,9 @@ from platformforge.security.sbom import analyze_sbom
 from platformforge.security.scan import scan_secrets
 from platformforge.security.supply import analyze_supply
 
-__all__ = ["analyze_iam_policy", "analyze_sbom", "scan_secrets",
-           "analyze_supply"]
+__all__ = [
+           "analyze_iam_policy",
+           "analyze_sbom",
+           "analyze_supply",
+           "scan_secrets",
+]

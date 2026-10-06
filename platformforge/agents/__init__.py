@@ -7,4 +7,4 @@ from platformforge.agents.playbook import playbook
 from platformforge.agents.referee import referee
 from platformforge.agents.roster import AGENTS, AgentSpec, coordinator_for
 
-__all__ = ["AGENTS", "AgentSpec", "coordinator_for", "referee", "playbook"]
+__all__ = ["AGENTS", "AgentSpec", "coordinator_for", "playbook", "referee"]

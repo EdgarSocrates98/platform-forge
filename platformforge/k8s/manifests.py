@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from platformforge.core.redaction import k8s_secret_values, redact_obj
+from platformforge.core.redaction import k8s_secret_values
 from platformforge.models.base import stable_id
 
 WORKLOAD_KINDS = {"Deployment", "StatefulSet", "DaemonSet", "ReplicaSet",

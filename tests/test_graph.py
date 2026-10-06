@@ -3,11 +3,21 @@
 import json
 
 import jsonschema
-import pytest
 
-from platformforge.graph import (Graph, GraphBuilder, blast_radius, cycles,
-                                 dependencies, dependents, diff, gaps, load,
-                                 paths, save, snapshots)
+from platformforge.graph import (
+    Graph,
+    GraphBuilder,
+    blast_radius,
+    cycles,
+    dependencies,
+    dependents,
+    diff,
+    gaps,
+    load,
+    paths,
+    save,
+    snapshots,
+)
 
 
 def _facts():
@@ -46,9 +56,9 @@ def test_build_from_facts_provenance(tmp_path):
     assert e.provenance == "inferred"  # t6 fact (llm-inference)
     e2 = g.edges["workload/payments->secret/db-creds:uses_secret"]
     assert e2.provenance == "observed" and e2.source_fact_ids == ("F2",)
-    jsonschema.validate(g.to_dict(), json.loads(open(
-        __import__("pathlib").Path(__file__).parents[1]
-        / "contracts/graph.schema.json").read()))
+    schema_path = (__import__("pathlib").Path(__file__).parents[1]
+                   / "contracts/graph.schema.json")
+    jsonschema.validate(g.to_dict(), json.loads(schema_path.read_text()))
 
 
 def test_queries(tmp_path):

@@ -16,10 +16,12 @@ evidence, never guessed.
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from platformforge.graph.model import Edge, Graph, Node, node_id
 from platformforge.graph.vocab import PROVENANCES
+
 
 def _tier_provenance(tier: int | str) -> str:
     """EvidenceTier int → edge provenance. 0-2 observed (measured, provider,
@@ -61,7 +63,7 @@ class GraphBuilder:
                  source_fact_ids=tuple(sorted(set(fact_ids))),
                  attrs=dict(attrs or {})))
 
-    def from_facts(self, facts: Iterable[dict[str, Any]]) -> "GraphBuilder":
+    def from_facts(self, facts: Iterable[dict[str, Any]]) -> GraphBuilder:
         for f in facts:
             contrib = (f.get("attrs") or {}).get("graph") or {}
             fid = f.get("fact_id", "")

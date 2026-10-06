@@ -6,12 +6,12 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 from platformforge.core.hashing import sha256_text
-from platformforge.graph.vocab import (EDGE_KINDS, NODE_KINDS, PROVENANCES,
-                                     impact_of)
+from platformforge.graph.vocab import EDGE_KINDS, NODE_KINDS, PROVENANCES, impact_of
 
 SCHEMA = "platformforge/graph/v1"
 _SLUG_RE = re.compile(r"[^a-z0-9_.\-/]+")
@@ -37,7 +37,7 @@ class Node:
 
     @classmethod
     def make(cls, kind: str, label: str, attrs: dict[str, Any] | None = None,
-             fact_ids: Iterable[str] = ()) -> "Node":
+             fact_ids: Iterable[str] = ()) -> Node:
         return cls(node_id=node_id(kind, label), kind=kind, label=label,
                    attrs=dict(attrs or {}),
                    source_fact_ids=tuple(sorted(set(fact_ids))))
@@ -139,7 +139,7 @@ class Graph:
         return json.dumps(self.to_dict(), sort_keys=True, indent=2)
 
     @classmethod
-    def from_dict(cls, doc: dict[str, Any]) -> "Graph":
+    def from_dict(cls, doc: dict[str, Any]) -> Graph:
         if doc.get("schema") != SCHEMA:
             raise ValueError("not a platformforge/graph/v1 document")
         g = cls()

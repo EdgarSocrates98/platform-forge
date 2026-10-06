@@ -2,8 +2,7 @@
 
 from platformforge.graph import GraphBuilder
 from platformforge.models import Fact
-from platformforge.product import (analyze_catalog, analyze_crossplane,
-                                   maturity, to_backstage)
+from platformforge.product import analyze_catalog, analyze_crossplane, maturity, to_backstage
 from platformforge.product.scorecards import scorecard
 from platformforge.rules import RuleEngine, load_catalog
 
@@ -79,7 +78,7 @@ def test_backstage_projection():
     b.add_edge("team", "pay-team", "workload", "prod/payments", "owns")
     b.add_edge("workload", "prod/payments", "api", "payments-api", "exposes")
     out = to_backstage(b.graph)
-    comp = [e for e in out["entities"] if e["kind"] == "Component"][0]
+    comp = next(e for e in out["entities"] if e["kind"] == "Component")
     assert comp["metadata"]["name"] == "payments"
     assert comp["spec"]["owner"] == "pay-team"
     assert comp["spec"]["providesApis"] == ["payments-api"]

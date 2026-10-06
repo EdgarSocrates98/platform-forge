@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from platformforge.models.base import stable_id
 from platformforge.core.redaction import redact_obj
+from platformforge.models.base import stable_id
 
 
 def _load(p: str | Path) -> dict[str, Any]:

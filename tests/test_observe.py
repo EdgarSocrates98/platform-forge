@@ -5,8 +5,7 @@ import json
 import pytest
 
 from platformforge.graph import GraphBuilder
-from platformforge.observe import (SloContract, capacity, correlate,
-                                   correlate_spans, error_budget)
+from platformforge.observe import SloContract, capacity, correlate, correlate_spans, error_budget
 
 
 def test_slo_contract_and_budget(tmp_path):
@@ -42,7 +41,7 @@ def test_otel_correlation(tmp_path):
     ]
     spans.write_text("\n".join(json.dumps(r) for r in rows))
     out = correlate_spans(spans)
-    t1 = [t for t in out["traces"] if t["trace_id"] == "t1"][0]
+    t1 = next(t for t in out["traces"] if t["trace_id"] == "t1")
     assert t1["error_services"] == ["api"]
     assert t1["critical_path_ms"] == 100 + 80 + 60
     assert out["service_summary"]["api"]["error_spans"] == 1

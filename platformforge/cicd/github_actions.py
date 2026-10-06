@@ -22,7 +22,7 @@ _WRITE_PERMS = {"contents": "write", "id-token": "write",
 
 def _action_ref(uses: str) -> dict[str, Any]:
     """`org/repo@ref` → {name, ref, pinned: sha|tag|branch|none}."""
-    if not uses or uses.startswith("./") or uses.startswith("docker://"):
+    if not uses or uses.startswith(("./", "docker://")):
         return {"name": uses, "ref": None, "pin": "local"}
     name, _, ref = uses.partition("@")
     if not ref:

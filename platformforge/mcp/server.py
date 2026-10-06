@@ -68,3 +68,8 @@ def serve(repo: str = ".", stdin: TextIO | None = None,
             out.write(resp + "\n")
             out.flush()
     return 0
+
+
+def main() -> None:
+    """Console-script entry point (``platformforge-mcp``)."""
+    sys.exit(serve())

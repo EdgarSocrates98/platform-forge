@@ -7,6 +7,8 @@ asserts maturity without evidence ids.
 
 from __future__ import annotations
 
+from typing import Any
+
 ASPECTS = ("investment", "adoption", "interfaces", "operations",
            "measurement")
 LEVELS = ("provisional", "operational", "scalable", "optimizing")
@@ -66,7 +68,7 @@ def maturity(signals: dict[str, list[str]],
             "missing_for_next": missing,
             "evidence": (evidence or {}).get(aspect, []),
         }
-    overall = min((_ORDER[a["level"]] for a in aspects.values()))
+    overall = min(_ORDER[a["level"]] for a in aspects.values())
     return {"aspects": aspects,
             "overall_level": LEVELS[overall],
             "model": "CNCF Platform Engineering Maturity Model",

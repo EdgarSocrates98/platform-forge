@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+
 def _is_unknown_desired(v: Any) -> bool:
     return isinstance(v, str) and ("${" in v or v.startswith("unknown"))
 

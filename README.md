@@ -3,31 +3,56 @@
 **Agentic Platform Engineering intelligence platform** — deterministic,
 offline-first, evidence-first, graph-aware, provider-neutral in the core.
 
-Platform Forge looks at repositories, Terraform, Kubernetes, GitOps, cloud
-accounts, CI/CD, observability, SLOs, security, cost and ownership, and builds
-one coherent, evidence-backed model of a platform.
+Platform Forge reads repositories, Terraform/OpenTofu, Kubernetes, GitOps,
+CI/CD, observability data, SLOs, security posture, cost and ownership — and
+builds one coherent, evidence-backed model of a platform. Facts have
+provenance; findings cite evidence; unanswered questions come back as
+named refusals, never hedged prose.
 
 *Versão em Português: [README.pt-BR.md](README.pt-BR.md)*
 
 ## Install
 
 ```bash
-pip install -e .          # core (offline-capable)
-pip install -e ".[mcp]"   # + MCP adapter
-pip install -e ".[dev]"   # + tests/lint
+pip install -e .            # core — offline-capable
+pip install -e ".[dev]"     # + tests/lint
+# or: uv sync && uv pip install -e .
 ```
 
 ## Quick start
 
 ```bash
-platformforge doctor            # environment health
-platformforge init              # scaffold .platformforge/ in a repo
-platformforge inspect .         # inventory artifacts
-platformforge analyze .         # extract facts
-platformforge judge             # apply rule catalog
-platformforge graph             # build the platform graph
-platformforge impact            # blast radius of a change
+platformforge doctor                       # environment health
+platformforge init --repo .                # scaffold .platformforge/
+platformforge inspect --repo .             # inventory analyzable artifacts
+platformforge analyze iac ./infra          # HCL → facts
+platformforge analyze k8s ./manifests      # manifests → facts
+platformforge analyze gha --repo .         # workflows → facts
+platformforge judge facts.json             # rules → findings
+platformforge graph build facts.json       # facts → provenanced graph
+platformforge graph blast --node X         # blast radius (per impact class)
+platformforge observe slo contract.yaml --sli '{"total_events":1e6,"bad_events":400}'
+platformforge finops costs billing.json    # cost facts + summary
+platformforge product maturity --signals s.json
+platformforge mcp tools                    # bounded MCP capability surface
+platformforge mcp serve                    # stdio server (same core as CLI)
+platformforge lab run-all                  # Forge Lab scenario suite
+platformforge sdd status --feature F       # spec lifecycle + hash cascade
+platformforge forge manifest               # capability manifest (interop)
 ```
+
+## Pipeline
+
+```
+artifacts → analyze → facts ──► judge → findings ──► scorecards / gates
+               │                                   ▲ rules/catalog/
+               └──────► graph build → graphfy ──────┘ (deps, blast, diff)
+```
+
+Facts carry evidence tiers (measured → provider → plan → repo → doc →
+declared → inferred). Graph edges inherit provenance. Every mutation path
+goes through `inspect → propose → sandbox → verify → approve → apply`;
+the core itself never mutates anything.
 
 ## Design docs
 

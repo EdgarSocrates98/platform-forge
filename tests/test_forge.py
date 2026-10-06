@@ -1,7 +1,6 @@
 """Phase 15 gate: capability manifest, A2A envelope, receipts."""
 
-from platformforge.forge import (Delegation, build_envelope,
-                                 capability_manifest, verify_envelope)
+from platformforge.forge import Delegation, build_envelope, capability_manifest, verify_envelope
 from platformforge.forge.delegate import result_receipt
 
 

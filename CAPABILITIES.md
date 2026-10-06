@@ -1,9 +1,9 @@
 # CAPABILITIES — Platform Forge capability matrix
 
-Machine-readable source of truth: `platformforge/capabilities/registry.yaml`.
-CLI verbs and MCP tools are projections of this registry — `platformforge
-capability list|describe|manifest` and the MCP adapter read the same data.
-Parity is tested, not assumed.
+Machine-readable source of truth: `platformforge/mcp/registry.py`
+(`CAPABILITIES`). CLI verbs and MCP tools are projections of this registry —
+`platformforge capability list|describe|manifest` and the MCP adapter read
+the same data. Parity is tested, not assumed (`tests/test_mcp.py`).
 
 Each capability declares:
 

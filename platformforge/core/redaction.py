@@ -32,7 +32,7 @@ def _marker(label: str, matched: str) -> str:
 
 def redact_text(text: str) -> str:
     for label, pat in PATTERNS:
-        text = pat.sub(lambda m: _marker(label, m.group(0)), text)
+        text = pat.sub(lambda m, label=label: _marker(label, m.group(0)), text)
     return text
 
 

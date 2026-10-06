@@ -2,8 +2,7 @@
 
 import json
 
-from platformforge.finops import (allocate, cost_facts, cost_summary,
-                                  graph_cost, to_focus)
+from platformforge.finops import allocate, cost_facts, cost_summary, graph_cost, to_focus
 from platformforge.graph import GraphBuilder
 
 ROWS = [
@@ -53,8 +52,6 @@ def test_graph_cost(tmp_path):
     b.add_edge("workload", "pay", "database", "db-prod", "depends_on")
     facts = _facts(tmp_path)
     # cost resource names must match node ids or suffixes
-    g_facts = [{"kind": "x", "tier": 3, "attrs": {"graph": {
-        "nodes": [{"kind": "database", "label": "db-prod"}]}}}]
     out = graph_cost(b.graph, facts)
     assert out["unattributed_resources"]  # no billed_to on db/prod nodes
     assert "payments" not in out["per_cost_center"]  # resource ids differ

@@ -15,7 +15,7 @@ class Budget:
     tool_budget: int | None = None
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Budget":
+    def from_dict(cls, d: dict[str, Any]) -> Budget:
         return cls(**{k: d.get(k) for k in cls.__dataclass_fields__})
 
     def to_dict(self) -> dict[str, Any]:

@@ -10,10 +10,8 @@ from typing import Any
 
 from platformforge.graph.model import Edge, Graph, impact_class
 
-
 DEPENDENCY_KINDS = frozenset(
-    "depends_on calls consumes reads writes uses_secret runs_on "
-    "contained_by routes_to publishes_to".split())
+    ["depends_on", "calls", "consumes", "reads", "writes", "uses_secret", "runs_on", "contained_by", "routes_to", "publishes_to"])
 
 
 def _adj(g: Graph, reverse: bool = False,
@@ -90,7 +88,7 @@ def blast_radius(g: Graph, nid: str, max_depth: int = 64) -> dict[str, Any]:
     seen: dict[str, dict[str, Any]] = {}
     q: deque[tuple[str, int, Edge | None]] = deque([(nid, 0, None)])
     while q:
-        cur, d, via = q.popleft()
+        cur, d, _via = q.popleft()
         if d >= max_depth:
             continue
         for e in adj_rev.get(cur, []):

@@ -26,7 +26,7 @@ class TaskSignal:
     production: bool = False
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "TaskSignal":
+    def from_dict(cls, d: dict[str, Any]) -> TaskSignal:
         return cls(**{k: v for k, v in d.items()
                       if k in cls.__dataclass_fields__})
 

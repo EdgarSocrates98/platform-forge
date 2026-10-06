@@ -6,13 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from platformforge.core.hashing import sha256_obj, sha256_text
 from platformforge.core.receipts import Receipt, ReceiptWriter, timed
-from platformforge.core.redaction import redact_obj, redact_text, contains_secret
+from platformforge.core.redaction import contains_secret, redact_obj, redact_text
 from platformforge.core.store import ArtifactStore
 from platformforge.core.workspace import init_workspace, load_workspace
 from platformforge.knowledge.registry import SourceRegistry
-from platformforge.models import EvidenceTier, Fact, Finding, Refusal, Recommendation
+from platformforge.models import EvidenceTier, Fact, Finding, Recommendation, Refusal
 from platformforge.rules import RuleEngine, load_catalog
 
 CONTRACTS = Path(__file__).resolve().parents[1] / "contracts"
@@ -107,7 +106,7 @@ def test_rule_engine_violation_and_version_gate(tmp_path):
     rules = load_catalog(tmp_path)
     f = Fact(kind="k8s.workload.deployment", source="d.yaml", location="d.yaml",
              attrs={"containers": [{"resources": {"limits": {}}}]})
-    findings, skipped = RuleEngine(rules, versions={"kubernetes": "1.31"}).evaluate([f])
+    findings, _skipped = RuleEngine(rules, versions={"kubernetes": "1.31"}).evaluate([f])
     assert findings[0].status == "violated" and findings[0].evidence == [f.fact_id]
     # version mismatch -> skipped, not applied
     findings2, skipped2 = RuleEngine(rules, versions={"kubernetes": "1.10"}).evaluate([f])

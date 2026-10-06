@@ -1,6 +1,5 @@
 """Phase 13 gate: capability registry, bounded tools, host parity, stdio."""
 
-import io
 import json
 
 from platformforge.mcp import CAPABILITIES, call_tool
@@ -27,10 +26,9 @@ def test_call_tool_dispatch(tmp_path):
 
 
 def test_call_tool_bounds_oversize(tmp_path):
-    out = call_tool("platformforge_analyze",
-                    {"domain": "secrets", "path": str(tmp_path)},
-                    repo=str(tmp_path))
-    cap = CAPABILITIES["platformforge_analyze"]
+    call_tool("platformforge_analyze",
+              {"domain": "secrets", "path": str(tmp_path)},
+              repo=str(tmp_path))
     # shrink bound artificially to force the ref path
     import platformforge.mcp.tools as T
     small = T._bound({"facts": ["x" * 100] * 1000},

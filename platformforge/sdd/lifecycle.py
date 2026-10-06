@@ -17,7 +17,7 @@ from typing import Any
 
 import yaml
 
-from platformforge.core.hashing import sha256_file, sha256_text
+from platformforge.core.hashing import sha256_file
 
 PHASES = ["discover", "define", "design", "contract", "plan", "build",
           "review", "verify", "ship", "learn"]
@@ -31,7 +31,7 @@ GATE_FAILURES = (
 )
 SDD_ROOT = ".platformforge/sdd"
 
-FM_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
+FM_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
 
 def artifact_name(phase: str) -> str:

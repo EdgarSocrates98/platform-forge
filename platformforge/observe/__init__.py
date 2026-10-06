@@ -6,5 +6,10 @@ from platformforge.observe.incident import correlate
 from platformforge.observe.otel import correlate_spans
 from platformforge.observe.slo import SloContract, error_budget
 
-__all__ = ["SloContract", "error_budget", "correlate_spans", "correlate",
-           "capacity"]
+__all__ = [
+           "SloContract",
+           "capacity",
+           "correlate",
+           "correlate_spans",
+           "error_budget",
+]

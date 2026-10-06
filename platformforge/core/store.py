@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from platformforge.core.hashing import sha256_bytes, sha256_text
+from platformforge.core.hashing import sha256_bytes
 
 STORE_DIR = ".platformforge/store"
 

@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import re
 import sqlite3
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from platformforge.core.hashing import sha256_file, sha256_text
 
@@ -22,16 +23,16 @@ TEXT_EXT = {".py", ".tf", ".tfvars", ".yaml", ".yml", ".json", ".md", ".go",
 MAX_FILE_BYTES = 2_000_000
 
 SYMBOL_PATTERNS = {
-    ".py": [re.compile(r"^\s*(?:class|def|async def)\s+([A-Za-z_][\w]*)", re.M)],
-    ".go": [re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_][\w]*)", re.M),
-            re.compile(r"^\s*type\s+([A-Za-z_][\w]*)", re.M)],
+    ".py": [re.compile(r"^\s*(?:class|def|async def)\s+([A-Za-z_][\w]*)", re.MULTILINE)],
+    ".go": [re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_][\w]*)", re.MULTILINE),
+            re.compile(r"^\s*type\s+([A-Za-z_][\w]*)", re.MULTILINE)],
     ".java": [re.compile(r"\b(?:class|interface|enum|record)\s+([A-Za-z_][\w]*)")],
     ".tf": [re.compile(r'\bresource\s+"([^"]+)"\s+"([^"]+)"'),
             re.compile(r'\bmodule\s+"([^"]+)"'),
             re.compile(r'\b(?:variable|output|data|provider)\s+"?([A-Za-z_][\w]*)"?')],
     ".hcl": [re.compile(r'\bresource\s+"([^"]+)"\s+"([^"]+)"')],
-    ".yaml": [re.compile(r"^\s*name:\s*([A-Za-z0-9_.\-/]+)", re.M)],
-    ".yml": [re.compile(r"^\s*name:\s*([A-Za-z0-9_.\-/]+)", re.M)],
+    ".yaml": [re.compile(r"^\s*name:\s*([A-Za-z0-9_.\-/]+)", re.MULTILINE)],
+    ".yml": [re.compile(r"^\s*name:\s*([A-Za-z0-9_.\-/]+)", re.MULTILINE)],
 }
 
 SCHEMA = """

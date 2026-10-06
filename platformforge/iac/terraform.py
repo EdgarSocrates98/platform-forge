@@ -14,8 +14,8 @@ from typing import Any
 
 import hcl2
 
-from platformforge.models.base import stable_id
 from platformforge.core.redaction import redact_obj
+from platformforge.models.base import stable_id
 
 _SKIP_PREFIXES = {"var", "local", "data", "module", "each", "count", "self",
                   "path", "terraform", "provider"}
@@ -59,7 +59,7 @@ def analyze_hcl(path: str | Path) -> dict[str, Any]:
     for f in files:
         try:
             doc = hcl2.load(f.open())
-        except Exception as exc:  # parse failure is a fact, not a crash
+        except Exception as exc:  # noqa: BLE001 — parse failure is a fact, not a crash
             facts.append({"fact_id": stable_id("PF-IAC", "iac.parse_error",
                                                str(f), str(exc)[:64]),
                           "kind": "iac.parse_error", "source": str(f),
@@ -74,7 +74,6 @@ def analyze_hcl(path: str | Path) -> dict[str, Any]:
             attrs = redact_obj(body)
             graph_edges = []
             for ref in sorted(_refs(body)):
-                rt, rn = ref.split(".", 1)
                 graph_edges.append(
                     {"src_kind": "terraform_resource", "src": address,
                      "dst_kind": "terraform_resource", "dst": ref,

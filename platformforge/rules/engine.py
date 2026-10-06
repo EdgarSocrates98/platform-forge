@@ -8,9 +8,10 @@ not silently at judge time.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import yaml
 
@@ -140,7 +141,7 @@ class Rule:
     enabled: bool = True
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Rule":
+    def from_dict(cls, d: dict[str, Any]) -> Rule:
         conds = d.get("conditions", {})
         for group in ("all", "any", "none"):
             for pred in conds.get(group, []) or []:

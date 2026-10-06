@@ -85,7 +85,7 @@ def test_workload_facts(tmp_path):
 
 def test_secret_redacted(tmp_path):
     doc = _facts(tmp_path)
-    sec = [f for f in doc["facts"] if f["kind"] == "k8s.secret"][0]
+    sec = next(f for f in doc["facts"] if f["kind"] == "k8s.secret")
     # payload never enters attrs — only key names
     assert sec["attrs"]["keys"] == ["pass"]
     assert "czNjcjN0" not in str(sec)
@@ -106,7 +106,7 @@ def test_k8s_rules(tmp_path):
     facts = [Fact.from_dict(x) for x in doc["facts"]]
     rules = load_catalog(
         __import__("pathlib").Path(__file__).parents[1] / "rules/catalog")
-    findings, skipped = RuleEngine(rules).evaluate(facts)
+    findings, _skipped = RuleEngine(rules).evaluate(facts)
     v = {f.rule_id for f in findings if f.status == "violated"}
     for rid in ("PF-K8S-001", "PF-K8S-002", "PF-K8S-003", "PF-K8S-004",
                 "PF-K8S-005", "PF-K8S-007", "PF-K8S-008", "PF-K8S-009",

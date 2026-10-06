@@ -49,14 +49,15 @@ def correlate_spans(path: str | Path) -> dict[str, Any]:
             children[s.get("parent_span_id")].append(s["span_id"])
         best: dict[str, Any] = {"dur": 0.0, "path": []}
 
-        def walk(sid: str, dur: float, path: list[str]):
+        def walk(sid: str, dur: float, path: list[str],
+                 by_id=by_id, best=best, children=children):
             node = by_id[sid]
             dur += float(node.get("duration_ms") or 0)
             path = path + [f"{node.get('service', '?')}:{node.get('name', '?')}"]
             if dur > best["dur"]:
                 best["dur"], best["path"] = dur, path
             for c in children.get(sid, []):
-                walk(c, dur, path)
+                walk(c, dur, path, by_id, best, children)
 
         roots = [s["span_id"] for s in spans_
                  if s.get("parent_span_id") not in by_id]

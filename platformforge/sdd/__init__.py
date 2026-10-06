@@ -3,7 +3,6 @@
 No runtime dependency on AgentSpec/cc-sdd/Cavekit — this is first-party.
 """
 
-from platformforge.sdd.lifecycle import (GATE_FAILURES, PHASES, SDDProject,
-                                         SddArtifact)
+from platformforge.sdd.lifecycle import GATE_FAILURES, PHASES, SddArtifact, SDDProject
 
-__all__ = ["SDDProject", "SddArtifact", "PHASES", "GATE_FAILURES"]
+__all__ = ["GATE_FAILURES", "PHASES", "SDDProject", "SddArtifact"]

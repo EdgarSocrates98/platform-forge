@@ -3,7 +3,6 @@ orchestrators. Generated from the code, never hand-maintained."""
 
 from __future__ import annotations
 
-import json
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -20,9 +19,9 @@ def capability_manifest(repo: str | Path | None = None) -> dict[str, Any]:
     rules = load_catalog(root / "rules" / "catalog")
     try:
         head = subprocess.run(["git", "-C", str(root), "rev-parse", "--short",
-                               "HEAD"], capture_output=True, text=True
-                              ).stdout.strip()
-    except Exception:
+                               "HEAD"], capture_output=True, text=True,
+                              check=False).stdout.strip()
+    except OSError:
         head = "unknown"
     return {
         "manifest": "platformforge/capability-manifest/v1",

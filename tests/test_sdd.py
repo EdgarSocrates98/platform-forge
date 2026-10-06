@@ -19,7 +19,6 @@ def test_sdd_lifecycle_and_upstream_hash(tmp_path):
     _drive(proj, "FEAT")
     st = proj.status("FEAT")
     assert not st["stale"]
-    design = proj.artifact("FEAT", "design")
     plan = proj.artifact("FEAT", "plan")
     assert plan.upstream["path"] == "contract.md"
     assert plan.upstream["sha256"]
