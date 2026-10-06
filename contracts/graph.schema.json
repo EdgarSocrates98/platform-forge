@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/graph/v1",
+  "title": "PlatformForge Graph — nodes and provenanced edges",
+  "type": "object",
+  "required": ["schema", "nodes", "edges"],
+  "properties": {
+    "schema": {"const": "platformforge/graph/v1"},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["node_id", "kind", "label"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "kind": {"type": "string"},
+          "label": {"type": "string"},
+          "attrs": {"type": "object"},
+          "source_fact_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind", "provenance", "confidence"],
+        "properties": {
+          "from": {"type": "string"},
+          "to": {"type": "string"},
+          "kind": {"type": "string"},
+          "provenance": {"type": "string", "enum": ["observed", "declared", "inferred"]},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "source_fact_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

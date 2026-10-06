@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/finding/v1",
+  "title": "PlatformForge Finding — a judgment over facts",
+  "type": "object",
+  "required": ["finding_id", "rule_id", "severity", "status", "evidence"],
+  "properties": {
+    "finding_id": {"type": "string", "pattern": "^PF-F-[0-9]+$"},
+    "rule_id": {"type": "string", "pattern": "^PF-[A-Z]+-[A-Z0-9-]*[0-9]+$"},
+    "severity": {"type": "string", "enum": ["info", "low", "medium", "high", "critical"]},
+    "status": {"type": "string", "enum": ["violated", "passed", "unresolved", "not-applicable"]},
+    "title": {"type": "string"},
+    "message": {"type": "string"},
+    "location": {"type": "string"},
+    "evidence": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "attrs": {"type": "object", "additionalProperties": true}
+  },
+  "additionalProperties": false,
+  "description": "A finding with empty evidence is invalid by construction."
+}

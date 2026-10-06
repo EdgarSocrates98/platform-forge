@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/slo-contract/v1",
+  "title": "Declared SLO contract",
+  "type": "object",
+  "required": ["service", "sli", "target", "window"],
+  "properties": {
+    "service": {"type": "string", "minLength": 1},
+    "sli": {"type": "string", "minLength": 1},
+    "target": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
+    "window": {"type": "string", "pattern": "^[0-9]+[dhm]$"},
+    "burn_rate_alerts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["window", "burn_rate"],
+        "properties": {
+          "window": {"type": "string"},
+          "burn_rate": {"type": "number", "exclusiveMinimum": 0}
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/context-pack/v1",
+  "title": "TokenSave context pack — minimal context for a task",
+  "type": "object",
+  "required": ["task", "budget"],
+  "properties": {
+    "task": {"type": "object"},
+    "relevant_files": {"type": "array", "items": {"type": "string"}},
+    "relevant_symbols": {"type": "array", "items": {"type": "string"}},
+    "facts": {"type": "array"},
+    "findings": {"type": "array"},
+    "graph_neighborhood": {"type": "array"},
+    "rules": {"type": "array", "items": {"type": "string"}},
+    "sources": {"type": "array", "items": {"type": "string"}},
+    "budget": {
+      "type": "object",
+      "properties": {
+        "input_budget": {"type": ["integer", "null"]},
+        "output_budget": {"type": ["integer", "null"]},
+        "reasoning_budget": {"type": ["integer", "null"]},
+        "tool_budget": {"type": ["integer", "null"]}
+      }
+    },
+    "packed_bytes": {"type": "integer"},
+    "refusals": {"type": "array"}
+  },
+  "additionalProperties": true
+}

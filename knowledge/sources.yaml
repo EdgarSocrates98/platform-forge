@@ -1,0 +1,424 @@
+# Source registry — Platform Forge knowledge base.
+# Every version-dependent claim must cite one of these entries (by `id`).
+# Freshness status is computed by `platformforge/knowledge` (see KNOWLEDGE.md):
+#   current | fresh | stale | deprecated | superseded | conflicted | unresolved
+# `retrieved_at` is UTC date of last human/agent verification against the source.
+
+schema: platformforge/source-registry/v1
+sources:
+  - id: cncf-maturity-model
+    product: CNCF Platform Engineering Maturity Model
+    source: https://tag-app-delivery.cncf.io/whitepapers/platform-eng-maturity-model/
+    source_authority: official
+    repo: https://github.com/cncf/tag-app-delivery/tree/main/platforms-maturity-model/v1
+    version: "1.0"
+    released: 2023-11-20
+    retrieved_at: 2026-10-06
+    scope: platform-maturity
+    confidence: high
+    notes: 5 aspects (investment, adoption, interfaces, operations, measurement) x
+      4 levels (provisional, operational, scalable, optimizing). Platform Forge
+      implements its own assessment inspired by this model, not a literal copy.
+
+  - id: dora-platforms
+    product: DORA platform engineering capabilities
+    source: https://dora.dev/capabilities/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: platform-engineering
+    confidence: high
+
+  - id: kubernetes-docs
+    product: Kubernetes
+    source: https://kubernetes.io/docs/
+    source_authority: official
+    releases_tracked: ["1.34", "1.33", "1.32", "1.31"]
+    retrieved_at: 2026-10-06
+    scope: kubernetes
+    confidence: high
+    notes: Rule catalog entries MUST declare applicable versions; deprecated-API
+      rules key off the deprecation guide.
+
+  - id: gateway-api
+    product: Kubernetes Gateway API
+    source: https://gateway-api.sigs.k8s.io/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: kubernetes-networking
+    confidence: high
+
+  - id: cncf-landscape
+    product: CNCF Landscape
+    source: https://landscape.cncf.io/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: ecosystem-map
+    confidence: high
+
+  - id: backstage-docs
+    product: Backstage
+    source: https://backstage.io/docs/overview/what-is-backstage
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: developer-portal
+    confidence: high
+    notes: Backstage is adapter/projection, never the canonical store.
+
+  - id: crossplane-docs
+    product: Crossplane
+    source: https://docs.crossplane.io/
+    source_authority: official
+    releases_tracked: ["2.x", "1.x"]
+    retrieved_at: 2026-10-06
+    scope: control-plane
+    confidence: high
+    notes: v2 changed XR/claim model vs v1 (namespaced XRs, no default claim) —
+      rules must be version-gated.
+
+  - id: terraform-docs
+    product: Terraform
+    source: https://developer.hashicorp.com/terraform/docs
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: iac
+    confidence: high
+
+  - id: opentofu-docs
+    product: OpenTofu
+    source: https://opentofu.org/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: iac
+    confidence: high
+    notes: Track divergence from Terraform (state encryption, removed blocks,
+      provider-driven functions in 1.9+).
+
+  - id: pulumi-docs
+    product: Pulumi
+    source: https://www.pulumi.com/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: iac
+    confidence: medium
+
+  - id: aws-docs
+    product: Amazon Web Services
+    source: https://docs.aws.amazon.com/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-aws
+    confidence: high
+
+  - id: azure-docs
+    product: Microsoft Azure
+    source: https://learn.microsoft.com/azure/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-azure
+    confidence: high
+
+  - id: gcp-docs
+    product: Google Cloud
+    source: https://cloud.google.com/docs
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-gcp
+    confidence: high
+
+  - id: argocd-docs
+    product: Argo CD
+    source: https://argo-cd.readthedocs.io/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: gitops
+    confidence: high
+
+  - id: argo-rollouts-docs
+    product: Argo Rollouts
+    source: https://argo-rollouts.readthedocs.io/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: progressive-delivery
+    confidence: high
+
+  - id: flux-docs
+    product: Flux
+    source: https://fluxcd.io/flux/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: gitops
+    confidence: high
+
+  - id: helm-docs
+    product: Helm
+    source: https://helm.sh/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: packaging
+    confidence: high
+
+  - id: kustomize-docs
+    product: Kustomize
+    source: https://kubectl.docs.kubernetes.io/guides/introduction/kustomize/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: packaging
+    confidence: high
+
+  - id: opentelemetry-docs
+    product: OpenTelemetry
+    source: https://opentelemetry.io/docs/
+    source_authority: official
+    semconv: https://opentelemetry.io/docs/specs/semconv/
+    retrieved_at: 2026-10-06
+    scope: observability
+    confidence: high
+
+  - id: prometheus-docs
+    product: Prometheus
+    source: https://prometheus.io/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: observability
+    confidence: high
+
+  - id: grafana-docs
+    product: Grafana
+    source: https://grafana.com/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: observability
+    confidence: high
+
+  - id: cilium-docs
+    product: Cilium / Hubble
+    source: https://docs.cilium.io/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: kubernetes-networking
+    confidence: high
+
+  - id: istio-docs
+    product: Istio
+    source: https://istio.io/latest/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: service-mesh
+    confidence: high
+
+  - id: linkerd-docs
+    product: Linkerd
+    source: https://linkerd.io/2/overview/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: service-mesh
+    confidence: high
+
+  - id: keda-docs
+    product: KEDA
+    source: https://keda.sh/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: autoscaling
+    confidence: high
+
+  - id: karpenter-docs
+    product: Karpenter
+    source: https://karpenter.sh/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: autoscaling
+    confidence: high
+    notes: v1 API (stable 2024-08) replaced v1beta1 NodePool — version-gate rules.
+
+  - id: kyverno-docs
+    product: Kyverno
+    source: https://kyverno.io/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: policy-as-code
+    confidence: high
+    notes: Modern Kyverno adds CEL-based policy types (ValidatingPolicy etc.) —
+      rules must distinguish legacy ClusterPolicy from CEL types.
+
+  - id: opa-docs
+    product: OPA / Gatekeeper
+    source: https://www.openpolicyagent.org/docs/ + https://open-policy-agent.github.io/gatekeeper/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: policy-as-code
+    confidence: high
+
+  - id: trivy-docs
+    product: Trivy
+    source: https://trivy.dev/latest/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: security-scanning
+    confidence: high
+
+  - id: checkov-docs
+    product: Checkov
+    source: https://www.checkov.io/1.Welcome/Quick%20Start.html
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: iac-security
+    confidence: high
+
+  - id: sigstore-docs
+    product: Sigstore / Cosign
+    source: https://docs.sigstore.dev/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: supply-chain
+    confidence: high
+
+  - id: slsa-spec
+    product: SLSA
+    source: https://slsa.dev/spec/v1.2/
+    source_authority: official
+    version: "1.2"
+    retrieved_at: 2026-10-06
+    scope: supply-chain
+    confidence: high
+    notes: v1.2 adds Source Track beside Build Track. Source L1 versioned, L2
+      history+provenance, L3 continuous controls, L4 two-party review. Never claim
+      a level without evidence.
+
+  - id: in-toto-spec
+    product: in-toto
+    source: https://in-toto.io/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: supply-chain
+    confidence: high
+
+  - id: spdx-spec
+    product: SPDX
+    source: https://spdx.github.io/spdx-spec/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: sbom
+    confidence: high
+
+  - id: cyclonedx-spec
+    product: CycloneDX
+    source: https://cyclonedx.org/specification/overview/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: sbom
+    confidence: high
+
+  - id: finops-framework
+    product: FinOps Framework
+    source: https://www.finops.org/framework/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: finops
+    confidence: high
+
+  - id: focus-spec
+    product: FOCUS (FinOps Open Cost and Usage Specification)
+    source: https://focus.finops.org/focus-specification/
+    source_authority: official
+    version: "1.4"
+    releases_tracked: ["1.4", "1.2"]
+    retrieved_at: 2026-10-06
+    scope: finops-billing
+    confidence: high
+    notes: v1.2 (2025-05-29) added SaaS/virtual-currency columns; v1.4 is the
+      latest listed release. Normalizer targets the declared version column set.
+
+  - id: opencost-docs
+    product: OpenCost
+    source: https://opencost.io/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: k8s-cost
+    confidence: high
+
+  - id: kubecost-docs
+    product: Kubecost
+    source: https://www.ibm.com/docs/en/kubecost (was kubecost.io)
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: k8s-cost
+    confidence: medium
+    notes: Kubecost docs moved under IBM after the Apptio/IBM acquisition; verify
+      URLs before citing in user-facing output.
+
+  - id: github-actions-docs
+    product: GitHub Actions
+    source: https://docs.github.com/en/actions
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cicd
+    confidence: high
+
+  - id: gitlab-ci-docs
+    product: GitLab CI
+    source: https://docs.gitlab.com/ee/ci/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cicd
+    confidence: high
+
+  - id: jenkins-docs
+    product: Jenkins
+    source: https://www.jenkins.io/doc/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cicd
+    confidence: medium
+
+  - id: tekton-docs
+    product: Tekton
+    source: https://tekton.dev/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cicd
+    confidence: high
+
+  - id: vault-docs
+    product: HashiCorp Vault
+    source: https://developer.hashicorp.com/vault/docs
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: secrets
+    confidence: high
+    notes: Vault is BUSL-licensed since 1.1.x line; OpenBao is the fork — track
+      both when advising.
+
+  - id: eso-docs
+    product: External Secrets Operator
+    source: https://external-secrets.io/latest/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: secrets
+    confidence: high
+
+  - id: cert-manager-docs
+    product: cert-manager
+    source: https://cert-manager.io/docs/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: certificates
+    confidence: high
+
+  - id: spark-forge-aws
+    product: spark-forge-aws (sibling Forge)
+    source: https://github.com/EdgarSocrates98/spark-forge-aws
+    source_authority: first-party-sibling
+    retrieved_at: 2026-10-06
+    scope: forge-conventions
+    confidence: high
+    license: MIT
+
+  - id: api-forge
+    product: api-forge (sibling Forge)
+    source: https://github.com/EdgarSocrates98/api-forge
+    source_authority: first-party-sibling
+    retrieved_at: 2026-10-06
+    scope: forge-conventions
+    confidence: high
+    license: MIT
