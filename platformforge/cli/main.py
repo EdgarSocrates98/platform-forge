@@ -359,6 +359,30 @@ def cmd_observe(args: argparse.Namespace) -> int:
     return _emit({"error": f"unknown observe verb {sub}"}, args, 1)
 
 
+def cmd_finops(args: argparse.Namespace) -> int:
+    from platformforge import finops as F
+    sub = args.finops_cmd
+    if sub == "costs":
+        doc = F.cost_facts(args.path)
+        return _emit({**doc, "summary": F.cost_summary(doc["facts"])}, args)
+    if sub == "allocate":
+        doc = F.cost_facts(args.path)
+        return _emit(F.allocate(doc["facts"], by=args.by), args)
+    if sub == "focus":
+        rows = json.loads(Path(args.path).read_text())
+        rows = rows if isinstance(rows, list) else rows.get("rows", [])
+        return _emit(F.to_focus(rows), args)
+    if sub == "graph":
+        g = _load_graph_or_refuse(args.repo)
+        if g is None:
+            return _emit({"refusal": "PF-GRAPH-NOGRAPH",
+                          "unlock": "platformforge graph build <facts.json>"},
+                         args, 2)
+        doc = F.cost_facts(args.path)
+        return _emit(F.graph_cost(g, doc["facts"]), args)
+    return _emit({"error": f"unknown finops verb {sub}"}, args, 1)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="platformforge",
                                 description="Agentic Platform Engineering intelligence")
@@ -473,6 +497,14 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--changes", default="")
     sp.add_argument("--window", type=int, default=3600)
     sp.set_defaults(func=cmd_observe)
+
+    sp = sub.add_parser("finops", help="FinOps cost analysis")
+    _add_common(sp)
+    sp.add_argument("finops_cmd",
+                    choices=["costs", "allocate", "focus", "graph"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--by", default="cost_center")
+    sp.set_defaults(func=cmd_finops)
     return p
 
 

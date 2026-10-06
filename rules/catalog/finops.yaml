@@ -1,0 +1,22 @@
+# FinOps rules — operate on finops.cost facts (tier-1 measured spend).
+rules:
+  - rule_id: PF-FIN-001
+    domain: finops
+    title: "Spend-bearing resource without cost allocation tag"
+    severity: medium
+    applies_to: {fact_kind: finops.cost}
+    conditions:
+      all:
+        - {path: attrs.tags.cost_center, op: absent}
+        - {path: attrs.amount, op: gt, value: 0}
+    message: "unallocated spend breaks unit economics and accountability"
+
+  - rule_id: PF-FIN-002
+    domain: finops
+    title: "Cost recorded without service attribution"
+    severity: low
+    applies_to: {fact_kind: finops.cost}
+    conditions:
+      all:
+        - {path: attrs.service, op: absent}
+    message: "service-less cost rows can't be attributed downstream"
