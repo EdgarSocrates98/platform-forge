@@ -298,6 +298,26 @@ def cmd_graph(args: argparse.Namespace) -> int:
     return _emit({"error": f"unknown graph verb {sub}"}, args, 1)
 
 
+def cmd_analyze(args: argparse.Namespace) -> int:
+    """Domain analyzers → fact documents (feed judge/graph)."""
+    sub = args.analyze_cmd
+    if sub == "iac":
+        from platformforge.iac import analyze_hcl
+        return _emit(analyze_hcl(args.path), args)
+    if sub == "plan":
+        from platformforge.iac import analyze_plan
+        return _emit(analyze_plan(args.path), args)
+    if sub == "state":
+        from platformforge.iac import analyze_state
+        return _emit(analyze_state(args.path), args)
+    if sub == "drift":
+        from platformforge.iac import analyze_hcl, analyze_state, drift
+        desired = analyze_hcl(args.config)["facts"]
+        observed = analyze_state(args.state)["facts"]
+        return _emit(drift(desired, observed), args)
+    return _emit({"error": f"unknown analyze domain {sub}"}, args, 1)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="platformforge",
                                 description="Agentic Platform Engineering intelligence")
@@ -391,6 +411,15 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--before", default="")
     sp.add_argument("--after", default="")
     sp.set_defaults(func=cmd_graph)
+
+    sp = sub.add_parser("analyze", help="domain analyzers → facts")
+    _add_common(sp)
+    sp.add_argument("analyze_cmd",
+                    choices=["iac", "plan", "state", "drift"])
+    sp.add_argument("path", nargs="?", default=".")
+    sp.add_argument("--config", default="")
+    sp.add_argument("--state", default="")
+    sp.set_defaults(func=cmd_analyze)
     return p
 
 

@@ -1,0 +1,66 @@
+# IaC rules — executable, not decorative. Convention: PF-IAC-NNN.
+rules:
+  - rule_id: PF-IAC-001
+    domain: iac
+    title: "S3 bucket exposes public ACL"
+    severity: critical
+    applies_to: {fact_kind: iac.resource}
+    conditions:
+      all:
+        - {path: attrs.type, op: equals, value: aws_s3_bucket}
+        - {path: attrs.body.acl, op: in,
+           value: [public-read, public-read-write, authenticated-write]}
+    message: "public ACL on object storage is a near-certain exposure"
+
+  - rule_id: PF-IAC-002
+    domain: iac
+    title: "Security group ingress open to the world"
+    severity: critical
+    applies_to: {fact_kind: iac.resource}
+    conditions:
+      all:
+        - {path: attrs.type, op: equals, value: aws_security_group}
+        - {path: "attrs.body.ingress[*].cidr_blocks[*]", op: equals,
+           value: "0.0.0.0/0"}
+    message: "ingress from 0.0.0.0/0 must be justified per-resource"
+
+  - rule_id: PF-IAC-003
+    domain: iac
+    title: "Resource without tags/labels"
+    severity: info
+    applies_to: {fact_kind: iac.resource}
+    conditions:
+      all:
+        - {path: attrs.tags, op: absent}
+        - {path: attrs.type, op: matches, value: "^(aws|azurerm|google)_"}
+    message: "untracked resources break cost allocation and ownership"
+
+  - rule_id: PF-IAC-010
+    domain: iac
+    title: "Plan destroys a resource"
+    severity: high
+    applies_to: {fact_kind: iac.plan_change}
+    conditions:
+      all:
+        - {path: attrs.delete, op: equals, value: true}
+    message: "deletion in a plan needs explicit human acceptance"
+
+  - rule_id: PF-IAC-011
+    domain: iac
+    title: "Plan replaces a resource"
+    severity: medium
+    applies_to: {fact_kind: iac.plan_change}
+    conditions:
+      all:
+        - {path: attrs.replace, op: equals, value: true}
+    message: "replacement implies downtime unless proven otherwise"
+
+  - rule_id: PF-IAC-020
+    domain: iac
+    title: "Module sourced without version pin"
+    severity: medium
+    applies_to: {fact_kind: iac.module}
+    conditions:
+      all:
+        - {path: attrs.version, op: absent}
+    message: "unpinned module sources make builds non-reproducible"

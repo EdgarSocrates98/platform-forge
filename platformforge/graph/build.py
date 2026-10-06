@@ -21,8 +21,16 @@ from typing import Any, Iterable
 from platformforge.graph.model import Edge, Graph, Node, node_id
 from platformforge.graph.vocab import PROVENANCES
 
-TIER_PROVENANCE = {"t1": "observed", "t2": "observed", "t3": "declared",
-                   "t4": "inferred"}
+def _tier_provenance(tier: int | str) -> str:
+    """EvidenceTier int → edge provenance. 0-2 observed (measured, provider,
+    generated plan), 3-5 declared (repo config, official doc, operator),
+    6-7 inferred (never silently observed)."""
+    t = {f"t{i}": i for i in range(8)}.get(tier, tier)
+    try:
+        t = int(t)
+    except (TypeError, ValueError):
+        return "declared"
+    return "observed" if t <= 2 else ("declared" if t <= 5 else "inferred")
 
 
 class GraphBuilder:
@@ -57,7 +65,7 @@ class GraphBuilder:
         for f in facts:
             contrib = (f.get("attrs") or {}).get("graph") or {}
             fid = f.get("fact_id", "")
-            prov = TIER_PROVENANCE.get(f.get("tier", "t3"), "declared")
+            prov = _tier_provenance(f.get("tier", 3))
             for n in contrib.get("nodes", []):
                 self.add_node(n["kind"], n["label"], n.get("attrs"),
                               [fid] if fid else [])

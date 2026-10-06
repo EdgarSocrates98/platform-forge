@@ -25,7 +25,7 @@ def _facts():
              "edges": [{"src_kind": "workload", "src": "payments",
                         "dst_kind": "secret", "dst": "db-creds",
                         "kind": "uses_secret"}]}}},
-        {"fact_id": "F3", "kind": "team.ownership", "tier": "t4",
+        {"fact_id": "F3", "kind": "team.ownership", "tier": "t6",
          "attrs": {"graph": {
              "nodes": [{"kind": "team", "label": "pay-team"}],
              "edges": [{"src_kind": "team", "src": "pay-team",
@@ -43,7 +43,7 @@ def test_build_from_facts_provenance(tmp_path):
     assert set(g.nodes) == {"workload/payments", "workload/checkout",
                             "secret/db-creds", "team/pay-team"}
     e = g.edges["team/pay-team->workload/payments:owns"]
-    assert e.provenance == "inferred"  # t4 fact
+    assert e.provenance == "inferred"  # t6 fact (llm-inference)
     e2 = g.edges["workload/payments->secret/db-creds:uses_secret"]
     assert e2.provenance == "observed" and e2.source_fact_ids == ("F2",)
     jsonschema.validate(g.to_dict(), json.loads(open(
