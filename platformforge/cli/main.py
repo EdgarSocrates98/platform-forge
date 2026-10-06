@@ -420,6 +420,22 @@ def cmd_lab(args: argparse.Namespace) -> int:
     return _emit(lab.run(args.path or ""), args)
 
 
+def cmd_forge(args: argparse.Namespace) -> int:
+    from platformforge import forge as FG
+    sub = args.forge_cmd
+    if sub == "manifest":
+        return _emit(FG.capability_manifest(args.repo), args)
+    if sub == "delegate":
+        d = FG.Delegation(from_forge=args.src or "platform-forge",
+                          to_forge=args.dst or "?",
+                          task=args.name or "", )
+        return _emit(FG.build_envelope(d), args)
+    if sub == "verify":
+        env = json.loads(Path(args.path).read_text())
+        return _emit(FG.verify_envelope(env), args)
+    return _emit({"error": f"unknown forge verb {sub}"}, args, 1)
+
+
 def cmd_observe(args: argparse.Namespace) -> int:
     from platformforge import observe as O
     sub = args.observe_cmd
@@ -634,6 +650,15 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("lab_cmd", choices=["list", "run", "run-all"])
     sp.add_argument("path", nargs="?", default="")
     sp.set_defaults(func=cmd_lab)
+
+    sp = sub.add_parser("forge", help="Forge interop")
+    _add_common(sp)
+    sp.add_argument("forge_cmd", choices=["manifest", "delegate", "verify"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--name", default="")
+    sp.add_argument("--src", default="")
+    sp.add_argument("--dst", default="")
+    sp.set_defaults(func=cmd_forge)
     return p
 
 
