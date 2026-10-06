@@ -324,6 +324,19 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     if sub == "gha":
         from platformforge.cicd import analyze_gha
         return _emit(analyze_gha(args.path), args)
+    if sub == "iam":
+        from platformforge.security import analyze_iam_policy
+        return _emit(analyze_iam_policy(args.path), args)
+    if sub == "sbom":
+        from platformforge.security import analyze_sbom
+        vulns = json.loads(Path(args.vulns).read_text()) if args.vulns else None
+        return _emit(analyze_sbom(args.path, vuln_db=vulns), args)
+    if sub == "secrets":
+        from platformforge.security import scan_secrets
+        return _emit(scan_secrets(args.path), args)
+    if sub == "supply":
+        from platformforge.security import analyze_supply
+        return _emit(analyze_supply(args.path), args)
     return _emit({"error": f"unknown analyze domain {sub}"}, args, 1)
 
 
@@ -481,10 +494,12 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("analyze_cmd",
                     choices=["iac", "plan", "state", "drift", "k8s",
-                             "gitops", "gha"])
+                             "gitops", "gha", "iam", "sbom", "secrets",
+                             "supply"])
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")
+    sp.add_argument("--vulns", default="", help="offline vuln list JSON")
     sp.set_defaults(func=cmd_analyze)
 
     sp = sub.add_parser("observe", help="SRE/observability verbs")

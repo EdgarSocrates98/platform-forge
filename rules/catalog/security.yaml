@@ -1,0 +1,82 @@
+# DevSecOps rules — PF-SEC-*.
+rules:
+  - rule_id: PF-SEC-001
+    domain: security
+    title: "Wildcard actions or admin grant in IAM policy"
+    severity: critical
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      any:
+        - {path: attrs.admin_grant, op: equals, value: true}
+        - {path: attrs.wildcard_actions, op: gt, value: 0}
+    message: "* actions widen compromise to everything the role can name"
+
+  - rule_id: PF-SEC-002
+    domain: security
+    title: "Public principal in IAM policy"
+    severity: critical
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      all:
+        - {path: attrs.public_principals, op: gt, value: 0}
+    message: "Principal '*' grants the internet access"
+
+  - rule_id: PF-SEC-003
+    domain: security
+    title: "Wildcard resource in IAM policy"
+    severity: medium
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      all:
+        - {path: attrs.wildcard_resources, op: gt, value: 0}
+    message: "Resource '*' applies the grant to every object"
+
+  - rule_id: PF-SEC-010
+    domain: security
+    title: "Secret pattern in repository file"
+    severity: critical
+    applies_to: {fact_kind: security.secret_leak}
+    conditions:
+      all:
+        - {path: attrs.hit_count, op: gt, value: 0}
+    message: "rotate first, scrub second — history retains the value"
+
+  - rule_id: PF-SEC-020
+    domain: security
+    title: "Component with known CVE (offline vuln list)"
+    severity: high
+    applies_to: {fact_kind: security.sbom}
+    conditions:
+      all:
+        - {path: attrs.vuln_count, op: gt, value: 0}
+    message: "matched against caller-supplied vuln list — freshness matters"
+
+  - rule_id: PF-SEC-021
+    domain: security
+    title: "Component without declared license"
+    severity: low
+    applies_to: {fact_kind: security.sbom}
+    conditions:
+      all:
+        - {path: attrs.unlicensed_components, op: not_empty}
+    message: "license posture unknown — legal exposure is unbounded"
+
+  - rule_id: PF-SEC-030
+    domain: security
+    title: "Artifact image not digest-pinned"
+    severity: high
+    applies_to: {fact_kind: security.artifact}
+    conditions:
+      all:
+        - {path: attrs.digest_pinned, op: equals, value: false}
+    message: "tag references are mutable — pin sha256 digest"
+
+  - rule_id: PF-SEC-031
+    domain: security
+    title: "Artifact without signature attestation"
+    severity: medium
+    applies_to: {fact_kind: security.artifact}
+    conditions:
+      all:
+        - {path: attrs.signed, op: equals, value: false}
+    message: "unsigned artifacts can't prove origin (cosign/SLSA)"
