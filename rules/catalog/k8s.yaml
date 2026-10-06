@@ -1,0 +1,140 @@
+# Kubernetes rules — the analyzer computes cross-resource coverage attrs
+# (pdb_count, netpol_count) so rules stay per-fact. Convention: PF-K8S-NNN.
+rules:
+  - rule_id: PF-K8S-001
+    domain: k8s
+    title: "Image pinned to :latest or untagged"
+    severity: medium
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.pod_spec.latest_tag, op: equals, value: true}
+    message: "mutable tags break reproducibility and rollback"
+
+  - rule_id: PF-K8S-002
+    domain: k8s
+    title: "Container without resource limits"
+    severity: high
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.pod_spec.no_limits, op: gt, value: 0}
+    message: "unbounded containers enable noisy-neighbor OOM/CPU starvation"
+
+  - rule_id: PF-K8S-003
+    domain: k8s
+    title: "Container without health probes"
+    severity: medium
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.pod_spec.no_probes, op: gt, value: 0}
+    message: "unprobed containers hide dead-but-running failures"
+
+  - rule_id: PF-K8S-004
+    domain: k8s
+    title: "Privileged container"
+    severity: critical
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.pod_spec.privileged, op: equals, value: true}
+    message: "privileged containers have near-node-root capability"
+
+  - rule_id: PF-K8S-005
+    domain: k8s
+    title: "Workload may run as root"
+    severity: high
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.pod_spec.run_as_non_root_set, op: equals,
+           value: false}
+        - {path: attrs.pod_spec.run_as_root, op: equals, value: false}
+        - {path: attrs.kind, op: in, value: [Deployment, StatefulSet, DaemonSet]}
+    message: "no runAsNonRoot set — root execution not prevented"
+
+  - rule_id: PF-K8S-006
+    domain: k8s
+    title: "Host network/PID/IPC namespace shared"
+    severity: high
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      any:
+        - {path: attrs.pod_spec.host_network, op: equals, value: true}
+        - {path: attrs.pod_spec.host_pid, op: equals, value: true}
+        - {path: attrs.pod_spec.host_ipc, op: equals, value: true}
+    message: "host namespaces break pod isolation"
+
+  - rule_id: PF-K8S-007
+    domain: k8s
+    title: "Service-account token auto-mounted"
+    severity: medium
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.pod_spec.automount_token, op: equals, value: true}
+    message: "automounted tokens expand credential theft blast radius"
+
+  - rule_id: PF-K8S-008
+    domain: k8s
+    title: "Deployment without PodDisruptionBudget"
+    severity: medium
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.kind, op: in, value: [Deployment, StatefulSet]}
+        - {path: attrs.pdb_count, op: equals, value: 0}
+        - {path: attrs.replicas, op: gt, value: 0}
+    message: "voluntary disruptions can take the workload to zero"
+
+  - rule_id: PF-K8S-009
+    domain: k8s
+    title: "Secret-looking value hardcoded in env"
+    severity: critical
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.pod_spec.env_hardcoded_secret, op: not_empty}
+    message: "env values are plaintext in etcd, manifests and logs"
+
+  - rule_id: PF-K8S-010
+    domain: k8s
+    title: "Ingress without TLS"
+    severity: high
+    applies_to: {fact_kind: k8s.ingress}
+    conditions:
+      all:
+        - {path: attrs.tls, op: equals, value: false}
+    message: "plaintext ingress terminates credentials in cleartext"
+
+  - rule_id: PF-K8S-011
+    domain: k8s
+    title: "Single-replica workload"
+    severity: low
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.kind, op: equals, value: Deployment}
+        - {path: attrs.replicas, op: lte, value: 1}
+    message: "one replica = no availability through node failure"
+
+  - rule_id: PF-K8S-012
+    domain: k8s
+    title: "Workload without NetworkPolicy"
+    severity: medium
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.netpol_count, op: equals, value: 0}
+    message: "no pod-level network segmentation declared"
+
+  - rule_id: PF-K8S-013
+    domain: k8s
+    title: "Secret keys present in manifest"
+    severity: info
+    applies_to: {fact_kind: k8s.secret}
+    conditions:
+      all:
+        - {path: attrs.keys, op: not_empty}
+    message: "manifest-held secrets should move to ESO/Vault"

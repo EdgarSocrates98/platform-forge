@@ -315,6 +315,9 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         desired = analyze_hcl(args.config)["facts"]
         observed = analyze_state(args.state)["facts"]
         return _emit(drift(desired, observed), args)
+    if sub == "k8s":
+        from platformforge.k8s import analyze_k8s
+        return _emit(analyze_k8s(args.path), args)
     return _emit({"error": f"unknown analyze domain {sub}"}, args, 1)
 
 
@@ -415,7 +418,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("analyze", help="domain analyzers → facts")
     _add_common(sp)
     sp.add_argument("analyze_cmd",
-                    choices=["iac", "plan", "state", "drift"])
+                    choices=["iac", "plan", "state", "drift", "k8s"])
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")
