@@ -389,6 +389,27 @@ def cmd_agents(args: argparse.Namespace) -> int:
     return _emit({"error": f"unknown agents verb {sub}"}, args, 1)
 
 
+def cmd_mcp(args: argparse.Namespace) -> int:
+    from platformforge import mcp as M
+    from platformforge.mcp.parity import detach, integrate
+    from platformforge.mcp.registry import tool_descriptors
+    sub = args.mcp_cmd
+    if sub == "tools":
+        return _emit({"tools": tool_descriptors()}, args)
+    if sub == "call":
+        inp = json.loads(args.input) if args.input else {}
+        out = M.call_tool(args.name, inp, repo=args.repo)
+        return _emit(out, args, 2 if "error" in out or "refusal" in out else 0)
+    if sub == "serve":
+        from platformforge.mcp.server import serve
+        return serve(repo=args.repo)
+    if sub == "integrate":
+        return _emit(integrate(args.host, args.repo), args)
+    if sub == "detach":
+        return _emit(detach(args.host, args.repo), args)
+    return _emit({"error": f"unknown mcp verb {sub}"}, args, 1)
+
+
 def cmd_observe(args: argparse.Namespace) -> int:
     from platformforge import observe as O
     sub = args.observe_cmd
@@ -586,6 +607,17 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--name", default="")
     sp.add_argument("--domain", default="")
     sp.set_defaults(func=cmd_agents)
+
+    sp = sub.add_parser("mcp", help="MCP server + host parity")
+    _add_common(sp)
+    sp.add_argument("mcp_cmd",
+                    choices=["tools", "call", "serve", "integrate", "detach"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--name", default="")
+    sp.add_argument("--input", default="")
+    sp.add_argument("--host", default="generic",
+                    choices=["claude", "codex", "devin", "copilot", "generic"])
+    sp.set_defaults(func=cmd_mcp)
     return p
 
 
