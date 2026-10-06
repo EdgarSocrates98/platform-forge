@@ -1,0 +1,95 @@
+# GitOps & CI/CD rules — PF-GITOPS-* / PF-CICD-*.
+rules:
+  - rule_id: PF-GITOPS-001
+    domain: gitops
+    title: "ArgoCD app without automated sync"
+    severity: low
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.automated_sync, op: equals, value: false}
+    message: "manual sync lets cluster drift from git silently"
+
+  - rule_id: PF-GITOPS-002
+    domain: gitops
+    title: "ArgoCD sync without self-heal"
+    severity: medium
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.automated_sync, op: equals, value: true}
+        - {path: attrs.self_heal, op: equals, value: false}
+    message: "out-of-band changes persist until the next sync"
+
+  - rule_id: PF-GITOPS-003
+    domain: gitops
+    title: "ArgoCD sync without prune"
+    severity: medium
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.automated_sync, op: equals, value: true}
+        - {path: attrs.prune, op: equals, value: false}
+    message: "deleted manifests linger in the cluster"
+
+  - rule_id: PF-GITOPS-010
+    domain: gitops
+    title: "Flux resource suspended"
+    severity: info
+    applies_to: {fact_kind: gitops.flux_resource}
+    conditions:
+      all:
+        - {path: attrs.suspend, op: equals, value: true}
+    message: "suspended resources stop reconciling — confirm intent"
+
+  - rule_id: PF-CICD-001
+    domain: cicd
+    title: "Third-party action not pinned to SHA"
+    severity: high
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.unpinned_third_party, op: not_empty}
+    message: "tag/branch refs are mutable — supply-chain hijack surface"
+
+  - rule_id: PF-CICD-002
+    domain: cicd
+    title: "Dangerous trigger on privileged context"
+    severity: critical
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.dangerous_triggers, op: not_empty}
+    message: "pull_request_target/workflow_run expose secrets to forks"
+
+  - rule_id: PF-CICD-003
+    domain: cicd
+    title: "Script injection via untrusted context"
+    severity: critical
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.script_injection_risk, op: not_empty}
+    message: "${{ }} inside run: interpolates attacker-controlled text"
+
+  - rule_id: PF-CICD-004
+    domain: cicd
+    title: "Broad write permissions at workflow level"
+    severity: medium
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      any:
+        - {path: attrs.write_perms, op: contains, value: "*"}
+        - {path: attrs.write_perms, op: contains, value: "id-token"}
+    message: "default broad GITHUB_TOKEN permissions widen compromise impact"
+
+  - rule_id: PF-CICD-005
+    domain: cicd
+    title: "Self-hosted runner on untrusted path"
+    severity: medium
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.self_hosted_jobs, op: not_empty}
+        - {path: attrs.dangerous_triggers, op: not_empty}
+    message: "self-hosted + fork-reachable triggers = host compromise"
