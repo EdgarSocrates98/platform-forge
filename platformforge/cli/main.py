@@ -327,6 +327,38 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     return _emit({"error": f"unknown analyze domain {sub}"}, args, 1)
 
 
+def cmd_observe(args: argparse.Namespace) -> int:
+    from platformforge import observe as O
+    sub = args.observe_cmd
+    if sub == "slo":
+        contract = O.SloContract.load(args.path)
+        sli = json.loads(args.sli) if args.sli else {}
+        out = O.error_budget(contract, **{
+            k: v for k, v in sli.items()
+            if k in ("good_events", "bad_events", "total_events")})
+        # wrap as fact so `judge` can evaluate PF-SLO-* rules
+        fact = {"fact_id": out.pop("fact_id", ""),
+                "kind": "sre.error_budget", "source": args.path,
+                "location": contract.service, "tier": 0, "attrs": out}
+        return _emit({"result": out, "facts": [fact]}, args)
+    if sub == "otel":
+        return _emit(O.correlate_spans(args.path), args)
+    if sub == "incident":
+        alerts = json.loads(Path(args.alerts).read_text())
+        changes = json.loads(Path(args.changes).read_text())
+        g = _load_graph_or_refuse(args.repo)
+        return _emit(O.correlate(alerts, changes, graph=g,
+                                 window_s=args.window), args)
+    if sub == "capacity":
+        items = json.loads(Path(args.path).read_text())
+        out = O.capacity(items)
+        facts = [{"fact_id": "", "kind": "sre.capacity", "source": args.path,
+                  "location": c["resource"] or "?", "tier": 0, "attrs": c}
+                 for c in out["capacity"]]
+        return _emit({**out, "facts": facts}, args)
+    return _emit({"error": f"unknown observe verb {sub}"}, args, 1)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="platformforge",
                                 description="Agentic Platform Engineering intelligence")
@@ -430,6 +462,17 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")
     sp.set_defaults(func=cmd_analyze)
+
+    sp = sub.add_parser("observe", help="SRE/observability verbs")
+    _add_common(sp)
+    sp.add_argument("observe_cmd",
+                    choices=["slo", "otel", "incident", "capacity"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--sli", default="", help="JSON {good,bad,total}_events")
+    sp.add_argument("--alerts", default="")
+    sp.add_argument("--changes", default="")
+    sp.add_argument("--window", type=int, default=3600)
+    sp.set_defaults(func=cmd_observe)
     return p
 
 
