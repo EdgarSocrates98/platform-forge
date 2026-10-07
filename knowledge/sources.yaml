@@ -422,3 +422,36 @@ sources:
     scope: forge-conventions
     confidence: high
     license: MIT
+
+  - id: google-sre-book
+    product: Google SRE Book / Workbook
+    source: https://sre.google/sre-book/table-of-contents/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: sre
+    confidence: high
+    notes: SLO/error-budget/burn-rate rules (PF-SLO-*, PF-SRE-*) cite chapters.
+
+  - id: nvd
+    product: NIST National Vulnerability Database
+    source: https://nvd.nist.gov/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: vulnerabilities
+    confidence: high
+
+  - id: osv
+    product: OSV.dev vulnerability database
+    source: https://osv.dev/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: vulnerabilities
+    confidence: high
+
+  - id: spdx-licenses
+    product: SPDX License List
+    source: https://spdx.dev/licenses/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: licenses
+    confidence: high

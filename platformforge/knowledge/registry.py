@@ -95,6 +95,48 @@ class SourceRegistry:
                 (FreshnessStatus.UNRESOLVED, FreshnessStatus.CONFLICTED)]
 
 
+    # §46 — knowledge entry contract: these fields are mandatory for an
+    # entry to count as knowledge-backed.
+    REQUIRED = ("id", "source", "source_authority", "retrieved_at",
+                "confidence")
+
+    def contract_check(self) -> dict[str, Any]:
+        """§46 — report entries missing contract fields."""
+        bad = {}
+        for e in self.entries.values():
+            missing = [f for f in self.REQUIRED
+                       if not getattr(e, f, None)]
+            if missing:
+                bad[e.id or "?"] = missing
+        return {"entries": len(self.entries), "invalid": bad,
+                "ok": not bad}
+
+    def link_rules(self, *catalog_dirs: str | Path) -> dict[str, Any]:
+        """§44/§47 — rule→source linkage + drift: every rule source must
+        resolve to a registered source by domain suffix match, else it is
+        reported `unlinked` (not silently trusted)."""
+        from platformforge.rules import load_catalog
+        domains = {}
+        for e in self.entries.values():
+            dom = (e.source or "").split("//")[-1].split("/")[0]
+            domains.setdefault(dom.lstrip("www."), e.id)
+        linked, unlinked = {}, []
+        for r in load_catalog(*catalog_dirs):
+            hits = []
+            for s in r.sources:
+                sdom = s.split("//")[-1].split("/")[0].lstrip("www.")
+                match = next((sid for dom, sid in domains.items()
+                              if sdom == dom or sdom.endswith("." + dom)
+                              or dom.endswith("." + sdom)), None)
+                hits.append({"source": s, "entry": match})
+            if all(h["entry"] for h in hits) if hits else False:
+                linked[r.rule_id] = [h["entry"] for h in hits]
+            else:
+                unlinked.append({"rule_id": r.rule_id, "sources": hits})
+        return {"linked": linked, "unlinked": unlinked,
+                "coverage": len(linked) / max(len(linked) + len(unlinked), 1)}
+
+
 def knowledge_age_days(retrieved_at: str, today: date | None = None) -> int | None:
     try:
         return ((today or datetime.now(UTC).date()) - date.fromisoformat(str(retrieved_at)[:10])).days

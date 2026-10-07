@@ -24,6 +24,8 @@ class TaskSignal:
     security_sensitive: bool = False
     evidence_available: bool = True
     production: bool = False
+    expected_cost: str = "low"             # low|medium|high (§37)
+    evidence_completeness: float = 1.0     # 0-1 measured fraction
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> TaskSignal:
@@ -112,8 +114,10 @@ def route(signal: TaskSignal, routes_path: str | Path | None = None) -> dict[str
     if signal.complexity == "high" and mode == "specialist":
         mode = "coordinated"
         agents.insert(0, f"{signal.domains[0] if signal.domains else 'platform'}-coordinator")
-    if not signal.evidence_available:
+    if not signal.evidence_available or signal.evidence_completeness < 0.5:
         extra.append("evidence unavailable — expect named unresolved, not guesses")
+    if signal.expected_cost == "high":
+        extra.append("high expected cost — deterministic-first mandated")
 
     return {
         "mode": mode,

@@ -232,6 +232,14 @@ def cmd_judge(args: argparse.Namespace) -> int:
 def cmd_knowledge(args: argparse.Namespace) -> int:
     from platformforge.knowledge.registry import SourceRegistry
     reg = SourceRegistry.default()
+    sub = getattr(args, "knowledge_cmd", "check") or "check"
+    if sub == "contract":
+        out = reg.contract_check()
+        return _emit(out, args, 2 if (args.strict and not out["ok"]) else 0)
+    if sub == "drift":
+        out = reg.link_rules("rules/catalog")
+        out["unresolved"] = [u["rule_id"] for u in out["unlinked"]]
+        return _emit(out, args)
     report = reg.check()
     bad = [r for r in report if r["status"] in ("stale", "unresolved", "conflicted",
                                               "deprecated", "superseded")]
@@ -260,8 +268,18 @@ def cmd_tokens(args: argparse.Namespace) -> int:
         pack = ContextPackBuilder(idx, ledger).build(
             task=args.task,
             budget=Budget(input_budget=args.input_budget),
-            changed_files=args.changed or [])
+            changed_files=args.changed or [],
+            graph_neighborhood=getattr(args, "graph_nodes", None) or None,
+            risk=getattr(args, "risk", None) or None,
+            previous_pack_hash=getattr(args, "prev_pack", None) or None)
         out = pack
+    elif args.tokens_cmd == "delta":
+        ledger = TokenLedger(args.repo)
+        out = ContextPackBuilder(idx, ledger).delta_for_change(
+            changed_files=args.changed or [],
+            budget=Budget(input_budget=args.input_budget),
+            previous_pack_hash=getattr(args, "prev_pack", None) or None,
+            risk=getattr(args, "risk", None) or None)
     elif args.tokens_cmd == "stats":
         out = idx.stats() | {"fingerprint": idx.fingerprint()}
     elif args.tokens_cmd == "ledger":
@@ -300,7 +318,31 @@ def cmd_caveman(args: argparse.Namespace) -> int:
 
 def cmd_economy(args: argparse.Namespace) -> int:
     from platformforge.economy import EconomyEngine
-    return _emit(EconomyEngine(args.repo).report(), args)
+    eng = EconomyEngine(args.repo)
+    sub = getattr(args, "economy_cmd", "report") or "report"
+    if sub == "strategy":
+        sig = json.loads(args.signal) if args.signal.strip().startswith("{") \
+            else {"task_type": args.signal or "analysis"}
+        return _emit(eng.strategy(sig), args)
+    if sub == "compare":
+        sig = json.loads(args.signal) if args.signal.strip().startswith("{") \
+            else {"task_type": args.signal or "analysis"}
+        return _emit(eng.compare(sig), args)
+    if sub == "qpt":
+        # §30–32 — measured quality-per-token over a facts doc
+        import json as _json
+
+        from platformforge.economy.qpt import quality_per_token
+        from platformforge.tokensave.budget import Budget
+        facts_doc = _json.loads(Path(args.path).read_text())
+        facts = facts_doc.get("facts", facts_doc)
+        out = quality_per_token(
+            facts_full=facts, findings_full=[],
+            index=_index(args), task=args.task or "analysis",
+            budget=Budget(input_budget=args.input_budget))
+        return _emit(out, args,
+                     2 if out.get("quality_gate") == "fail" else 0)
+    return _emit(eng.report(), args)
 
 
 def cmd_route(args: argparse.Namespace) -> int:
@@ -890,17 +932,28 @@ def build_parser() -> argparse.ArgumentParser:
     verb("inspect", cmd_inspect, "inventory analyzable artifacts")
     verb("judge", cmd_judge, "apply rule catalog to facts",
          lambda sp: (sp.add_argument("facts"), sp.add_argument("--catalog", nargs="*")))
-    verb("knowledge", cmd_knowledge, "knowledge freshness check")
+    verb("knowledge", cmd_knowledge, "knowledge freshness/drift check",
+         lambda sp: sp.add_argument(
+             "knowledge_cmd", nargs="?", default="check",
+             choices=["check", "contract", "drift"]))
 
-    sp = sub.add_parser("tokens", help="tokensave: index/search/pack/stats/ledger")
+    sp = sub.add_parser("tokens",
+                        help="tokensave: index/search/pack/delta/stats/ledger")
     _add_common(sp)
     sp.add_argument("tokens_cmd",
-                    choices=["index", "search", "pack", "stats", "ledger"])
+                    choices=["index", "search", "pack", "delta", "stats",
+                             "ledger"])
     sp.add_argument("--task", default="")
     sp.add_argument("--query", default="")
     sp.add_argument("--limit", type=int, default=20)
     sp.add_argument("--changed", nargs="*")
     sp.add_argument("--input-budget", type=int, default=None)
+    sp.add_argument("--risk", default=None,
+                    choices=["low", "medium", "high", "critical"])
+    sp.add_argument("--graph-nodes", nargs="*",
+                    help="seed nodes for graph-aware ranking")
+    sp.add_argument("--prev-pack", default=None,
+                    help="previous pack hash — delta-aware dedup")
     sp.set_defaults(func=cmd_tokens)
 
     sp = sub.add_parser("rtk", help="compact command output (rtk)")
@@ -927,8 +980,15 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--context-risk", default="normal")
     sp.set_defaults(func=cmd_caveman)
 
-    sp = sub.add_parser("economy", help="economy engine report")
+    sp = sub.add_parser("economy", help="economy engine report/strategy/qpt")
     _add_common(sp)
+    sp.add_argument("economy_cmd", nargs="?", default="report",
+                    choices=["report", "strategy", "compare", "qpt"])
+    sp.add_argument("--signal", default="",
+                    help="JSON TaskSignal (strategy/compare)")
+    sp.add_argument("--path", default="", help="facts doc for qpt")
+    sp.add_argument("--task", default="analysis")
+    sp.add_argument("--input-budget", type=int, default=None)
     sp.set_defaults(func=cmd_economy)
 
     sp = sub.add_parser("route", help="adaptive routing decision")

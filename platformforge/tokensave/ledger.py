@@ -16,14 +16,24 @@ from typing import Any
 
 @dataclass
 class LedgerEntry:
+    """§29 — v2 fields: requested/candidate/selected/delivered/reused/
+    cached/compressed/skipped + essential/optional split. Provider-side
+    tokens stay None unless a host transcript observes them."""
     operation: str
     context_requested: int = 0      # estimated tokens requested
+    context_candidate: int = 0      # ranked candidates before budget
+    context_selected: int = 0       # selected after ranking
     context_delivered: int = 0
     context_reused: int = 0         # served from cache/content-address
+    context_cached: int = 0
     context_skipped: int = 0
     context_compressed: int = 0
+    essential_tokens: int = 0       # evidence that must not be dropped
+    optional_tokens: int = 0
     input_tokens: int | None = None   # observed (provider transcript)
     output_tokens: int | None = None
+    reasoning_tokens: int | None = None
+    cost_usd: float | None = None
     input_tokens_est: int | None = None  # estimated
     output_tokens_est: int | None = None
     cache_hits: int = 0
