@@ -30,12 +30,29 @@
 | 14 Forge Lab | L0 static + profiles (container/kubernetes/cloud guarded), chaos on graph, eval corpus 34 cases, coverage 63/63, precision | validated | scenarios produce expected findings |
 | 15 Forge interop | manifest v2, capability negotiation, delegation, A2A envelope, receipts | implemented | no coupling |
 | 16 Hardening | CI wheel install, offline test, capability contracts, bench, docs parity | implemented | full suite + push |
+| 2.1 Closure | single-source validation (`scripts/validate.py` = CI), version tri-state, canonical source ids, QPT measured==delivered, Crossplane families+Upbound, knowledge packs, wheel self-contained, adversarial review fixes (H1–H3) | validated | 13 gates green; see `docs/cycle2.1/FINAL-MATRIX.md` |
 
 Declared gaps (not hidden):
 
 - Lab L1–L4 real runtimes (containers/kind/cloud) — profiles declared and
   guarded; host execution stays host-side.
 - Live cloud collectors — dumps only; `collect` never calls provider APIs.
+- QPT default judge is facts-only (packs carry facts essential-complete);
+  file-body judgment needs a custom judge — labeled in every receipt.
+- MCP tools don't take `--versions`; version-gated rules resolve to
+  `unresolved` over MCP (safe direction).
+- Knowledge packs are a seed corpus (4 domains, 13 packs) — thin by
+  design, expansion is normal-cycle work.
+- Redaction markers are a prefix oracle for low-entropy secrets
+  (documented in SECURITY.md).
+
+## Cycle 3 — concept only (not implemented)
+
+`docs/cycle3/PROPOSAL.md` — runtime & live platform intelligence:
+host-side live discovery, AWS/K8s inventory, continuous reconciliation
+(desired/planned/observed), runtime topology, multi-cluster, live drift,
+incident correlation, controlled remediation planning. Spec only —
+no implementation in this cycle.
 
 Definition of done per feature: contract, implementation, tests, negative test,
 unresolved behavior, evidence, docs, source provenance, eval, CLI/MCP exposure.

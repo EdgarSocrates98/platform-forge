@@ -2,7 +2,47 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
-## [Unreleased] — Cycle 2 (truth + depth hardening)
+## [Unreleased] — Cycle 2.1 (closure + reproducibility)
+
+Adversarial closure pass over Cycle 2 — every guarantee a reviewer could
+attack got tested, and the real ones got fixed. Phases A–H, each a commit.
+
+### Fixed (adversarial review)
+- Graph edge merge crashed on `planned` provenance; per-edge provenance
+  could launder any tier into `observed`; negative tiers minted observed.
+- `versions:` constraints were unvalidated — vacuous/garbage constraints
+  produced strong verdicts. Now fail-loud at catalog load; duplicate
+  rule_ids rejected; missing catalog dirs warn.
+- `--strict` bypassed unresolved on `reliability`/`security` verbs and a
+  `[:200]` list cap dropped tail findings.
+- Crossplane: `notupbound.io` spoofed the provider suffix; junk specs
+  classified as ProviderConfig via `"provider" in group`; empty
+  `status.atProvider` counted as evidence; `spec.resourceRefs` minted
+  XRs from arbitrary CRDs.
+- Redaction: `db_password`/`client_secret`/`aws_secret_key` evaded kv
+  patterns (snake_case prefixes); `/+=` value chars truncated AWS
+  secrets below the length floor; multi-line PEMs unreachable under
+  per-line scanning; MCP artifact store + `rtk expand` persisted and
+  returned raw secrets; the MCP redaction test was vacuous.
+- QPT measured a payload the pack never delivered (full file bodies,
+  path-filtered facts); measured after judging; unresolved→violated
+  flips counted as kept; budget refusal crashed the bench.
+- `review_change` defaulted to CWD-relative `rules/catalog` — zero-rule
+  review outside the checkout; coverage/package gates printed instead of
+  asserting; evals gate ignored unresolved verdicts.
+- Ledger `token_basis` was free-form and observed counts were
+  unfalsifiable — now a closed vocabulary, and observed rows require a
+  `transcript_ref`.
+
+### Added
+- `scripts/validate.py` — single gate source for local + CI; the
+  workflow orchestrates it, no hidden logic.
+- `docs/cycle2.1/FINAL-MATRIX.md` + `VALIDATION-RECEIPT.json`
+  (machine-readable, sha-stamped).
+- `docs/cycle3/PROPOSAL.md` — Cycle 3 concept (runtime/live intel),
+  spec only.
+
+## [Released] — Cycle 2 (truth + depth hardening)
 
 ### Added
 - **Truth hardening** — `planned` provenance (T2 plans no longer promote

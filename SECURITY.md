@@ -46,6 +46,15 @@ Two artifact classes, explicitly separated:
   and the redaction receipt records only `label`, `count`, `location`
   and a sha256 pattern-set hash (§90). Secret values are never stored
   anywhere in the receipt chain.
+- **artifact store (`.platformforge/store/`) is not a vault** — MCP
+  oversize results and RTK compacted output are redacted *before*
+  persistence, and `rtk expand` re-redacts on read-back (defense in
+  depth; `tests/test_wave_k.py` proves both directions).
+- **marker caveat (honest limit):** `[REDACTED:<label>:<sha8>]` hashes
+  the secret to 8 hex chars so equal secrets correlate across a run —
+  but for a *low-entropy* secret (e.g. `password=hunter22`) the marker
+  is a prefix oracle enabling dictionary confirmation. Correlation is
+  the trade-off; when it matters, treat the marker as sensitive.
 
 Who returns what: analyzers and the index return *pointers* to raw
 artifacts; pack/compress/receipt paths return redacted content. A caller
