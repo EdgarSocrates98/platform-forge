@@ -6,7 +6,7 @@ named test/eval. Receipt: `VALIDATION-RECEIPT.json` (sha-stamped).
 
 | Area | Before | After | Evidence | Tests | Remaining gap |
 |---|---|---|---|---|---|
-| CI | Billing-blocked (jobs never started); gates hidden in YAML | `scripts/validate.py` is the single gate source; `ci.yml` calls it; `runs-on` resolves via `RUNNER_LABELS` repo var (self-hosted compatible); 13 gates pass locally | `VALIDATION-RECEIPT.json` verdict=validated | `.github/workflows/ci.yml` + local run | Remote green **depends on the account's Actions availability** — verify on the pushed run |
+| CI | Billing-blocked (jobs never started); gates hidden in YAML | `scripts/validate.py` is the single gate source; `ci.yml` calls it; `runs-on` resolves via `PF_RUNNER` repo var (self-hosted compatible); 13 gates pass locally | `VALIDATION-RECEIPT.json` verdict=validated | `.github/workflows/ci.yml` + local run | **Remote CI: blocked — not green.** Push `8d65932` verified remotely: jobs rejected before start with "recent account payments have failed or your spending limit needs to be increased"; 0 self-hosted runners registered. Unblock = fix billing OR register a runner + set `PF_RUNNER`. Local validation is the authoritative signal until then |
 | Python support | 3.11/3.12 assumed | Matrix 3.10–3.13; suite verified green on 3.10, 3.12, 3.13 (`datetime.UTC`, `Self` shims removed) | pytest on each interpreter | 260 tests × matrix | none |
 | Rules | Duplicate ids silently merged; garbage `versions:` accepted; missing catalog dir silent | `load_catalog` rejects dup `rule_id`, warns on missing dirs; `Rule.from_dict` validates constraint syntax (fail-loud at load) | `engine.py::_validate_constraint` | catalog tests + evals | none |
 | Sources | Rules cited URL strings; `link_rules` did domain-suffix matching | Canonical source ids only; `resolve()` = id or declared `aliases:`; `contract_check` reports duplicate ids + alias collisions | `gate_linkage`, `gate_provenance` | 63/63 linked, `bad_refs` empty | aliases unused today (dead path kept for host registries) |
@@ -28,8 +28,9 @@ Findings → fixes are in commits `a421c2e` (H1 truth/graph/rules),
 
 - `quality_measurement: facts-only` — the default QPT judge can't detect
   file-body regressions; custom judges can. Labeled, never claimed.
-- `runs-on` resolves via `RUNNER_LABELS` — remote CI green is verified on
-  the pushed run, not assumed from local gates.
+- `runs-on` resolves via `PF_RUNNER` — remote CI is **blocked** on account
+  billing (verified on `8d65932`); local gates are the signal until a
+  runner or billing fix lands.
 - `knowledge packs` are a seed corpus (13 packs, 4 domains) — coverage is
   real but thin; expansion is normal-cycle work.
 - MCP tools don't accept `--versions` — version-gated rules resolve to
