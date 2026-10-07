@@ -10,7 +10,9 @@ rules:
         - {path: attrs.owner, op: absent}
         - {path: attrs.entity_kind, op: in, value: [Component, API, Resource]}
     message: "unowned entities decay silently — no one is paged for them"
-    sources: ["backstage.io/docs/features/software-catalog/descriptor-format#specowner-required"]
+    sources: ['backstage-docs']
+    source_refs:
+      backstage-docs: "docs/features/software-catalog/descriptor-format#specowner-required"
 
   - rule_id: PF-CAT-002
     domain: product
@@ -22,7 +24,9 @@ rules:
         - {path: attrs.lifecycle, op: absent}
         - {path: attrs.entity_kind, op: equals, value: Component}
     message: "lifecycle (experimental/production/deprecated) drives routing"
-    sources: ["backstage.io/docs/features/software-catalog/descriptor-format#speclifecycle-required"]
+    sources: ['backstage-docs']
+    source_refs:
+      backstage-docs: "docs/features/software-catalog/descriptor-format#speclifecycle-required"
 
   - rule_id: PF-XR-001
     domain: product
@@ -33,4 +37,6 @@ rules:
       all:
         - {path: attrs.deletion_policy, op: equals, value: Delete}
     message: "deleting the claim destroys the resource — Orphan where data lives"
-    sources: ["docs.crossplane.io/latest/concepts/managed-resources#deletionpolicy"]
+    sources: ['crossplane-docs']
+    source_refs:
+      crossplane-docs: "latest/concepts/managed-resources#deletionpolicy"

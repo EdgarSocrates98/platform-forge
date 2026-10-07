@@ -10,7 +10,9 @@ rules:
       all:
         - {path: attrs.pod_spec.latest_tag, op: equals, value: true}
     message: "mutable tags break reproducibility and rollback"
-    sources: ["k8s.io/docs/concepts/containers/images#image-names"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/containers/images#image-names"
 
   - rule_id: PF-K8S-002
     domain: k8s
@@ -21,7 +23,9 @@ rules:
       all:
         - {path: attrs.pod_spec.no_limits, op: gt, value: 0}
     message: "unbounded containers enable noisy-neighbor OOM/CPU starvation"
-    sources: ["k8s.io/docs/concepts/configuration/manage-resources-containers"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/configuration/manage-resources-containers"
 
   - rule_id: PF-K8S-003
     domain: k8s
@@ -32,7 +36,9 @@ rules:
       all:
         - {path: attrs.pod_spec.no_probes, op: gt, value: 0}
     message: "unprobed containers hide dead-but-running failures"
-    sources: ["k8s.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes"
 
   - rule_id: PF-K8S-004
     domain: k8s
@@ -43,7 +49,9 @@ rules:
       all:
         - {path: attrs.pod_spec.privileged, op: equals, value: true}
     message: "privileged containers have near-node-root capability"
-    sources: ["k8s.io/docs/concepts/security/pod-security-standards#restricted"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/security/pod-security-standards#restricted"
 
   - rule_id: PF-K8S-005
     domain: k8s
@@ -57,7 +65,9 @@ rules:
         - {path: attrs.pod_spec.run_as_root, op: equals, value: false}
         - {path: attrs.kind, op: in, value: [Deployment, StatefulSet, DaemonSet]}
     message: "no runAsNonRoot set — root execution not prevented"
-    sources: ["k8s.io/docs/concepts/security/pod-security-standards#restricted"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/security/pod-security-standards#restricted"
 
   - rule_id: PF-K8S-006
     domain: k8s
@@ -70,7 +80,9 @@ rules:
         - {path: attrs.pod_spec.host_pid, op: equals, value: true}
         - {path: attrs.pod_spec.host_ipc, op: equals, value: true}
     message: "host namespaces break pod isolation"
-    sources: ["k8s.io/docs/concepts/security/pod-security-standards#baseline"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/security/pod-security-standards#baseline"
 
   - rule_id: PF-K8S-007
     domain: k8s
@@ -81,7 +93,9 @@ rules:
       all:
         - {path: attrs.pod_spec.automount_token, op: equals, value: true}
     message: "automounted tokens expand credential theft blast radius"
-    sources: ["k8s.io/docs/tasks/configure-pod-container/configure-service-account"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/tasks/configure-pod-container/configure-service-account"
 
   - rule_id: PF-K8S-008
     domain: k8s
@@ -94,7 +108,9 @@ rules:
         - {path: attrs.pdb_count, op: equals, value: 0}
         - {path: attrs.replicas, op: gt, value: 0}
     message: "voluntary disruptions can take the workload to zero"
-    sources: ["k8s.io/docs/tasks/run-application/configure-pdb"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/tasks/run-application/configure-pdb"
 
   - rule_id: PF-K8S-009
     domain: k8s
@@ -105,7 +121,9 @@ rules:
       all:
         - {path: attrs.pod_spec.env_hardcoded_secret, op: not_empty}
     message: "env values are plaintext in etcd, manifests and logs"
-    sources: ["k8s.io/docs/concepts/configuration/secret#using-secrets-as-environment-variables"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/configuration/secret#using-secrets-as-environment-variables"
 
   - rule_id: PF-K8S-010
     domain: k8s
@@ -116,7 +134,9 @@ rules:
       all:
         - {path: attrs.tls, op: equals, value: false}
     message: "plaintext ingress terminates credentials in cleartext"
-    sources: ["k8s.io/docs/concepts/services-networking/ingress#tls"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/services-networking/ingress#tls"
 
   - rule_id: PF-K8S-011
     domain: k8s
@@ -128,7 +148,9 @@ rules:
         - {path: attrs.kind, op: equals, value: Deployment}
         - {path: attrs.replicas, op: lte, value: 1}
     message: "one replica = no availability through node failure"
-    sources: ["k8s.io/docs/concepts/workloads/controllers/deployment#pod-template"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/workloads/controllers/deployment#pod-template"
 
   - rule_id: PF-K8S-012
     domain: k8s
@@ -139,7 +161,9 @@ rules:
       all:
         - {path: attrs.netpol_count, op: equals, value: 0}
     message: "no pod-level network segmentation declared"
-    sources: ["k8s.io/docs/concepts/services-networking/network-policies"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/services-networking/network-policies"
 
   - rule_id: PF-K8S-013
     domain: k8s
@@ -150,7 +174,9 @@ rules:
       all:
         - {path: attrs.keys, op: not_empty}
     message: "manifest-held secrets should move to ESO/Vault"
-    sources: ["k8s.io/docs/concepts/configuration/secret#caution"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/configuration/secret#caution"
 
   - rule_id: PF-K8S-020
     domain: k8s
@@ -162,7 +188,9 @@ rules:
         - {path: attrs.target_known, op: equals, value: true}
         - {path: attrs.target_has_requests, op: equals, value: false}
     message: "CPU-based autoscaling requires requests on the target workload"
-    sources: ["k8s.io/docs/tasks/run-application/horizontal-pod-autoscale#algorithm-details"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/tasks/run-application/horizontal-pod-autoscale#algorithm-details"
 
   - rule_id: PF-K8S-021
     domain: k8s
@@ -174,7 +202,9 @@ rules:
         - {path: attrs.wildcard_verbs, op: equals, value: true}
         - {path: attrs.wildcard_resources, op: equals, value: true}
     message: "wildcard grants are overbroad and hard to audit"
-    sources: ["k8s.io/docs/reference/access-authn-authz/rbac#role-examples"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/reference/access-authn-authz/rbac#role-examples"
 
   - rule_id: PF-K8S-022
     domain: k8s
@@ -185,7 +215,9 @@ rules:
       all:
         - {path: attrs.binds_cluster_admin, op: equals, value: true}
     message: "cluster-admin grants unrestricted control of the cluster"
-    sources: ["k8s.io/docs/reference/access-authn-authz/rbac#default-roles-and-role-bindings"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/reference/access-authn-authz/rbac#default-roles-and-role-bindings"
 
   - rule_id: PF-K8S-023
     domain: k8s
@@ -196,7 +228,9 @@ rules:
       all:
         - {path: attrs.has_plain_http_listener, op: equals, value: true}
     message: "plain HTTP/TCP listeners serve unencrypted traffic"
-    sources: ["gateway-api.sigs.k8s.io/guides/tls/"]
+    sources: ['gateway-api']
+    source_refs:
+      gateway-api: "guides/tls/"
 
   - rule_id: PF-K8S-024
     domain: k8s
@@ -208,7 +242,9 @@ rules:
         - {path: attrs.rollout.canary, op: equals, value: true}
         - {path: attrs.rollout.analysis_refs, op: empty}
     message: "canary steps without AnalysisTemplate rely on manual judgement"
-    sources: ["argoproj.github.io/argo-rollouts/features/analysis/"]
+    sources: ['argo-rollouts-docs']
+    source_refs:
+      argo-rollouts-docs: "argo-rollouts/features/analysis/"
 
   - rule_id: PF-K8S-025
     domain: k8s
@@ -221,7 +257,9 @@ rules:
         - {path: attrs.pod_spec.topology_spread, op: equals, value: false}
         - {path: attrs.pod_spec.has_pod_anti_affinity, op: equals, value: false}
     message: "replicas may colocate on one node/zone"
-    sources: ["k8s.io/docs/concepts/scheduling-eviction/topology-spread-constraints/"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/scheduling-eviction/topology-spread-constraints/"
 
   - rule_id: PF-K8S-026
     domain: k8s
@@ -232,7 +270,9 @@ rules:
       all:
         - {path: attrs.storage_class, op: empty}
     message: "implicit default class hides provisioning semantics"
-    sources: ["k8s.io/docs/concepts/storage/persistent-volumes#class-1"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/storage/persistent-volumes#class-1"
 
   # Version-gated deprecation rules (§version-unresolved semantics):
   # unknown cluster version → fires with `version_notes` unresolved marker,
@@ -248,7 +288,9 @@ rules:
         - {path: attrs.api_removed_in, op: in,
            value: ["1.16", "1.21", "1.22"]}
     message: "the cluster does not serve this apiVersion — apply will fail"
-    sources: ["k8s.io/docs/reference/using-api/deprecation-guide#v1-22"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/reference/using-api/deprecation-guide#v1-22"
 
   - rule_id: PF-K8S-031
     domain: k8s
@@ -261,7 +303,9 @@ rules:
         - {path: attrs.api_removed_in, op: in,
            value: ["1.24", "1.25", "1.26", "1.29"]}
     message: "the cluster does not serve this apiVersion — apply will fail"
-    sources: ["k8s.io/docs/reference/using-api/deprecation-guide#v1-25"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/reference/using-api/deprecation-guide#v1-25"
 
   - rule_id: PF-K8S-032
     domain: k8s
@@ -273,4 +317,6 @@ rules:
         - {path: attrs.api_beta_track, op: equals, value: true}
         - {path: attrs.api_removed_in, op: absent}
     message: "beta APIs are deprecated and scheduled for removal"
-    sources: ["k8s.io/docs/reference/using-api/deprecation-guide/"]
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/reference/using-api/deprecation-guide/"

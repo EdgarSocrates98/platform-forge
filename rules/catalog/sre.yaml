@@ -9,7 +9,9 @@ rules:
       all:
         - {path: attrs.status, op: equals, value: exhausted}
     message: "freeze non-essential change; reliability is the feature now"
-    sources: ["sre.google/sre-book/service-level-objectives"]
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "sre-book/service-level-objectives"
 
   - rule_id: PF-SLO-002
     domain: sre
@@ -21,7 +23,9 @@ rules:
         - {path: attrs.status, op: in, value: [at_risk, exhausted]}
         - {path: attrs.burn_rate, op: gte, value: 2.0}
     message: "sustained burn ≥2× empties the budget inside half the window"
-    sources: ["sre.google/workbook/alerting-on-slos"]
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "workbook/alerting-on-slos"
 
   - rule_id: PF-SLO-003
     domain: sre
@@ -32,7 +36,9 @@ rules:
       all:
         - {path: attrs.status, op: equals, value: unresolved}
     message: "no SLI events — budget position cannot be claimed"
-    sources: ["sre.google/sre-book/service-level-objectives"]
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "sre-book/service-level-objectives"
 
   - rule_id: PF-SRE-001
     domain: sre
@@ -43,7 +49,9 @@ rules:
       all:
         - {path: attrs.class, op: equals, value: saturated}
     message: "≥95% utilization — headroom gone before the next spike"
-    sources: ["sre.google/sre-book/monitoring-distributed-systems"]
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "sre-book/monitoring-distributed-systems"
 
   - rule_id: PF-SRE-002
     domain: sre
@@ -54,4 +62,6 @@ rules:
       all:
         - {path: attrs.class, op: equals, value: hot}
     message: "≥85% utilization — plan capacity, don't wait for the page"
-    sources: ["sre.google/workbook/implementing-slos"]
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "workbook/implementing-slos"

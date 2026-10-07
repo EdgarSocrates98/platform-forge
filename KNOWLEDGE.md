@@ -17,10 +17,16 @@ foundation docs > secondary), `retrieved_at`, `product`, `version`,
 superseded|conflicted|unresolved` — computed from `retrieved_at`
 (FRESH_DAYS=120, STALE_DAYS=365), never assumed.
 
-## Rule linkage (§44)
+## Rule linkage (§44, cycle 2.1)
 
-Every rule's `sources:` must resolve to registry entries. The linkage
-gate reports `unlinked` rules; CI requires coverage = 1.0.
+Every rule's `sources:` is a list of **canonical registry ids** — exact
+`SourceRegistry.get()`/`resolve()` lookup, no domain-suffix inference (a
+`k8s.io` rule must never silently match `gateway-api.sigs.k8s.io`).
+Doc path/anchor detail lives in `source_refs: {id: path#anchor}`, and
+every `source_refs` key must appear in `sources`. `aliases:` on a
+registry entry are the only escape hatch — declared, never inferred.
+The linkage gate reports `unlinked` rules and dangling `bad_refs`;
+CI requires coverage = 1.0 and both lists empty.
 
 ## Research ledger (§146)
 

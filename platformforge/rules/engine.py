@@ -135,7 +135,8 @@ class Rule:
     versions: dict[str, str] = field(default_factory=dict)
     scope: str = "fact"                 # fact | aggregate
     evidence_requirements: list[str] = field(default_factory=list)
-    sources: list[str] = field(default_factory=list)
+    sources: list[str] = field(default_factory=list)      # canonical registry ids
+    source_refs: dict[str, str] = field(default_factory=dict)  # id → doc path/anchor
     action: dict[str, Any] = field(default_factory=dict)
     message: str = ""
     enabled: bool = True
@@ -156,7 +157,9 @@ class Rule:
             applies_to=d.get("applies_to", {}), versions=d.get("versions", {}),
             scope=d.get("scope", "fact"),
             evidence_requirements=d.get("evidence_requirements", []),
-            sources=d.get("sources", []), action=d.get("action", {}),
+            sources=d.get("sources", []),
+            source_refs=d.get("source_refs", {}) or {},
+            action=d.get("action", {}),
             message=d.get("message", ""), enabled=d.get("enabled", True),
         )
 
@@ -278,6 +281,8 @@ class RuleEngine:
                         f"\"x.y.z\"}}')")
                     if rule.sources:
                         attrs["sources"] = list(rule.sources)
+                    if rule.source_refs:
+                        attrs["source_refs"] = dict(rule.source_refs)
                     findings.append(Finding(
                         rule_id=rule.rule_id, severity=rule.severity,
                         status="unresolved", evidence=[fact.fact_id],
@@ -292,6 +297,8 @@ class RuleEngine:
                 attrs = dict(rule.action)
                 if rule.sources:
                     attrs["sources"] = list(rule.sources)
+                if rule.source_refs:
+                    attrs["source_refs"] = dict(rule.source_refs)
                 findings.append(Finding(
                     rule_id=rule.rule_id, severity=rule.severity, status=status,
                     evidence=[fact.fact_id], title=rule.title,

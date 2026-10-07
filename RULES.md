@@ -10,7 +10,9 @@ over `Fact`s. A rule is judgment over evidence, never over prose.
   domain: k8s
   severity: high
   title: privileged container
-  sources: [kubernetes-docs]          # §9 — required, registry-linked
+  sources: [kubernetes-docs]          # §9 — required; canonical registry ids only
+  source_refs:                       # optional id → doc path/anchor detail
+    kubernetes-docs: "docs/concepts/security/pod-security-standards#restricted" 
   applies_to:
     fact_kind_prefix: "k8s."          # or fact_kind: [...]
   when:

@@ -109,6 +109,46 @@ sources:
     scope: cloud-aws
     confidence: high
 
+  - id: aws-iam-docs
+    product: AWS Identity and Access Management
+    source: https://docs.aws.amazon.com/IAM/latest/UserGuide/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-aws-iam
+    confidence: high
+
+  - id: aws-vpc-docs
+    product: Amazon Virtual Private Cloud
+    source: https://docs.aws.amazon.com/vpc/latest/userguide/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-aws-networking
+    confidence: high
+
+  - id: aws-s3-docs
+    product: Amazon S3
+    source: https://docs.aws.amazon.com/AmazonS3/latest/userguide/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-aws-storage
+    confidence: high
+
+  - id: aws-eks-docs
+    product: Amazon Elastic Kubernetes Service
+    source: https://docs.aws.amazon.com/eks/latest/userguide/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-aws-kubernetes
+    confidence: high
+
+  - id: aws-organizations-docs
+    product: AWS Organizations
+    source: https://docs.aws.amazon.com/organizations/latest/userguide/
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cloud-aws-governance
+    confidence: high
+
   - id: azure-docs
     product: Microsoft Azure
     source: https://learn.microsoft.com/azure/
@@ -354,6 +394,25 @@ sources:
     retrieved_at: 2026-10-06
     scope: cicd
     confidence: high
+
+  - id: github-security-docs
+    product: GitHub code security
+    source: https://docs.github.com/en/code-security
+    source_authority: official
+    retrieved_at: 2026-10-06
+    scope: cicd-security
+    confidence: high
+
+  - id: github-securitylab
+    product: GitHub Security Lab
+    source: https://securitylab.github.com/
+    source_authority: vendor-research
+    retrieved_at: 2026-10-06
+    scope: cicd-security
+    confidence: medium
+    notes: Research write-ups (pwn requests, workflow injection) — cite as
+      secondary evidence next to github-actions-docs, never alone for a
+      normative claim.
 
   - id: gitlab-ci-docs
     product: GitLab CI

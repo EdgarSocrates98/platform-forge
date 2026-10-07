@@ -11,7 +11,9 @@ rules:
         - {path: attrs.body.acl, op: in,
            value: [public-read, public-read-write, authenticated-write]}
     message: "public ACL on object storage is a near-certain exposure"
-    sources: ["docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html"]
+    sources: ['aws-s3-docs']
+    source_refs:
+      aws-s3-docs: "AmazonS3/latest/userguide/about-object-ownership.html"
 
   - rule_id: PF-IAC-002
     domain: iac
@@ -24,7 +26,9 @@ rules:
         - {path: "attrs.body.ingress[*].cidr_blocks[*]", op: equals,
            value: "0.0.0.0/0"}
     message: "ingress from 0.0.0.0/0 must be justified per-resource"
-    sources: ["docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html"]
+    sources: ['aws-vpc-docs']
+    source_refs:
+      aws-vpc-docs: "vpc/latest/userguide/security-group-rules.html"
 
   - rule_id: PF-IAC-003
     domain: iac
@@ -36,7 +40,9 @@ rules:
         - {path: attrs.tags, op: absent}
         - {path: attrs.type, op: matches, value: "^(aws|azurerm|google)_"}
     message: "untracked resources break cost allocation and ownership"
-    sources: ["docs.aws.amazon.com/general/latest/gr/aws_tagging.html"]
+    sources: ['aws-docs']
+    source_refs:
+      aws-docs: "general/latest/gr/aws_tagging.html"
 
   - rule_id: PF-IAC-010
     domain: iac
@@ -47,7 +53,9 @@ rules:
       all:
         - {path: attrs.delete, op: equals, value: true}
     message: "deletion in a plan needs explicit human acceptance"
-    sources: ["developer.hashicorp.com/terraform/language/state#staging-a-deletion"]
+    sources: ['terraform-docs']
+    source_refs:
+      terraform-docs: "terraform/language/state#staging-a-deletion"
 
   - rule_id: PF-IAC-011
     domain: iac
@@ -58,7 +66,9 @@ rules:
       all:
         - {path: attrs.replace, op: equals, value: true}
     message: "replacement implies downtime unless proven otherwise"
-    sources: ["developer.hashicorp.com/terraform/cli/commands/plan#resource-replacement"]
+    sources: ['terraform-docs']
+    source_refs:
+      terraform-docs: "terraform/cli/commands/plan#resource-replacement"
 
   - rule_id: PF-IAC-020
     domain: iac
@@ -69,4 +79,6 @@ rules:
       all:
         - {path: attrs.version, op: absent}
     message: "unpinned module sources make builds non-reproducible"
-    sources: ["developer.hashicorp.com/terraform/language/modules/sources#version-constraints"]
+    sources: ['terraform-docs']
+    source_refs:
+      terraform-docs: "terraform/language/modules/sources#version-constraints"

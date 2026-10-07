@@ -31,12 +31,23 @@ jobs:
           python -c "from platformforge.rules.engine import catalog_provenance_report; \
           r = catalog_provenance_report('rules/catalog'); \
           assert r['coverage'] == 1.0, r; print(r)"
+      - name: Rule→source exact linkage
+        run: |
+          python -c "from platformforge.knowledge.registry import SourceRegistry; \
+          from platformforge.resources import data_path; \
+          r = SourceRegistry.default().link_rules(data_path('rules','catalog')); \
+          assert not r['unlinked'], r['unlinked']; \
+          assert not r['bad_refs'], r['bad_refs']; \
+          print(r['coverage'], 'linked by canonical id')"
       - name: Knowledge sources gate
         run: |
           python -c "from platformforge.knowledge.registry import SourceRegistry; \
           reg = SourceRegistry.default(); \
-          bad = [e['id'] for e in reg.entries if not e.get('retrieved_at')]; \
-          assert not bad, f'sources missing retrieved_at: {bad}'; \
+          c = reg.contract_check(); assert c['ok'], c; \
+          from platformforge.knowledge.registry import SOURCE_AUTHORITIES; \
+          bad = [e.id for e in reg.entries.values() \
+                 if e.source_authority not in SOURCE_AUTHORITIES]; \
+          assert not bad, f'unknown authority: {bad}'; \
           print(len(reg.entries), 'sources valid')"
       - name: Lab scenarios
         run: platformforge lab run-all

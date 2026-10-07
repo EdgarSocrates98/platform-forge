@@ -21,6 +21,9 @@ from platformforge.models import FreshnessStatus
 FRESH_DAYS = 120       # verified within ~4 months
 STALE_DAYS = 365       # older than a year → stale by default
 
+# Closed vocabulary for `source_authority` — asserted by the CI gate.
+SOURCE_AUTHORITIES = ("official", "vendor-research", "first-party-sibling")
+
 
 @dataclass
 class SourceEntry:
@@ -39,6 +42,7 @@ class SourceEntry:
     valid_until: str = ""
     confidence: str = "medium"
     notes: str = ""
+    aliases: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> SourceEntry:
@@ -84,6 +88,16 @@ class SourceRegistry:
     def get(self, source_id: str) -> SourceEntry | None:
         return self.entries.get(source_id)
 
+    def resolve(self, ref: str) -> SourceEntry | None:
+        """Canonical id, else explicit `aliases:` declared on an entry.
+        No inference — a ref that is neither is unresolvable."""
+        if ref in self.entries:
+            return self.entries[ref]
+        for e in self.entries.values():
+            if ref in e.aliases:
+                return e
+        return None
+
     def check(self, today: date | None = None) -> list[dict[str, Any]]:
         """Freshness report for every registered source."""
         return [
@@ -115,28 +129,30 @@ class SourceRegistry:
                 "ok": not bad}
 
     def link_rules(self, *catalog_dirs: str | Path) -> dict[str, Any]:
-        """§44/§47 — rule→source linkage + drift: every rule source must
-        resolve to a registered source by domain suffix match, else it is
-        reported `unlinked` (not silently trusted)."""
+        """§44/§47 + cycle 2.1 — rule→source linkage by exact canonical id.
+
+        Every `sources:` entry on a rule must be a registered id (or an
+        entry's explicit `aliases:` member). No domain-suffix inference —
+        `k8s.io` must never silently match `gateway-api.sigs.k8s.io`.
+        Unresolvable refs are reported `unlinked`, not silently trusted.
+        """
         from platformforge.rules import load_catalog
-        domains = {}
-        for e in self.entries.values():
-            dom = (e.source or "").split("//")[-1].split("/")[0]
-            domains.setdefault(dom.removeprefix("www."), e.id)
-        linked, unlinked = {}, []
+        linked, unlinked, bad_refs = {}, [], []
         for r in load_catalog(*catalog_dirs):
-            hits = []
-            for s in r.sources:
-                sdom = s.split("//")[-1].split("/")[0].removeprefix("www.")
-                match = next((sid for dom, sid in domains.items()
-                              if sdom == dom or sdom.endswith("." + dom)
-                              or dom.endswith("." + sdom)), None)
-                hits.append({"source": s, "entry": match})
-            if all(h["entry"] for h in hits) if hits else False:
+            hits = [{"source": s,
+                     "entry": (self.resolve(s) or SourceEntry(
+                         id="", source="")).id or None}
+                    for s in r.sources]
+            if hits and all(h["entry"] for h in hits):
                 linked[r.rule_id] = [h["entry"] for h in hits]
             else:
                 unlinked.append({"rule_id": r.rule_id, "sources": hits})
-        return {"linked": linked, "unlinked": unlinked,
+            dangling = sorted(k for k in getattr(r, "source_refs", {})
+                              if k not in r.sources)
+            if dangling:
+                bad_refs.append({"rule_id": r.rule_id,
+                                 "source_refs": dangling})
+        return {"linked": linked, "unlinked": unlinked, "bad_refs": bad_refs,
                 "coverage": len(linked) / max(len(linked) + len(unlinked), 1)}
 
 
