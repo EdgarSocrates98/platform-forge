@@ -449,6 +449,13 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     if sub == "iam":
         from platformforge.security import analyze_iam_policy
         return _emit(analyze_iam_policy(args.path), args)
+    if sub.startswith("cloud-"):
+        from platformforge.cloud import (analyze_aws_dump,
+                                         analyze_azure_dump,
+                                         analyze_gcp_dump)
+        fn = {"cloud-aws": analyze_aws_dump, "cloud-azure": analyze_azure_dump,
+              "cloud-gcp": analyze_gcp_dump}[sub]
+        return _emit(fn(args.path), args)
     if sub == "sbom":
         from platformforge.security import analyze_sbom
         vulns = json.loads(Path(args.vulns).read_text()) if args.vulns else None
@@ -1032,7 +1039,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("analyze_cmd",
                     choices=["iac", "plan", "state", "drift", "k8s",
                              "gitops", "gha", "iam", "sbom", "secrets",
-                             "supply", "catalog", "crossplane"])
+                             "supply", "catalog", "crossplane", "cloud-aws",
+                             "cloud-azure", "cloud-gcp"])
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")

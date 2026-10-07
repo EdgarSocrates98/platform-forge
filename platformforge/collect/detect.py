@@ -30,6 +30,15 @@ def _shape_domain(path: Path, doc: Any) -> str | None:
             return "k8s"
         if doc.get("format_version") or "terraform_version" in doc:
             return "plan" if "planned_values" in doc else "state"
+        # AWS CLI dumps: top-level keys like Vpcs/Subnets/Roles/Accounts
+        if set(doc) & {"Vpcs", "Subnets", "InternetGateways", "NatGateways",
+                       "RouteTables", "SecurityGroups", "LoadBalancers",
+                       "HostedZones", "Roles", "Policies", "Users",
+                       "PolicyVersion", "Organization", "Accounts",
+                       "OrganizationalUnits", "Reservations", "Functions",
+                       "Clusters", "Buckets", "DBInstances", "QueueUrls",
+                       "Queues", "Topics", "TableNames"}:
+            return "cloud-aws"
         if "Statement" in doc:
             return "iam"
         if doc.get("bomFormat") == "CycloneDX" \
@@ -124,6 +133,10 @@ def collect(path: str | Path) -> dict[str, Any]:
                 facts += security.analyze_supply(str(paths[0]))["facts"]
             elif dom == "finops":
                 facts += cost_facts(str(paths[0]))["facts"]
+            elif dom == "cloud-aws":
+                from platformforge.cloud import analyze_aws_dump
+                for p in paths:
+                    facts += analyze_aws_dump(str(p))["facts"]
             elif dom in ("k8s", "gitops"):
                 # dir-level domains: run once over the common parent
                 parent = paths[0].parent
