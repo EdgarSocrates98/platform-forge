@@ -11,7 +11,7 @@ from typing import Any
 # Ordered (label, pattern). First match wins per span.
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("aws_access_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
-    ("aws_secret_key", re.compile(r"(?i)aws_secret_access_key['\"\s:=]+[A-Za-z0-9/+=]{40}")),
+    ("aws_secret_key", re.compile(r"(?i)aws[_-]?(secret[_-]?)?access[_-]?key['\"\s:=]+[A-Za-z0-9/+=]{40}")),
     ("github_token", re.compile(r"\b(ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{22,}\b")),
     ("gitlab_token", re.compile(r"\bglpat-[A-Za-z0-9_\-]{20,}\b")),
     ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9\-]{10,}\b")),
@@ -19,10 +19,18 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("jwt", re.compile(r"\beyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\b")),
     ("bearer", re.compile(r"(?i)bearer\s+[A-Za-z0-9_\-\.]{20,}")),
     # Delimiter required (:= or quote) — prose like "password policy" must
-    # not redact (§88 false-positive guard).
-    ("password_kv", re.compile(r"(?i)\b(pass(word)?|passwd|pwd)\s*[:='\"]\s*['\"]?[^\s'\"]{6,}")),
-    ("conn_string", re.compile(r"\b(?:postgres|mysql|mongodb|redis|amqp|mssql|sqlserver)://[^\s'\"]+")),
-    ("generic_secret_kv", re.compile(r"(?i)\b(api[_-]?key|secret|token)['\"\s:=]+[A-Za-z0-9_\-\.]{16,}")),
+    # not redact (§88 false-positive guard). Snake-case prefixes allowed:
+    # db_password / client_secret / my_api_key must still match.
+    ("password_kv", re.compile(r"(?i)\b(?:[a-z0-9]+_)*(?:pass(?:word)?|passwd|pwd)\s*[:='\"]\s*['\"]?[^\s'\"]{6,}")),
+    ("conn_string", re.compile(
+        r"\b(?:postgres|mysql|mongodb|redis|amqp|mssql|sqlserver|kafka|"
+        r"ldaps?)://[^\s'\"]+|"
+        r"\b(?:https?|ssh|ftp)://[^\s/'\"]+:[^\s/'\"]+@")),
+    ("generic_secret_kv", re.compile(
+        r"(?i)\b(?:[a-z0-9]+_)*(?:api[_-]?key|secret(?:[_-]?key)?|"
+        r"access[_-]?key|access[_-]?token|refresh[_-]?token|"
+        r"client[_-]?secret|account[_-]?key|token)"
+        r"['\"\s:=]+[A-Za-z0-9_\-./+=]{16,}")),
 ]
 
 SECRET_VALUE_KEYS = ("stringData", "data")  # k8s Secret keys whose values are secrets

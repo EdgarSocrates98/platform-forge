@@ -41,12 +41,13 @@ _CORE_KINDS: dict[str, dict[str, str]] = {
     "secrets.crossplane.io": {
         "StoreConfig": "platform.crossplane_storeconfig",
     },
-    "apiextensions.crossplane.io/v2": {},
 }
 
-# Provider-shaped group suffixes. Membership here is necessary but not
-# sufficient for ManagedResource — structural evidence is still required.
-_PROVIDER_GROUP_SUFFIXES = (".upbound.io", "upbound.io", ".crossplane.io")
+# Provider-shaped group suffixes (dotted — `notupbound.io` must NOT match).
+# Membership here is necessary but not sufficient for ManagedResource —
+# structural evidence is still required.
+_PROVIDER_GROUP_SUFFIXES = (".upbound.io", ".crossplane.io")
+_PROVIDER_GROUPS_EXACT = ("upbound.io", "crossplane.io")
 
 # Strong MR shape — one is sufficient. Weak fields (writeConnectionSecretToRef
 # etc.) also appear on claims and Upbound Spaces objects, so they never
@@ -73,7 +74,7 @@ def _provider_family(group: str) -> str:
 def _mr_evidence(spec: dict[str, Any], status: dict[str, Any]) -> list[str]:
     """Strong evidence only — weak fields never unlock classification."""
     ev = [f"spec.{k}" for k in _MR_STRONG_FIELDS if k in spec]
-    if isinstance(status.get("atProvider"), dict):
+    if status.get("atProvider"):  # non-empty dict — '{}' proves nothing
         ev.append("status.atProvider")
     return ev
 
@@ -92,6 +93,9 @@ def _version_signals(kind: str, api: str, spec: dict[str, Any]) -> list[str]:
             sig.append("v1:claim-names")
         if spec.get("connectionSecretKeys"):
             sig.append("v1:connection-secret-keys")
+        if any(s.startswith("v1:") for s in sig) and \
+                any(s.startswith("v2:") for s in sig):
+            sig.append("conflict:v1+v2-signals")
     elif kind == "Composition":
         mode = str(spec.get("mode", "")).lower()
         if mode == "pipeline" or spec.get("pipeline"):
@@ -104,7 +108,8 @@ def _version_signals(kind: str, api: str, spec: dict[str, Any]) -> list[str]:
 
 
 def _provider_group(group: str) -> bool:
-    return any(group == s or group.endswith(s) for s in _PROVIDER_GROUP_SUFFIXES)
+    return group in _PROVIDER_GROUPS_EXACT or any(
+        group.endswith(s) for s in _PROVIDER_GROUP_SUFFIXES)
 
 
 def classify_object(doc: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
@@ -174,14 +179,19 @@ def classify_object(doc: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
         return fk, attrs
 
     # 2. ProviderConfig lives in provider family groups (v2 moved it out of
-    #    pkg.crossplane.io).
-    if kind in ("ProviderConfig", "ClusterProviderConfig") and (
-            _provider_group(group) or "provider" in group):
-        return "platform.provider_config", {
-            "api": api, "name": name, "provider_family":
-                _provider_family(group),
-            "credentials_source": ((spec.get("credentials") or {})
-                                   .get("source"))}
+    #    pkg.crossplane.io) — group membership AND a credentials shape; the
+    #    bare kind name on an arbitrary group proves nothing.
+    if kind in ("ProviderConfig", "ClusterProviderConfig") \
+            and _provider_group(group):
+        creds = spec.get("credentials") or {}
+        if creds.get("source") or spec.get("secretRef") \
+                or any(k in spec for k in ("projectID", "clientID",
+                                           "tenantID", "subscriptionID")):
+            return "platform.provider_config", {
+                "api": api, "name": name, "provider_family":
+                    _provider_family(group),
+                "credentials_source": creds.get("source")}
+        return None
 
     # 3. ManagedResource — provider group suffix AND structural evidence.
     if _provider_group(group):
@@ -220,7 +230,6 @@ def _xr_candidate(doc: dict[str, Any],
         return None
     key = (group, kind)
     comp_ref = (spec.get("compositionRef") or {}).get("name")
-    res_refs = spec.get("resourceRefs") or []
     if key in xrd_kinds:
         xr = xrd_kinds[key]
         role = "xr_claim" if xr.get("kind_claim") == kind else "xr"
@@ -229,7 +238,12 @@ def _xr_candidate(doc: dict[str, Any],
             "xrd": xr["xrd"], "composition_ref": comp_ref,
             "classification": "declared-xrd",
             "version_signals": _version_signals(kind, api, spec)}
-    if comp_ref or res_refs:
+    # Inferred path: spec.compositionRef is nearly Crossplane-exclusive;
+    # status.resourceRefs is the real XR shape (composer-populated).
+    # spec.resourceRefs alone is generic CRD plumbing — not enough.
+    status = doc.get("status") or {}
+    status_refs = status.get("resourceRefs") or []
+    if comp_ref or status_refs:
         return "platform.xr", {
             "xr_kind": kind, "api": api, "name": name,
             "composition_ref": comp_ref,

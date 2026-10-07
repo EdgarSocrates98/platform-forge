@@ -33,6 +33,16 @@ def scan_secrets(path: str | Path, max_files: int = 5000) -> dict[str, Any]:
             for label, pat in PATTERNS:
                 if pat.search(line):
                     hits.append({"line": lineno, "label": label})
+        # multi-line patterns (private keys) never match per-line —
+        # run them against the whole file body.
+        for label, pat in PATTERNS:
+            if "[\\s\\S]" not in pat.pattern:
+                continue
+            for m in pat.finditer(text):
+                lineno = text.count("\n", 0, m.start()) + 1
+                hit = {"line": lineno, "label": label}
+                if hit not in hits:
+                    hits.append(hit)
         if hits:
             hits_total += len(hits)
             facts.append({"fact_id": stable_id("PF-SEC", "scan", str(f)),

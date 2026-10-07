@@ -419,14 +419,18 @@ def _bound(result: Any, cap, repo: str) -> dict[str, Any]:
     text = json.dumps(result, default=str)
     if len(text.encode()) <= cap.max_bytes:
         return {"result": result, "bounded": False}
+    # Secrets are redacted BEFORE persistence — the artifact store is a
+    # file on disk, not a trusted vault, and rtk expand reads it back.
+    from platformforge.core.redaction import redact_obj, redact_text
     store = ArtifactStore(repo)
-    sha = store.put(text.encode(), meta={"kind": "mcp-result"})
+    sha = store.put(redact_text(text).encode(), meta={"kind": "mcp-result"})
     ref = f"artifact://sha256/{sha}"
     summary = result
     if isinstance(result, dict):
         summary = {k: v for k, v in result.items()
                    if not isinstance(v, (list, dict)) or len(
                        json.dumps(v, default=str)) < 2000}
+    summary = redact_obj(summary)
     return {"bounded": True,
             "artifact_ref": ref,
             "summary": summary,

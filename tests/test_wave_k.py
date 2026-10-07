@@ -154,11 +154,35 @@ def test_mcp_response_never_contains_secret(tmp_path):
     f.write_text(f'resource "x" "y" {{ password = "{SECRET}" }}')
     resp = handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
                    "params": {"name": "platformforge_analyze",
-                              "arguments": {"kind": "iac",
+                              "arguments": {"domain": "iac",
                                             "path": str(tmp_path)}}},
                   repo=str(tmp_path))
     assert resp is not None
-    assert SECRET not in resp
+    # the tool must have actually analyzed (not errored before dispatch)
+    msg = json.loads(resp) if isinstance(resp, str) else resp
+    content = msg["result"]["content"][0]["text"]
+    out = json.loads(content)
+    assert "error" not in out and "refusal" not in out
+    assert SECRET not in content
+    assert "REDACTED" in content  # boundary redaction really ran
+
+
+def test_mcp_artifact_store_never_persists_secret(tmp_path):
+    """Oversize MCP results are stored redacted — rtk expand must not
+    hand back raw secrets either (defense in depth on read)."""
+    from platformforge.core.store import ArtifactStore
+    from platformforge.mcp.tools import _bound
+    from platformforge.rtk.compact import expand
+    blob = {"big": "x" * 60_000, "leaked_key": SECRET,
+            "leaked_pw": "hunter2-hunter2"}
+    out = _bound(blob, type("C", (), {"max_bytes": 1000})(),
+                 repo=str(tmp_path))
+    assert out["bounded"] and SECRET not in json.dumps(out)
+    sha = out["artifact_ref"].removeprefix("artifact://sha256/")
+    stored = ArtifactStore(tmp_path).get_text(sha)
+    assert stored is not None and SECRET not in stored
+    exp = expand(ArtifactStore(tmp_path), out["artifact_ref"])
+    assert SECRET not in json.dumps(exp)
 
 
 def test_context_pack_bodies_redacted(tmp_path):

@@ -58,7 +58,9 @@ def compact_output(command: str, output: str, exit_code: int = 0,
     lines = output.splitlines()
     raw_ref = ""
     if store is not None:
-        sha = store.put_text(output, meta={"command": command})
+        from platformforge.core.redaction import redact_text
+        sha = store.put_text(redact_text(output),
+                             meta={"command": command})
         raw_ref = ref(sha)
 
     key = detect_command(command)
@@ -90,7 +92,8 @@ def expand(store: ArtifactStore, raw_artifact: str,
     text = store.get_text(sha)
     if text is None:
         return {"error": "artifact not found", "artifact": raw_artifact}
-    lines = text.splitlines()
+    from platformforge.core.redaction import redact_text
+    lines = redact_text(text).splitlines()  # defense in depth on read-back
     if pattern:
         import re
         rx = re.compile(pattern)
