@@ -450,12 +450,19 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         from platformforge.security import analyze_iam_policy
         return _emit(analyze_iam_policy(args.path), args)
     if sub.startswith("cloud-"):
-        from platformforge.cloud import (analyze_aws_dump,
-                                         analyze_azure_dump,
-                                         analyze_gcp_dump)
+        from platformforge.cloud import analyze_aws_dump, analyze_azure_dump, analyze_gcp_dump
         fn = {"cloud-aws": analyze_aws_dump, "cloud-azure": analyze_azure_dump,
               "cloud-gcp": analyze_gcp_dump}[sub]
         return _emit(fn(args.path), args)
+    if sub == "helm":
+        from platformforge.k8s.helm import analyze_helm
+        return _emit(analyze_helm(args.path), args)
+    if sub == "kustomize":
+        from platformforge.k8s.helm import analyze_kustomize
+        return _emit(analyze_kustomize(args.path), args)
+    if sub == "hubble":
+        from platformforge.k8s.hubble import analyze_hubble
+        return _emit(analyze_hubble(args.path), args)
     if sub == "sbom":
         from platformforge.security import analyze_sbom
         vulns = json.loads(Path(args.vulns).read_text()) if args.vulns else None
@@ -1040,7 +1047,8 @@ def build_parser() -> argparse.ArgumentParser:
                     choices=["iac", "plan", "state", "drift", "k8s",
                              "gitops", "gha", "iam", "sbom", "secrets",
                              "supply", "catalog", "crossplane", "cloud-aws",
-                             "cloud-azure", "cloud-gcp"])
+                             "cloud-azure", "cloud-gcp", "helm",
+                             "kustomize", "hubble"])
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")

@@ -5,8 +5,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from platformforge.cloud import (analyze_aws_dump, analyze_azure_dump,
-                                 analyze_gcp_dump)
+from platformforge.cloud import analyze_aws_dump, analyze_azure_dump, analyze_gcp_dump
 from platformforge.collect import collect
 
 

@@ -135,7 +135,7 @@ sources:
 
   - id: argo-rollouts-docs
     product: Argo Rollouts
-    source: https://argo-rollouts.readthedocs.io/
+    source: https://argoproj.github.io/argo-rollouts/
     source_authority: official
     retrieved_at: 2026-10-06
     scope: progressive-delivery

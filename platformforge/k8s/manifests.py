@@ -18,7 +18,7 @@ from platformforge.core.redaction import k8s_secret_values
 from platformforge.models.base import stable_id
 
 WORKLOAD_KINDS = {"Deployment", "StatefulSet", "DaemonSet", "ReplicaSet",
-                  "Job", "CronJob", "Pod"}
+                  "Job", "CronJob", "Pod", "Rollout"}
 
 
 def _docs(path: Path):
@@ -116,6 +116,19 @@ def _workload_attrs(doc: dict[str, Any], secret_names: set[str]) -> dict[str, An
             "env_hardcoded_secret": env_hardcoded_secret,
             "secrets_used": sorted({s for s in used_secrets if s}),
             "configmaps_used": sorted({c for c in used_cms if c}),
+            # §62 scheduling/placement signals
+            "has_affinity": bool(psp.get("affinity")),
+            "has_pod_anti_affinity": bool(
+                (psp.get("affinity") or {}).get("podAntiAffinity")),
+            "topology_spread": bool(
+                psp.get("topologySpreadConstraints")),
+            "tolerations": len(psp.get("tolerations") or []),
+            "priority_class": psp.get("priorityClassName"),
+            "pvc_refs": sorted({(v.get("persistentVolumeClaim") or {})
+                                .get("claimName", "")
+                                for v in psp.get("volumes") or []
+                                if isinstance(v, dict)
+                                and v.get("persistentVolumeClaim")}),
         },
         "replicas": spec.get("replicas", 1),
     }
@@ -128,6 +141,7 @@ def analyze_k8s(path: str | Path) -> dict[str, Any]:
 
     # first pass: collect workloads + their labels for cross-resource joins
     wl_labels: dict[str, dict[str, str]] = {}
+    wl_attrs: dict[str, dict[str, Any]] = {}
     for f, i, doc in docs:
         if doc["kind"] in WORKLOAD_KINDS:
             meta = doc.get("metadata") or {}
@@ -135,12 +149,28 @@ def analyze_k8s(path: str | Path) -> dict[str, Any]:
             lbl = (((doc.get("spec") or {}).get("template") or {})
                    .get("metadata") or {}).get("labels") or {}
             wl_labels[f"{ns}/{meta.get('name')}"] = lbl
+            wl_attrs[f"{ns}/{meta.get('name')}"] = _workload_attrs(
+                doc, set())["pod_spec"]
 
     NODE_KIND = {"Service": "k8s_service", "Ingress": "ingress",
                  "Namespace": "namespace",
                  "ServiceAccount": "service_account",
                  "Secret": "secret",
-                 "NetworkPolicy": "security_policy"}
+                 "NetworkPolicy": "security_policy",
+                 "PersistentVolumeClaim": "storage",
+                 "PersistentVolume": "storage",
+                 "StorageClass": "storage",
+                 "GatewayClass": "gateway",
+                 "Gateway": "gateway",
+                 "HTTPRoute": "route", "GRPCRoute": "route",
+                 "TCPRoute": "route", "TLSRoute": "route",
+                 "ReferenceGrant": "security_policy",
+                 "CiliumNetworkPolicy": "security_policy",
+                 "CiliumClusterwideNetworkPolicy": "security_policy",
+                 "Rollout": "workload",
+                 "VerticalPodAutoscaler": "autoscaler",
+                 "ScaledObject": "autoscaler",
+                 "NodePool": "autoscaler"}
 
     def _coverage(kind: str, key: str) -> dict[str, int]:
         counts = {k: 0 for k in wl_labels}
@@ -175,6 +205,15 @@ def analyze_k8s(path: str | Path) -> dict[str, Any]:
             attrs.update(_workload_attrs(doc, set()))
             attrs["pdb_count"] = pdb_cov.get(wk, 0)
             attrs["netpol_count"] = netpol_cov.get(wk, 0)
+            if kind == "Rollout":  # §70 — Argo Rollouts strategy signals
+                strat = (doc.get("spec") or {}).get("strategy") or {}
+                attrs["rollout"] = {
+                    "canary": bool(strat.get("canary")),
+                    "blue_green": bool(strat.get("blueGreen")),
+                    "analysis_refs": sorted({
+                        s.get("analysis", {}).get("templateName", "")
+                        for s in (strat.get("canary") or {}).get("steps") or []
+                        if isinstance(s, dict) and s.get("analysis")})}
             fact_kind = "k8s.workload"
             g_nodes = [{"kind": "workload", "label": wk,
                         "attrs": {"k8s_kind": kind, "file": str(f)}}]
@@ -226,14 +265,194 @@ def analyze_k8s(path: str | Path) -> dict[str, Any]:
             g_edges.append({"src_kind": "ingress", "src": wk,
                             "dst_kind": "api", "dst": "external",
                             "kind": "exposes"})
+        elif kind == "ServiceAccount":
+            fact_kind = "k8s.service_account"
+            attrs["automount_token"] = doc.get("automountServiceAccountToken")
+        elif kind in ("Role", "ClusterRole", "RoleBinding",
+                      "ClusterRoleBinding"):
+            fact_kind = "k8s.rbac"
+            rules = doc.get("rules") or []
+            attrs["rules"] = len(rules)
+            attrs["subjects"] = doc.get("subjects") or []
+            # §62 — RBAC depth: wildcard verbs/resources, cluster-admin binds
+            attrs["wildcard_verbs"] = any(
+                "*" in (r.get("verbs") or []) for r in rules)
+            attrs["wildcard_resources"] = any(
+                "*" in (r.get("resources") or []) for r in rules)
+            attrs["binds_cluster_admin"] = (
+                (doc.get("roleRef") or {}).get("name") == "cluster-admin")
+            role_ref = doc.get("roleRef") or {}
+            if role_ref.get("name"):
+                g_edges.append({"src_kind": "service_account",
+                                "src": wk, "dst_kind": "security_policy",
+                                "dst": role_ref["name"],
+                                "kind": "assumes"})
+        elif kind == "Namespace":
+            fact_kind = "k8s.namespace"
+            lbl = meta.get("labels") or {}
+            attrs["pod_security"] = {
+                k.split("pod-security.kubernetes.io/")[-1]: v
+                for k, v in lbl.items()
+                if k.startswith("pod-security.kubernetes.io/")}
+        elif kind == "PersistentVolumeClaim":
+            fact_kind = "k8s.pvc"
+            spec = doc.get("spec") or {}
+            attrs.update({"storage_class": spec.get("storageClassName"),
+                          "access_modes": spec.get("accessModes") or [],
+                          "size": ((spec.get("resources") or {})
+                                   .get("requests") or {}).get("storage")})
+        elif kind == "PersistentVolume":
+            fact_kind = "k8s.pv"
+            spec = doc.get("spec") or {}
+            attrs.update({"storage_class": spec.get("storageClassName"),
+                          "reclaim": spec.get("persistentVolumeReclaimPolicy"),
+                          "capacity": (spec.get("capacity") or {})
+                                      .get("storage"),
+                          "csi_driver": (spec.get("csi") or {}).get("driver")})
+        elif kind == "StorageClass":
+            fact_kind = "k8s.storageclass"
+            attrs.update({"provisioner": doc.get("provisioner"),
+                          "reclaim": doc.get("reclaimPolicy"),
+                          "expansion": doc.get("allowVolumeExpansion"),
+                          "binding": doc.get("volumeBindingMode")})
+        elif kind == "GatewayClass":
+            fact_kind = "k8s.gatewayclass"
+            spec = doc.get("spec") or {}
+            attrs["controller"] = spec.get("controllerName")
+        elif kind == "Gateway":
+            fact_kind = "k8s.gateway"
+            spec = doc.get("spec") or {}
+            listeners = spec.get("listeners") or []
+            attrs["gateway_class"] = spec.get("gatewayClassName")
+            attrs["listeners"] = [{"port": li.get("port"),
+                                   "protocol": li.get("protocol"),
+                                   "hostname": li.get("hostname"),
+                                   "tls": bool(li.get("tls"))}
+                                  for li in listeners]
+            attrs["has_plain_http_listener"] = any(
+                li.get("protocol") in ("HTTP", "TCP") and not li.get("tls")
+                for li in listeners)
+            g_nodes = [{"kind": "gateway", "label": wk}]
+            if spec.get("gatewayClassName"):
+                g_edges.append({"src_kind": "gateway", "src": wk,
+                                "dst_kind": "gateway",
+                                "dst": spec["gatewayClassName"],
+                                "kind": "contained_by"})
+            g_edges.append({"src_kind": "gateway", "src": wk,
+                            "dst_kind": "api", "dst": "external",
+                            "kind": "exposes"})
+        elif kind in ("HTTPRoute", "GRPCRoute", "TCPRoute", "TLSRoute"):
+            fact_kind = "k8s.route"
+            spec = doc.get("spec") or {}
+            parents = [p.get("name") for p in spec.get("parentRefs") or []
+                       if p.get("name")]
+            backends = [b.get("name") for r in spec.get("rules") or []
+                        for b in r.get("backendRefs") or []
+                        if b.get("name")]
+            attrs.update({"route_kind": kind, "parents": parents,
+                          "backends": backends,
+                          "hostnames": spec.get("hostnames") or []})
+            g_nodes = [{"kind": "route", "label": wk}]
+            for p in parents:
+                g_edges.append({"src_kind": "route", "src": wk,
+                                "dst_kind": "gateway", "dst": p,
+                                "kind": "attached_to"})
+            for b in backends:
+                g_edges.append({"src_kind": "route", "src": wk,
+                                "dst_kind": "k8s_service", "dst": f"{ns}/{b}",
+                                "kind": "routes_to"})
+        elif kind == "ReferenceGrant":
+            fact_kind = "k8s.reference_grant"
+            spec = doc.get("spec") or {}
+            attrs.update({
+                "from": [{"kind": r.get("kind"), "ns": r.get("namespace")}
+                         for r in spec.get("from") or []],
+                "to": [r.get("kind") for r in spec.get("to") or []]})
+        elif kind in ("CiliumNetworkPolicy",
+                      "CiliumClusterwideNetworkPolicy"):
+            fact_kind = "k8s.cilium_policy"
+            spec = doc.get("spec") or doc.get("specs") or {}
+            specs = spec if isinstance(spec, list) else [spec]
+            def _l7(specs: list) -> bool:
+                """L7 marker: `rules` under toPorts of any ingress/egress."""
+                for s in specs:
+                    if not isinstance(s, dict):
+                        continue
+                    for d in ("ingress", "egress"):
+                        for e in s.get(d) or []:
+                            if isinstance(e, dict) and any(
+                                    "rules" in p
+                                    for p in e.get("toPorts") or []
+                                    if isinstance(p, dict)):
+                                return True
+                return False
+            attrs.update({
+                "clusterwide": kind == "CiliumClusterwideNetworkPolicy",
+                "has_egress": any(s.get("egress") for s in specs
+                                  if isinstance(s, dict)),
+                "has_ingress": any(s.get("ingress") for s in specs
+                                   if isinstance(s, dict)),
+                "l7_rules": _l7(specs)})
+        elif kind in ("AnalysisTemplate", "AnalysisRun", "Experiment"):
+            fact_kind = "k8s.analysis"
+            spec = doc.get("spec") or {}
+            attrs["metrics"] = [m.get("name") for m in
+                                spec.get("metrics") or []]
+        elif kind == "VerticalPodAutoscaler":
+            fact_kind = "k8s.vpa"
+            spec = doc.get("spec") or {}
+            tgt = spec.get("targetRef") or {}
+            upd = spec.get("updatePolicy") or {}
+            attrs.update({"target": f"{tgt.get('kind')}/{tgt.get('name')}",
+                          "update_mode": upd.get("updateMode", "Auto")})
+            if tgt.get("name"):
+                g_edges.append({"src_kind": "autoscaler", "src": wk,
+                                "dst_kind": "workload",
+                                "dst": f"{ns}/{tgt['name']}",
+                                "kind": "scales"})
+        elif kind == "ScaledObject":
+            fact_kind = "k8s.keda"
+            spec = doc.get("spec") or {}
+            tgt = (spec.get("scaleTargetRef") or {})
+            attrs.update({"target": f"{tgt.get('kind', 'Deployment')}"
+                                    f"/{tgt.get('name')}",
+                          "triggers": [t.get("type") for t in
+                                       spec.get("triggers") or []],
+                          "min_replicas": spec.get("minReplicaCount"),
+                          "max_replicas": spec.get("maxReplicaCount")})
+            if tgt.get("name"):
+                g_edges.append({"src_kind": "autoscaler", "src": wk,
+                                "dst_kind": "workload",
+                                "dst": f"{ns}/{tgt['name']}",
+                                "kind": "scales"})
+        elif kind == "NodePool":
+            fact_kind = "k8s.karpenter"
+            spec = doc.get("spec") or {}
+            attrs.update({"disruption": spec.get("disruption") or {},
+                          "limits": spec.get("limits") or {},
+                          "weight": spec.get("weight")})
+            g_nodes = [{"kind": "autoscaler", "label": wk}]
         elif kind == "HorizontalPodAutoscaler":
             fact_kind = "k8s.hpa"
             spec = doc.get("spec") or {}
             tgt = spec.get("scaleTargetRef") or {}
+            twl = wl_attrs.get(f"{ns}/{tgt.get('name')}") or {}
             attrs.update({"min_replicas": spec.get("minReplicas"),
                           "max_replicas": spec.get("maxReplicas"),
-                          "target": f"{tgt.get('kind')}/{tgt.get('name')}"})
-            g_nodes = [{"kind": "workload", "label": wk}]
+                          "target": f"{tgt.get('kind')}/{tgt.get('name')}",
+                          "metrics": [m.get("type") for m in
+                                      spec.get("metrics") or []],
+                          # §68 — joined: does the target declare requests?
+                          "target_has_requests":
+                              twl.get("no_requests", 0) == 0
+                              if twl else None,
+                          "target_known": bool(twl)})
+            g_nodes = [{"kind": "autoscaler", "label": wk}]
+            if tgt.get("name"):
+                g_edges.append({"src_kind": "autoscaler", "src": wk,
+                                "dst_kind": "workload",
+                                "dst": f"{ns}/{tgt['name']}",
+                                "kind": "scales"})
         elif kind == "PodDisruptionBudget":
             fact_kind = "k8s.pdb"
             spec = doc.get("spec") or {}
@@ -250,14 +469,13 @@ def analyze_k8s(path: str | Path) -> dict[str, Any]:
             attrs["type"] = doc.get("type", "Opaque")
             attrs["keys"] = sorted((doc.get("data") or {}).keys())
             doc = {**doc, **k8s_secret_values(doc)}  # redact payload
-        elif kind == "ServiceAccount":
-            fact_kind = "k8s.service_account"
-            attrs["automount_token"] = doc.get("automountServiceAccountToken")
-        elif kind in ("Role", "ClusterRole", "RoleBinding",
-                      "ClusterRoleBinding"):
-            fact_kind = "k8s.rbac"
-            attrs["rules"] = len(doc.get("rules") or [])
-            attrs["subjects"] = doc.get("subjects") or []
+        elif kind == "CustomResourceDefinition":
+            fact_kind = "k8s.crd"
+            spec = doc.get("spec") or {}
+            attrs.update({"group": spec.get("group"),
+                          "scope": spec.get("scope"),
+                          "versions": [v.get("name") for v in
+                                       spec.get("versions") or []]})
         else:
             fact_kind = "k8s.generic"
         attrs["graph"] = {"nodes": g_nodes, "edges": g_edges}

@@ -151,3 +151,85 @@ rules:
         - {path: attrs.keys, op: not_empty}
     message: "manifest-held secrets should move to ESO/Vault"
     sources: ["k8s.io/docs/concepts/configuration/secret#caution"]
+
+  - rule_id: PF-K8S-020
+    domain: k8s
+    title: "HPA target without resource requests"
+    severity: high
+    applies_to: {fact_kind: k8s.hpa}
+    conditions:
+      all:
+        - {path: attrs.target_known, op: equals, value: true}
+        - {path: attrs.target_has_requests, op: equals, value: false}
+    message: "CPU-based autoscaling requires requests on the target workload"
+    sources: ["k8s.io/docs/tasks/run-application/horizontal-pod-autoscale#algorithm-details"]
+
+  - rule_id: PF-K8S-021
+    domain: k8s
+    title: "RBAC wildcard verbs or resources"
+    severity: high
+    applies_to: {fact_kind: k8s.rbac}
+    conditions:
+      any:
+        - {path: attrs.wildcard_verbs, op: equals, value: true}
+        - {path: attrs.wildcard_resources, op: equals, value: true}
+    message: "wildcard grants are overbroad and hard to audit"
+    sources: ["k8s.io/docs/reference/access-authn-authz/rbac#role-examples"]
+
+  - rule_id: PF-K8S-022
+    domain: k8s
+    title: "Binding to cluster-admin"
+    severity: critical
+    applies_to: {fact_kind: k8s.rbac}
+    conditions:
+      all:
+        - {path: attrs.binds_cluster_admin, op: equals, value: true}
+    message: "cluster-admin grants unrestricted control of the cluster"
+    sources: ["k8s.io/docs/reference/access-authn-authz/rbac#default-roles-and-role-bindings"]
+
+  - rule_id: PF-K8S-023
+    domain: k8s
+    title: "Gateway listener without TLS"
+    severity: medium
+    applies_to: {fact_kind: k8s.gateway}
+    conditions:
+      all:
+        - {path: attrs.has_plain_http_listener, op: equals, value: true}
+    message: "plain HTTP/TCP listeners serve unencrypted traffic"
+    sources: ["gateway-api.sigs.k8s.io/guides/tls/"]
+
+  - rule_id: PF-K8S-024
+    domain: k8s
+    title: "Canary rollout without analysis"
+    severity: medium
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.rollout.canary, op: equals, value: true}
+        - {path: attrs.rollout.analysis_refs, op: empty}
+    message: "canary steps without AnalysisTemplate rely on manual judgement"
+    sources: ["argoproj.github.io/argo-rollouts/features/analysis/"]
+
+  - rule_id: PF-K8S-025
+    domain: k8s
+    title: "Multi-replica workload without spread"
+    severity: low
+    applies_to: {fact_kind: k8s.workload}
+    conditions:
+      all:
+        - {path: attrs.replicas, op: gte, value: 2}
+        - {path: attrs.pod_spec.topology_spread, op: equals, value: false}
+        - {path: attrs.pod_spec.has_pod_anti_affinity, op: equals, value: false}
+    message: "replicas may colocate on one node/zone"
+    sources: ["k8s.io/docs/concepts/scheduling-eviction/topology-spread-constraints/"]
+
+  - rule_id: PF-K8S-026
+    domain: k8s
+    title: "PVC without explicit StorageClass"
+    severity: low
+    applies_to: {fact_kind: k8s.pvc}
+    conditions:
+      all:
+        - {path: attrs.storage_class, op: empty}
+    message: "implicit default class hides provisioning semantics"
+    sources: ["k8s.io/docs/concepts/storage/persistent-volumes#class-1"]

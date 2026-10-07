@@ -74,6 +74,7 @@ class GraphBuilder:
         "declared": "desired", "inferred": "inferred"}
 
     def from_facts(self, facts: Iterable[dict[str, Any]]) -> GraphBuilder:
+        facts = list(facts)  # consumed twice: fact edges + delivery joins
         state_rank: dict[str, int] = {}
         for f in facts:
             contrib = (f.get("attrs") or {}).get("graph") or {}
@@ -93,4 +94,14 @@ class GraphBuilder:
                               confidence=e.get("confidence", 1.0),
                               fact_ids=[fid] if fid else [],
                               attrs=e.get("attrs"))
+        self._delivery(facts)
         return self
+
+    def _delivery(self, facts: Iterable[dict[str, Any]]) -> None:
+        """§72 — join gitops/workflows/workloads into the delivery chain."""
+        from platformforge.graph.delivery import delivery_edges
+        for e in delivery_edges(list(facts)):
+            self.add_edge(e["src_kind"], e["src"], e["dst_kind"], e["dst"],
+                          e["kind"], provenance="declared",
+                          fact_ids=e.get("fact_ids") or [],
+                          attrs={"via": e.get("via")})

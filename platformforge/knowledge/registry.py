@@ -119,12 +119,12 @@ class SourceRegistry:
         domains = {}
         for e in self.entries.values():
             dom = (e.source or "").split("//")[-1].split("/")[0]
-            domains.setdefault(dom.lstrip("www."), e.id)
+            domains.setdefault(dom.removeprefix("www."), e.id)
         linked, unlinked = {}, []
         for r in load_catalog(*catalog_dirs):
             hits = []
             for s in r.sources:
-                sdom = s.split("//")[-1].split("/")[0].lstrip("www.")
+                sdom = s.split("//")[-1].split("/")[0].removeprefix("www.")
                 match = next((sid for dom, sid in domains.items()
                               if sdom == dom or sdom.endswith("." + dom)
                               or dom.endswith("." + sdom)), None)

@@ -24,8 +24,11 @@ def _shape_domain(path: Path, doc: Any) -> str | None:
     """Document-shape heuristics, ordered most-specific first."""
     if isinstance(doc, dict):
         if _looks_k8s(doc):
-            if doc.get("kind") in ("Application", "AppProject") \
+            if doc.get("kind") in ("Application", "AppProject",
+                                   "ApplicationSet") \
                     and "argoproj.io" in str(doc.get("apiVersion")):
+                return "gitops"
+            if "toolkit.fluxcd.io" in str(doc.get("apiVersion")):
                 return "gitops"
             return "k8s"
         if doc.get("format_version") or "terraform_version" in doc:
@@ -39,6 +42,8 @@ def _shape_domain(path: Path, doc: Any) -> str | None:
                        "Clusters", "Buckets", "DBInstances", "QueueUrls",
                        "Queues", "Topics", "TableNames"}:
             return "cloud-aws"
+        if "flow" in doc and isinstance(doc.get("flow"), dict):
+            return "hubble"
         if "Statement" in doc:
             return "iam"
         if doc.get("bomFormat") == "CycloneDX" \
@@ -62,6 +67,12 @@ def detect_file(path: Path) -> str | None:
     suffix = path.suffix.lower()
     if suffix == ".tf":
         return "iac"
+    if name == "chart.yaml":
+        return "helm"
+    if name in ("kustomization.yaml", "kustomization.yml"):
+        return "kustomize"
+    if "hubble" in name or "flows" in name:
+        return "hubble"
     if name in ("policy.json", "trust.json") or name.endswith(".policy.json"):
         return "iam"
     if name in ("sbom.json", "sbom.cdx.json") or "sbom" in name:
@@ -137,6 +148,17 @@ def collect(path: str | Path) -> dict[str, Any]:
                 from platformforge.cloud import analyze_aws_dump
                 for p in paths:
                     facts += analyze_aws_dump(str(p))["facts"]
+            elif dom == "helm":
+                from platformforge.k8s.helm import analyze_helm
+                parent = paths[0].parent
+                facts += analyze_helm(parent)["facts"]
+            elif dom == "kustomize":
+                from platformforge.k8s.helm import analyze_kustomize
+                facts += analyze_kustomize(paths[0].parent)["facts"]
+            elif dom == "hubble":
+                from platformforge.k8s.hubble import analyze_hubble
+                for p in paths:
+                    facts += analyze_hubble(str(p))["facts"]
             elif dom in ("k8s", "gitops"):
                 # dir-level domains: run once over the common parent
                 parent = paths[0].parent

@@ -41,10 +41,14 @@ def analyze_gitops(path: str | Path) -> dict[str, Any]:
 
         if kind in ARGO_KINDS and "argoproj.io" in api:
             sync = spec.get("syncPolicy") or {}
-            src = spec.get("source") or {}
+            # §69 — multi-source applications carry `sources[]`, not `source`
+            sources = spec.get("sources") or ([spec["source"]]
+                                              if spec.get("source") else [])
+            src = sources[0] if sources else {}
             dest = spec.get("destination") or {}
             # ArgoCD: presence of `automated` (even `{}`/null) enables sync
             automated = "automated" in sync
+            ann = meta.get("annotations") or {}
             attrs = {
                 "name": name, "namespace": ns, "tool": "argocd",
                 "automated_sync": automated,
@@ -53,15 +57,34 @@ def analyze_gitops(path: str | Path) -> dict[str, Any]:
                 "source_repo": src.get("repoURL"),
                 "source_path": src.get("path"),
                 "source_revision": src.get("targetRevision"),
+                "source_count": len(sources),
+                "source_repos": sorted({s.get("repoURL") for s in sources
+                                        if s.get("repoURL")}),
                 "dest_server": dest.get("server"),
                 "dest_namespace": dest.get("namespace"),
                 "project": spec.get("project"),
+                # §69 sync waves + hooks (declared, T3)
+                "sync_wave": ann.get("argocd.argoproj.io/sync-wave"),
+                "has_hooks": "argocd.argoproj.io/hook" in ann,
+                "app_project_scope": bool(spec.get("project")),
                 "graph": {
                     "nodes": [{"kind": "argocd_application",
                                "label": f"{ns}/{name}",
                                "attrs": {"project": spec.get("project")}}],
                     "edges": []},
             }
+            # §69 — kind-specific depth: ApplicationSet generators +
+            # AppProject source/destination restrictions
+            if kind == "ApplicationSet":
+                gens = spec.get("generators") or []
+                attrs["generators"] = [next(iter(g)) for g in gens
+                                       if isinstance(g, dict) and g]
+            elif kind == "AppProject":
+                attrs["source_restrictions"] = len(spec.get("sourceRepos") or [])
+                attrs["dest_restrictions"] = len(spec.get("destinations") or [])
+                attrs["cluster_resource_whitelist"] = len(
+                    spec.get("clusterResourceWhitelist") or [])
+                attrs["roles"] = len(spec.get("roles") or [])
             edges = attrs["graph"]["edges"]
             if src.get("repoURL"):
                 edges.append({"src_kind": "argocd_application",
