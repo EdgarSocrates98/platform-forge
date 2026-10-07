@@ -438,9 +438,19 @@ def cmd_economy(args: argparse.Namespace) -> int:
         out = quality_per_token(
             facts_full=facts, findings_full=[],
             index=_index(args), task=args.task or "analysis",
-            budget=Budget(input_budget=args.input_budget))
+            budget=Budget(input_budget=args.input_budget),
+            versions=json.loads(args.versions)
+            if getattr(args, "versions", "") else None)
         return _emit(out, args,
                      2 if out.get("quality_gate") == "fail" else 0)
+    if sub == "qpt-bench":
+        # §43–46 — fixed corpus: full vs packed envelopes, same judge,
+        # receipts per task with quality-before-economy verdicts
+        from platformforge.economy.bench import run_qpt_bench
+        out = run_qpt_bench()
+        bad = [c["id"] for c in out["cases"]
+               if c["verdict"] == "optimization_not_beneficial"]
+        return _emit(out, args, 2 if (args.strict and bad) else 0)
     return _emit(eng.report(), args)
 
 
@@ -1311,12 +1321,16 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("economy", help="economy engine report/strategy/qpt")
     _add_common(sp)
     sp.add_argument("economy_cmd", nargs="?", default="report",
-                    choices=["report", "strategy", "compare", "qpt"])
+                    choices=["report", "strategy", "compare", "qpt",
+                             "qpt-bench"])
     sp.add_argument("--signal", default="",
                     help="JSON TaskSignal (strategy/compare)")
     sp.add_argument("--path", default="", help="facts doc for qpt")
     sp.add_argument("--task", default="analysis")
     sp.add_argument("--input-budget", type=int, default=None)
+    sp.add_argument("--versions", default="",
+                    help='JSON product versions for qpt, e.g. '
+                         '\'{"kubernetes": "1.29"}\'')
     sp.set_defaults(func=cmd_economy)
 
     sp = sub.add_parser("route", help="adaptive routing decision")

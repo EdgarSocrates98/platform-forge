@@ -38,6 +38,16 @@ class LedgerEntry:
     output_tokens_est: int | None = None
     cache_hits: int = 0
     cache_misses: int = 0
+    # §42 — deterministic vs model split. Deterministic bytes are the local
+    # working set (never billed as model spend); model_context_* counts only
+    # the payload a model/agent receives. Provider counts stay None when no
+    # transcript observed them (`unknown`).
+    deterministic_input_bytes: int = 0
+    deterministic_fact_count: int = 0
+    model_context_bytes: int = 0
+    model_context_tokens: int | None = None
+    model_output_tokens: int | None = None
+    cache_tokens: int = 0
     latency_ms: float = 0.0
     token_basis: str = "unknown"   # observed | estimated | unknown
     ts: float = field(default_factory=time.time)
@@ -78,6 +88,10 @@ class TokenLedger:
             "output_tokens_observed": tot("output_tokens"),
             "input_tokens_estimated": tot("input_tokens_est"),
             "output_tokens_estimated": tot("output_tokens_est"),
+            "deterministic_input_bytes": tot("deterministic_input_bytes"),
+            "deterministic_fact_count": tot("deterministic_fact_count"),
+            "model_context_bytes": tot("model_context_bytes"),
+            "cache_tokens": tot("cache_tokens"),
             "basis_counts": {
                 b: sum(1 for e in ents if e.get("token_basis") == b)
                 for b in ("observed", "estimated", "unknown")

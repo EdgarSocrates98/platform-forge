@@ -1,0 +1,5 @@
+id: incident-analysis
+task: "incident evidence analysis — burn rate + availability series"
+domain: prometheus
+fixture: fixture
+budget: 50000

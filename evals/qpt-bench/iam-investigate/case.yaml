@@ -1,0 +1,5 @@
+id: iam-investigate
+task: "iam investigation — wildcard, privilege escalation, public principal"
+domain: iam
+fixture: fixture/policy.json
+budget: 50000

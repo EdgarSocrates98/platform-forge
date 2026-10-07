@@ -1,0 +1,6 @@
+{"PolicyName": "deployer", "Version": "2012-10-17",
+ "Statement": [
+   {"Effect": "Allow", "Action": "*", "Resource": "*"},
+   {"Effect": "Allow", "Principal": {"AWS": "*"},
+    "Action": "sts:AssumeRole", "Resource": "arn:aws:iam::123:role/x"}
+ ]}

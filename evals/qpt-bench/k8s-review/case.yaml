@@ -1,0 +1,6 @@
+id: k8s-review
+task: "kubernetes workload review — limits, probes, pdb, security context"
+domain: k8s
+fixture: fixture
+versions: {kubernetes: "1.29"}
+budget: 50000
