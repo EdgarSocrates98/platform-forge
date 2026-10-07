@@ -15,6 +15,10 @@ terraform_module, terraform_resource, crossplane_xr, argocd_application,
 fluxcd_resource, monitor, dashboard, alert, slo, cost_center, budget,
 billing_unit, security_policy, admission_policy`
 
+Node `state` is resolved from the strongest contributing fact:
+`observed > planned > desired > inferred` — stored on `node.attrs` so a
+planned-only cluster is never rendered as existing.
+
 ## Edge kinds
 
 `owns, depends_on, deploys_to, runs_on, contained_by, routes_to, calls,
@@ -29,26 +33,41 @@ edge:
   kind: uses_secret
   from: workload/payments
   to:   secret/db-creds
-  provenance: observed | declared | inferred
+  provenance: observed | planned | declared | inferred
   confidence: 0.0..1.0
   source_fact_ids: [PF-K8S-00123]
 ```
 
-An inferred edge is never rendered as observed. Facts feed edges 1:1.
+`planned` comes from T2 generated-plan facts (a Terraform plan, an ArgoCD
+desired state) — intent, never promoted to `observed` (ADR-0004).
+`inferred` covers cross-member joins and heuristics (`confidence < 1`,
+`via` recorded). Facts feed edges; `source_fact_ids` prove them.
+
+## Derived edges
+
+- **Delivery graph** — repo → pipeline → image → GitOps app → workload
+  chains joined across fact collections.
+- **Cross-repo** — `workspace.yaml` members: application→gitops→cluster,
+  infra→cluster, namespace matches — all `inferred`, challengeable.
+- **Identity paths** — principal→role chaining (`graph identity-*`).
 
 ## Algorithms
 
-blast radius, upstream/downstream deps, transitive deps, critical paths,
-single points of failure, cycles, orphans, ownership gaps, unmonitored
-workloads, unprotected resources, unallocated costs, unreachable resources,
-external exposure, identity chains, network paths, deployment paths, GitOps
-paths, supply-chain paths.
+blast radius (per impact class), upstream/downstream deps, transitive
+deps, critical paths, single points of failure, cycles, orphans,
+ownership gaps, unmonitored workloads, unprotected resources,
+unallocated costs, unreachable resources, external exposure, identity
+chains, network paths, deployment paths, GitOps paths, supply-chain
+paths.
 
-## Graph diff
+## Snapshots & diff
 
-`graph_before` vs `graph_after` → `nodes_added/removed, edges_added/removed,
-exposure_changed, identity_changed, ownership_changed, cost_changed,
-HA_changed, SLO_changed, security_changed` → feeds the change-risk engine.
+`graph snapshots` persists a versioned envelope (source types, counts,
+hash). `graph diff` / `diff --before --after` → semantic categories:
+`nodes_added/removed, edges_added/removed, exposure_changed,
+identity_changed, ownership_changed, cost_changed, HA_changed,
+SLO_changed, security_changed` — each entry cites `fact_ids` and feeds
+the change-risk engine.
 
 ## Canonical questions it must answer
 
@@ -56,9 +75,11 @@ HA_changed, SLO_changed, security_changed` → feeds the change-risk engine.
 - "Who depends on this cluster?" / "Which app uses this secret?"
 - "Which pipeline produced this image?" / "Which SLO covers this service?"
 - "Who owns this resource?" / "Which cost center absorbs this workload?"
+- "Can this principal become that role?" (`identity-become` — a
+  no-path-found is a named result, never "no risk")
 
 ## Discipline
 
 Graph proximity is not proven causality. Blast radius reports
-`direct | transitive | runtime | security | reliability | cost | compliance |
-unknown` impact classes separately.
+`direct | transitive | runtime | security | reliability | cost |
+compliance | unknown` impact classes separately.

@@ -80,3 +80,33 @@ in-place). `platformforge-mcp` is an optional extra (`pip install platformforge[
   Forge owns the EKS/EMR/runtime/network/IAM/cost envelope.
 - vs **The Forge** (future orchestrator): Platform Forge answers
   `What capabilities do you have?` with a manifest — no hard coupling.
+
+## Repository layout
+
+```text
+platformforge/
+  models/      Fact, Finding, Refusal, evidence tiers (T0–T7)
+  core/        redaction, receipts, artifact store, hashing, ownership,
+               contradictions, workspace
+  tokensave/   content-addressed index + bounded context packs
+  rtk/         compact command output   caveman/   lossless compression
+  economy/     ledger, strategies, quality-per-token
+  routing/     adaptive cheap→premium routing
+  graph/       Graphfy — nodes/edges+provenance, snapshots, diff, query,
+               delivery + cross-repo edges
+  rules/       engine + catalog/*.yaml (63 sourced rules)
+  iac/ k8s/ gitops cicd/ observe/ finops/ security/ product/ cloud/
+               domain analyzers → Facts
+  collect/     dump sniffer → facts   diagnose/   per-node composition
+  plan/        remediation v2 DAG     risk/       change-risk v2
+  sandbox/     change review (copy-tree → apply → compare)
+  sdd/         spec lifecycle + hash cascade
+  agents/      roster, routing, referee v2, host mirrors
+  mcp/         registry v2 + bounded/redacted tool surface
+  forge/       capability manifest + interop   lab/   scenario runner
+  evals/       corpus + coverage + precision   bench.py  measured benchmarks
+  cli/         41 verbs — thin dispatch over the above
+```
+
+Sibling forges consulted during design: `api-forge`, `spark-forge-aws`
+(contracts and conventions, not runtime dependencies).

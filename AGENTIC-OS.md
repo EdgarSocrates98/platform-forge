@@ -48,11 +48,15 @@ security-sensitive change   → mandatory security reviewer
 
 Routing table: `rules/catalog/routing.yaml` (data, not code).
 
-## Referee arbitration
+## Referee arbitration (v2)
 
-When specialists disagree: compare evidence authority (tier), freshness,
-version compatibility, scope, assumptions, risk → return `{winner, why,
-remaining_uncertainty}`. Never average positions.
+When specialists disagree, `agents referee` scores each position on six
+axes — **tier, freshness, version compatibility, scope, contradictions,
+completeness** — and returns `{winner, scores, unresolved, refusal,
+receipt_id}`. A position with absent evidence cannot win as a confident
+conclusion; the outcome can be `unresolved` with a named refusal.
+Never average positions; contradictory evidence is preserved, not
+smoothed over.
 
 ## Cost of reasoning
 

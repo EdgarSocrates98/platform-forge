@@ -83,7 +83,10 @@ the core itself never mutates anything.
 [RESEARCH.md](RESEARCH.md) · [ROADMAP.md](ROADMAP.md) ·
 [KNOWLEDGE.md](KNOWLEDGE.md) · [RULES.md](RULES.md) ·
 [SECURITY.md](SECURITY.md) · [EVALS.md](EVALS.md) · [CLOUD.md](CLOUD.md) ·
-[GOLDEN-PATHS.md](GOLDEN-PATHS.md) · [QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md)
+[GOLDEN-PATHS.md](GOLDEN-PATHS.md) · [QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md) ·
+[CLI-REFERENCE.md](CLI-REFERENCE.md) · [GLOSSARY.md](GLOSSARY.md) ·
+[MCP.md](MCP.md) · [CONTRIBUTING.md](CONTRIBUTING.md) ·
+[AGENTS.md](AGENTS.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
