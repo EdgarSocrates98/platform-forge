@@ -55,7 +55,7 @@ def test_build_from_facts_provenance(tmp_path):
     e = g.edges["team/pay-team->workload/payments:owns"]
     assert e.provenance == "inferred"  # t6 fact (llm-inference)
     e2 = g.edges["workload/payments->secret/db-creds:uses_secret"]
-    assert e2.provenance == "observed" and e2.source_fact_ids == ("F2",)
+    assert e2.provenance == "planned" and e2.source_fact_ids == ("F2",)
     schema_path = (__import__("pathlib").Path(__file__).parents[1]
                    / "contracts/graph.schema.json")
     jsonschema.validate(g.to_dict(), json.loads(schema_path.read_text()))

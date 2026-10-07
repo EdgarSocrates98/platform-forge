@@ -10,6 +10,7 @@ rules:
         - {path: attrs.admin_grant, op: equals, value: true}
         - {path: attrs.wildcard_actions, op: gt, value: 0}
     message: "* actions widen compromise to everything the role can name"
+    sources: ["docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html"]
 
   - rule_id: PF-SEC-002
     domain: security
@@ -20,6 +21,7 @@ rules:
       all:
         - {path: attrs.public_principals, op: gt, value: 0}
     message: "Principal '*' grants the internet access"
+    sources: ["docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html"]
 
   - rule_id: PF-SEC-003
     domain: security
@@ -30,6 +32,7 @@ rules:
       all:
         - {path: attrs.wildcard_resources, op: gt, value: 0}
     message: "Resource '*' applies the grant to every object"
+    sources: ["docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html"]
 
   - rule_id: PF-SEC-010
     domain: security
@@ -40,6 +43,7 @@ rules:
       all:
         - {path: attrs.hit_count, op: gt, value: 0}
     message: "rotate first, scrub second — history retains the value"
+    sources: ["docs.github.com/en/code-security/secret-scanning/about-secret-scanning"]
 
   - rule_id: PF-SEC-020
     domain: security
@@ -50,6 +54,7 @@ rules:
       all:
         - {path: attrs.vuln_count, op: gt, value: 0}
     message: "matched against caller-supplied vuln list — freshness matters"
+    sources: ["nvd.nist.gov/vuln", "osv.dev"]
 
   - rule_id: PF-SEC-021
     domain: security
@@ -60,6 +65,7 @@ rules:
       all:
         - {path: attrs.unlicensed_components, op: not_empty}
     message: "license posture unknown — legal exposure is unbounded"
+    sources: ["spdx.dev/licenses"]
 
   - rule_id: PF-SEC-030
     domain: security
@@ -70,6 +76,7 @@ rules:
       all:
         - {path: attrs.digest_pinned, op: equals, value: false}
     message: "tag references are mutable — pin sha256 digest"
+    sources: ["kubernetes.io/docs/concepts/containers/images#image-pull-policy"]
 
   - rule_id: PF-SEC-031
     domain: security
@@ -80,3 +87,4 @@ rules:
       all:
         - {path: attrs.signed, op: equals, value: false}
     message: "unsigned artifacts can't prove origin (cosign/SLSA)"
+    sources: ["slsa.dev/spec/v1.0/levels", "sigstore.dev"]

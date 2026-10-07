@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from platformforge.core.hashing import sha256_file, sha256_text
+from platformforge.core.redaction import redact_text_report, redaction_receipt
 
 IGNORE_DIRS = {".git", ".venv", "node_modules", ".platformforge", "vendor",
                "__pycache__", "dist", "build", ".terraform", ".idea", ".vscode"}
@@ -76,6 +77,12 @@ class SearchIndex:
                 stats["reused"] += 1
                 continue
             body = p.read_text(errors="replace")
+            # §17 — secrets are never stored raw in the context engine;
+            # the index keeps redacted text + a receipt of what was masked.
+            body, redactions = redact_text_report(body)
+            if redactions:
+                stats.setdefault("redactions", {})[rel] = redaction_receipt(
+                    rel, redactions)["redactions"]
             symbols = sorted({m for pat in SYMBOL_PATTERNS.get(p.suffix, [])
                               for m in pat.findall(body)
                               for m in (m if isinstance(m, tuple) else (m,))})

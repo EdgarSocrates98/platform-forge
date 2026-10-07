@@ -175,6 +175,17 @@ def load_catalog(*dirs: str | Path) -> list[Rule]:
     return rules
 
 
+def catalog_provenance_report(*dirs: str | Path) -> dict[str, Any]:
+    """§10 — every rule must name at least one dated source. Reports
+    coverage; a rule without sources is not skipped but is flagged as
+    unverifiable until linked."""
+    rules = load_catalog(*dirs)
+    missing = [r.rule_id for r in rules if not r.sources]
+    return {"total": len(rules), "with_sources": len(rules) - len(missing),
+            "missing_sources": sorted(missing),
+            "coverage": (len(rules) - len(missing)) / len(rules) if rules else 1.0}
+
+
 class RuleEngine:
     def __init__(self, rules: Iterable[Rule], versions: dict[str, str] | None = None):
         self.rules = [r for r in rules if r.enabled]
@@ -235,6 +246,8 @@ class RuleEngine:
                 attrs = dict(rule.action)
                 if notes:
                     attrs["version_notes"] = notes
+                if rule.sources:
+                    attrs["sources"] = list(rule.sources)
                 findings.append(Finding(
                     rule_id=rule.rule_id, severity=rule.severity, status=status,
                     evidence=[fact.fact_id], title=rule.title,

@@ -10,6 +10,7 @@ rules:
       all:
         - {path: attrs.pod_spec.latest_tag, op: equals, value: true}
     message: "mutable tags break reproducibility and rollback"
+    sources: ["k8s.io/docs/concepts/containers/images#image-names"]
 
   - rule_id: PF-K8S-002
     domain: k8s
@@ -20,6 +21,7 @@ rules:
       all:
         - {path: attrs.pod_spec.no_limits, op: gt, value: 0}
     message: "unbounded containers enable noisy-neighbor OOM/CPU starvation"
+    sources: ["k8s.io/docs/concepts/configuration/manage-resources-containers"]
 
   - rule_id: PF-K8S-003
     domain: k8s
@@ -30,6 +32,7 @@ rules:
       all:
         - {path: attrs.pod_spec.no_probes, op: gt, value: 0}
     message: "unprobed containers hide dead-but-running failures"
+    sources: ["k8s.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes"]
 
   - rule_id: PF-K8S-004
     domain: k8s
@@ -40,6 +43,7 @@ rules:
       all:
         - {path: attrs.pod_spec.privileged, op: equals, value: true}
     message: "privileged containers have near-node-root capability"
+    sources: ["k8s.io/docs/concepts/security/pod-security-standards#restricted"]
 
   - rule_id: PF-K8S-005
     domain: k8s
@@ -53,6 +57,7 @@ rules:
         - {path: attrs.pod_spec.run_as_root, op: equals, value: false}
         - {path: attrs.kind, op: in, value: [Deployment, StatefulSet, DaemonSet]}
     message: "no runAsNonRoot set — root execution not prevented"
+    sources: ["k8s.io/docs/concepts/security/pod-security-standards#restricted"]
 
   - rule_id: PF-K8S-006
     domain: k8s
@@ -65,6 +70,7 @@ rules:
         - {path: attrs.pod_spec.host_pid, op: equals, value: true}
         - {path: attrs.pod_spec.host_ipc, op: equals, value: true}
     message: "host namespaces break pod isolation"
+    sources: ["k8s.io/docs/concepts/security/pod-security-standards#baseline"]
 
   - rule_id: PF-K8S-007
     domain: k8s
@@ -75,6 +81,7 @@ rules:
       all:
         - {path: attrs.pod_spec.automount_token, op: equals, value: true}
     message: "automounted tokens expand credential theft blast radius"
+    sources: ["k8s.io/docs/tasks/configure-pod-container/configure-service-account"]
 
   - rule_id: PF-K8S-008
     domain: k8s
@@ -87,6 +94,7 @@ rules:
         - {path: attrs.pdb_count, op: equals, value: 0}
         - {path: attrs.replicas, op: gt, value: 0}
     message: "voluntary disruptions can take the workload to zero"
+    sources: ["k8s.io/docs/tasks/run-application/configure-pdb"]
 
   - rule_id: PF-K8S-009
     domain: k8s
@@ -97,6 +105,7 @@ rules:
       all:
         - {path: attrs.pod_spec.env_hardcoded_secret, op: not_empty}
     message: "env values are plaintext in etcd, manifests and logs"
+    sources: ["k8s.io/docs/concepts/configuration/secret#using-secrets-as-environment-variables"]
 
   - rule_id: PF-K8S-010
     domain: k8s
@@ -107,6 +116,7 @@ rules:
       all:
         - {path: attrs.tls, op: equals, value: false}
     message: "plaintext ingress terminates credentials in cleartext"
+    sources: ["k8s.io/docs/concepts/services-networking/ingress#tls"]
 
   - rule_id: PF-K8S-011
     domain: k8s
@@ -118,6 +128,7 @@ rules:
         - {path: attrs.kind, op: equals, value: Deployment}
         - {path: attrs.replicas, op: lte, value: 1}
     message: "one replica = no availability through node failure"
+    sources: ["k8s.io/docs/concepts/workloads/controllers/deployment#pod-template"]
 
   - rule_id: PF-K8S-012
     domain: k8s
@@ -128,6 +139,7 @@ rules:
       all:
         - {path: attrs.netpol_count, op: equals, value: 0}
     message: "no pod-level network segmentation declared"
+    sources: ["k8s.io/docs/concepts/services-networking/network-policies"]
 
   - rule_id: PF-K8S-013
     domain: k8s
@@ -138,3 +150,4 @@ rules:
       all:
         - {path: attrs.keys, op: not_empty}
     message: "manifest-held secrets should move to ESO/Vault"
+    sources: ["k8s.io/docs/concepts/configuration/secret#caution"]

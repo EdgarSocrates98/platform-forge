@@ -10,6 +10,7 @@ rules:
         - {path: attrs.tags.cost_center, op: absent}
         - {path: attrs.amount, op: gt, value: 0}
     message: "unallocated spend breaks unit economics and accountability"
+    sources: ["finops.org/framework/capabilities/allocation"]
 
   - rule_id: PF-FIN-002
     domain: finops
@@ -20,3 +21,4 @@ rules:
       all:
         - {path: attrs.service, op: absent}
     message: "service-less cost rows can't be attributed downstream"
+    sources: ["focus.finops.org"]

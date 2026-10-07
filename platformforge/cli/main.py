@@ -21,14 +21,63 @@ if TYPE_CHECKING:
 DETAIL_LEVELS = ("summary", "normal", "full")
 
 
+_DETAIL_LIST_CAP = {"summary": 3, "normal": 50, "full": None}
+_SUMMARY_KEYS = {"status", "verdict", "ok", "passed", "failed", "exit_code",
+                 "severity", "rule_id", "finding_id", "level", "risk",
+                 "counts", "coverage", "summary", "unresolved", "refused",
+                 "refusals", "skipped"}
+
+
+def _detail_bound(obj: Any, level: str, depth: int = 0) -> Any:
+    """§108 — detail levels bound payload shape, deterministically.
+    summary: scalar summary fields + counts + ≤3 list items; normal: ≤50
+    list items; full: unbounded."""
+    cap = _DETAIL_LIST_CAP.get(level)
+    if cap is None:
+        return obj
+    if isinstance(obj, list):
+        if len(obj) > cap:
+            return ([_detail_bound(x, level, depth + 1) for x in obj[:cap]]
+                    + [{"_truncated": len(obj) - cap}])
+        return [_detail_bound(x, level, depth + 1) for x in obj]
+    if isinstance(obj, dict):
+        if level == "summary" and depth > 0:
+            keep = {k: v for k, v in obj.items() if k in _SUMMARY_KEYS}
+            extra = {k for k in obj if k not in _SUMMARY_KEYS}
+            if extra:
+                keep["_elided_keys"] = sorted(extra)
+            return {k: _detail_bound(v, level, depth + 1)
+                    for k, v in keep.items()}
+        return {k: _detail_bound(v, level, depth + 1)
+                for k, v in obj.items()}
+    return obj
+
+
+def _has_unresolved(obj: Any) -> bool:
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k in ("unresolved", "refused", "refusals") and v:
+                return True
+            if _has_unresolved(v):
+                return True
+    elif isinstance(obj, list):
+        return any(_has_unresolved(x) for x in obj[:200])
+    return False
+
+
 def _emit(result: Any, args: argparse.Namespace, exit_code: int = 0) -> int:
-    text = json.dumps(result, indent=2, sort_keys=True, default=str)
+    level = getattr(args, "detail_level", "normal")
+    shown = result if level == "full" else _detail_bound(result, level)
+    if getattr(args, "offline", False) and isinstance(shown, dict):
+        shown = {**shown, "offline": True}
+    # §110 — strict: any unresolved/refused in the payload exits 2.
+    if getattr(args, "strict", False) and exit_code == 0 \
+            and _has_unresolved(result):
+        exit_code = 2
+    text = json.dumps(shown, indent=2, sort_keys=True, default=str)
     if getattr(args, "output", None):
         Path(args.output).write_text(text + "\n")
-    if getattr(args, "json", True):
-        print(text)
-    else:
-        print(text)
+    print(text)
     return exit_code
 
 
@@ -305,7 +354,9 @@ def cmd_graph(args: argparse.Namespace) -> int:
         doc = json.loads(Path(args.facts).read_text())
         facts = doc.get("facts", doc)
         builder = G.GraphBuilder().from_facts(facts)
-        p = G.save(builder.graph, args.repo)
+        p = G.save(builder.graph, args.repo,
+                   source=args.facts,
+                   source_type=getattr(args, "source_type", "desired"))
         return _emit({"wrote": str(p), **builder.graph.stats()}, args)
     if sub == "snapshots":
         return _emit({"snapshots": G.snapshots(args.repo)}, args)
@@ -911,6 +962,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--dst", default="")
     sp.add_argument("--before", default="")
     sp.add_argument("--after", default="")
+    sp.add_argument("--source-type", default="desired",
+                    choices=["desired", "planned", "observed", "runtime"],
+                    help="§6 snapshot type for `graph build`")
     sp.set_defaults(func=cmd_graph)
 
     sp = sub.add_parser("analyze", help="domain analyzers → facts")

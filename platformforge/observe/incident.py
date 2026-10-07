@@ -35,8 +35,21 @@ def correlate(alerts: list[dict[str, Any]],
             score = (2 if proximity == "self" else
                      1 if proximity.startswith("graph-depth") else 0) \
                 + (1 if 0 <= dt <= window_s else 0)  # change before alert
+            # §8 — causality vocabulary: proximity is never causality.
+            # confirmed requires external confirmation, never assigned here.
+            if dt < 0:
+                causality = "contradicted"  # change after the alert started
+            elif proximity == "self":
+                causality = "strongly-supported"
+            elif proximity.startswith("graph-depth"):
+                causality = "candidate"
+            elif proximity == "unknown":
+                causality = "correlated" if 0 <= dt <= window_s else "unknown"
+            else:
+                causality = "unknown"
             cands.append({"change": ch, "dt_seconds": dt,
-                          "proximity": proximity, "score": score})
+                          "proximity": proximity, "score": score,
+                          "causality": causality})
         cands.sort(key=lambda c: (-c["score"], abs(c["dt_seconds"])))
         hyps.append({"alert": al, "hypotheses": cands,
                      "note": "correlation is not causation — hypothesis "

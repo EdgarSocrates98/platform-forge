@@ -36,6 +36,30 @@ def redact_text(text: str) -> str:
     return text
 
 
+def redact_text_report(text: str) -> tuple[str, dict[str, int]]:
+    """Redact and return per-label counts for a redaction receipt (§18)."""
+    counts: dict[str, int] = {}
+    for label, pat in PATTERNS:
+        def _sub(m: re.Match[str], label: str = label) -> str:
+            counts[label] = counts.get(label, 0) + 1
+            return _marker(label, m.group(0))
+        text = pat.sub(_sub, text)
+    return text, counts
+
+
+def redaction_receipt(source: str, counts: dict[str, int]) -> dict[str, Any]:
+    """§18 — a receipt names what was redacted (labels + counts + hash of
+    the pattern set), never the values. """
+    return {
+        "kind": "pf-redaction-receipt/1",
+        "source": str(source),
+        "redactions": dict(sorted(counts.items())),
+        "total": sum(counts.values()),
+        "patterns_sha256": hashlib.sha256(
+            "".join(p.pattern for _, p in PATTERNS).encode()).hexdigest()[:16],
+    }
+
+
 def redact_obj(obj: Any) -> Any:
     """Deep-redact strings in dict/list structures."""
     if isinstance(obj, str):

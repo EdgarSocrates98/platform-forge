@@ -6,7 +6,7 @@ NODE_KINDS = frozenset(
 EDGE_KINDS = frozenset(
     ["owns", "depends_on", "deploys_to", "runs_on", "contained_by", "routes_to", "calls", "publishes_to", "consumes", "reads", "writes", "assumes", "impersonates", "can_access", "uses_secret", "exposes", "secured_by", "observed_by", "alerted_by", "governed_by", "provisioned_by", "generated_by", "billed_to", "replicated_to", "fails_over_to"])
 
-PROVENANCES = frozenset({"observed", "declared", "inferred"})
+PROVENANCES = frozenset({"observed", "planned", "declared", "inferred"})
 
 # Edge kind → impact class for blast-radius decomposition. Proximity is not
 # causality: classes are reported separately, never merged into one number.

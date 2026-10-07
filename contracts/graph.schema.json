@@ -29,7 +29,7 @@
           "from": {"type": "string"},
           "to": {"type": "string"},
           "kind": {"type": "string"},
-          "provenance": {"type": "string", "enum": ["observed", "declared", "inferred"]},
+          "provenance": {"type": "string", "enum": ["observed", "planned", "declared", "inferred"]},
           "confidence": {"type": "number", "minimum": 0, "maximum": 1},
           "source_fact_ids": {"type": "array", "items": {"type": "string"}}
         }

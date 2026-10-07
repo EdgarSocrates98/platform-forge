@@ -53,3 +53,5 @@ addopts = "-q"
 [tool.ruff]
 line-length = 110
 target-version = "py310"
+# eval fixtures are data (deliberately malformed/secret-bearing), not code
+exclude = ["evals/cases/*/fixture/**", "lab/scenarios/*/fixture/**"]

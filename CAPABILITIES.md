@@ -59,6 +59,8 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.integrate` | 13 | adapters | yes | `integrate --host` | = `mcp integrate/detach` |
 | `platform.evals` | 14 | lab | yes | `evals run/list` | §94 types + §95 variants, `evals/cases/*/case.yaml` |
 | `platform.lab.chaos` | 14 | lab | yes | `lab chaos <dir>` | §93 fault injection on the graph (simulation); prod targets refused unless `--allow-prod` |
+| `platform.knowledge` | 2 | economy | yes | `knowledge` | source registry freshness check — stale/unresolved/conflicted flagged |
+| `platform.agents` | 12 | agents | yes | `agents list/lint/sync/playbook/referee` | agent roster + mirror sync + referee arbitration |
 
 ### Known gaps (declared, not hidden)
 

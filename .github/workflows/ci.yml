@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: pip install -e ".[dev]" || pip install -e . && pip install pytest ruff pyyaml
+      - name: Lint
+        run: ruff check .
+      - name: Tests
+        run: pytest -q
+      - name: Rule provenance gate (§10)
+        run: |
+          python -c "from platformforge.rules.engine import catalog_provenance_report; \
+          r = catalog_provenance_report('rules/catalog'); \
+          assert r['coverage'] == 1.0, r; print(r)"
+      - name: Lab scenarios
+        run: platformforge lab run-all
+      - name: Eval corpus
+        run: platformforge evals run
+      - name: MCP parity smoke
+        run: |
+          python -c "from platformforge.mcp.registry import registry; \
+          tools = registry(); assert len(tools) >= 20, len(tools); \
+          print(len(tools), 'mcp tools')"
+      - name: Docs drift (§11/§129)
+        run: pytest -q tests/test_docs_drift.py

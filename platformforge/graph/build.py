@@ -17,22 +17,24 @@ evidence, never guessed.
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, ClassVar
 
 from platformforge.graph.model import Edge, Graph, Node, node_id
 from platformforge.graph.vocab import PROVENANCES
 
 
 def _tier_provenance(tier: int | str) -> str:
-    """EvidenceTier int → edge provenance. 0-2 observed (measured, provider,
-    generated plan), 3-5 declared (repo config, official doc, operator),
-    6-7 inferred (never silently observed)."""
+    """EvidenceTier int → edge provenance (§4): 0-1 observed (measured,
+    provider), 2 planned (generated plan — never observed), 3-5 declared,
+    6-7 inferred."""
     t = {f"t{i}": i for i in range(8)}.get(tier, tier)
     try:
         t = int(t)
     except (TypeError, ValueError):
         return "declared"
-    return "observed" if t <= 2 else ("declared" if t <= 5 else "inferred")
+    if t <= 1:
+        return "observed"
+    return {2: "planned"}.get(t, "declared" if t <= 5 else "inferred")
 
 
 class GraphBuilder:
@@ -63,14 +65,27 @@ class GraphBuilder:
                  source_fact_ids=tuple(sorted(set(fact_ids))),
                  attrs=dict(attrs or {})))
 
+    # §5: node state is resolved from the strongest contributing fact —
+    # observed beats planned beats desired(declared) beats inferred.
+    _STATE_ORDER: ClassVar[dict[str, int]] = {
+        "observed": 0, "planned": 1, "desired": 2, "inferred": 3}
+    _PROV_STATE: ClassVar[dict[str, str]] = {
+        "observed": "observed", "planned": "planned",
+        "declared": "desired", "inferred": "inferred"}
+
     def from_facts(self, facts: Iterable[dict[str, Any]]) -> GraphBuilder:
+        state_rank: dict[str, int] = {}
         for f in facts:
             contrib = (f.get("attrs") or {}).get("graph") or {}
             fid = f.get("fact_id", "")
             prov = _tier_provenance(f.get("tier", 3))
             for n in contrib.get("nodes", []):
-                self.add_node(n["kind"], n["label"], n.get("attrs"),
-                              [fid] if fid else [])
+                node = self.add_node(n["kind"], n["label"], n.get("attrs"),
+                                     [fid] if fid else [])
+                rank = self._STATE_ORDER[self._PROV_STATE[prov]]
+                if rank < state_rank.get(node.node_id, 99):
+                    state_rank[node.node_id] = rank
+                    node.attrs["state"] = self._PROV_STATE[prov]
             for e in contrib.get("edges", []):
                 self.add_edge(e["src_kind"], e["src"], e["dst_kind"],
                               e["dst"], e["kind"],
