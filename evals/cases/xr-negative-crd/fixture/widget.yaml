@@ -1,0 +1,19 @@
+# §58 negative — not builtin, not Crossplane. Must produce zero facts.
+apiVersion: foo.example.com/v1
+kind: Widget
+metadata:
+  name: gadget
+spec:
+  deletionPolicy: Delete   # same field name — must still NOT classify
+  forProvider:
+    region: us-east-1
+---
+# Provider-shaped group, no MR shape → not a ManagedResource (§53).
+apiVersion: spaces.upbound.io/v1beta1
+kind: ControlPlane
+metadata:
+  name: ctp
+spec:
+  writeConnectionSecretToRef:
+    name: kc
+    namespace: upbound-system

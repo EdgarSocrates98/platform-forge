@@ -11,7 +11,7 @@ from typing import Any
 from platformforge.graph.model import Edge, Graph, impact_class
 
 DEPENDENCY_KINDS = frozenset(
-    ["depends_on", "calls", "consumes", "reads", "writes", "uses_secret", "runs_on", "contained_by", "routes_to", "publishes_to"])
+    ["depends_on", "calls", "consumes", "reads", "writes", "uses_secret", "runs_on", "contained_by", "routes_to", "publishes_to", "provisioned_by"])
 
 
 def _adj(g: Graph, reverse: bool = False,

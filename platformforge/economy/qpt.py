@@ -39,8 +39,8 @@ def _pr(actual: set[str], predicted: set[str]) -> dict[str, Any]:
 
 def _default_judge(versions: dict[str, str] | None):
     from platformforge.models import Fact
-    from platformforge.rules import RuleEngine, load_catalog
     from platformforge.resources import data_path
+    from platformforge.rules import RuleEngine, load_catalog
     eng = RuleEngine(load_catalog(data_path("rules", "catalog")),
                      versions=versions)
 
