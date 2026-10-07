@@ -45,32 +45,63 @@ SIGNALS = {
 _ORDER = {"provisional": 0, "operational": 1, "scalable": 2, "optimizing": 3}
 
 
-def maturity(signals: dict[str, list[str]],
+def _signal_provenance(v: Any) -> str:
+    """§80 — signals carry provenance: observed > declared > inferred.
+    A bare string is *declared*; {"signal": x, "provenance": p} carries it."""
+    if isinstance(v, dict):
+        return v.get("provenance", "declared")
+    return "declared"
+
+
+def maturity(signals: dict[str, list[Any]],
              evidence: dict[str, list[str]] | None = None) -> dict[str, Any]:
-    """signals: {aspect: [observed_signal,...]}. Level = highest level whose
-    every lower level's signals are also observed (maturity compounds)."""
+    """§80 — Level = highest level whose signals are *observed*. Declared
+    signals produce a `declared_level` claim; the gap between observed and
+    declared is surfaced, never collapsed. Unknown stays unknown."""
     aspects = {}
     for aspect in ASPECTS:
-        obs = set(signals.get(aspect, []))
-        level = "provisional"
-        missing = {}
-        for lv in ("operational", "scalable", "optimizing"):
-            want = SIGNALS[aspect].get(lv, [])
-            lack = [s for s in want if s not in obs]
-            if not lack:
-                level = lv
-            else:
-                missing[lv] = lack
-                break  # maturity compounds — can't skip a level
+        raw = signals.get(aspect, [])
+        names = {(_signal_name(s)): _signal_provenance(s) for s in raw}
+        obs = {n for n, p in names.items() if p == "observed"}
+        dec = set(names)  # declared ⊇ observed for level purposes
+        observed_level = _level_for(aspect, obs)
+        declared_level = _level_for(aspect, dec)
         aspects[aspect] = {
-            "level": level,
-            "observed_signals": sorted(obs),
-            "missing_for_next": missing,
-            "evidence": (evidence or {}).get(aspect, []),
-        }
-    overall = min(_ORDER[a["level"]] for a in aspects.values())
-    return {"aspects": aspects,
-            "overall_level": LEVELS[overall],
-            "model": "CNCF Platform Engineering Maturity Model",
-            "note": "level = highest fully-evidenced level; compounding "
-                    "— a skipped tier caps the claim"}
+            "level": observed_level,              # the evidence-backed claim
+            "declared_level": declared_level,     # what configs/papers say
+            "overclaimed": _ORDER[declared_level] > _ORDER[observed_level],
+            "signals_observed": sorted(obs),
+            "signals_declared_only": sorted(dec - obs),
+            "evidence": (evidence or {}).get(aspect, [])}
+    return {"aspects": aspects, "schema": "platformforge/maturity/v2"}
+
+
+def _signal_name(s: Any) -> str:
+    return s.get("signal", "") if isinstance(s, dict) else str(s)
+
+
+def _level_for(aspect: str, have: set[str]) -> str:
+    level = "provisional"
+    for lv in ("operational", "scalable", "optimizing"):
+        want = SIGNALS[aspect].get(lv, [])
+        if all(s in have for s in want):
+            level = lv
+        else:
+            break  # maturity compounds — stop at first unmet level
+    return level
+
+
+def maturity_report(signals: dict[str, list[Any]],
+                    evidence: dict[str, list[str]] | None = None
+                    ) -> dict[str, Any]:
+    """Full v2 report: per-aspect + overall, with overclaim flags."""
+    out = maturity(signals, evidence)
+    overall = min(_ORDER[a["level"]] for a in out["aspects"].values())
+    out["overall_level"] = LEVELS[overall]
+    out["model"] = "CNCF Platform Engineering Maturity Model"
+    out["overclaimed_aspects"] = [a for a, v in out["aspects"].items()
+                                  if v["overclaimed"]]
+    out["note"] = ("level = highest fully-observed level; "
+                   "declared_level may exceed it — that gap is the "
+                   "missing evidence, not an error")
+    return out

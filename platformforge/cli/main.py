@@ -490,8 +490,8 @@ def cmd_product(args: argparse.Namespace) -> int:
     sub = args.product_cmd
     if sub == "maturity":
         sig = json.loads(Path(args.signals).read_text())
-        return _emit(P.maturity(sig.get("signals", sig),
-                                sig.get("evidence")), args)
+        return _emit(P.maturity_report(sig.get("signals", sig),
+                                       sig.get("evidence")), args)
     if sub == "scorecard":
         doc = json.loads(Path(args.findings).read_text())
         findings = doc.get("findings", doc)
@@ -504,6 +504,29 @@ def cmd_product(args: argparse.Namespace) -> int:
                           "unlock": "platformforge graph build <facts.json>"},
                          args, 2)
         return _emit(P.to_backstage(g), args)
+    if sub == "paths":
+        from platformforge.product.golden_paths import load_library
+        lib = load_library()
+        return _emit({"paths": [{"id": p.id, "name": p.name,
+                                 "version": p.version,
+                                 "use_case": p.use_case}
+                                for p in lib["paths"]],
+                      "invalid": lib["invalid"]}, args)
+    if sub == "path":
+        from platformforge.product.golden_paths import describe
+        return _emit(describe(args.id), args)
+    if sub == "capabilities":
+        from platformforge.product.golden_paths import capabilities
+        return _emit(capabilities(), args)
+    if sub == "path-analyze":
+        if args.facts:
+            doc = json.loads(Path(args.facts).read_text())
+            facts = doc.get("facts", doc)
+        else:
+            from platformforge.collect import collect
+            facts = collect(args.repo)["facts"]
+        from platformforge.product.golden_paths import analyze_paths
+        return _emit(analyze_paths(facts), args)
     return _emit({"error": f"unknown product verb {sub}"}, args, 1)
 
 
@@ -1077,9 +1100,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("product", help="platform product verbs")
     _add_common(sp)
     sp.add_argument("product_cmd",
-                    choices=["maturity", "scorecard", "backstage"])
+                    choices=["maturity", "scorecard", "backstage",
+                             "paths", "path", "capabilities",
+                             "path-analyze"])
     sp.add_argument("--signals", default="", help="JSON signals doc")
     sp.add_argument("--findings", default="", help="findings JSON doc")
+    sp.add_argument("--facts", default="", help="facts JSON for analysis")
+    sp.add_argument("--id", default="", help="golden path id")
     sp.set_defaults(func=cmd_product)
 
     sp = sub.add_parser("agents", help="agent roster, mirrors, referee")
