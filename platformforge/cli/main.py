@@ -218,6 +218,8 @@ def cmd_judge(args: argparse.Namespace) -> int:
     facts_doc = json.loads(Path(args.facts).read_text())
     facts = [Fact.from_dict(f) for f in facts_doc.get("facts", facts_doc)]
     versions = facts_doc.get("versions", {}) if isinstance(facts_doc, dict) else {}
+    if getattr(args, "versions", ""):
+        versions = {**versions, **json.loads(args.versions)}
     catalog_dirs = args.catalog or [Path(__file__).resolve().parents[2] / "rules" / "catalog"]
     rules = load_catalog(*catalog_dirs)
     findings, skipped = RuleEngine(rules, versions).evaluate(facts)
@@ -314,6 +316,29 @@ def cmd_caveman(args: argparse.Namespace) -> int:
     text = Path(args.file).read_text() if args.file != "-" else sys.stdin.read()
     out, receipt = compress(text, mode=args.mode, context_risk=args.context_risk)
     return _emit({"compressed": out, "receipt": receipt.to_dict()}, args)
+
+
+def cmd_store(args: argparse.Namespace) -> int:
+    """§151 — store stats / gc. GC is dry-run unless --execute."""
+    import re
+
+    from platformforge.core.store import ArtifactStore
+    store = ArtifactStore(args.repo)
+    if args.store_cmd == "stats":
+        return _emit({"store": store.stats()}, args)
+    # collect hashes referenced anywhere under .platformforge/ (receipts,
+    # packs, ledger) — referenced artifacts are never GC candidates
+    referenced: set[str] = set()
+    root = Path(args.repo) / ".platformforge"
+    pat = re.compile(r"artifact://sha256/([0-9a-f]{64})")
+    for doc in root.rglob("*.json") if root.exists() else []:
+        if "store" in doc.parts:
+            continue
+        referenced.update(pat.findall(
+            doc.read_text(errors="replace")))
+    out = store.gc(keep_days=args.keep_days, referenced=referenced,
+                   dry_run=not args.execute)
+    return _emit(out, args)
 
 
 def cmd_economy(args: argparse.Namespace) -> int:
@@ -605,13 +630,15 @@ def cmd_lab(args: argparse.Namespace) -> int:
     if args.lab_cmd == "list":
         return _emit({"scenarios": lab.list_scenarios()}, args)
     if args.lab_cmd == "run-all":
-        out = lab.runner.run_all()
+        out = lab.runner.run_all(profile=args.profile or None,
+                                 allow_profile=args.allow_profile)
         return _emit(out, args, 0 if not out["failed"] else 2)
     if args.lab_cmd == "chaos":
         from platformforge.lab.chaos import run_scenario
         return _emit(run_scenario(args.path or "",
                                   allow_prod=args.allow_prod), args)
-    return _emit(lab.run(args.path or ""), args)
+    out = lab.run(args.path or "", allow_profile=args.allow_profile)
+    return _emit(out, args, 2 if "refusal" in out else 0)
 
 
 def cmd_collect(args: argparse.Namespace) -> int:
@@ -776,6 +803,16 @@ def cmd_evals(args: argparse.Namespace) -> int:
         return _emit({"cases": [c.parent.name for c in
                                 sorted(d.glob("*/case.yaml"))]
                       if Path(d).is_dir() else []}, args)
+    if args.evals_cmd == "coverage":
+        # §122 — rule → variant coverage matrix
+        from platformforge.evals.coverage import rule_coverage
+        out = rule_coverage(cases) if cases else rule_coverage()
+        return _emit(out, args)
+    if args.evals_cmd == "precision":
+        # §127 — measured FP rate over negative/boundary cases
+        from platformforge.evals.coverage import precision_report
+        out = precision_report(cases) if cases else precision_report()
+        return _emit(out, args)
     out = run_all(cases, type_filter=args.type or None) \
         if cases else run_all(type_filter=args.type or None)
     return _emit(out, args, 2 if out["counts"]["fail"] else 0)
@@ -1067,7 +1104,11 @@ def build_parser() -> argparse.ArgumentParser:
     verb("status", cmd_status, "workspace + store status")
     verb("inspect", cmd_inspect, "inventory analyzable artifacts")
     verb("judge", cmd_judge, "apply rule catalog to facts",
-         lambda sp: (sp.add_argument("facts"), sp.add_argument("--catalog", nargs="*")))
+         lambda sp: (sp.add_argument("facts"),
+                     sp.add_argument("--catalog", nargs="*"),
+                     sp.add_argument("--versions", default="",
+                                     help='JSON product versions, e.g. '
+                                          '\'{"kubernetes": "1.29"}\'')))
     verb("knowledge", cmd_knowledge, "knowledge freshness/drift check",
          lambda sp: sp.add_argument(
              "knowledge_cmd", nargs="?", default="check",
@@ -1282,7 +1323,8 @@ def build_parser() -> argparse.ArgumentParser:
                      sp.add_argument("--detach", action="store_true")))
     verb("evals", cmd_evals, "eval framework (§94–95)",
          lambda sp: (sp.add_argument("evals_cmd",
-                                     choices=["run", "list"], nargs="?",
+                                     choices=["run", "list", "coverage",
+                                              "precision"], nargs="?",
                                      default="run"),
                      sp.add_argument("--type", default=""),
                      sp.add_argument("--cases", default="")))
@@ -1292,7 +1334,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("lab_cmd", choices=["list", "run", "run-all", "chaos"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--allow-prod", action="store_true",
-                    help="chaos on production nodes (default refused)")
+                    help="chaos: allow env:production targets")
+    sp.add_argument("--profile", default="",
+                    choices=["static", "container", "kubernetes", "cloud"],
+                    help="§118 lab profile filter")
+    sp.add_argument("--allow-profile", action="store_true",
+                    help="§119 — opt into non-static lab profiles")
     sp.set_defaults(func=cmd_lab)
 
     sp = sub.add_parser("forge", help="Forge interop")
@@ -1341,6 +1388,14 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("path", help="findings doc (json)")
     sp.set_defaults(func=cmd_recommend)
+
+    sp = sub.add_parser("store", help="§151 artifact store stats/gc")
+    _add_common(sp)
+    sp.add_argument("store_cmd", choices=["stats", "gc"])
+    sp.add_argument("--keep-days", type=float, default=30.0)
+    sp.add_argument("--execute", action="store_true",
+                    help="actually delete (default: dry-run)")
+    sp.set_defaults(func=cmd_store)
     return p
 
 

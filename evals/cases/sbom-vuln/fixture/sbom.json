@@ -1,0 +1,9 @@
+{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {"name": "openssl", "version": "3.0.0",
+     "licenses": [{"license": {"id": "Apache-2.0"}}]},
+    {"name": "mystery-lib", "version": "0.1",
+     "licenses": []}
+  ]
+}

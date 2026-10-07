@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noreq
+  namespace: prod
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: app
+          image: registry/app:1.0.0
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: noreq
+  namespace: prod
+spec:
+  minReplicas: 2
+  maxReplicas: 10
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: noreq
+  metrics:
+    - type: Resource
+      resource: {name: cpu}

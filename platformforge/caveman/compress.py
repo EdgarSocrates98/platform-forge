@@ -128,6 +128,10 @@ def compress(text: str, mode: str = "lite",
              context_risk: str = "normal") -> tuple[str, CompressionReceipt]:
     if mode not in ("off", "lite", "full", "auto"):
         raise ValueError(f"unknown mode {mode!r}")
+    # §16 — secrets never cross the compression boundary, mode "off"
+    # included. Redact before anything else; the receipt records counts.
+    from platformforge.core.redaction import redact_text_report, redaction_receipt
+    text, redactions = redact_text_report(text)
     actual = choose_mode(text, context_risk) if mode == "auto" else mode
     before_chars = len(text)
     before_tokens = estimate_tokens(text)
@@ -147,4 +151,6 @@ def compress(text: str, mode: str = "lite",
         compression_ratio=(1 - len(out) / before_chars) if before_chars else 0.0,
         protected_spans=len(spans),
     )
+    if redactions:
+        rc.extra["redaction"] = redaction_receipt("caveman", redactions)
     return out, rc

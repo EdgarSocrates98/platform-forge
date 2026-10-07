@@ -20,6 +20,31 @@ from platformforge.models.base import stable_id
 WORKLOAD_KINDS = {"Deployment", "StatefulSet", "DaemonSet", "ReplicaSet",
                   "Job", "CronJob", "Pod", "Rollout"}
 
+# apiVersion → k8s version that stopped serving it (k8s.io deprecation
+# guide). Used by version-gated rules PF-K8S-030/031 — a fact carries the
+# removal version; the cluster version decides applicability.
+API_REMOVED = {
+    "apps/v1beta1": "1.16",
+    "apps/v1beta2": "1.16",
+    "extensions/v1beta1": "1.22",
+    "networking.k8s.io/v1beta1": "1.22",
+    "admissionregistration.k8s.io/v1beta1": "1.22",
+    "apiextensions.k8s.io/v1beta1": "1.22",
+    "rbac.authorization.k8s.io/v1beta1": "1.22",
+    "scheduling.k8s.io/v1beta1": "1.22",
+    "storage.k8s.io/v1beta1": "1.22",
+    "discovery.k8s.io/v1beta1": "1.21",
+    "authentication.k8s.io/v1beta1": "1.24",
+    "node.k8s.io/v1beta1": "1.24",
+    "policy/v1beta1": "1.25",
+    "batch/v1beta1": "1.25",
+    "autoscaling/v2beta1": "1.25",
+    "autoscaling/v2beta2": "1.26",
+    "events.k8s.io/v1beta1": "1.25",
+    "flowcontrol.apiserver.k8s.io/v1beta1": "1.26",
+    "flowcontrol.apiserver.k8s.io/v1beta2": "1.29",
+}
+
 
 def _docs(path: Path):
     for f in sorted(path.rglob("*.yaml")) + sorted(path.rglob("*.yml")) \
@@ -194,7 +219,9 @@ def analyze_k8s(path: str | Path) -> dict[str, Any]:
         loc = f"{f}::{ns}/{name}"
         base = {"api_version": doc.get("apiVersion"), "kind": kind,
                 "namespace": ns, "name": name,
-                "labels": meta.get("labels") or {}}
+                "labels": meta.get("labels") or {},
+                "api_removed_in": API_REMOVED.get(doc.get("apiVersion")),
+                "api_beta_track": "beta" in (doc.get("apiVersion") or "")}
         nk = "workload" if kind in WORKLOAD_KINDS else NODE_KIND.get(kind)
         g_nodes = [{"kind": nk, "label": f"{ns}/{name}"}] if nk else []
         g_edges = []

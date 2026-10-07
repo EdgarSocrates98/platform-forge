@@ -36,8 +36,13 @@ def handle(req: dict[str, Any], repo: str) -> str | None:
     if method == "tools/list":
         return _result(rid, {"tools": tool_descriptors()})
     if method == "tools/call":
+        from platformforge.core.redaction import redact_obj
         p = req.get("params") or {}
         out = call_tool(p.get("name", ""), p.get("arguments"), repo=repo)
+        # §17 — a secret value never leaves the MCP boundary, even if a
+        # tool result somehow carried one. Redaction markers keep
+        # provenance (label + short hash) without the value.
+        out = redact_obj(out)
         text = json.dumps(out, default=str)
         return _result(rid, {"content": [{"type": "text", "text": text}],
                              "isError": "error" in out or "refusal" in out})

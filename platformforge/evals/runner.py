@@ -27,7 +27,8 @@ import yaml
 
 EVAL_TYPES = ("unit", "integration", "golden", "contract", "property",
               "metamorphic", "regression", "recall", "precision",
-              "token_economy", "graph_correctness", "routing", "security")
+              "token_economy", "graph_correctness", "routing", "security",
+              "knowledge", "version")
 VARIANTS = ("positive", "negative", "boundary", "unresolved", "version")
 
 _REPO = Path(__file__).resolve().parents[2]
@@ -39,23 +40,39 @@ def _catalog():
     return load_catalog(_REPO / "rules")
 
 
+_ANALYZER_KW = {"kyverno": "kyverno_version"}
+
+
 def _facts_for(case: dict, case_dir: Path) -> list[dict]:
     dom = case.get("domain", "k8s")
     fx = case_dir / case.get("fixture", "fixture")
     from platformforge.lab.runner import _analyzer
-    return _analyzer(dom, fx)["facts"]
+    out = _analyzer(dom, fx)
+    # analyzers needing a declared version get it from the case
+    if _ANALYZER_KW.get(dom) and (case.get("versions") or {}).get("kyverno"):
+        kw = _ANALYZER_KW[dom]
+        fn = _resolve_for(dom)
+        out = fn(fx, **{kw: case["versions"]["kyverno"]})
+    return out["facts"]
 
 
-def _fired_ids(facts: list[dict]) -> set[str]:
+def _resolve_for(dom: str):
+    from platformforge.lab.runner import _ANALYZERS, _resolve
+    return _resolve(_ANALYZERS[dom])
+
+
+def _fired_ids(facts: list[dict],
+               versions: dict | None = None) -> set[str]:
     from platformforge.models import Fact
     from platformforge.rules import RuleEngine
     fs = [f if isinstance(f, Fact) else Fact.from_dict(f) for f in facts]
-    findings, _skipped = RuleEngine(_catalog()).evaluate(fs)
+    findings, _skipped = RuleEngine(_catalog(),
+                                    versions=versions).evaluate(fs)
     return {f.rule_id for f in findings if f.status == "violated"}
 
 
 def _grade_analyze(case: dict, case_dir: Path) -> dict[str, Any]:
-    fired = _fired_ids(_facts_for(case, case_dir))
+    fired = _fired_ids(_facts_for(case, case_dir), case.get("versions"))
     exp = case.get("expect", {})
     missing = sorted(set(exp.get("rules_fired", [])) - fired)
     extra = sorted(fired & set(exp.get("rules_not_fired", [])))
@@ -70,7 +87,7 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
     if t in ("golden", "unit", "integration", "regression"):
         return _grade_analyze(case, case_dir)
     if t in ("recall", "precision"):
-        fired = _fired_ids(_facts_for(case, case_dir))
+        fired = _fired_ids(_facts_for(case, case_dir), case.get("versions"))
         want = set(exp.get("rules_fired", []))
         tp = len(fired & want)
         val = (tp / len(want)) if t == "recall" and want else \
@@ -131,6 +148,44 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
         leaked = [v for v in exp.get("must_not_contain", []) if v in blob]
         return {"verdict": "pass" if not leaked else "fail",
                 "leaked": leaked}
+    if t == "knowledge":
+        # every expected source id must exist in the registry
+        from platformforge.knowledge.registry import SourceRegistry
+        reg = SourceRegistry.default()
+        missing = [s for s in exp.get("sources", [])
+                   if s not in reg.entries]
+        return {"verdict": "pass" if not missing else "fail",
+                "missing_sources": missing}
+    if t == "version":
+        # version-gated rules must skip without a declared version and
+        # fire (or stay clean) with one — never a strong verdict on
+        # unknown versions
+        from platformforge.models import Fact
+        from platformforge.rules import RuleEngine
+        fs = [Fact.from_dict(f)
+              for f in _facts_for(case, case_dir)]
+        engine = RuleEngine(_catalog(),
+                            versions=case.get("versions"))
+        findings, skipped = engine.evaluate(fs)
+        want_skipped = set(exp.get("rules_skipped", []))
+        got_skipped = {s.get("rule_id") for s in skipped}
+        fired = {f.rule_id for f in findings if f.status == "violated"}
+        missing_skip = sorted(want_skipped - got_skipped)
+        extra_fire = sorted(fired & set(exp.get("rules_not_fired", [])))
+        missing_fire = sorted(set(exp.get("rules_fired", [])) - fired)
+        # an unresolved-version note must ride along when a gated rule
+        # fired without a declared version (§20 semantics)
+        noted = {f.rule_id for f in findings
+                 if (f.attrs or {}).get("version_notes")}
+        want_noted = set(exp.get("version_notes", []))
+        missing_notes = sorted(want_noted - noted)
+        ok = not (missing_skip or extra_fire or missing_fire
+                  or missing_notes)
+        return {"verdict": "pass" if ok else "fail",
+                "skipped": sorted(got_skipped), "fired": sorted(fired),
+                "version_notes": sorted(noted),
+                "missing_skips": missing_skip,
+                "missing_fires": missing_fire}
     if t in ("property", "metamorphic"):
         if exp.get("check") == "rtk_round_trip":
             from platformforge.core.store import ArtifactStore

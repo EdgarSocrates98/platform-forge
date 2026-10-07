@@ -1,0 +1,10 @@
+id: kyverno-dep
+type: version
+variant: version
+case_of: PF-SEC-040
+domain: kyverno
+fixture: fixture
+versions: {kyverno: "1.14"}
+expect:
+  rules_fired: [PF-SEC-040]
+  rules_not_fired: [PF-SEC-041]

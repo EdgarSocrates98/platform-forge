@@ -43,7 +43,7 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.identity.*` | 4 | security | yes | `graph identity-become/access/workloads/blast` | §100–101 identity paths; no-path-found is named, never "no risk" |
 | `platform.reliability.*` | 8 | sre | yes | `observe slo/slo-burn/otel/semconv/incident/timeline/postmortem/capacity/dr/prometheus/grafana` | SLO multi-window burn, incident/postmortem, DR, prom/grafana, OTel semconv |
 | `platform.finops.*` | 9 | finops | yes | `finops costs/allocate/focus/focus-validate/unit/ingest/report/graph` | allocation, FOCUS 1.0 validation, unit economics, CUR/Azure/GCP/OpenCost/Kubecost ingest, idle/rightsizing/anomaly/forecast/commitments/shared |
-| `platform.lab.*` | 14 | lab | yes | `lab list/run/run-all` | 13 scenarios (L0 static tier) |
+| `platform.lab.*` | 14 | lab | yes | `lab list/run/run-all` | 13 scenarios; §118 profiles static/container/kubernetes/cloud — non-static refused without `--allow-profile` + §119 safety contract |
 | `platform.product.*` | 11 | product | yes | `product maturity/scorecard/backstage` | CNCF maturity, Backstage projection |
 | `platform.integrate/detach` | 13 | adapters | yes | `mcp integrate/detach` | host parity files |
 | `platform.capability.*` | 13 | core | yes | `capability list/describe/manifest` | this registry |
@@ -58,10 +58,11 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.security` | 10 | security | yes | `security <root>` | secrets+iam+sbom+supply bundle → security-domain judge |
 | `platform.reliability` | 8 | sre | yes | `reliability <facts.json>` | sre+k8s rules only |
 | `platform.integrate` | 13 | adapters | yes | `integrate --host` | = `mcp integrate/detach` |
-| `platform.evals` | 14 | lab | yes | `evals run/list` | §94 types + §95 variants, `evals/cases/*/case.yaml` |
+| `platform.evals` | 14 | lab | yes | `evals run/list/coverage/precision` | §94 types + §95 variants; 63/63 rule coverage (evals + lab); §127 measured precision |
 | `platform.lab.chaos` | 14 | lab | yes | `lab chaos <dir>` | §93 fault injection on the graph (simulation); prod targets refused unless `--allow-prod` |
 | `platform.knowledge` | 2 | economy | yes | `knowledge` | source registry freshness check — stale/unresolved/conflicted flagged |
 | `platform.agents` | 12 | agents | yes | `agents list/lint/sync/playbook/referee` | agent roster + mirror sync + referee arbitration |
+| `platform.store` | 2 | core | yes | `store stats/gc` | §151 — content-addressed store; gc dry-run by default, never deletes referenced artifacts, `--execute` to delete |
 
 ### Known gaps (declared, not hidden)
 

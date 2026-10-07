@@ -73,6 +73,46 @@ class ArtifactStore:
         return {"artifacts": len(blobs),
                 "bytes": sum(p.stat().st_size for p in blobs)}
 
+    def gc(self, keep_days: float = 30.0,
+           referenced: set[str] | None = None,
+           dry_run: bool = True) -> dict[str, Any]:
+        """§151 — garbage-collect stale blobs.
+
+        Never deletes a hash in `referenced` (receipts, packs, ledger rows).
+        `dry_run=True` reports candidates without touching the store.
+        """
+        ref = referenced or set()
+        cutoff = time.time() - keep_days * 86400
+        stale: list[dict[str, Any]] = []
+        kept = 0
+        for blob in self.root.glob("*/*"):
+            if blob.name.endswith(".meta.json"):
+                continue
+            sha = blob.name
+            meta = self.meta(sha) or {}
+            stored_at = float(meta.get("stored_at") or blob.stat().st_mtime)
+            if sha in ref or stored_at > cutoff:
+                kept += 1
+                continue
+            stale.append({"sha256": sha, "bytes": blob.stat().st_size,
+                          "stored_at": stored_at})
+        removed_bytes = 0
+        if not dry_run:
+            for s in stale:
+                p = self._path(s["sha256"])
+                mp = p.with_suffix(".meta.json")
+                removed_bytes += p.stat().st_size
+                p.unlink(missing_ok=True)
+                mp.unlink(missing_ok=True)
+        return {"dry_run": dry_run, "keep_days": keep_days,
+                "candidates": len(stale),
+                "candidate_bytes": sum(s["bytes"] for s in stale),
+                "removed": 0 if dry_run else len(stale),
+                "removed_bytes": removed_bytes,
+                "kept": kept,
+                "referenced_protected": len(ref),
+                "stale": stale if dry_run else []}
+
 
 def ref(sha: str) -> str:
     """Artifact reference used in context packs and receipts."""

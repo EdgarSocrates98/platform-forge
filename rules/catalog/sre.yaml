@@ -18,7 +18,7 @@ rules:
     applies_to: {fact_kind: sre.error_budget}
     conditions:
       all:
-        - {path: attrs.status, op: equals, value: at_risk}
+        - {path: attrs.status, op: in, value: [at_risk, exhausted]}
         - {path: attrs.burn_rate, op: gte, value: 2.0}
     message: "sustained burn ≥2× empties the budget inside half the window"
     sources: ["sre.google/workbook/alerting-on-slos"]

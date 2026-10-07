@@ -233,3 +233,44 @@ rules:
         - {path: attrs.storage_class, op: empty}
     message: "implicit default class hides provisioning semantics"
     sources: ["k8s.io/docs/concepts/storage/persistent-volumes#class-1"]
+
+  # Version-gated deprecation rules (§version-unresolved semantics):
+  # unknown cluster version → fires with `version_notes` unresolved marker,
+  # never a silent pass; known-too-old version → skipped as inapplicable.
+  - rule_id: PF-K8S-030
+    domain: k8s
+    title: "apiVersion no longer served (removed by Kubernetes ≤1.22)"
+    severity: critical
+    versions: {kubernetes: ">=1.22"}
+    applies_to: {fact_kind_prefix: "k8s."}
+    conditions:
+      all:
+        - {path: attrs.api_removed_in, op: in,
+           value: ["1.16", "1.21", "1.22"]}
+    message: "the cluster does not serve this apiVersion — apply will fail"
+    sources: ["k8s.io/docs/reference/using-api/deprecation-guide#v1-22"]
+
+  - rule_id: PF-K8S-031
+    domain: k8s
+    title: "apiVersion no longer served (removed by Kubernetes 1.24–1.29)"
+    severity: critical
+    versions: {kubernetes: ">=1.24"}
+    applies_to: {fact_kind_prefix: "k8s."}
+    conditions:
+      all:
+        - {path: attrs.api_removed_in, op: in,
+           value: ["1.24", "1.25", "1.26", "1.29"]}
+    message: "the cluster does not serve this apiVersion — apply will fail"
+    sources: ["k8s.io/docs/reference/using-api/deprecation-guide#v1-25"]
+
+  - rule_id: PF-K8S-032
+    domain: k8s
+    title: "Beta apiVersion on removal track"
+    severity: low
+    applies_to: {fact_kind_prefix: "k8s."}
+    conditions:
+      all:
+        - {path: attrs.api_beta_track, op: equals, value: true}
+        - {path: attrs.api_removed_in, op: absent}
+    message: "beta APIs are deprecated and scheduled for removal"
+    sources: ["k8s.io/docs/reference/using-api/deprecation-guide/"]

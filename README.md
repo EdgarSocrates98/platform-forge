@@ -33,6 +33,7 @@ platformforge analyze cosign bundle.json   # sigstore shape — claimed ≠ veri
 platformforge analyze slsa prov.json       # SLSA requirement/evidence/gap
 platformforge analyze cloud-aws ./dumps    # AWS CLI dumps → T1 facts
 platformforge judge facts.json             # rules → findings
+platformforge judge facts.json --versions '{"kubernetes":"1.29"}'  # version-gated rules
 platformforge graph build facts.json       # facts → provenanced graph
 platformforge graph blast --node X         # blast radius (per impact class)
 platformforge graph identity-become --node role/x   # who can become this role
@@ -49,6 +50,9 @@ platformforge mcp serve                    # stdio server (same core as CLI)
 platformforge lab run-all                  # Forge Lab scenario suite
 platformforge lab chaos lab/chaos-pod-kill # fault injection on the graph
 platformforge evals run                    # eval framework (§94–95)
+platformforge evals coverage               # rule ↔ case coverage matrix
+platformforge evals precision              # measured false-positive rate
+platformforge store gc                     # §151 — dry-run GC of stale blobs
 platformforge collect ./dumps              # sniff dumps → facts
 platformforge diagnose <node> --findings j.json --facts f.json
 platformforge plan findings.json           # ordered remediation plan

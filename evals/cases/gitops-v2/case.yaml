@@ -1,0 +1,11 @@
+id: gitops-v2
+type: golden
+variant: positive
+domain: gitops
+fixture: fixture
+expect:
+  rules_fired:
+    - PF-GITOPS-010   # flux suspended
+    - PF-GITOPS-020   # app unscoped to project
+    - PF-GITOPS-021   # AppProject no source restrictions
+    - PF-GITOPS-022   # ApplicationSet no generators

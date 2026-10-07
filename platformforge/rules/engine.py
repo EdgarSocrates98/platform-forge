@@ -235,11 +235,17 @@ class RuleEngine:
                 skipped.append({"rule_id": rule.rule_id,
                                 "reason": "aggregate-scope-not-implemented"})
                 continue
-            kind = rule.applies_to.get("fact_kind")
-            targets = [f for f in facts if f.kind == kind] if kind else facts
-            if kind and not targets:
+            spec = rule.applies_to
+            kinds = spec.get("fact_kind")
+            kinds = [kinds] if isinstance(kinds, str) else (kinds or [])
+            prefix = spec.get("fact_kind_prefix")
+            targets = [f for f in facts
+                       if (not kinds or f.kind in kinds)
+                       and (not prefix or f.kind.startswith(prefix))]
+            if (kinds or prefix) and not targets:
                 skipped.append({"rule_id": rule.rule_id,
-                                "reason": f"no facts of kind {kind}"})
+                                "reason": f"no facts of kind "
+                                          f"{kinds or prefix}"})
             for fact in targets:
                 violated = self._eval_predicates(fact, rule.conditions)
                 status = "violated" if violated else "passed"

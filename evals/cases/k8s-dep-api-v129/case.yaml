@@ -1,0 +1,9 @@
+id: k8s-dep-api-v129
+type: version
+variant: version
+case_of: PF-K8S-031
+domain: k8s
+fixture: fixture
+versions: {kubernetes: "1.29"}
+expect:
+  rules_fired: [PF-K8S-030, PF-K8S-031]
