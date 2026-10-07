@@ -80,7 +80,10 @@ the core itself never mutates anything.
 [ARCHITECTURE.md](ARCHITECTURE.md) · [GRAPHFY.md](GRAPHFY.md) ·
 [ECONOMY.md](ECONOMY.md) · [SDD.md](SDD.md) · [AGENTIC-OS.md](AGENTIC-OS.md) ·
 [DOMAIN-MAP.md](DOMAIN-MAP.md) · [CAPABILITIES.md](CAPABILITIES.md) ·
-[RESEARCH.md](RESEARCH.md) · [ROADMAP.md](ROADMAP.md)
+[RESEARCH.md](RESEARCH.md) · [ROADMAP.md](ROADMAP.md) ·
+[KNOWLEDGE.md](KNOWLEDGE.md) · [RULES.md](RULES.md) ·
+[SECURITY.md](SECURITY.md) · [EVALS.md](EVALS.md) · [CLOUD.md](CLOUD.md) ·
+[GOLDEN-PATHS.md](GOLDEN-PATHS.md) · [QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md)
 
 ## License
 
