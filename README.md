@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.jpg" alt="Platform Forge" width="420">
+</p>
+
 # Platform Forge
 
 **Agentic Platform Engineering intelligence platform** — deterministic,
