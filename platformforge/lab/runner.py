@@ -21,9 +21,10 @@ from typing import Any
 import yaml
 
 from platformforge.models import Fact
+from platformforge.resources import data_path
 from platformforge.rules import RuleEngine, load_catalog
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = data_path()
 SCENARIOS_DIR = _REPO_ROOT / "lab" / "scenarios"
 CATALOG = _REPO_ROOT / "rules" / "catalog"
 PROFILES = ("static", "container", "kubernetes", "cloud")

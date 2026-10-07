@@ -31,7 +31,9 @@ EVAL_TYPES = ("unit", "integration", "golden", "contract", "property",
               "knowledge", "version")
 VARIANTS = ("positive", "negative", "boundary", "unresolved", "version")
 
-_REPO = Path(__file__).resolve().parents[2]
+from platformforge.resources import data_path
+
+_REPO = data_path()
 CASES_DIR = _REPO / "evals" / "cases"
 
 

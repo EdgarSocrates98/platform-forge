@@ -20,7 +20,9 @@ if TYPE_CHECKING:
 
 DETAIL_LEVELS = ("summary", "normal", "full")
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+from platformforge.resources import data_path
+
+REPO_ROOT = data_path()
 
 
 _DETAIL_LIST_CAP = {"summary": 3, "normal": 50, "full": None}
@@ -281,7 +283,7 @@ def cmd_judge(args: argparse.Namespace) -> int:
     versions = facts_doc.get("versions", {}) if isinstance(facts_doc, dict) else {}
     if getattr(args, "versions", ""):
         versions = {**versions, **json.loads(args.versions)}
-    catalog_dirs = args.catalog or [Path(__file__).resolve().parents[2] / "rules" / "catalog"]
+    catalog_dirs = args.catalog or [data_path("rules", "catalog")]
     rules = load_catalog(*catalog_dirs)
     findings, skipped = RuleEngine(rules, versions).evaluate(facts)
     out = {"findings": [f.to_dict() for f in findings],
@@ -810,7 +812,7 @@ def cmd_context(args: argparse.Namespace) -> int:
 def cmd_policy(args: argparse.Namespace) -> int:
     """§7 policy — the rule catalog IS the policy layer."""
     from platformforge.rules import load_catalog
-    cat_dir = Path(__file__).resolve().parents[2] / "rules" / "catalog"
+    cat_dir = data_path("rules", "catalog")
     rules = load_catalog(cat_dir)
     if args.policy_cmd == "list":
         return _emit({"rules": [{"rule_id": r.rule_id, "domain": r.domain,
@@ -843,7 +845,7 @@ def cmd_security(args: argparse.Namespace) -> int:
         if p.exists():
             facts += fn(str(p))["facts"]
             present.append(name)
-    cat_dir = Path(__file__).resolve().parents[2] / "rules" / "catalog"
+    cat_dir = data_path("rules", "catalog")
     cat = [r for r in load_catalog(cat_dir) if r.domain == "security"]
     findings, _ = RuleEngine(cat).evaluate(
         [Fact.from_dict(f) for f in facts])
@@ -856,7 +858,7 @@ def cmd_reliability(args: argparse.Namespace) -> int:
     """§7 reliability — SRE+K8S rules over a facts doc."""
     from platformforge.models import Fact
     from platformforge.rules import RuleEngine, load_catalog
-    cat_dir = Path(__file__).resolve().parents[2] / "rules" / "catalog"
+    cat_dir = data_path("rules", "catalog")
     rules = [r for r in load_catalog(cat_dir)
              if r.domain in ("sre", "k8s")]
     facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]

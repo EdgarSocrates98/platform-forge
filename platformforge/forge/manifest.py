@@ -9,9 +9,10 @@ from typing import Any
 
 from platformforge.graph.vocab import EDGE_KINDS, NODE_KINDS
 from platformforge.mcp.registry import CAPABILITIES
+from platformforge.resources import data_path
 from platformforge.rules import load_catalog
 
-_REPO = Path(__file__).resolve().parents[2]
+_REPO = data_path()
 
 
 def capability_manifest(repo: str | Path | None = None) -> dict[str, Any]:

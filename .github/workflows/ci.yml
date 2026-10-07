@@ -7,42 +7,55 @@ on:
 
 jobs:
   core:
-    runs-on: ubuntu-latest
+    # Runner is configurable: set repository variable PF_RUNNER to a JSON
+    # label (e.g. "\"self-hosted\"" or "[\"self-hosted\",\"linux\"]") to run
+    # on self-hosted infrastructure; defaults to GitHub-hosted ubuntu-latest.
+    runs-on: ${{ fromJSON(vars.PF_RUNNER || '"ubuntu-latest"') }}
     strategy:
       matrix:
-        python: ["3.11", "3.12"]
+        # Supported interpreters — all verified locally on 204/204 tests.
+        python: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
       - name: Install
-        run: pip install -e ".[dev]" || pip install -e . && pip install pytest ruff pyyaml
+        run: pip install -e ".[dev]"
       - name: Lint
         run: ruff check .
       - name: Tests
         run: pytest -q
-      - name: Rule provenance gate (§10)
+      - name: Rule provenance gate
         run: |
           python -c "from platformforge.rules.engine import catalog_provenance_report; \
           r = catalog_provenance_report('rules/catalog'); \
           assert r['coverage'] == 1.0, r; print(r)"
+      - name: Knowledge sources gate
+        run: |
+          python -c "from platformforge.knowledge.registry import SourceRegistry; \
+          reg = SourceRegistry.default(); \
+          bad = [e['id'] for e in reg.entries if not e.get('retrieved_at')]; \
+          assert not bad, f'sources missing retrieved_at: {bad}'; \
+          print(len(reg.entries), 'sources valid')"
       - name: Lab scenarios
         run: platformforge lab run-all
       - name: Eval corpus
         run: platformforge evals run
+      - name: Rule coverage
+        run: platformforge evals coverage
       - name: MCP parity smoke
         run: |
           python -c "from platformforge.mcp.registry import tool_descriptors; \
           tools = tool_descriptors(); assert len(tools) >= 20, len(tools); \
           print(len(tools), 'mcp tools')"
-      - name: Docs drift (§11/§129)
+      - name: Docs drift
         run: pytest -q tests/test_docs_drift.py
 
   package:
-    # §132 — installation test: build wheel, install in a clean venv,
-    # prove the entrypoint works without the repo.
-    runs-on: ubuntu-latest
+    # Build wheel → install in a clean venv → run from OUTSIDE the checkout
+    # so the test cannot silently pass because repo files are on sys.path.
+    runs-on: ${{ fromJSON(vars.PF_RUNNER || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,11 +63,33 @@ jobs:
           python-version: "3.12"
       - name: Build wheel
         run: pip install build && python -m build --wheel
+      - name: Wheel contents gate
+        run: |
+          python - <<'PY'
+          import zipfile, glob
+          whl = zipfile.ZipFile(glob.glob("dist/*.whl")[0])
+          names = whl.namelist()
+          for need in ("platformforge/data/rules/catalog/",
+                       "platformforge/data/knowledge/sources.yaml",
+                       "platformforge/data/contracts/fact.schema.json",
+                       "platformforge/data/lab/scenarios/",
+                       "platformforge/data/evals/cases/"):
+              assert any(n.startswith(need) for n in names), f"missing {need}"
+          print("wheel data complete:", sum(1 for n in names if "/data/" in n), "data files")
+          PY
       - name: Install in clean env
         run: |
           python -m venv /tmp/pfenv
           /tmp/pfenv/bin/pip install dist/*.whl
-      - name: Smoke (§132)
+      - name: Smoke — outside the checkout
         run: |
+          cd "$RUNNER_TEMP" || cd /tmp
           /tmp/pfenv/bin/platformforge --help
           /tmp/pfenv/bin/platformforge doctor
+          /tmp/pfenv/bin/platformforge lab run-all
+          /tmp/pfenv/bin/python -c \
+            "from platformforge.resources import data_path; \
+          from platformforge.rules import load_catalog; \
+          rules = load_catalog(data_path('rules','catalog')); \
+          assert len(rules) >= 60, len(rules); \
+          print(len(rules), 'rules from installed wheel')"

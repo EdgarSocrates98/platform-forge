@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import date, datetime, timezone
+
+UTC = timezone.utc  # datetime.UTC alias is 3.11+; keep 3.10 compatible
 from pathlib import Path
 from typing import Any
 
@@ -76,7 +78,8 @@ class SourceRegistry:
 
     @classmethod
     def default(cls) -> SourceRegistry:
-        return cls(Path(__file__).resolve().parents[2] / "knowledge" / "sources.yaml")
+        from platformforge.resources import data_path
+        return cls(data_path("knowledge", "sources.yaml"))
 
     def get(self, source_id: str) -> SourceEntry | None:
         return self.entries.get(source_id)

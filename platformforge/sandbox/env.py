@@ -10,7 +10,7 @@ import shutil
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 
 @dataclass
@@ -22,7 +22,7 @@ class Sandbox:
         self.root = Path(self.root).resolve()
         self.workdir = Path(tempfile.mkdtemp(prefix="pf-sandbox-"))
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> Sandbox:  # noqa: PYI034 - typing.Self is 3.11+; no typing_extensions dep
         return self
 
     def __exit__(self, *exc) -> None:

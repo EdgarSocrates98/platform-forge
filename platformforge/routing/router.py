@@ -70,10 +70,11 @@ def _match(sig: TaskSignal, when: dict[str, Any]) -> bool:
 
 
 def load_routes(path: str | Path | None = None) -> list[dict[str, Any]]:
+    from platformforge.resources import data_path
     if path and Path(path).is_file():
         doc = yaml.safe_load(Path(path).read_text()) or {}
         return doc.get("routes", []) or []
-    default = Path(__file__).resolve().parents[2] / "rules" / "catalog" / "routing.yaml"
+    default = data_path("rules", "catalog", "routing.yaml")
     if default.is_file():
         doc = yaml.safe_load(default.read_text()) or {}
         return doc.get("routes", []) or []

@@ -46,6 +46,16 @@ Issues = "https://github.com/EdgarSocrates98/platform-forge/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["platformforge"]
 
+# Ship runtime data inside the wheel under platformforge/data/ so an
+# installed package is self-contained (platformforge/resources.py resolves it).
+[tool.hatch.build.targets.wheel.force-include]
+"rules" = "platformforge/data/rules"
+"knowledge" = "platformforge/data/knowledge"
+"contracts" = "platformforge/data/contracts"
+"evals" = "platformforge/data/evals"
+"lab" = "platformforge/data/lab"
+
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

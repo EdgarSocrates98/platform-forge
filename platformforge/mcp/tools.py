@@ -295,7 +295,8 @@ def _observe(inp: dict[str, Any]) -> Any:
 
 
 def _default_catalog() -> Path:
-    return Path(__file__).resolve().parents[2] / "rules" / "catalog"
+    from platformforge.resources import data_path
+    return data_path("rules", "catalog")
 
 
 def _analyze(domain: str, path: str) -> Any:
