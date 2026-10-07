@@ -22,19 +22,32 @@ from typing import Any, ClassVar
 from platformforge.graph.model import Edge, Graph, Node, node_id
 from platformforge.graph.vocab import PROVENANCES
 
+_PROV_RANK = {"observed": 3, "planned": 2, "declared": 1, "inferred": 0}
+
 
 def _tier_provenance(tier: int | str) -> str:
     """EvidenceTier int → edge provenance (§4): 0-1 observed (measured,
     provider), 2 planned (generated plan — never observed), 3-5 declared,
-    6-7 inferred."""
+    6-7 inferred. Out-of-range tiers mint `inferred`, never `observed`."""
     t = {f"t{i}": i for i in range(8)}.get(tier, tier)
     try:
         t = int(t)
     except (TypeError, ValueError):
         return "declared"
+    if not 0 <= t <= 7:
+        return "inferred"  # garbage tier must not mint strong evidence
     if t <= 1:
         return "observed"
     return {2: "planned"}.get(t, "declared" if t <= 5 else "inferred")
+
+
+def _clamp_provenance(claimed: str, tier_prov: str) -> str:
+    """A fact may downgrade its edge provenance, never upgrade beyond what
+    its evidence tier supports (raw dicts bypass Fact validation)."""
+    if claimed not in _PROV_RANK:
+        return tier_prov
+    return claimed if _PROV_RANK[claimed] <= _PROV_RANK[tier_prov] \
+        else tier_prov
 
 
 class GraphBuilder:
@@ -90,7 +103,8 @@ class GraphBuilder:
             for e in contrib.get("edges", []):
                 self.add_edge(e["src_kind"], e["src"], e["dst_kind"],
                               e["dst"], e["kind"],
-                              provenance=e.get("provenance", prov),
+                              provenance=_clamp_provenance(
+                                  e.get("provenance", prov), prov),
                               confidence=e.get("confidence", 1.0),
                               fact_ids=[fid] if fid else [],
                               attrs=e.get("attrs"))

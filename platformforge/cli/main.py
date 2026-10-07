@@ -68,7 +68,7 @@ def _has_unresolved(obj: Any) -> bool:
             if _has_unresolved(v):
                 return True
     elif isinstance(obj, list):
-        return any(_has_unresolved(x) for x in obj[:200])
+        return any(_has_unresolved(x) for x in obj)
     return False
 
 
@@ -868,11 +868,14 @@ def cmd_security(args: argparse.Namespace) -> int:
             present.append(name)
     cat_dir = data_path("rules", "catalog")
     cat = [r for r in load_catalog(cat_dir) if r.domain == "security"]
-    findings, _ = RuleEngine(cat).evaluate(
+    findings, skipped = RuleEngine(cat).evaluate(
         [Fact.from_dict(f) for f in facts])
+    unresolved = [f for f in findings if f.status != "violated"]
     return _emit({"facts": facts, "analyzers_run": ["secrets", *present],
                   "findings": [f.to_dict() for f in findings
-                               if f.status == "violated"]}, args)
+                               if f.status == "violated"],
+                  "unresolved": [f.to_dict() for f in unresolved],
+                  "skipped": skipped}, args)
 
 
 def cmd_reliability(args: argparse.Namespace) -> int:
@@ -885,9 +888,12 @@ def cmd_reliability(args: argparse.Namespace) -> int:
     facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]
     findings, skipped = RuleEngine(rules).evaluate(facts)
     violated = [f for f in findings if f.status == "violated"]
+    unresolved = [f for f in findings if f.status == "unresolved"]
     return _emit({"findings": [f.to_dict() for f in violated],
+                  "unresolved": [f.to_dict() for f in unresolved],
                   "skipped": skipped,
-                  "counts": {"violated": len(violated)}}, args)
+                  "counts": {"violated": len(violated),
+                             "unresolved": len(unresolved)}}, args)
 
 
 def cmd_integrate(args: argparse.Namespace) -> int:

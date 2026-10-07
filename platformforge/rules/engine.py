@@ -28,6 +28,31 @@ def _parse_version(v: str) -> tuple[int, ...]:
     return tuple(int(p) for p in parts) if parts else ()
 
 
+def _validate_constraint(rule_id: str, component: str,
+                         constraint: Any) -> None:
+    """Fail loudly on vacuous/garbage version constraints — a malformed
+    constraint must never silently produce a strong verdict."""
+    if not isinstance(constraint, str) or not constraint.strip():
+        raise ValueError(
+            f"{rule_id}: versions.{component} must be a non-empty "
+            f"constraint string, got {constraint!r}")
+    parsed = 0
+    for cond in constraint.split():
+        m = re.match(r"(>=|<=|==|!=|>|<)?(.+)", cond)
+        if not m or not m.group(2).strip():
+            raise ValueError(
+                f"{rule_id}: malformed version constraint "
+                f"{constraint!r} (token {cond!r})")
+        if not _parse_version(m.group(2)):
+            raise ValueError(
+                f"{rule_id}: unparseable version operand "
+                f"{m.group(2)!r} in {constraint!r}")
+        parsed += 1
+    if not parsed:
+        raise ValueError(
+            f"{rule_id}: vacuous version constraint {constraint!r}")
+
+
 def version_satisfies(version: str | None, constraint: str | None) -> bool | None:
     """True/False when decidable, None when version unknown."""
     if not constraint:
@@ -151,6 +176,8 @@ class Rule:
                         f"{d.get('rule_id')}: unknown op {pred.get('op')!r} "
                         f"(allowed: {sorted(OPS)})"
                     )
+        for comp, cons in (d.get("versions") or {}).items():
+            _validate_constraint(d.get("rule_id", "?"), comp, cons)
         return cls(
             rule_id=d["rule_id"], title=d.get("title", ""), domain=d.get("domain", ""),
             severity=d.get("severity", "medium"), conditions=conds,
@@ -165,15 +192,25 @@ class Rule:
 
 
 def load_catalog(*dirs: str | Path) -> list[Rule]:
-    """Load all rule YAML files from catalog dirs (sorted → deterministic)."""
+    """Load all rule YAML files from catalog dirs (sorted → deterministic).
+    Missing dirs warn (a silent empty catalog masks packaging bugs);
+    duplicate rule_ids are rejected — two rules sharing an id could emit
+    contradictory verdicts for the same check."""
+    import warnings
     rules: list[Rule] = []
+    seen: set[str] = set()
     for d in dirs:
         p = Path(d)
         if not p.is_dir():
+            warnings.warn(f"catalog dir missing: {p}", stacklevel=2)
             continue
         for f in sorted(p.rglob("*.yaml")) + sorted(p.rglob("*.yml")):
             doc = yaml.safe_load(f.read_text()) or {}
             for entry in doc.get("rules", doc if isinstance(doc, list) else []):
+                rid = entry.get("rule_id")
+                if rid in seen:
+                    raise ValueError(f"duplicate rule_id {rid!r} ({f})")
+                seen.add(rid)
                 rules.append(Rule.from_dict(entry))
     return rules
 

@@ -43,7 +43,8 @@ def _rules_of(case: dict) -> dict[str, list[str]]:
     return {"positive": list(exp.get("rules_fired", [])),
             "negative": list(exp.get("rules_not_fired", [])),
             "version": (list(exp.get("unresolved", []))
-                        + list(exp.get("rules_skipped", []))
+                        + [next(iter(w)) if isinstance(w, dict) else w
+                           for w in exp.get("rules_skipped", [])]
                         + list(exp.get("passed", [])))}
 
 

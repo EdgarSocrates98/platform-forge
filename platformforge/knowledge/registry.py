@@ -76,9 +76,13 @@ class SourceRegistry:
         self.path = Path(path)
         doc = yaml.safe_load(self.path.read_text())
         self.schema = doc.get("schema", "")
-        self.entries: dict[str, SourceEntry] = {
-            e["id"]: SourceEntry.from_dict(e) for e in doc.get("sources", [])
-        }
+        self.entries: dict[str, SourceEntry] = {}
+        self.duplicate_ids: list[str] = []
+        for e in doc.get("sources", []):
+            if e["id"] in self.entries:
+                self.duplicate_ids.append(e["id"])
+                continue
+            self.entries[e["id"]] = SourceEntry.from_dict(e)
 
     @classmethod
     def default(cls) -> SourceRegistry:
@@ -118,15 +122,30 @@ class SourceRegistry:
                 "confidence")
 
     def contract_check(self) -> dict[str, Any]:
-        """§46 — report entries missing contract fields."""
+        """§46 — report entries missing contract fields, duplicate ids,
+        and alias collisions (an alias owned by two entries resolves to
+        whichever loads first — silent wrong-linkage)."""
         bad = {}
         for e in self.entries.values():
             missing = [f for f in self.REQUIRED
                        if not getattr(e, f, None)]
             if missing:
                 bad[e.id or "?"] = missing
+        alias_owner: dict[str, str] = {}
+        alias_collisions: dict[str, list[str]] = {}
+        for e in self.entries.values():
+            for a in e.aliases:
+                if a in alias_owner and alias_owner[a] != e.id:
+                    alias_collisions.setdefault(a, []).append(e.id)
+                else:
+                    alias_owner[a] = e.id
+        for a, owners in alias_collisions.items():
+            owners.insert(0, alias_owner[a])
+        ok = not bad and not self.duplicate_ids and not alias_collisions
         return {"entries": len(self.entries), "invalid": bad,
-                "ok": not bad}
+                "duplicate_ids": self.duplicate_ids,
+                "alias_collisions": alias_collisions,
+                "ok": ok}
 
     def link_rules(self, *catalog_dirs: str | Path) -> dict[str, Any]:
         """§44/§47 + cycle 2.1 — rule→source linkage by exact canonical id.

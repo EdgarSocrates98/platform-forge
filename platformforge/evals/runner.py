@@ -170,11 +170,23 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
                             versions=case.get("versions"))
         findings, skipped = engine.evaluate(fs)
         got_skipped = {s.get("rule_id") for s in skipped}
+        skip_reasons = {s.get("rule_id"): s.get("reason") for s in skipped}
         by_status: dict[str, set[str]] = {}
         for f in findings:
             by_status.setdefault(f.status, set()).add(f.rule_id)
-        want_skipped = set(exp.get("rules_skipped", []))
+        want_skipped = {
+            (next(iter(w)) if isinstance(w, dict) else w)
+            for w in exp.get("rules_skipped", [])}
         missing_skip = sorted(want_skipped - got_skipped)
+        # `rules_skipped` entries may be bare ids or {id: reason} maps —
+        # a wrong skip reason must not satisfy the expectation.
+        bad_reason = {}
+        for want in exp.get("rules_skipped", []):
+            if isinstance(want, dict):
+                rid, reason = next(iter(want.items()))
+                if rid in skip_reasons and skip_reasons[rid] != reason:
+                    bad_reason[rid] = {"want": reason,
+                                       "got": skip_reasons[rid]}
         checks: dict[str, tuple[set[str], str]] = {
             "rules_fired": (set(exp.get("rules_fired", [])), "violated"),
             "rules_not_fired": (set(exp.get("rules_not_fired", [])),
@@ -189,7 +201,9 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
             if not want:
                 continue
             if key == "rules_not_fired":
-                bad = sorted(want & fired)
+                # "not fired" = no strong verdict at all — `passed` also
+                # counts as firing (a silent pass is still an overclaim).
+                bad = sorted(want & strong)
                 if bad:
                     missing["rules_not_fired"] = bad
                 continue
@@ -200,9 +214,11 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
         # hard invariant: a rule expected unresolved must never emit a
         # strong verdict (overclaim), and vice-versa
         overclaim = sorted(set(exp.get("unresolved", [])) & strong)
-        ok = not (missing_skip or missing or overclaim)
+        ok = not (missing_skip or missing or overclaim or bad_reason)
         return {"verdict": "pass" if ok else "fail",
                 "skipped": sorted(got_skipped),
+                "skip_reasons": skip_reasons,
+                "bad_skip_reasons": bad_reason,
                 "by_status": {k: sorted(v) for k, v in by_status.items()},
                 "overclaim": overclaim,
                 "missing": missing,

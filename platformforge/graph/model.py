@@ -111,7 +111,8 @@ class Graph:
         if existing:
             stronger = existing if existing.confidence >= edge.confidence \
                 else edge
-            prov_order = {"observed": 2, "declared": 1, "inferred": 0}
+            prov_order = {"observed": 3, "planned": 2,
+                          "declared": 1, "inferred": 0}
             provenance = max(
                 (existing.provenance, edge.provenance),
                 key=lambda p: prov_order[p])
