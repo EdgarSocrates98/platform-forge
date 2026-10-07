@@ -33,8 +33,28 @@ jobs:
         run: platformforge evals run
       - name: MCP parity smoke
         run: |
-          python -c "from platformforge.mcp.registry import registry; \
-          tools = registry(); assert len(tools) >= 20, len(tools); \
+          python -c "from platformforge.mcp.registry import tool_descriptors; \
+          tools = tool_descriptors(); assert len(tools) >= 20, len(tools); \
           print(len(tools), 'mcp tools')"
       - name: Docs drift (§11/§129)
         run: pytest -q tests/test_docs_drift.py
+
+  package:
+    # §132 — installation test: build wheel, install in a clean venv,
+    # prove the entrypoint works without the repo.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build wheel
+        run: pip install build && python -m build --wheel
+      - name: Install in clean env
+        run: |
+          python -m venv /tmp/pfenv
+          /tmp/pfenv/bin/pip install dist/*.whl
+      - name: Smoke (§132)
+        run: |
+          /tmp/pfenv/bin/platformforge --help
+          /tmp/pfenv/bin/platformforge doctor

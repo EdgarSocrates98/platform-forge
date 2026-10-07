@@ -98,10 +98,19 @@ class GraphBuilder:
         return self
 
     def _delivery(self, facts: Iterable[dict[str, Any]]) -> None:
-        """§72 — join gitops/workflows/workloads into the delivery chain."""
-        from platformforge.graph.delivery import delivery_edges
-        for e in delivery_edges(list(facts)):
+        """§72/§135 — join gitops/workflows/workloads into the delivery
+        chain, then resolve cross-member links (inferred provenance)."""
+        from platformforge.graph.delivery import cross_repo_edges, delivery_edges
+        facts = list(facts)
+        for e in delivery_edges(facts):
             self.add_edge(e["src_kind"], e["src"], e["dst_kind"], e["dst"],
                           e["kind"], provenance="declared",
+                          fact_ids=e.get("fact_ids") or [],
+                          attrs={"via": e.get("via")})
+        for e in cross_repo_edges(facts):
+            self.add_edge(e["src_kind"], e["src"], e["dst_kind"], e["dst"],
+                          e["kind"],
+                          provenance=e.get("provenance", "inferred"),
+                          confidence=e.get("confidence", 0.6),
                           fact_ids=e.get("fact_ids") or [],
                           attrs={"via": e.get("via")})

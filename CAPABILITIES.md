@@ -46,7 +46,7 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.lab.*` | 14 | lab | yes | `lab list/run/run-all` | 13 scenarios; §118 profiles static/container/kubernetes/cloud — non-static refused without `--allow-profile` + §119 safety contract |
 | `platform.product.*` | 11 | product | yes | `product maturity/scorecard/backstage` | CNCF maturity, Backstage projection |
 | `platform.integrate/detach` | 13 | adapters | yes | `mcp integrate/detach` | host parity files |
-| `platform.capability.*` | 13 | core | yes | `capability list/describe/manifest` | this registry |
+| `platform.capability.*` | 13 | core | yes | `capability list/describe/manifest/check` | §112 v2 contracts + §139 negotiation (domain+version) |
 | `platform.forge.*` | 15 | integrations | yes | `forge manifest/delegate/verify/discover/collect` | A2A envelope + sibling-forge ingress |
 | `platform.collect` | 1+ | core | yes | `collect <path>` | shape-sniff dumps (k8s/plan/state/iam/sbom/supply/finops) → facts; undetected files reported, never dropped; secrets baseline always runs |
 | `platform.plan` | 8+ | core | yes | `plan <findings.json>` | ordered remediation plan (severity→blast), no-evidence steps refused |
@@ -63,6 +63,8 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.knowledge` | 2 | economy | yes | `knowledge` | source registry freshness check — stale/unresolved/conflicted flagged |
 | `platform.agents` | 12 | agents | yes | `agents list/lint/sync/playbook/referee` | agent roster + mirror sync + referee arbitration |
 | `platform.store` | 2 | core | yes | `store stats/gc` | §151 — content-addressed store; gc dry-run by default, never deletes referenced artifacts, `--execute` to delete |
+| `platform.bench` | 16 | core | yes | `bench run/tokens` | §148–150 — measured perf/token/storage on eval fixtures; baseline, never a claim |
+| `platform.ownership` | 4 | core | yes | `analyze ownership/contradictions` | §116/§136–137 — CODEOWNERS/Backstage/workspace/k8s-labels/cloud-tags signals; `ownership.conflicted` + `state.contradiction` facts |
 
 ### Known gaps (declared, not hidden)
 

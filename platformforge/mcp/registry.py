@@ -3,12 +3,17 @@ CLI already calls. Bounds are declared per-tool and enforced on output."""
 
 from __future__ import annotations
 
+import dataclasses as _dc
 from dataclasses import dataclass
 from typing import Any
 
 
 @dataclass(frozen=True)
 class Capability:
+    """§112 capability registry v2 — declarative contract per tool.
+
+    `handler` resolves the implementation; the rest describes the boundary
+    an orchestrator can negotiate against (§139)."""
     name: str
     description: str
     input_schema: dict[str, Any]
@@ -16,9 +21,74 @@ class Capability:
     max_results: int = 100
     max_bytes: int = 32_000
     detail_levels: tuple[str, ...] = ("summary", "normal", "full")
+    version: str = "1"
+    domain: str = "core"
+    output_schema: str = "platformforge/result/v1"
+    risk: str = "read"                 # read | simulate | guarded
+    offline: bool = True
+    mutable: bool = False              # core never mutates external state
+    evidence_required: bool = True     # findings need evidence fact_ids
+    cost_class: str = "cheap"          # cheap | moderate | expensive
+    agent_requirements: tuple[str, ...] = ()
+
+    def contract(self) -> dict[str, Any]:
+        """§112 v2 projection — the negotiable capability descriptor."""
+        return {"id": self.name, "version": self.version,
+                "domain": self.domain, "input_schema": self.input_schema,
+                "output_schema": self.output_schema, "risk": self.risk,
+                "offline": self.offline, "mutable": self.mutable,
+                "evidence_required": self.evidence_required,
+                "cost_class": self.cost_class,
+                "agent_requirements": list(self.agent_requirements),
+                "detail_levels": list(self.detail_levels),
+                "bounds": {"max_results": self.max_results,
+                           "max_bytes": self.max_bytes}}
 
 
-CAPABILITIES: dict[str, Capability] = {c.name: c for c in [
+# §112 — per-tool v2 metadata (domain / risk / cost / evidence policy).
+_V2: dict[str, dict[str, Any]] = {
+    "platformforge_inspect": {"domain": "core"},
+    "platformforge_analyze": {"domain": "multi", "cost_class": "moderate"},
+    "platformforge_judge": {"domain": "rules"},
+    "platformforge_graph_query": {"domain": "graph"},
+    "platformforge_slo": {"domain": "sre"},
+    "platformforge_economy": {"domain": "economy"},
+    "platformforge_maturity": {"domain": "product"},
+    "platformforge_agents": {"domain": "agents"},
+    "platformforge_collect": {"domain": "core", "cost_class": "moderate"},
+    "platformforge_diagnose": {"domain": "sre", "cost_class": "moderate"},
+    "platformforge_plan": {"domain": "core"},
+    "platformforge_risk": {"domain": "core"},
+    "platformforge_explain": {"domain": "core"},
+    "platformforge_recommend": {"domain": "core"},
+    "platformforge_security_scan": {"domain": "security",
+                                    "cost_class": "moderate"},
+    "platformforge_reliability": {"domain": "sre"},
+    "platformforge_drift": {"domain": "iac"},
+    "platformforge_change_verify": {"domain": "change", "risk": "simulate",
+                                    "cost_class": "expensive"},
+    "platformforge_change_review": {"domain": "change", "risk": "simulate",
+                                    "cost_class": "expensive"},
+    "platformforge_finops": {"domain": "finops", "cost_class": "moderate"},
+    "platformforge_observe": {"domain": "sre", "cost_class": "moderate"},
+    "platformforge_evals": {"domain": "lab", "cost_class": "moderate"},
+    "platformforge_lab_chaos": {"domain": "lab", "risk": "guarded",
+                                "mutable": True,
+                                "agent_requirements": ("allow_prod",)},
+    "platformforge_correlate": {"domain": "sre"},
+    "platformforge_policy": {"domain": "rules"},
+    "platformforge_integrate": {"domain": "adapters", "risk": "guarded",
+                                "mutable": True},
+    "platformforge_capability": {"domain": "core"},
+}
+
+
+def _apply_v2(entries: list[Capability]) -> dict[str, Capability]:
+    return {c.name: _dc.replace(c, **_V2.get(c.name, {}))
+            for c in entries}
+
+
+CAPABILITIES: dict[str, Capability] = _apply_v2([
     Capability("platformforge_inspect",
                "Inventory analyzable artifacts under a root",
                {"type": "object", "properties": {"repo": {"type": "string"}}},
@@ -26,7 +96,8 @@ CAPABILITIES: dict[str, Capability] = {c.name: c for c in [
     Capability("platformforge_analyze",
                "Run a domain analyzer (iac|plan|state|k8s|gitops|gha|iam|"
                "sbom|secrets|supply|catalog|crossplane|helm|kustomize|"
-               "hubble|kyverno|cosign|slsa|cloud-aws|cloud-azure|cloud-gcp)",
+               "hubble|kyverno|cosign|slsa|cloud-aws|cloud-azure|cloud-gcp|"
+               "ownership|contradictions)",
                {"type": "object", "required": ["domain", "path"],
                 "properties": {"domain": {"type": "string"},
                                "path": {"type": "string"}},
@@ -196,7 +267,7 @@ CAPABILITIES: dict[str, Capability] = {c.name: c for c in [
                 "properties": {"op": {"type": "string"},
                                "name": {"type": "string"}}},
                "cli:capability"),
-]}
+])
 
 
 def tool_descriptors() -> list[dict[str, Any]]:

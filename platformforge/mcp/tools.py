@@ -231,6 +231,27 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
         return detach(inp["host"], repo) if inp.get("detach") \
             else integrate(inp["host"], repo)
     if handler == "cli:capability":
+        op = inp.get("op", "manifest")
+        if op == "list":
+            return {"capabilities": [c.contract()
+                                     for c in CAPABILITIES.values()]}
+        if op == "check":
+            dom = inp.get("domain", "")
+            matches = [c for c in CAPABILITIES.values()
+                       if c.domain == dom or dom in c.description.lower()
+                       or dom in c.name]
+            if not matches:
+                return {"supported": False,
+                        "refusal": "platform.capability.unresolved",
+                        "domain": dom}
+            return {"supported": True, "domain": dom,
+                    "version": inp.get("version"),
+                    "capabilities": [c.contract() for c in matches]}
+        if op == "describe":
+            c = CAPABILITIES.get(inp.get("name", ""))
+            return c.contract() if c else {
+                "refusal": "platform.capability.unresolved",
+                "name": inp.get("name")}
         from platformforge.forge import capability_manifest
         return capability_manifest()
     raise ValueError(f"no handler {handler}")
@@ -344,6 +365,15 @@ def _analyze(domain: str, path: str) -> Any:
     if domain == "cloud-gcp":
         from platformforge.cloud import analyze_gcp_dump
         return analyze_gcp_dump(path)
+    if domain == "ownership":
+        from platformforge.core.ownership import analyze_ownership
+        return analyze_ownership(path)
+    if domain == "contradictions":
+        from platformforge.core.ownership import detect_contradictions
+        doc = json.loads(Path(path).read_text())
+        facts = doc.get("facts", doc if isinstance(doc, list) else [])
+        out = detect_contradictions(facts)
+        return {"facts": out, "contradictions": len(out)}
     raise ValueError(f"unknown domain {domain}")
 
 

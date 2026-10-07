@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 DETAIL_LEVELS = ("summary", "normal", "full")
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 _DETAIL_LIST_CAP = {"summary": 3, "normal": 50, "full": None}
 _SUMMARY_KEYS = {"status", "verdict", "ok", "passed", "failed", "exit_code",
@@ -101,8 +103,13 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
+    """§141 — Forge-Doctor-ready health surface.
+
+    `--deep` validates the contracts a Forge Doctor could check: install,
+    config, capability manifest, knowledge freshness, host parity, graph
+    integrity, index health and the artifact store — all read-only."""
     import platform
-    checks = {
+    checks: dict[str, Any] = {
         "python": platform.python_version(),
         "platformforge": __version__,
         "pyyaml": _mod_version("yaml"),
@@ -113,7 +120,61 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     }
     ok = all(v != "missing" for k, v in checks.items()
              if k in ("pyyaml", "jsonschema", "python-hcl2"))
-    return _emit({"ok": ok, "checks": checks}, args, 0 if ok else 1)
+    detail: dict[str, Any] = {}
+    if getattr(args, "deep", False):
+        detail = _doctor_deep(args)
+        ok = ok and all(v.get("ok", True) for v in detail.values())
+    return _emit({"ok": ok, "checks": checks, "deep": detail},
+                 args, 0 if ok else 1)
+
+
+def _doctor_deep(args: argparse.Namespace) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    from platformforge.core.workspace import load_workspace
+    ws = load_workspace(getattr(args, "repo", "."))
+    # config
+    out["config"] = {"ok": True, "workspace": ws.name,
+                     "multi_repo": ws.is_multi_repo,
+                     "members": len(ws.members) or 1}
+    # capability manifest
+    try:
+        from platformforge.forge import capability_manifest
+        m = capability_manifest(args.repo)
+        out["capability_manifest"] = {"ok": bool(m.get("tools")),
+                                      "tools": len(m.get("tools", [])),
+                                      "rules": m.get("rule_count")}
+    except (OSError, ValueError, KeyError) as e:
+        out["capability_manifest"] = {"ok": False, "error": str(e)}
+    # knowledge freshness
+    try:
+        from platformforge.knowledge.registry import SourceRegistry
+        reg = SourceRegistry.default()
+        check = reg.check()
+        stale = [c["id"] for c in check
+                 if c["status"] in ("stale", "unresolved", "conflicted")]
+        out["knowledge_freshness"] = {"ok": True, "entries": len(check),
+                                      "attention": stale,
+                                      "contract": reg.contract_check()}
+    except (OSError, ValueError, KeyError) as e:
+        out["knowledge_freshness"] = {"ok": False, "error": str(e)}
+    # host parity (host adapter files present?)
+    parity = {}
+    for host, marker in (("claude", ".claude"), ("devin", ".devin"),
+                         ("agents", ".agents")):
+        parity[host] = (ws.root / marker).exists()
+    out["host_parity"] = {"ok": True, "adapters": parity}
+    # index health (tokensave db)
+    idx = ws.pf_dir / "index.db"
+    out["index_health"] = {"ok": True, "present": idx.is_file(),
+                           "bytes": idx.stat().st_size if idx.is_file() else 0}
+    # artifact store
+    try:
+        from platformforge.core.store import ArtifactStore
+        st = ArtifactStore(ws.root).stats()
+        out["artifact_store"] = {"ok": True, **st}
+    except (OSError, ValueError, KeyError) as e:
+        out["artifact_store"] = {"ok": False, "error": str(e)}
+    return out
 
 
 _DIST_NAMES = {"yaml": "PyYAML", "hcl2": "python-hcl2"}
@@ -341,6 +402,14 @@ def cmd_store(args: argparse.Namespace) -> int:
     return _emit(out, args)
 
 
+def cmd_bench(args: argparse.Namespace) -> int:
+    """§148–150 — measured benchmarks over the eval corpus fixtures."""
+    from platformforge import bench
+    fn = {"run": bench.run_benchmark,
+          "tokens": bench.token_benchmark}[args.bench_cmd]
+    return _emit(fn(repeat=args.repeat), args)
+
+
 def cmd_economy(args: argparse.Namespace) -> int:
     from platformforge.economy import EconomyEngine
     eng = EconomyEngine(args.repo)
@@ -520,6 +589,18 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         from platformforge.security import analyze_sbom
         vulns = json.loads(Path(args.vulns).read_text()) if args.vulns else None
         return _emit(analyze_sbom(args.path, vuln_db=vulns), args)
+    if sub == "ownership":
+        from platformforge.core.ownership import analyze_ownership
+        facts = (_json_doc(args.facts, "facts")
+                 if getattr(args, "facts", "") else None)
+        return _emit(analyze_ownership(args.path, facts), args)
+    if sub == "contradictions":
+        from platformforge.core.ownership import detect_contradictions
+        facts = [f for f in _json_doc(args.path, "facts")]
+        out = detect_contradictions(facts)
+        return _emit({"facts": out, "contradictions": len(out),
+                      "boundary": "declared-vs-observed diffs are named, "
+                                  "never resolved silently"}, args)
     tree_analyzers = {
         "iac": "platformforge.iac:analyze_hcl",
         "k8s": "platformforge.k8s:analyze_k8s",
@@ -874,7 +955,8 @@ def cmd_change(args: argparse.Namespace) -> int:
 
 
 def cmd_explain(args: argparse.Namespace) -> int:
-    """Evidence chain for a finding id — facts behind the judgment."""
+    """§154 — evidence chain for a finding: why, which fact, which rule,
+    which source, which version, and what unlocks an unresolved state."""
     doc = json.loads(Path(args.path).read_text())
     findings = doc.get("findings", doc if isinstance(doc, list) else [])
     f = next((x for x in findings if x.get("finding_id") == args.name
@@ -887,7 +969,30 @@ def cmd_explain(args: argparse.Namespace) -> int:
     by_id = {x.get("fact_id"): x for x in facts_doc}
     chain = [{"fact_id": e, "fact": by_id.get(e, "unresolved")}
              for e in f.get("evidence", [])]
-    return _emit({"finding": f, "evidence_chain": chain}, args)
+    # §154 — resolve the rule's provenance: source(s) + version gate
+    rule_meta: dict[str, Any] = {"rule_id": f.get("rule_id")}
+    try:
+        from platformforge.rules import load_catalog
+        rule = next((r for r in load_catalog(REPO_ROOT / "rules" / "catalog")
+                     if r.rule_id == f.get("rule_id")), None)
+        if rule:
+            rule_meta.update({
+                "sources": getattr(rule, "sources", []),
+                "versions": getattr(rule, "versions", {}),
+                "severity": getattr(rule, "severity", None)})
+    except (OSError, ValueError):
+        pass
+    # what unlocks an unresolved/verdict-weak state
+    unlock = []
+    if not f.get("evidence"):
+        unlock.append("collect the facts named by the rule's "
+                      "applies_to and re-run judge")
+    for note in f.get("version_notes") or []:
+        unlock.append(f"declare the product version → {note}")
+    if f.get("status") == "skipped":
+        unlock.append("rule skipped: " + f.get("reason", "?"))
+    return _emit({"finding": f, "evidence_chain": chain,
+                  "rule": rule_meta, "unlock": unlock}, args)
 
 
 def cmd_recommend(args: argparse.Namespace) -> int:
@@ -904,21 +1009,33 @@ def cmd_recommend(args: argparse.Namespace) -> int:
                             "reason": "finding without evidence — "
                                       "recommendation refused by contract"})
             continue
+        # §155 — qualitative expected direction only; quantified effect
+        # would require a measured benchmark (model enforces this).
+        sev = f.get("severity", "medium")
         recs.append(Recommendation(
             title=f.get("title") or f["rule_id"],
-            severity=f.get("severity", "medium"),
+            severity=sev,
             confidence="declared",
             evidence=f["evidence"],
             root_cause=f.get("message", ""),
             proposed_change=[f.get("remediation",
                                    "resolve rule violation")],
             basis={"declared": f["evidence"]},
-            risks=[],
-            validation=["re-run analyze+judge after change"],
-            rollback=["revert the diff"],
+            risks=[f"change touches evidence {e}" for e in f["evidence"][:3]]
+                  or ["no evidence — refused upstream"],
+            validation=[("re-run analyze+judge after change; finding "
+                         f"{f.get('rule_id')} must flip to passed")],
+            rollback=["revert the diff; verify no new violations"],
+            tradeoffs=[("remediation may require downtime/coordination "
+                        "depending on blast radius — assess before "
+                        "apply")],
+            expected_effect="direction: risk reduction "
+                            "(unquantified — no benchmark exists)",
         ).to_dict())
     return _emit({"recommendations": recs, "count": len(recs),
-                  "refused": skipped}, args)
+                  "refused": skipped,
+                  "boundary": "expected_effect is directional; quantified "
+                              "claims require benchmark_ref"}, args)
 
 
 def cmd_capability(args: argparse.Namespace) -> int:
@@ -926,12 +1043,9 @@ def cmd_capability(args: argparse.Namespace) -> int:
     from platformforge.mcp.registry import CAPABILITIES
     sub = args.capability_cmd
     if sub == "list":
-        return _emit({"capabilities": [
-            {"name": c.name, "description": c.description,
-             "bounds": {"max_results": c.max_results,
-                        "max_bytes": c.max_bytes,
-                        "detail_levels": list(c.detail_levels)}}
-            for c in CAPABILITIES.values()]}, args)
+        return _emit({"capabilities": [c.contract()
+                                       for c in CAPABILITIES.values()]},
+                     args)
     if sub == "describe":
         c = CAPABILITIES.get(args.name or "")
         if not c:
@@ -939,10 +1053,36 @@ def cmd_capability(args: argparse.Namespace) -> int:
                           "name": args.name,
                           "unlock": "platformforge capability list"},
                          args, 2)
-        return _emit({"name": c.name, "description": c.description,
-                      "input_schema": c.input_schema, "handler": c.handler,
-                      "bounds": {"max_results": c.max_results,
-                                 "max_bytes": c.max_bytes}}, args)
+        return _emit({**c.contract(), "description": c.description,
+                      "handler": c.handler}, args)
+    if sub == "check":
+        # §139 — capability negotiation: "can you analyze X at version Y?"
+        dom, ver = (args.domain or ""), (args.version or "")
+        matches = [c for c in CAPABILITIES.values()
+                   if c.domain == dom or dom in c.description.lower()
+                   or dom in c.name]
+        if not matches:
+            return _emit({"supported": False,
+                          "refusal": "platform.capability.unresolved",
+                          "domain": dom,
+                          "unlock": "platformforge capability list"},
+                         args, 2)
+        out = {"supported": True, "domain": dom, "version": ver,
+               "capabilities": [c.contract() for c in matches],
+               "version_note": None}
+        if ver:
+            from platformforge.knowledge.registry import SourceRegistry
+            reg = SourceRegistry.default()
+            srcs = [s for s in reg.entries.values()
+                    if dom and dom.split("-")[0] in (s.product or s.id)]
+            out["version_note"] = {
+                "declared": ver,
+                "known_sources": [{"id": s.id, "version": s.version,
+                                   "freshness": s.freshness()}
+                                  for s in srcs],
+                "caveat": "version support is evidence-bound — unknown "
+                          "versions degrade to unresolved, not assumed"}
+        return _emit(out, args)
     if sub == "manifest":
         from platformforge.forge import capability_manifest
         return _emit(capability_manifest(args.repo), args)
@@ -1100,7 +1240,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     verb("init", cmd_init, "scaffold .platformforge/",
          lambda sp: sp.add_argument("--name", default=""))
-    verb("doctor", cmd_doctor, "environment health-check")
+    verb("doctor", cmd_doctor, "environment health-check",
+         lambda sp: sp.add_argument("--deep", action="store_true",
+                                    help="§141 contract checks (config, "
+                                         "manifest, knowledge, parity, "
+                                         "index, store)"))
     verb("status", cmd_status, "workspace + store status")
     verb("inspect", cmd_inspect, "inventory analyzable artifacts")
     verb("judge", cmd_judge, "apply rule catalog to facts",
@@ -1214,7 +1358,9 @@ def build_parser() -> argparse.ArgumentParser:
                              "supply", "catalog", "crossplane", "cloud-aws",
                              "cloud-azure", "cloud-gcp", "helm",
                              "kustomize", "hubble", "kyverno", "cosign",
-                             "slsa"])
+                             "slsa", "ownership", "contradictions"])
+    sp.add_argument("--facts", default="",
+                    help="facts doc for ownership/contradiction joins")
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")
@@ -1355,8 +1501,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("capability", help="capability registry")
     _add_common(sp)
     sp.add_argument("capability_cmd",
-                    choices=["list", "describe", "manifest"])
+                    choices=["list", "describe", "manifest", "check"])
     sp.add_argument("--name", default="")
+    sp.add_argument("--domain", default="",
+                    help="§139 — domain to negotiate, e.g. k8s")
+    sp.add_argument("--version", default="",
+                    help="§139 — product version to check support for")
     sp.set_defaults(func=cmd_capability)
 
     sp = sub.add_parser("risk", help="§130 change-risk assessment")
@@ -1396,6 +1546,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--execute", action="store_true",
                     help="actually delete (default: dry-run)")
     sp.set_defaults(func=cmd_store)
+
+    sp = sub.add_parser("bench", help="§148–150 measured benchmarks")
+    _add_common(sp)
+    sp.add_argument("bench_cmd", choices=["run", "tokens"], nargs="?",
+                    default="run")
+    sp.add_argument("--repeat", type=int, default=3)
+    sp.set_defaults(func=cmd_bench)
     return p
 
 

@@ -17,6 +17,7 @@ from platformforge.core.hashing import sha256_obj
 
 @dataclass
 class Receipt:
+    """§152 receipt v2 — auditable, replayable operation record."""
     operation: str
     inputs: list[Any] = field(default_factory=list)
     hashes: dict[str, str] = field(default_factory=dict)
@@ -24,6 +25,8 @@ class Receipt:
     versions: dict[str, str] = field(default_factory=dict)
     facts: list[str] = field(default_factory=list)
     findings: list[str] = field(default_factory=list)
+    sources: list[str] = field(default_factory=list)      # §152
+    cost: dict[str, Any] = field(default_factory=dict)    # bytes/tokens
     graph: str | None = None
     started_at: float = 0.0
     ended_at: float = 0.0

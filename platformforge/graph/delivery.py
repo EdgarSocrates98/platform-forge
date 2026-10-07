@@ -104,3 +104,80 @@ def delivery_edges(facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
                         f"fact:{wf}", "generated_by", "image_repo",
                         [wfid, wf])
     return edges
+
+
+def cross_repo_edges(facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """§135 — resolve the multi-repo chain across workspace members:
+
+        application repo → image → gitops repo → workload
+        infra repo → cluster
+        workload → cluster
+
+    Facts carry `attrs.workspace_member` when collected via a multi-member
+    workspace. Joins are name/key-based and therefore provenance `inferred`
+    — they are hypotheses to confirm, never observed links."""
+    edges: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    def add(sk: str, s: str, dk: str, d: str, ek: str, via: str,
+            fids: list[str]) -> None:
+        if (sk, ek, d) in seen:
+            return
+        seen.add((sk, ek, d))
+        edges.append({"src_kind": sk, "src": s, "dst_kind": dk, "dst": d,
+                      "kind": ek, "via": via, "fact_ids": fids,
+                      "provenance": "inferred"})
+
+    clusters: dict[str, tuple[str, str]] = {}   # name → (member, fact_id)
+    gitops_dests: list[tuple[str, str, str, str]] = []  # (server/name, ns, member, fid)
+    member_of: dict[str, str] = {}              # fact_id → member
+
+    for f in facts:
+        a = f.get("attrs") or {}
+        fid = f.get("fact_id", "")
+        member = a.get("workspace_member", "")
+        if member:
+            member_of[fid] = member
+        kind = f.get("kind", "")
+        if kind.endswith(".cluster") or (
+                kind == "iac.resource"
+                and "cluster" in str(a.get("type", "")).lower()):
+            cname = str(a.get("name") or f.get("location") or "")
+            if cname:
+                clusters[cname] = (member, fid)
+        if kind == "gitops.argocd_app":
+            server = str(a.get("dest_server") or a.get("dest_name") or "")
+            ns = str(a.get("dest_namespace") or "")
+            if server:
+                gitops_dests.append((server, ns, member, fid))
+
+    # gitops app → cluster (dest server/name match), possibly cross-member
+    for server, ns, member, gfid in gitops_dests:
+        skey = server.rsplit("/", 1)[-1]
+        for cname, (cmember, cfid) in clusters.items():
+            if skey in (cname, server) or cname in skey:
+                add("argocd_application", f"fact:{gfid}", "cluster", cname,
+                    "deploys_to", "dest_server_match", [gfid, cfid])
+                if member and cmember and member != cmember:
+                    add("repository", member, "cluster", cname,
+                        "deploys_to", "cross_repo_gitops", [gfid, cfid])
+
+    # infra member → cluster it provisioned (iac/crossplane fact lives there)
+    for cname, (cmember, cfid) in clusters.items():
+        if cmember:
+            add("cluster", cname, "repository", cmember,
+                "provisioned_by", "member_attr", [cfid])
+
+    # gitops repo member → workloads it deploys to in another member
+    for f in facts:
+        if f.get("kind") != "k8s.workload":
+            continue
+        a = f.get("attrs") or {}
+        wmember = a.get("workspace_member", "")
+        ns = a.get("namespace", "")
+        for server, gns, gmember, gfid in gitops_dests:
+            if gns == ns and gmember and wmember and gmember != wmember:
+                add("repository", gmember, "workload",
+                    f"fact:{f['fact_id']}", "deploys_to",
+                    "cross_repo_ns_match", [gfid, f["fact_id"]])
+    return edges

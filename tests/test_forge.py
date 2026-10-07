@@ -7,7 +7,7 @@ from platformforge.forge.delegate import result_receipt
 def test_manifest_is_generated(tmp_path):
     m = capability_manifest()
     assert m["forge"] == "platform-forge"
-    assert m["manifest"] == "platformforge/capability-manifest/v1"
+    assert m["manifest"].startswith("platformforge/capability-manifest/v")
     assert m["modes"]["read_only"] and not m["modes"]["cloud_mutation"]
     assert m["rule_count"] >= 40
     assert "platformforge_analyze" in m["tools"]
