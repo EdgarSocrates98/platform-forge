@@ -42,7 +42,9 @@ def _rules_of(case: dict) -> dict[str, list[str]]:
     exp = case.get("expect", {})
     return {"positive": list(exp.get("rules_fired", [])),
             "negative": list(exp.get("rules_not_fired", [])),
-            "version": list(exp.get("version_notes", []))}
+            "version": (list(exp.get("unresolved", []))
+                        + list(exp.get("rules_skipped", []))
+                        + list(exp.get("passed", [])))}
 
 
 def _lab_rules_of(doc: dict) -> dict[str, list[str]]:

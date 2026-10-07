@@ -159,9 +159,9 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
         return {"verdict": "pass" if not missing else "fail",
                 "missing_sources": missing}
     if t == "version":
-        # version-gated rules must skip without a declared version and
-        # fire (or stay clean) with one — never a strong verdict on
-        # unknown versions
+        # Tri-state contract (cycle 2.1): compatible → passed/violated;
+        # incompatible → version-mismatch skip; unknown → unresolved
+        # finding with refusal metadata — never a strong verdict.
         from platformforge.models import Fact
         from platformforge.rules import RuleEngine
         fs = [Fact.from_dict(f)
@@ -169,25 +169,44 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
         engine = RuleEngine(_catalog(),
                             versions=case.get("versions"))
         findings, skipped = engine.evaluate(fs)
-        want_skipped = set(exp.get("rules_skipped", []))
         got_skipped = {s.get("rule_id") for s in skipped}
-        fired = {f.rule_id for f in findings if f.status == "violated"}
+        by_status: dict[str, set[str]] = {}
+        for f in findings:
+            by_status.setdefault(f.status, set()).add(f.rule_id)
+        want_skipped = set(exp.get("rules_skipped", []))
         missing_skip = sorted(want_skipped - got_skipped)
-        extra_fire = sorted(fired & set(exp.get("rules_not_fired", [])))
-        missing_fire = sorted(set(exp.get("rules_fired", [])) - fired)
-        # an unresolved-version note must ride along when a gated rule
-        # fired without a declared version (§20 semantics)
-        noted = {f.rule_id for f in findings
-                 if (f.attrs or {}).get("version_notes")}
-        want_noted = set(exp.get("version_notes", []))
-        missing_notes = sorted(want_noted - noted)
-        ok = not (missing_skip or extra_fire or missing_fire
-                  or missing_notes)
+        checks: dict[str, tuple[set[str], str]] = {
+            "rules_fired": (set(exp.get("rules_fired", [])), "violated"),
+            "rules_not_fired": (set(exp.get("rules_not_fired", [])),
+                                "violated"),
+            "unresolved": (set(exp.get("unresolved", [])), "unresolved"),
+            "passed": (set(exp.get("passed", [])), "passed"),
+        }
+        missing: dict[str, list[str]] = {}
+        fired = by_status.get("violated", set())
+        strong = fired | by_status.get("passed", set())
+        for key, (want, status) in checks.items():
+            if not want:
+                continue
+            if key == "rules_not_fired":
+                bad = sorted(want & fired)
+                if bad:
+                    missing["rules_not_fired"] = bad
+                continue
+            got = by_status.get(status, set())
+            miss = sorted(want - got)
+            if miss:
+                missing[key] = miss
+        # hard invariant: a rule expected unresolved must never emit a
+        # strong verdict (overclaim), and vice-versa
+        overclaim = sorted(set(exp.get("unresolved", [])) & strong)
+        ok = not (missing_skip or missing or overclaim)
         return {"verdict": "pass" if ok else "fail",
-                "skipped": sorted(got_skipped), "fired": sorted(fired),
-                "version_notes": sorted(noted),
-                "missing_skips": missing_skip,
-                "missing_fires": missing_fire}
+                "skipped": sorted(got_skipped),
+                "by_status": {k: sorted(v) for k, v in by_status.items()},
+                "overclaim": overclaim,
+                "missing": missing,
+                "missing_skips": missing_skip}
     if t in ("property", "metamorphic"):
         if exp.get("check") == "rtk_round_trip":
             from platformforge.core.store import ArtifactStore

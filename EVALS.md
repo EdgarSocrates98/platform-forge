@@ -18,6 +18,12 @@ A case declares `analyzer`, `fixture`, `expect.rules_fired` /
 `rules_not_fired`, optional `versions` (product version map for gated
 rules) or `expect.sources` (knowledge cases).
 
+`type: version` cases assert the tri-state: `expect.unresolved`
+(status=unresolved findings, implies no violated), `expect.passed`,
+`expect.rules_skipped` (version-mismatch), `expect.rules_fired`. The
+grader fails on *overclaim* — a rule expected unresolved that emitted a
+strong verdict.
+
 ## Variants per rule (§121)
 
 positive, negative, boundary, unresolved, version — coverage is reported

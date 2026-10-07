@@ -191,17 +191,30 @@ class RuleEngine:
         self.rules = [r for r in rules if r.enabled]
         self.versions = versions or {}
 
-    def _version_gate(self, rule: Rule) -> tuple[bool, list[str]]:
-        """(applies, unresolved_notes). Unknown versions mark unresolved,
-        never silently skip."""
-        notes = []
+    def _version_gate(self, rule: Rule) -> tuple[str, list[dict[str, Any]]]:
+        """→ (state, requirements) — state ∈ {decidable, unresolved, incompatible}.
+
+        - decidable: every required version known and satisfying (or the rule
+          has no version requirements) → normal passed/violated verdicts.
+        - incompatible: a required version is known and violates the
+          constraint → explicit ``version-mismatch`` skip (auditable, never
+          silent).
+        - unresolved: ≥1 required version unknown → ``unresolved`` findings
+          carrying refusal metadata; the rule must never emit a strong
+          verdict without its required version.
+        """
+        reqs: list[dict[str, Any]] = []
+        state = "decidable"
         for product, constraint in rule.versions.items():
-            sat = version_satisfies(self.versions.get(product), constraint)
+            declared = self.versions.get(product)
+            reqs.append({"product": product, "constraint": constraint,
+                         "declared": declared})
+            sat = version_satisfies(declared, constraint)
             if sat is False:
-                return False, notes
+                return "incompatible", reqs
             if sat is None:
-                notes.append(f"platform.version.unresolved:{product}({constraint})")
-        return True, notes
+                state = "unresolved"
+        return state, reqs
 
     def _eval_predicates(self, fact: Fact, conds: dict[str, Any]) -> bool:
         doc = {"kind": fact.kind, "source": fact.source, "location": fact.location,
@@ -227,9 +240,11 @@ class RuleEngine:
         findings: list[Finding] = []
         skipped: list[dict[str, Any]] = []
         for rule in self.rules:
-            ok, notes = self._version_gate(rule)
-            if not ok:
-                skipped.append({"rule_id": rule.rule_id, "reason": "version-mismatch"})
+            state, reqs = self._version_gate(rule)
+            if state == "incompatible":
+                skipped.append({"rule_id": rule.rule_id,
+                                "reason": "version-mismatch",
+                                "requirements": reqs})
                 continue
             if rule.scope == "aggregate":
                 skipped.append({"rule_id": rule.rule_id,
@@ -245,13 +260,36 @@ class RuleEngine:
             if (kinds or prefix) and not targets:
                 skipped.append({"rule_id": rule.rule_id,
                                 "reason": f"no facts of kind "
-                                          f"{kinds or prefix}"})
+                                          f"{kinds or prefix}",
+                                "version_state": state})
+            if state == "unresolved":
+                unres = [r for r in reqs if version_satisfies(
+                    r["declared"], r["constraint"]) is None]
+                for fact in targets:
+                    primary = unres[0] if unres else reqs[0]
+                    attrs = dict(rule.action)
+                    attrs["refusal_code"] = "platform.version.unresolved"
+                    attrs["required_version"] = primary["product"]
+                    attrs["constraint"] = primary["constraint"]
+                    attrs["requirements"] = reqs
+                    attrs["unlock"] = (
+                        f"declare the {primary['product']} version "
+                        f"(e.g. --versions '{{\"{primary['product']}\": "
+                        f"\"x.y.z\"}}')")
+                    if rule.sources:
+                        attrs["sources"] = list(rule.sources)
+                    findings.append(Finding(
+                        rule_id=rule.rule_id, severity=rule.severity,
+                        status="unresolved", evidence=[fact.fact_id],
+                        title=rule.title,
+                        message=rule.message or rule.title,
+                        location=fact.location, attrs=attrs,
+                    ))
+                continue
             for fact in targets:
                 violated = self._eval_predicates(fact, rule.conditions)
                 status = "violated" if violated else "passed"
                 attrs = dict(rule.action)
-                if notes:
-                    attrs["version_notes"] = notes
                 if rule.sources:
                     attrs["sources"] = list(rule.sources)
                 findings.append(Finding(

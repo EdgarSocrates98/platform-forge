@@ -62,6 +62,9 @@ def _has_unresolved(obj: Any) -> bool:
         for k, v in obj.items():
             if k in ("unresolved", "refused", "refusals") and v:
                 return True
+            # findings/refusals carry status fields — strict must catch them
+            if k == "status" and v in ("unresolved", "refused"):
+                return True
             if _has_unresolved(v):
                 return True
     elif isinstance(obj, list):
@@ -989,8 +992,10 @@ def cmd_explain(args: argparse.Namespace) -> int:
     if not f.get("evidence"):
         unlock.append("collect the facts named by the rule's "
                       "applies_to and re-run judge")
-    for note in f.get("version_notes") or []:
-        unlock.append(f"declare the product version → {note}")
+    fa = f.get("attrs") or {}
+    if fa.get("refusal_code") == "platform.version.unresolved":
+        unlock.append(fa.get("unlock") or
+                      "declare the required product version and re-run judge")
     if f.get("status") == "skipped":
         unlock.append("rule skipped: " + f.get("reason", "?"))
     return _emit({"finding": f, "evidence_chain": chain,

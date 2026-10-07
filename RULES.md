@@ -21,15 +21,20 @@ over `Fact`s. A rule is judgment over evidence, never over prose.
 
 - `when.all|any|none` predicate lists; ops: eq, neq, in, contains, empty,
   not_empty, gte, lte, exists, matches, any.
-- `versions` gates the rule (ADR-0007): unknown version → `version_notes`
-  unresolved marker, mismatch → skipped with reason.
+- `versions` gates the rule (ADR-0007, tri-state): known-compatible →
+  normal `passed`/`violated`; known-incompatible → `version-mismatch`
+  skip; unknown → `unresolved` finding with `refusal_code`
+  `platform.version.unresolved`, `required_version`, `constraint` and
+  `unlock` in `attrs` — never a strong verdict without the version.
 - Version-gated rules use `judge --versions '{"kubernetes":"1.29"}'`.
+  Under `--strict`, any unresolved finding exits 2.
 
 ## Findings
 
-Status `passed|violated|skipped`; violated findings carry `evidence`
-(non-empty `fact_id` list — enforced), `attrs.sources` from the rule, and
-`version_notes` when applicable. `policy list/check` exposes the catalog.
+Status `passed|violated|unresolved|not-applicable`; violated findings
+carry `evidence` (non-empty `fact_id` list — enforced), `attrs.sources`
+from the rule; unresolved findings carry refusal metadata
+(`refusal_code`, `unlock`). `policy list/check` exposes the catalog.
 
 ## Coverage & precision
 

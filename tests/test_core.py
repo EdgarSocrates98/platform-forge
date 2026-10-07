@@ -111,6 +111,17 @@ def test_rule_engine_violation_and_version_gate(tmp_path):
     # version mismatch -> skipped, not applied
     findings2, skipped2 = RuleEngine(rules, versions={"kubernetes": "1.10"}).evaluate([f])
     assert not findings2 and skipped2[0]["reason"] == "version-mismatch"
+    # unknown version -> unresolved finding with refusal metadata, never
+    # a strong verdict (cycle 2.1 §13–22)
+    findings3, _ = RuleEngine(rules).evaluate([f])
+    f3 = findings3[0]
+    assert f3.status == "unresolved" and f3.evidence == [f.fact_id]
+    assert f3.attrs["refusal_code"] == "platform.version.unresolved"
+    assert f3.attrs["required_version"] == "kubernetes"
+    assert f3.attrs["constraint"] == ">=1.20" and f3.attrs["unlock"]
+    # boundary version -> satisfies the floor, evaluates normally
+    findings4, _ = RuleEngine(rules, versions={"kubernetes": "1.20"}).evaluate([f])
+    assert findings4[0].status == "violated"
 
 
 def test_contracts_validate_models():

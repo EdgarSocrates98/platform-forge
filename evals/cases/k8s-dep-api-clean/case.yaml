@@ -1,0 +1,13 @@
+id: k8s-dep-api-clean
+type: version
+variant: version
+case_of: PF-K8S-030
+domain: k8s
+fixture: fixture
+# known-compatible NEGATIVE: version declared and satisfying, but the
+# fixture uses only served APIs → both rules evaluate to `passed`,
+# not violated and not unresolved.
+versions: {kubernetes: "1.29"}
+expect:
+  passed: [PF-K8S-030, PF-K8S-031]
+  rules_not_fired: [PF-K8S-030, PF-K8S-031]
