@@ -107,3 +107,37 @@ def test_product_rules(tmp_path):
     findings, _ = RuleEngine(rules).evaluate(facts)
     v = {f.rule_id for f in findings if f.status == "violated"}
     assert "PF-CAT-001" in v
+
+
+def test_golden_path_strict_schema(tmp_path):
+    """§96 — structural validation, not just field presence."""
+    from platformforge.product.golden_paths.engine import load_library
+    doc = {"schema": "platformforge/golden-paths/v1", "paths": [{
+        "id": "x", "name": "X", "version": "1", "use_case": "u",
+        "inputs": [{"name": "svc"}], "outputs": ["repo"],
+        "steps": [{"id": "s", "produces": "repo"}], "policies": ["p"],
+        "ownership": {"owner_field": "team"},
+        "observability": {"metrics": "required"},
+        "security": {"sbom": "required"}, "cost": {"tag_required": ["t"]},
+        "slo": {"availability": 99.9},
+        "escape_hatches": {"happy_path": "h", "escape_hatch": "e"},
+        "supported_variants": []}]}
+    import yaml as y
+    good = tmp_path / "good.yaml"
+    good.write_text(y.safe_dump(doc))
+    lib = load_library(good)
+    assert len(lib["paths"]) == 1 and not lib["invalid"]
+    # break each structural requirement
+    for mutate in (
+            lambda d: d["paths"][0].update(steps=[{"id": "s"}]),
+            lambda d: d["paths"][0].update(ownership={}),
+            lambda d: d["paths"][0]["escape_hatches"].pop("escape_hatch"),
+            lambda d: d["paths"][0].update(observability={})):
+        import copy
+        bad = copy.deepcopy(doc)
+        mutate(bad)
+        p = tmp_path / "bad.yaml"
+        p.write_text(y.safe_dump(bad))
+        lib = load_library(p)
+        assert lib["invalid"], mutate
+        assert not lib["paths"]

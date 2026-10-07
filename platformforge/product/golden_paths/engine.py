@@ -25,7 +25,7 @@ def load_library(path: str | Path | None = None) -> dict[str, Any]:
     for p in doc.get("paths") or []:
         try:
             paths.append(GoldenPath.from_dict(p))
-        except ValueError as exc:
+        except (ValueError, TypeError) as exc:
             invalid.append(str(exc))
     return {"paths": paths, "invalid": invalid,
             "schema": doc.get("schema", "")}

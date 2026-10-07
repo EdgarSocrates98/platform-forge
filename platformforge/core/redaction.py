@@ -18,7 +18,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("private_key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----")),
     ("jwt", re.compile(r"\beyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\b")),
     ("bearer", re.compile(r"(?i)bearer\s+[A-Za-z0-9_\-\.]{20,}")),
-    ("password_kv", re.compile(r"(?i)\b(pass(word)?|passwd|pwd)['\"\s:=]+[^\s'\"]{6,}")),
+    # Delimiter required (:= or quote) — prose like "password policy" must
+    # not redact (§88 false-positive guard).
+    ("password_kv", re.compile(r"(?i)\b(pass(word)?|passwd|pwd)\s*[:='\"]\s*['\"]?[^\s'\"]{6,}")),
     ("conn_string", re.compile(r"\b(?:postgres|mysql|mongodb|redis|amqp|mssql|sqlserver)://[^\s'\"]+")),
     ("generic_secret_kv", re.compile(r"(?i)\b(api[_-]?key|secret|token)['\"\s:=]+[A-Za-z0-9_\-\.]{16,}")),
 ]

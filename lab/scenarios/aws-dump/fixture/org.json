@@ -1,0 +1,4 @@
+{"Organization": {"Id": "o-example", "Arn": "arn:aws:organizations::111:organization/o-example", "MasterAccountId": "111"},
+ "Accounts": [{"Id": "111", "Name": "root", "Status": "ACTIVE"},
+              {"Id": "222", "Name": "prod", "Status": "ACTIVE"}],
+ "OrganizationalUnits": [{"Id": "ou-1", "Name": "workloads"}]}

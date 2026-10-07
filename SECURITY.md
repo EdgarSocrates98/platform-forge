@@ -32,8 +32,34 @@ named result, never "no risk".
 - `ownership.conflicted` / `state.contradiction` surface disagreement
   instead of picking a silent winner (§116, §137).
 
+## Raw vs redacted artifact policy (§89)
+
+Two artifact classes, explicitly separated:
+
+- **raw artifact** — the source file/dump on disk. The host may read it;
+  facts cite it by `source`/`location` *pointer only*. Raw content never
+  enters facts, findings, receipts, context packs, FTS index, Caveman
+  output or MCP responses.
+- **redacted artifact** — any content that crosses the boundary
+  (index insert, pack file body, compressed text, finding message).
+  `redact_text_report` runs first — including `caveman mode=off` —
+  and the redaction receipt records only `label`, `count`, `location`
+  and a sha256 pattern-set hash (§90). Secret values are never stored
+  anywhere in the receipt chain.
+
+Who returns what: analyzers and the index return *pointers* to raw
+artifacts; pack/compress/receipt paths return redacted content. A caller
+asking for raw file content through a bounded surface gets a refusal
+with an unlock path (read it yourself on the host).
+
 ## Tests
 
 `tests/test_wave_k.py` + `test_wave_l.py` cover: secret never in
 ContextPack / MCP response / Finding / Caveman output; raw artifact
 pointers don't expose content; version-gated Kyverno behavior.
+`tests/test_redaction.py` covers per-pattern detection (JWT, GitHub/
+GitLab/Slack tokens, private key, password kv, connection strings),
+receipt purity, index-before-FTS redaction, caveman mode=off, and
+false-positive guards (§86–90). `tests/test_offline.py` blocks sockets
+at the syscall level — a network attempt in the core pipeline is a test
+failure, not a convention (§91).

@@ -1,0 +1,4 @@
+{"Buckets": [{"Name": "logs-prod"}, {"Name": "data-lake"}],
+ "DBInstances": [{"DBInstanceArn": "arn:aws:rds:us-east-1:111:db/orders",
+                  "Engine": "postgres", "PubliclyAccessible": false,
+                  "StorageEncrypted": true, "MultiAZ": true}]}

@@ -36,10 +36,35 @@ class GoldenPath:
 
     @classmethod
     def from_dict(cls, doc: dict[str, Any]) -> GoldenPath:
+        pid = doc.get("id", "?")
         missing = [f for f in REQUIRED_FIELDS if f not in doc]
         if missing:
-            raise ValueError(f"golden path {doc.get('id', '?')} missing "
+            raise ValueError(f"golden path {pid} missing "
                              f"required fields: {missing}")
+        # §96 — structural validation, not just presence.
+        for i in doc["inputs"]:
+            if not isinstance(i, dict) or not i.get("name"):
+                raise ValueError(f"golden path {pid}: input without name")
+        for s in doc["steps"]:
+            if not isinstance(s, dict) or not s.get("id") \
+                    or not s.get("produces"):
+                raise ValueError(f"golden path {pid}: step without "
+                                 "id/produces")
+        if not doc["ownership"].get("owner_field"):
+            raise ValueError(f"golden path {pid}: ownership lacks "
+                             "owner_field")
+        for f in ("observability", "security", "cost"):
+            if not isinstance(doc[f], dict) or not doc[f]:
+                raise ValueError(f"golden path {pid}: {f} must be a "
+                                 "non-empty mapping")
+        # slo is required as a key but may be {} — infra paths produce no
+        # service-level SLO; empty is an honest "not applicable".
+        if not isinstance(doc["slo"], dict):
+            raise TypeError(f"golden path {pid}: slo must be a mapping")
+        for f in ("happy_path", "escape_hatch"):
+            if not doc["escape_hatches"].get(f):
+                raise ValueError(f"golden path {pid}: escape_hatches "
+                                 f"lacks {f}")
         return cls(**{f: doc[f] for f in REQUIRED_FIELDS})
 
     def capability(self) -> dict[str, Any]:
