@@ -37,6 +37,13 @@ platformforge product maturity --signals s.json
 platformforge mcp tools                    # bounded MCP capability surface
 platformforge mcp serve                    # stdio server (same core as CLI)
 platformforge lab run-all                  # Forge Lab scenario suite
+platformforge lab chaos lab/chaos-pod-kill # fault injection on the graph
+platformforge evals run                    # eval framework (§94–95)
+platformforge collect ./dumps              # sniff dumps → facts
+platformforge diagnose <node> --findings j.json --facts f.json
+platformforge plan findings.json           # ordered remediation plan
+platformforge policy check facts.json      # catalog as policy
+platformforge security ./dumps             # secrets+iam+sbom+supply bundle
 platformforge sdd status --feature F       # spec lifecycle + hash cascade
 platformforge forge manifest               # capability manifest (interop)
 ```

@@ -1,0 +1,8 @@
+id: iam-wildcard-positive
+type: golden
+variant: positive
+case_of: PF-SEC-001
+domain: iam
+fixture: fixture
+expect:
+  rules_fired: [PF-SEC-001]

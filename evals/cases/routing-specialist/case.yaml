@@ -1,0 +1,9 @@
+id: routing-specialist
+type: routing
+signal:
+  task_type: analysis
+  domains: [k8s]
+  complexity: normal
+  evidence_available: true
+expect:
+  mode: specialist

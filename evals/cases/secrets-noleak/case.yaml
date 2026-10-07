@@ -1,0 +1,5 @@
+id: secrets-noleak
+type: security
+fixture: fixture
+expect:
+  must_not_contain: ["AKIAIOSFODNN7EXAMPLE"]

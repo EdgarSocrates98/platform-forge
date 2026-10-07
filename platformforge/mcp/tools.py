@@ -55,6 +55,145 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
     if handler == "cli:agents_list":
         from platformforge.agents import AGENTS
         return {"agents": [a.to_dict() for a in AGENTS.values()]}
+    if handler == "cli:collect":
+        from platformforge.collect import collect
+        return collect(inp["path"])
+    if handler == "cli:diagnose":
+        from platformforge import graph as G
+        from platformforge.diagnose import diagnose
+        g = G.load(repo)
+        findings = json.loads(Path(inp["findings"]).read_text()) \
+            if inp.get("findings") else []
+        facts = json.loads(Path(inp["facts"]).read_text()) \
+            if inp.get("facts") else []
+        return diagnose(g, inp["node"],
+                        findings.get("findings", findings),
+                        facts.get("facts", facts))
+    if handler == "cli:plan":
+        from platformforge.plan import remediation_plan
+        doc = json.loads(Path(inp["findings_path"]).read_text())
+        findings = doc.get("findings", doc if isinstance(doc, list) else [])
+        facts = doc.get("facts", [])
+        try:
+            from platformforge import graph as G
+            g = G.load(repo)
+        except FileNotFoundError:
+            g = None
+        return remediation_plan(findings, g, facts)
+    if handler == "cli:risk":
+        from platformforge.risk.engine import assess_change
+        signals = dict(inp.get("signals") or {})
+        if inp.get("node"):
+            from platformforge import graph as G
+            from platformforge.graph.query import blast_radius
+            from platformforge.risk.signals import signals_from_graph
+            g = G.load(repo)
+            blast = blast_radius(g, inp["node"])
+            signals = {**signals_from_graph(g, [inp["node"]], blast),
+                       **signals}
+        return assess_change(signals)
+    if handler == "cli:explain":
+        doc = json.loads(Path(inp["findings_path"]).read_text())
+        findings = doc.get("findings", doc if isinstance(doc, list) else [])
+        f = next((x for x in findings
+                  if x.get("finding_id") == inp["name"]
+                  or x.get("rule_id") == inp["name"]), None)
+        if not f:
+            return {"refusal": "platform.finding.unresolved",
+                    "name": inp["name"]}
+        facts = json.loads(Path(inp["facts_path"]).read_text()) \
+            if inp.get("facts_path") else doc.get("facts", [])
+        by_id = {x.get("fact_id"): x
+                 for x in (facts.get("facts", facts)
+                           if isinstance(facts, dict) else facts)}
+        return {"finding": f,
+                "evidence_chain": [{"fact_id": e,
+                                    "fact": by_id.get(e, "unresolved")}
+                                   for e in f.get("evidence", [])]}
+    if handler == "cli:recommend":
+        import argparse
+        import contextlib
+        import io
+
+        from platformforge.cli.main import cmd_recommend
+        ns = argparse.Namespace(path=inp["findings_path"], format="json",
+                                strict=False, repo=repo, output=None,
+                                detail_level="normal", offline=False)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cmd_recommend(ns)
+        return json.loads(buf.getvalue())
+    if handler == "cli:security":
+        import argparse
+        import contextlib
+        import io
+
+        from platformforge.cli.main import cmd_security
+        ns = argparse.Namespace(path=inp["path"], repo=repo, format="json",
+                                strict=False, output=None,
+                                detail_level="normal", offline=False)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cmd_security(ns)
+        return json.loads(buf.getvalue())
+    if handler == "cli:reliability":
+        import argparse
+        import contextlib
+        import io
+
+        from platformforge.cli.main import cmd_reliability
+        ns = argparse.Namespace(path=inp["facts_path"], repo=repo,
+                                format="json", strict=False, output=None,
+                                detail_level="normal", offline=False)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cmd_reliability(ns)
+        return json.loads(buf.getvalue())
+    if handler == "cli:drift":
+        from platformforge.iac import analyze_hcl, analyze_state, drift
+        return drift(analyze_hcl(inp["config"])["facts"],
+                     analyze_state(inp["state"])["facts"])
+    if handler == "cli:change_verify":
+        from platformforge.sandbox import sandbox_analyze
+        return sandbox_analyze(inp["root"], patch=inp.get("patch"),
+                               files=inp.get("files"))
+    if handler == "cli:evals":
+        from platformforge.evals import run_all
+        return run_all(inp["cases"] if inp.get("cases") else
+                       __import__("platformforge.evals.runner",
+                                  fromlist=["CASES_DIR"]).CASES_DIR,
+                       type_filter=inp.get("type") or None)
+    if handler == "cli:lab_chaos":
+        from platformforge.lab.chaos import run_scenario
+        return run_scenario(inp["scenario"],
+                            allow_prod=bool(inp.get("allow_prod")))
+    if handler == "cli:correlate":
+        from platformforge import observe as O
+        return O.correlate_spans(inp["path"])
+    if handler == "cli:policy":
+        from platformforge.rules import load_catalog
+        rules = load_catalog(_default_catalog())
+        if inp["op"] == "list":
+            return {"rules": [{"rule_id": r.rule_id, "domain": r.domain,
+                               "severity": r.severity} for r in rules]}
+        from platformforge.models import Fact
+        from platformforge.rules import RuleEngine
+        doc = json.loads(Path(inp["facts_path"]).read_text())
+        facts = [Fact.from_dict(f)
+                 for f in doc.get("facts", doc if isinstance(doc, list)
+                                  else [])]
+        findings, skipped = RuleEngine(rules).evaluate(facts)
+        return {"findings": [f.to_dict() for f in findings],
+                "skipped": skipped,
+                "violated": [f.rule_id for f in findings
+                             if f.status == "violated"]}
+    if handler == "cli:integrate":
+        from platformforge.mcp.parity import detach, integrate
+        return detach(inp["host"], repo) if inp.get("detach") \
+            else integrate(inp["host"], repo)
+    if handler == "cli:capability":
+        from platformforge.forge import capability_manifest
+        return capability_manifest()
     raise ValueError(f"no handler {handler}")
 
 

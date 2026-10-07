@@ -47,17 +47,26 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.integrate/detach` | 13 | adapters | yes | `mcp integrate/detach` | host parity files |
 | `platform.capability.*` | 13 | core | yes | `capability list/describe/manifest` | this registry |
 | `platform.forge.*` | 15 | integrations | yes | `forge manifest/delegate/verify/discover/collect` | A2A envelope + sibling-forge ingress |
+| `platform.collect` | 1+ | core | yes | `collect <path>` | shape-sniff dumps (k8s/plan/state/iam/sbom/supply/finops) → facts; undetected files reported, never dropped; secrets baseline always runs |
+| `platform.plan` | 8+ | core | yes | `plan <findings.json>` | ordered remediation plan (severity→blast), no-evidence steps refused |
+| `platform.correlate` | 8 | sre | yes | `correlate <otel.yaml>` | = `observe otel` |
+| `platform.diff` | 4 | graph | yes | `diff --before f1.json --after f2.json` | facts docs → graphs → diff |
+| `platform.impact` | 4 | graph | yes | `impact --node` | = `graph blast` |
+| `platform.context` | 2 | economy | yes | `context --task --input-budget` | = `tokens pack` |
+| `platform.policy` | 1 | core | yes | `policy check/list` | rule catalog as policy layer |
+| `platform.security` | 10 | security | yes | `security <root>` | secrets+iam+sbom+supply bundle → security-domain judge |
+| `platform.reliability` | 8 | sre | yes | `reliability <facts.json>` | sre+k8s rules only |
+| `platform.integrate` | 13 | adapters | yes | `integrate --host` | = `mcp integrate/detach` |
+| `platform.evals` | 14 | lab | yes | `evals run/list` | §94 types + §95 variants, `evals/cases/*/case.yaml` |
+| `platform.lab.chaos` | 14 | lab | yes | `lab chaos <dir>` | §93 fault injection on the graph (simulation); prod targets refused unless `--allow-prod` |
 
 ### Known gaps (declared, not hidden)
 
-- `platform.collect` — generic ingress adapters (k8s export, cloud dumps)
-  are not implemented; domain analyzers read artifacts directly instead.
-- `platform.plan` as a standalone verb — covered by `analyze plan` +
-  `change verify`.
-- Lab tiers L1–L4 (containers/kind/cloud) and chaos (§93) — L0 static
-  only; higher tiers need a host runtime the offline core doesn't assume.
-- Eval framework (§94) — covered by `tests/` (unit/contract/golden via
-  lab) rather than a separate evals runtime.
+- Lab tiers L1–L4 (containers/kind/cloud) — L0 static + graph-simulated
+  chaos only; higher tiers need a host runtime the offline core doesn't
+  assume.
+- `collect` covers the offline dump shapes listed above; live-provider
+  collectors (kubectl/cloud APIs) stay host-side by design.
 
 `platform.*` is a namespace, not a runtime requirement: every entry is
 implemented locally, offline-capable unless marked otherwise.

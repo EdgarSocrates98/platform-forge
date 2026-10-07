@@ -1,0 +1,13 @@
+{"facts": [
+ {"fact_id": "PF-TST-1", "kind": "k8s.workload", "source": "fixture",
+  "location": "deploy.yaml", "tier": 3, "observed": true,
+  "attrs": {"graph": {"nodes": [{"kind": "workload", "label": "prod/api",
+                                 "attrs": {"env": "staging"}}],
+                       "edges": []}}},
+ {"fact_id": "PF-TST-2", "kind": "k8s.service", "source": "fixture",
+  "location": "svc.yaml", "tier": 3, "observed": true,
+  "attrs": {"graph": {"nodes": [{"kind": "k8s_service", "label": "prod/api-svc"}],
+                       "edges": [{"src_kind": "k8s_service", "src": "prod/api-svc",
+                                   "dst_kind": "workload", "dst": "prod/api",
+                                   "kind": "routes_to"}]}}}
+]}

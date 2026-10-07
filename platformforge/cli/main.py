@@ -449,7 +449,178 @@ def cmd_lab(args: argparse.Namespace) -> int:
     if args.lab_cmd == "run-all":
         out = lab.runner.run_all()
         return _emit(out, args, 0 if not out["failed"] else 2)
+    if args.lab_cmd == "chaos":
+        from platformforge.lab.chaos import run_scenario
+        return _emit(run_scenario(args.path or "",
+                                  allow_prod=args.allow_prod), args)
     return _emit(lab.run(args.path or ""), args)
+
+
+def cmd_collect(args: argparse.Namespace) -> int:
+    """§7 collect — sniff a dumps dir/file, run matching analyzers."""
+    from platformforge.collect import collect
+    return _emit(collect(args.path or args.repo), args)
+
+
+def _json_doc(path: str, key: str) -> list:
+    doc = json.loads(Path(path).read_text())
+    if isinstance(doc, dict):
+        return doc.get(key, [])
+    return doc if isinstance(doc, list) else []
+
+
+def cmd_diagnose(args: argparse.Namespace) -> int:
+    """§7 diagnose — compose graph + findings for one node."""
+    g = _load_graph_or_refuse(args.repo)
+    if g is None:
+        return _emit({"refusal": "PF-GRAPH-NOGRAPH",
+                      "unlock": "platformforge graph build <facts.json>"},
+                     args, 2)
+    from platformforge.diagnose import diagnose
+    findings = _json_doc(args.findings, "findings") if args.findings else []
+    facts = _json_doc(args.facts, "facts") if args.facts else []
+    return _emit(diagnose(g, args.node, findings, facts), args)
+
+
+def cmd_plan(args: argparse.Namespace) -> int:
+    """§7 plan — findings → ordered remediation plan."""
+    from platformforge.plan import remediation_plan
+    findings = _json_doc(args.path, "findings")
+    facts = _json_doc(args.facts, "facts") if args.facts else []
+    g = _load_graph_or_refuse(args.repo)   # optional enrichment
+    return _emit(remediation_plan(findings, g, facts), args)
+
+
+def cmd_correlate(args: argparse.Namespace) -> int:
+    """§7 correlate — OTel/telemetry correlation (observe otel)."""
+    from platformforge import observe as O
+    return _emit(O.correlate_spans(args.path), args)
+
+
+def _build_graph_from(path: str):
+    from platformforge.graph import GraphBuilder
+    doc = json.loads(Path(path).read_text())
+    return GraphBuilder().from_facts(
+        doc.get("facts", doc if isinstance(doc, list) else [])).graph
+
+
+def cmd_diff(args: argparse.Namespace) -> int:
+    """§7 diff — graph diff between two facts docs."""
+    from platformforge.graph.diff import diff as graph_diff
+    return _emit(graph_diff(_build_graph_from(args.before),
+                            _build_graph_from(args.after)), args)
+
+
+def cmd_drift(args: argparse.Namespace) -> int:
+    """§7 drift — desired (HCL) vs observed (state)."""
+    from platformforge.iac import analyze_hcl, analyze_state, drift
+    desired = analyze_hcl(args.config)["facts"]
+    observed = analyze_state(args.state)["facts"]
+    return _emit(drift(desired, observed), args)
+
+
+def cmd_impact(args: argparse.Namespace) -> int:
+    """§7 impact — blast radius for a graph node."""
+    g = _load_graph_or_refuse(args.repo)
+    if g is None:
+        return _emit({"refusal": "PF-GRAPH-NOGRAPH",
+                      "unlock": "platformforge graph build <facts.json>"},
+                     args, 2)
+    from platformforge.graph.query import blast_radius
+    return _emit(blast_radius(g, args.node), args)
+
+
+def cmd_context(args: argparse.Namespace) -> int:
+    """§7 context — context pack for a task (tokens pack)."""
+    from platformforge.tokensave.budget import Budget
+    from platformforge.tokensave.ledger import TokenLedger
+    from platformforge.tokensave.packs import ContextPackBuilder
+    pack = ContextPackBuilder(_index(args), TokenLedger(args.repo)).build(
+        task=args.task, budget=Budget(input_budget=args.input_budget),
+        changed_files=args.changed or [])
+    return _emit(pack, args)
+
+
+def cmd_policy(args: argparse.Namespace) -> int:
+    """§7 policy — the rule catalog IS the policy layer."""
+    from platformforge.rules import load_catalog
+    cat_dir = Path(__file__).resolve().parents[2] / "rules" / "catalog"
+    rules = load_catalog(cat_dir)
+    if args.policy_cmd == "list":
+        return _emit({"rules": [{"rule_id": r.rule_id, "domain": r.domain,
+                                 "severity": r.severity}
+                                for r in rules]}, args)
+    from platformforge.models import Fact
+    from platformforge.rules import RuleEngine
+    facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]
+    findings, skipped = RuleEngine(rules).evaluate(facts)
+    out = {"findings": [f.to_dict() for f in findings],
+           "skipped": skipped,
+           "violated": [f.rule_id for f in findings
+                        if f.status == "violated"]}
+    return _emit(out, args)
+
+
+def cmd_security(args: argparse.Namespace) -> int:
+    """§7 security — scan bundle: secrets + iam + sbom + supply → judge."""
+    from platformforge.models import Fact
+    from platformforge.rules import RuleEngine, load_catalog
+    from platformforge.security import analyze_iam_policy, analyze_sbom, analyze_supply, scan_secrets
+    root = Path(args.path or args.repo)
+    facts = scan_secrets(root)["facts"]
+    extras = {"iam": ("policy.json", analyze_iam_policy),
+              "sbom": ("sbom.json", analyze_sbom),
+              "supply": ("supply.json", analyze_supply)}
+    present = []
+    for name, (fname, fn) in extras.items():
+        p = root / fname
+        if p.exists():
+            facts += fn(str(p))["facts"]
+            present.append(name)
+    cat_dir = Path(__file__).resolve().parents[2] / "rules" / "catalog"
+    cat = [r for r in load_catalog(cat_dir) if r.domain == "security"]
+    findings, _ = RuleEngine(cat).evaluate(
+        [Fact.from_dict(f) for f in facts])
+    return _emit({"facts": facts, "analyzers_run": ["secrets", *present],
+                  "findings": [f.to_dict() for f in findings
+                               if f.status == "violated"]}, args)
+
+
+def cmd_reliability(args: argparse.Namespace) -> int:
+    """§7 reliability — SRE+K8S rules over a facts doc."""
+    from platformforge.models import Fact
+    from platformforge.rules import RuleEngine, load_catalog
+    cat_dir = Path(__file__).resolve().parents[2] / "rules" / "catalog"
+    rules = [r for r in load_catalog(cat_dir)
+             if r.domain in ("sre", "k8s")]
+    facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]
+    findings, skipped = RuleEngine(rules).evaluate(facts)
+    violated = [f for f in findings if f.status == "violated"]
+    return _emit({"findings": [f.to_dict() for f in violated],
+                  "skipped": skipped,
+                  "counts": {"violated": len(violated)}}, args)
+
+
+def cmd_integrate(args: argparse.Namespace) -> int:
+    """§7 integrate — host integration via mcp parity."""
+    from platformforge.mcp.parity import detach, integrate
+    fn = detach if args.detach else integrate
+    return _emit(fn(args.host, args.repo), args)
+
+
+def cmd_evals(args: argparse.Namespace) -> int:
+    """§94–95 eval framework."""
+    from platformforge.evals import run_all
+    cases = Path(args.cases) if args.cases else None
+    if args.evals_cmd == "list":
+        d = cases or __import__("platformforge.evals.runner",
+                                fromlist=["CASES_DIR"]).CASES_DIR
+        return _emit({"cases": [c.parent.name for c in
+                                sorted(d.glob("*/case.yaml"))]
+                      if Path(d).is_dir() else []}, args)
+    out = run_all(cases, type_filter=args.type or None) \
+        if cases else run_all(type_filter=args.type or None)
+    return _emit(out, args, 2 if out["counts"]["fail"] else 0)
 
 
 def cmd_risk(args: argparse.Namespace) -> int:
@@ -801,10 +972,56 @@ def build_parser() -> argparse.ArgumentParser:
                     choices=["claude", "codex", "devin", "copilot", "generic"])
     sp.set_defaults(func=cmd_mcp)
 
+    verb("collect", cmd_collect, "ingest artifact dumps → facts",
+         lambda sp: sp.add_argument("path", nargs="?", default=""))
+    verb("diagnose", cmd_diagnose, "node diagnosis: facts+findings+blast",
+         lambda sp: (sp.add_argument("node"),
+                     sp.add_argument("--findings", default=""),
+                     sp.add_argument("--facts", default="")))
+    verb("plan", cmd_plan, "findings → ordered remediation plan",
+         lambda sp: (sp.add_argument("path"),
+                     sp.add_argument("--facts", default="")))
+    verb("correlate", cmd_correlate, "OTel correlation (observe otel)",
+         lambda sp: sp.add_argument("path"))
+    verb("diff", cmd_diff, "graph diff between two facts docs",
+         lambda sp: (sp.add_argument("--before", required=True),
+                     sp.add_argument("--after", required=True)))
+    verb("drift", cmd_drift, "IaC drift: --config dir vs --state file",
+         lambda sp: (sp.add_argument("--config", required=True),
+                     sp.add_argument("--state", required=True)))
+    verb("impact", cmd_impact, "blast radius for a graph node",
+         lambda sp: sp.add_argument("--node", required=True))
+    verb("context", cmd_context, "context pack for a task",
+         lambda sp: (sp.add_argument("--task", default=""),
+                     sp.add_argument("--input-budget", type=int,
+                                     default=None),
+                     sp.add_argument("--changed", nargs="*")))
+    verb("policy", cmd_policy, "policy-as-code catalog check",
+         lambda sp: (sp.add_argument("policy_cmd",
+                                     choices=["check", "list"]),
+                     sp.add_argument("path", nargs="?", default="")))
+    verb("security", cmd_security, "security bundle (secrets+iam+sbom+supply)",
+         lambda sp: sp.add_argument("path", nargs="?", default=""))
+    verb("reliability", cmd_reliability, "SRE+K8S rules over facts",
+         lambda sp: sp.add_argument("path", nargs="?", default=""))
+    verb("integrate", cmd_integrate, "host integration (mcp parity)",
+         lambda sp: (sp.add_argument("--host", required=True,
+                                     choices=["claude", "codex", "devin",
+                                              "copilot", "generic"]),
+                     sp.add_argument("--detach", action="store_true")))
+    verb("evals", cmd_evals, "eval framework (§94–95)",
+         lambda sp: (sp.add_argument("evals_cmd",
+                                     choices=["run", "list"], nargs="?",
+                                     default="run"),
+                     sp.add_argument("--type", default=""),
+                     sp.add_argument("--cases", default="")))
+
     sp = sub.add_parser("lab", help="Forge Lab scenarios")
     _add_common(sp)
-    sp.add_argument("lab_cmd", choices=["list", "run", "run-all"])
+    sp.add_argument("lab_cmd", choices=["list", "run", "run-all", "chaos"])
     sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--allow-prod", action="store_true",
+                    help="chaos on production nodes (default refused)")
     sp.set_defaults(func=cmd_lab)
 
     sp = sub.add_parser("forge", help="Forge interop")
