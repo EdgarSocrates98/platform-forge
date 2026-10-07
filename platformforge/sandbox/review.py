@@ -25,9 +25,14 @@ def review_change(repo: str | Any,
                   patch: str | None = None,
                   files: dict[str, str] | None = None,
                   signals: dict[str, Any] | None = None,
-                  catalog_dirs=("rules/catalog",)) -> dict[str, Any]:
+                  catalog_dirs=None) -> dict[str, Any]:
     """Run sandbox_analyze, then judge findings on the after-state and
     score the risk delta. Output is a review — never a decision."""
+    if catalog_dirs is None:
+        # resolve via data_path — a CWD-relative default yields an empty
+        # catalog (zero-rule review) outside the repo checkout
+        from platformforge.resources import data_path
+        catalog_dirs = (data_path("rules", "catalog"),)
     run = sandbox_analyze(repo, patch=patch, files=files)
     if "refusal" in run:
         return run

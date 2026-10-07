@@ -305,7 +305,7 @@ def cmd_knowledge(args: argparse.Namespace) -> int:
         out = reg.contract_check()
         return _emit(out, args, 2 if (args.strict and not out["ok"]) else 0)
     if sub == "drift":
-        out = reg.link_rules("rules/catalog")
+        out = reg.link_rules(data_path("rules", "catalog"))
         out["unresolved"] = [u["rule_id"] for u in out["unlinked"]]
         return _emit(out, args)
     if sub == "packs":

@@ -49,9 +49,31 @@ class LedgerEntry:
     model_output_tokens: int | None = None
     cache_tokens: int = 0
     latency_ms: float = 0.0
-    token_basis: str = "unknown"   # observed | estimated | unknown
+    token_basis: str = "unknown"   # closed vocab: observed|estimated|unknown
+    # an "observed" row must bind to the transcript that observed it —
+    # otherwise the count is unfalsifiable
+    transcript_ref: str | None = None
     ts: float = field(default_factory=time.time)
     extra: dict[str, Any] = field(default_factory=dict)
+
+    _TOKEN_BASES = ("observed", "estimated", "unknown")
+
+    def __post_init__(self) -> None:
+        if self.token_basis not in self._TOKEN_BASES:
+            raise ValueError(
+                f"token_basis must be one of {self._TOKEN_BASES}, "
+                f"got {self.token_basis!r}")
+        observed = any(v is not None for v in
+                       (self.input_tokens, self.output_tokens,
+                        self.reasoning_tokens))
+        if observed and self.token_basis != "observed":
+            raise ValueError(
+                "provider token counts require token_basis='observed'")
+        if self.token_basis == "observed" and observed \
+                and not self.transcript_ref:
+            raise ValueError(
+                "observed token counts require transcript_ref — "
+                "unbindable numbers are fabricated")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

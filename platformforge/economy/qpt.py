@@ -64,6 +64,7 @@ def quality_per_token(*, facts_full: list[dict[str, Any]],
     catalog evaluated over `env.facts` (versions-aware).
     """
     floors = floors or DEFAULT_FLOORS
+    judge_is_default = judge is None
     judge = judge or _default_judge(versions)
 
     # deterministic working set — local facts are not model spend (§38)
@@ -79,24 +80,35 @@ def quality_per_token(*, facts_full: list[dict[str, Any]],
                            facts=facts_full, findings=findings_full,
                            metadata={"task": task, "variant": "full"})
     builder = ContextPackBuilder(index)
+    # retain_content → the envelope carries the EXACT bytes the pack
+    # delivers (truncated bodies, not re-read full files)
     pack = builder.build(task, budget=budget, facts=facts_full,
-                         findings=findings_full)
+                         findings=findings_full, retain_content=True)
     if pack["budget_decision"] == "refuse":
-        return {"budget_decision": "refuse", "qpt": None,
-                "reason": pack["budget_reason"]}
+        return {"task": task, "verdict": "refused",
+                "budget_decision": "refuse",
+                "reason": pack["budget_reason"],
+                "refusals": pack.get("refusals", [])}
 
-    # packed = what the pack actually delivers: selected file bodies + the
-    # fact/finding/rule payloads the pack carries (essential, never dropped)
+    # packed = what the pack actually delivers: delivered file bodies +
+    # facts/findings/rules/symbols/graph neighborhood it carries
     packed = ContextEnvelope(
         kind="model",
-        files=[{"path": f["path"], "content": index.read(f["path"]) or ""}
+        files=[{"path": f["path"], "content": f.get("content", "")}
                for f in pack["relevant_files"]],
         facts=list(pack.get("facts") or []),
         findings=list(pack.get("findings") or []),
         rules=list(pack.get("rules") or []),
+        graph={"neighborhood": pack.get("graph_neighborhood") or []},
         metadata={"task": task, "variant": "tokensave",
+                  "symbols": pack.get("relevant_symbols") or [],
+                  "sources": pack.get("sources") or [],
                   "pack_budget": pack.get("budget"),
                   "budget_decision": pack.get("budget_decision")})
+
+    # measure BEFORE judging — a mutating judge must not shift the numbers
+    tokens_full, bytes_full = full.estimated_tokens, full.byte_size
+    tokens_pack, bytes_pack = packed.estimated_tokens, packed.byte_size
 
     # same serializer + estimator for both sides; judge sees exactly the
     # envelope that was measured
@@ -111,18 +123,17 @@ def quality_per_token(*, facts_full: list[dict[str, Any]],
     def ev(rs):   return {f["fact"] for f in rs if f.get("status") == "violated"}
     def unr(rs):  return {f["rule_id"] for f in rs if f.get("status") == "unresolved"}
     def kept(rs): return {f["rule_id"] for f in rs
-                          if f.get("status") in ("violated", "unresolved")}
+                          if f.get("status") == "unresolved"}
 
     fr = _pr(viol(full_res), viol(pack_res))
     evr = _pr(ev(full_res), ev(pack_res))
-    # unresolved correctness: every rule unresolved at baseline must keep a
-    # non-silent verdict (violated|unresolved) in the packed context
+    # unresolved correctness: a baseline-unresolved rule must STAY
+    # unresolved — flipping to `violated` on less context is an overclaim,
+    # counted as lost (and as a false positive by `fr`).
     unres_lost = sorted(unr(full_res) - kept(pack_res))
     unres_recall = 1.0 - (len(unres_lost) / len(unr(full_res))
                           if unr(full_res) else 0.0)
 
-    tokens_full = full.estimated_tokens
-    tokens_pack = packed.estimated_tokens
     reduction = (1 - tokens_pack / tokens_full) if tokens_full else 0.0
 
     floors_ok = {
@@ -141,7 +152,7 @@ def quality_per_token(*, facts_full: list[dict[str, Any]],
     return {
         "task": task,
         "baseline": {
-            "model_context_bytes": full.byte_size,
+            "model_context_bytes": bytes_full,
             "estimated_tokens": tokens_full,
             "facts": len(full.facts),
             "judge_seconds": round(t_full, 6),
@@ -149,7 +160,7 @@ def quality_per_token(*, facts_full: list[dict[str, Any]],
             "findings_unresolved": sorted(unr(full_res)),
         },
         "optimized": {
-            "model_context_bytes": packed.byte_size,
+            "model_context_bytes": bytes_pack,
             "estimated_tokens": tokens_pack,
             "facts": len(packed.facts),
             "judge_seconds": round(t_pack, 6),
@@ -169,8 +180,15 @@ def quality_per_token(*, facts_full: list[dict[str, Any]],
         "economy": {
             "token_reduction": round(reduction, 4),
             "byte_reduction": round(
-                1 - packed.byte_size / full.byte_size, 4) if full.byte_size else 0.0,
+                1 - bytes_pack / bytes_full, 4) if bytes_full else 0.0,
         },
+        # honesty label: the shipped judge reads env.facts only, and the
+        # pack carries facts as essential-complete — quality floors then
+        # measure payload integrity, not file-dependent judgment. A
+        # file-consuming judge (inject `judge=`) exercises the rest.
+        "quality_measurement": ("facts-only (files not judged)"
+                                if judge_is_default
+                                else "custom judge"),
         "verdict": verdict,
         # compat with pre-2.1 readers
         "tokens_full_context": tokens_full, "tokens_packed": tokens_pack,

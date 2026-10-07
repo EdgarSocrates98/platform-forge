@@ -10,10 +10,13 @@ jobs:
     # Runner is configurable: set repository variable PF_RUNNER to a JSON
     # label (e.g. "\"self-hosted\"" or "[\"self-hosted\",\"linux\"]") to run
     # on self-hosted infrastructure; defaults to GitHub-hosted ubuntu-latest.
+    # Gates live in scripts/validate.py — CI orchestrates, never duplicates
+    # (cycle 2.1 §144-145): `python scripts/validate.py --gate <name>` runs
+    # the identical check locally.
     runs-on: ${{ fromJSON(vars.PF_RUNNER || '"ubuntu-latest"') }}
     strategy:
       matrix:
-        # Supported interpreters — all verified locally on 204/204 tests.
+        # Supported interpreters — all verified locally.
         python: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
@@ -23,54 +26,34 @@ jobs:
       - name: Install
         run: pip install -e ".[dev]"
       - name: Lint
-        run: ruff check .
+        run: python scripts/validate.py --gate lint
       - name: Tests
-        run: pytest -q
+        run: python scripts/validate.py --gate tests
       - name: Rule provenance gate
-        run: |
-          python -c "from platformforge.rules.engine import catalog_provenance_report; \
-          r = catalog_provenance_report('rules/catalog'); \
-          assert r['coverage'] == 1.0, r; print(r)"
+        run: python scripts/validate.py --gate provenance
       - name: Rule→source exact linkage
-        run: |
-          python -c "from platformforge.knowledge.registry import SourceRegistry; \
-          from platformforge.resources import data_path; \
-          r = SourceRegistry.default().link_rules(data_path('rules','catalog')); \
-          assert not r['unlinked'], r['unlinked']; \
-          assert not r['bad_refs'], r['bad_refs']; \
-          print(r['coverage'], 'linked by canonical id')"
+        run: python scripts/validate.py --gate linkage
       - name: Knowledge sources gate
-        run: |
-          python -c "from platformforge.knowledge.registry import SourceRegistry; \
-          reg = SourceRegistry.default(); \
-          c = reg.contract_check(); assert c['ok'], c; \
-          from platformforge.knowledge.registry import SOURCE_AUTHORITIES; \
-          bad = [e.id for e in reg.entries.values() \
-                 if e.source_authority not in SOURCE_AUTHORITIES]; \
-          assert not bad, f'unknown authority: {bad}'; \
-          print(len(reg.entries), 'sources valid')"
+        run: python scripts/validate.py --gate knowledge
       - name: Knowledge packs contract
-        run: |
-          python -c "from platformforge.knowledge.packs import PackRegistry; \
-          c = PackRegistry.default().contract_check(); assert c['ok'], c; \
-          print(c['packs'], 'packs,', c['consumed'], 'consumed')"
+        run: python scripts/validate.py --gate packs
+      - name: Security — redaction + offline
+        run: python scripts/validate.py --gate security
       - name: Lab scenarios
-        run: platformforge lab run-all
+        run: python scripts/validate.py --gate lab
       - name: Eval corpus
-        run: platformforge evals run
+        run: python scripts/validate.py --gate evals
       - name: Rule coverage
-        run: platformforge evals coverage
+        run: python scripts/validate.py --gate coverage
       - name: MCP parity smoke
-        run: |
-          python -c "from platformforge.mcp.registry import tool_descriptors; \
-          tools = tool_descriptors(); assert len(tools) >= 20, len(tools); \
-          print(len(tools), 'mcp tools')"
+        run: python scripts/validate.py --gate mcp-parity
       - name: Docs drift
-        run: pytest -q tests/test_docs_drift.py
+        run: python scripts/validate.py --gate docs
 
   package:
-    # Build wheel → install in a clean venv → run from OUTSIDE the checkout
-    # so the test cannot silently pass because repo files are on sys.path.
+    # Build wheel → gate contents → install in a clean venv → run from
+    # OUTSIDE the checkout so the test cannot silently pass because repo
+    # files are on sys.path.
     runs-on: ${{ fromJSON(vars.PF_RUNNER || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
@@ -80,19 +63,7 @@ jobs:
       - name: Build wheel
         run: pip install build && python -m build --wheel
       - name: Wheel contents gate
-        run: |
-          python - <<'PY'
-          import zipfile, glob
-          whl = zipfile.ZipFile(glob.glob("dist/*.whl")[0])
-          names = whl.namelist()
-          for need in ("platformforge/data/rules/catalog/",
-                       "platformforge/data/knowledge/sources.yaml",
-                       "platformforge/data/contracts/fact.schema.json",
-                       "platformforge/data/lab/scenarios/",
-                       "platformforge/data/evals/cases/"):
-              assert any(n.startswith(need) for n in names), f"missing {need}"
-          print("wheel data complete:", sum(1 for n in names if "/data/" in n), "data files")
-          PY
+        run: python scripts/validate.py --gate package
       - name: Install in clean env
         run: |
           python -m venv /tmp/pfenv

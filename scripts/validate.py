@@ -46,7 +46,8 @@ def gate_tests() -> dict:
 
 def gate_provenance() -> dict:
     r = _py("from platformforge.rules.engine import catalog_provenance_report;"
-            "r = catalog_provenance_report('rules/catalog');"
+            "from platformforge.resources import data_path;"
+            "r = catalog_provenance_report(data_path('rules','catalog'));"
             "assert r['coverage'] == 1.0, r; print(r)")
     r["what"] = "every rule cites >=1 source"
     return r
@@ -91,12 +92,31 @@ def gate_lab() -> dict:
 
 
 def gate_evals() -> dict:
-    # --strict: an eval case regressing to `unresolved` fails the gate
-    return _run(["platformforge", "evals", "run", "--strict"])
+    # Assert on verdict counts — a case regressing to `unresolved` or
+    # `fail` fails the gate. (Can't use --strict: expected-unresolved
+    # rules legitimately appear in passing cases' by_status.)
+    r = _py("import json, subprocess;"
+            "out = subprocess.run(['platformforge','evals','run'],"
+            " capture_output=True, text=True).stdout;"
+            "d = json.loads(out[out.find('{'):]);"
+            "c = d['counts'];"
+            "assert c.get('fail', 0) == 0 and c.get('unresolved', 0) == 0, c;"
+            "print(c)")
+    r["what"] = "every eval case passes; none unresolved or failed"
+    return r
 
 
 def gate_coverage() -> dict:
-    return _run(["platformforge", "evals", "coverage"])
+    # assert, don't just print — uncovered rules fail the gate
+    r = _py("import json, subprocess;"
+            "out = subprocess.run(['platformforge','evals','coverage'],"
+            " capture_output=True, text=True).stdout;"
+            "d = json.loads(out[out.find('{'):]);"
+            "unc = d['counts'].get('uncovered', []);"
+            "assert not unc, f'uncovered rules: {unc}';"
+            "print(d['counts']['rules'], 'rules, 0 uncovered')")
+    r["what"] = "every rule is named by an eval case or lab scenario"
+    return r
 
 
 def gate_mcp_parity() -> dict:
@@ -119,11 +139,16 @@ def gate_security() -> dict:
 
 
 def gate_package() -> dict:
-    """Wheel contents + clean-env smoke. Requires `python -m build` first;
-    skipped gracefully when dist/ is absent."""
+    """Build + validate the wheel — never skipped: a missing wheel is a
+    failure, not a pass (the gate exists to prove installable truth)."""
     if not list(REPO.glob("dist/*.whl")):
-        return {"rc": 0, "skipped": "no dist/*.whl — run python -m build",
-                "what": "wheel contains bundled data"}
+        b = _run(["uv", "build", "--out-dir", "dist"])
+        if b["rc"] != 0:
+            return {"rc": b["rc"], "tail": b["tail"],
+                    "what": "wheel build (uv build)"}
+    if not list(REPO.glob("dist/*.whl")):
+        return {"rc": 1, "tail": ["uv build produced no wheel"],
+                "what": "wheel build produced an artifact"}
     r = _py("import zipfile, glob;"
             "w = zipfile.ZipFile(glob.glob('dist/*.whl')[0]);"
             "names = w.namelist();"

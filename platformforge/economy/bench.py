@@ -43,7 +43,6 @@ def run_qpt_bench(bench_dir: str | Path | None = None) -> dict[str, Any]:
                 index=idx, task=case.get("task", case_dir.name),
                 versions=case.get("versions"),
                 budget=Budget(input_budget=case.get("budget", 50_000)))
-        rep = rep.get("qpt", rep) if rep.get("budget_decision") == "refuse" else rep
         results.append({"id": case.get("id", case_dir.name),
                         "task": case.get("task"),
                         "domain": case["domain"],
@@ -57,7 +56,7 @@ def run_qpt_bench(bench_dir: str | Path | None = None) -> dict[str, Any]:
         "tasks": len(results),
         "verdicts": {v: sum(1 for r in results if r["verdict"] == v)
                      for v in ("beneficial", "no_reduction",
-                               "optimization_not_beneficial")},
+                               "optimization_not_beneficial", "refused")},
         "min_finding_recall": min(
             (r["quality"]["finding_recall"] for r in results if r["quality"]),
             default=None),

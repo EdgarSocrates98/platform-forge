@@ -39,7 +39,7 @@ CASES_DIR = _REPO / "evals" / "cases"
 
 def _catalog():
     from platformforge.rules import load_catalog
-    return load_catalog(_REPO / "rules")
+    return load_catalog(_REPO / "rules" / "catalog")
 
 
 _ANALYZER_KW = {"kyverno": "kyverno_version"}

@@ -98,7 +98,8 @@ class ContextPackBuilder:
               graph_neighborhood: list[dict] | None = None,
               risk: str | None = None,
               previous_pack_hash: str | None = None,
-              max_file_bytes: int = 20_000) -> dict[str, Any]:
+              max_file_bytes: int = 20_000,
+              retain_content: bool = False) -> dict[str, Any]:
         budget = budget or Budget()
         changed = changed_files or []
         node_terms = [
@@ -142,9 +143,15 @@ class ContextPackBuilder:
                     continue
             seen_hash.add(sha)
             used_tokens += tokens
-            files_out.append({"path": path, "score": score,
-                              "reasons": c_reasons, "class": cls,
-                              "tokens": tokens})
+            entry = {"path": path, "score": score,
+                     "reasons": c_reasons, "class": cls,
+                     "tokens": tokens,
+                     "delivered_bytes": len(truncated.encode()),
+                     "delivered_chars": len(truncated)}
+            if retain_content:
+                # exact delivered payload — QPT measures what ships
+                entry["content"] = truncated
+            files_out.append(entry)
             sym_row = self.index.db.execute(
                 "SELECT symbols FROM files WHERE path=?", (path,)).fetchone()
             if sym_row and sym_row[0]:
@@ -183,8 +190,7 @@ class ContextPackBuilder:
             "budget_decision": decision,
             "budget_reason": decision_reason,
             "packed_files": len(files_out),
-            "packed_bytes": sum(len(self.index.read(f["path"]) or "")
-                                for f in files_out),
+            "packed_bytes": sum(f["delivered_bytes"] for f in files_out),
             "est_input_tokens": used_tokens + essential_tokens,
             "essential_tokens": essential_tokens,
             "skipped_duplicates": skipped,
@@ -235,14 +241,29 @@ class ContextPackBuilder:
 
 
 def pack_to_text(pack: dict[str, Any], index: SearchIndex) -> str:
-    """Render a pack for an agent prompt — files included by reference."""
+    """Render a pack for an agent prompt — file bodies bounded by what the
+    pack actually delivered (`delivered_bytes`), plus the essential
+    facts/findings/rules the pack carries. Never re-reads beyond the
+    pack's own truncation."""
     out = [f"# task: {pack['task']['description']}"]
     for f in pack["relevant_files"]:
         path = f["path"] if isinstance(f, dict) else f
         reasons = ""
+        content = None
         if isinstance(f, dict):
             reasons = f"  # {', '.join(f.get('reasons', []))}"
+            content = f.get("content")
         out.append(f"\n## {path}{reasons}")
-        body = index.read(path) or ""
-        out.append(body[:4000])
+        if content is None:
+            body = index.read(path) or ""
+            delivered = f.get("delivered_chars") if isinstance(f, dict) \
+                else None
+            content = body[:delivered] if delivered else body[:4000]
+        out.append(content)
+    essential = {"facts": pack.get("facts") or [],
+                 "findings": pack.get("findings") or [],
+                 "rules": pack.get("rules") or []}
+    if any(essential.values()):
+        out.append("\n## essential-evidence")
+        out.append(json.dumps(essential, default=str)[:8000])
     return "\n".join(out)

@@ -6,5 +6,7 @@ domain: k8s
 fixture: fixture
 versions: {kubernetes: "1.20"}
 expect:
-  rules_skipped: [PF-K8S-030, PF-K8S-031]
+  rules_skipped:
+    - PF-K8S-030: version-mismatch
+    - PF-K8S-031: version-mismatch
   rules_not_fired: [PF-K8S-030, PF-K8S-031]

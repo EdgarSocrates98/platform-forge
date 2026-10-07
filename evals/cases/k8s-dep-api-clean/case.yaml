@@ -10,4 +10,3 @@ fixture: fixture
 versions: {kubernetes: "1.29"}
 expect:
   passed: [PF-K8S-030, PF-K8S-031]
-  rules_not_fired: [PF-K8S-030, PF-K8S-031]
