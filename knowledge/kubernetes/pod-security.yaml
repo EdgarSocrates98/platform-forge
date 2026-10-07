@@ -1,0 +1,26 @@
+schema: platformforge/knowledge/v1
+id: kubernetes-pod-security
+domain: kubernetes
+applies_to:
+  versions: [kubernetes]
+sources: [kubernetes-docs]
+claims:
+  - id: pss-baseline
+    statement: "Pod Security Standards baseline forbids privileged
+      containers, hostNetwork/hostPID/hostIPC sharing, and
+      hostPath volumes; restricted additionally requires
+      runAsNonRoot, seccomp and dropped capabilities."
+    versions: {kubernetes: ">=1.23"}
+  - id: pss-psa-replaced-psp
+    statement: "PodSecurityPolicy was removed in 1.25; Pod Security
+      Admission (pod-security.kubernetes.io/* namespace labels) is the
+      built-in enforcement mechanism."
+    versions: {kubernetes: ">=1.25"}
+  - id: sa-token-automount
+    statement: "automountServiceAccountToken defaults to true; a pod that
+      does not need the API should set it false — the token is a
+      credential mounted at a known path."
+    versions: {}
+used_by:
+  rules: [PF-K8S-004, PF-K8S-005, PF-K8S-006, PF-K8S-007]
+  analyzers: [k8s]

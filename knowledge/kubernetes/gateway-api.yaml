@@ -1,0 +1,20 @@
+schema: platformforge/knowledge/v1
+id: kubernetes-gateway-api
+domain: kubernetes
+applies_to:
+  versions: [kubernetes]
+sources: [gateway-api, kubernetes-docs]
+claims:
+  - id: gw-listener-tls
+    statement: "A Gateway listener with protocol HTTPS without
+      certificateRefs terminates nothing; listeners on 443 require TLS
+      material. HTTP listeners need explicit redirect semantics."
+    versions: {}
+  - id: gw-ga-track
+    statement: "Gateway API v1.0 GA'd Gateway, GatewayClass and HTTPRoute
+      (v1); TCPRoute/UDPRoute/TLSRoute/GRPCRoute remained experimental or
+      moved to GA in v1.2+ — check channel (standard vs experimental)."
+    versions: {}
+used_by:
+  rules: [PF-K8S-023, PF-K8S-010]
+  analyzers: [k8s]

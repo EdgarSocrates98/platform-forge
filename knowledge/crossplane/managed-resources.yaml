@@ -1,0 +1,26 @@
+schema: platformforge/knowledge/v1
+id: crossplane-managed-resources
+domain: crossplane
+applies_to:
+  versions: [crossplane]
+sources: [crossplane-docs]
+claims:
+  - id: mr-shape
+    statement: "A managed resource carries spec.forProvider plus
+      providerConfigRef/managementPolicies; status.atProvider mirrors the
+      observed external state. Group suffix alone does not make an object
+      an MR — the spec shape does."
+    versions: {}
+  - id: mr-deletion-policy
+    statement: "deletionPolicy: Delete deletes the external resource when
+      the MR is deleted; Orphan keeps it. Data-bearing resources without
+      Orphan risk data loss on claim deletion."
+    versions: {}
+  - id: mr-management-policies
+    statement: "managementPolicies controls which reconcile actions
+      Crossplane performs (Observe/Create/Update/Delete/LateInitialize);
+      Observe-only is the import path for pre-existing resources."
+    versions: {crossplane: ">=1.14"}
+used_by:
+  rules: [PF-XR-001]
+  analyzers: [crossplane]

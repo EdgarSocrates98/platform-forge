@@ -308,6 +308,14 @@ def cmd_knowledge(args: argparse.Namespace) -> int:
         out = reg.link_rules("rules/catalog")
         out["unresolved"] = [u["rule_id"] for u in out["unlinked"]]
         return _emit(out, args)
+    if sub == "packs":
+        from platformforge.knowledge.packs import PackRegistry
+        packs = PackRegistry.default()
+        out = {"packs": [p.to_dict() for p in sorted(
+            packs.packs.values(), key=lambda x: x.pack_id)],
+            "contract": packs.contract_check()}
+        return _emit(out, args,
+                     2 if (args.strict and not out["contract"]["ok"]) else 0)
     report = reg.check()
     bad = [r for r in report if r["status"] in ("stale", "unresolved", "conflicted",
                                               "deprecated", "superseded")]
@@ -1273,7 +1281,7 @@ def build_parser() -> argparse.ArgumentParser:
     verb("knowledge", cmd_knowledge, "knowledge freshness/drift check",
          lambda sp: sp.add_argument(
              "knowledge_cmd", nargs="?", default="check",
-             choices=["check", "contract", "drift"]))
+             choices=["check", "contract", "drift", "packs"]))
 
     sp = sub.add_parser("tokens",
                         help="tokensave: index/search/pack/delta/stats/ledger")

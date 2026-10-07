@@ -1,0 +1,20 @@
+schema: platformforge/knowledge/v1
+id: aws-eks
+domain: aws
+applies_to:
+  versions: [eks]
+sources: [aws-eks-docs]
+claims:
+  - id: eks-support-window
+    statement: "EKS supports a Kubernetes version for ~14 months standard
+      plus ~12 months extended support (at added cost); control-plane
+      version determines which deprecated APIs are served."
+    versions: {}
+  - id: eks-oidc-irsa
+    statement: "IAM Roles for Service Accounts trust the cluster OIDC
+      provider; the role trust must pin system:serviceaccount:<ns>:<name>
+      in the sub condition."
+    versions: {}
+used_by:
+  rules: [PF-SEC-043]
+  analyzers: [cloud-aws, k8s]

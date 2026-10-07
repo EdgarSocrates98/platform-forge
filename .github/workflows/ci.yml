@@ -49,6 +49,11 @@ jobs:
                  if e.source_authority not in SOURCE_AUTHORITIES]; \
           assert not bad, f'unknown authority: {bad}'; \
           print(len(reg.entries), 'sources valid')"
+      - name: Knowledge packs contract
+        run: |
+          python -c "from platformforge.knowledge.packs import PackRegistry; \
+          c = PackRegistry.default().contract_check(); assert c['ok'], c; \
+          print(c['packs'], 'packs,', c['consumed'], 'consumed')"
       - name: Lab scenarios
         run: platformforge lab run-all
       - name: Eval corpus
