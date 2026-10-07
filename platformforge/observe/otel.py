@@ -12,6 +12,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from platformforge.models.base import stable_id
+
 
 def correlate_spans(path: str | Path) -> dict[str, Any]:
     spans: list[dict[str, Any]] = []
@@ -79,3 +81,55 @@ def correlate_spans(path: str | Path) -> dict[str, Any]:
             svc: {"spans": svc_calls[svc], "error_spans": svc_errors.get(svc, 0)}
             for svc in sorted(svc_calls)},
     }
+
+
+# §83 — OTel semantic conventions used for Graphfy correlation.
+SEMCONV = ("service.name", "service.namespace", "service.instance.id",
+           "cloud.provider", "cloud.account.id", "cloud.region",
+           "k8s.cluster.name", "k8s.namespace.name", "k8s.deployment.name",
+           "k8s.pod.name")
+
+
+def analyze_semconv(path: str | Path) -> dict[str, Any]:
+    """Extract §83 resource attributes from spans → facts + graph edges.
+
+    service.name → service node; k8s.deployment.name → workload node,
+    linked `runs_on`. Every edge carries the span's fact provenance.
+    """
+    spans: list[dict[str, Any]] = []
+    for line in Path(path).read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            spans.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    facts: list[dict[str, Any]] = []
+    seen_edges: set[tuple[str, str]] = set()
+    for s in spans:
+        res = s.get("resource") or s.get("resource_attributes") or {}
+        attrs = {k: res.get(k) or s.get(k) for k in SEMCONV}
+        svc = attrs.get("service.name") or s.get("service")
+        if not svc:
+            continue
+        deploy = attrs.get("k8s.deployment.name")
+        pod = attrs.get("k8s.pod.name")
+        edges, nodes = [], [{"kind": "service", "label": svc}]
+        if deploy:
+            nodes.append({"kind": "workload", "label": deploy})
+            if (svc, deploy) not in seen_edges:
+                seen_edges.add((svc, deploy))
+                edges.append({"src_kind": "workload", "src": deploy,
+                              "dst_kind": "service", "dst": svc,
+                              "kind": "runs_on"})
+        facts.append({
+            "fact_id": stable_id("PF-OTEL", "semconv",
+                                 s.get("span_id", svc)),
+            "kind": "otel.resource", "source": str(path),
+            "location": svc, "tier": 1,
+            "attrs": {"semconv": {k: v for k, v in attrs.items() if v},
+                      "service": svc, "pod": pod,
+                      "graph": {"nodes": nodes, "edges": edges}}})
+    return {"facts": facts, "counts": {"spans": len(spans),
+                                       "resources": len(facts)}}

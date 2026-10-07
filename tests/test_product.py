@@ -49,13 +49,15 @@ def test_maturity_compounds():
                     "adoption": ["some_self_service"],
                     "operations": ["runbooks", "oncall", "slo_defined",
                                    "error_budgets", "gitops"]})
-    assert out["aspects"]["investment"]["level"] == "scalable"
-    assert out["aspects"]["adoption"]["level"] == "provisional"  # missing signal
-    assert "documented_onboarding" in \
-        out["aspects"]["adoption"]["missing_for_next"]["operational"]
-    assert out["aspects"]["operations"]["level"] == "scalable"
-    assert out["aspects"]["measurement"]["level"] == "provisional"
-    assert out["overall_level"] == "provisional"  # min of aspects
+    inv = out["aspects"]["investment"]
+    # v2: bare signals are declared claims, not observed maturity
+    assert inv["declared_level"] == "scalable"
+    assert inv["overclaimed"] is True
+    assert out["aspects"]["adoption"]["declared_level"] == "provisional"
+    assert out["aspects"]["adoption"]["signals_declared_only"] == \
+        ["some_self_service"]
+    assert out["aspects"]["operations"]["declared_level"] == "scalable"
+    assert out["aspects"]["measurement"]["declared_level"] == "provisional"
 
 
 def test_scorecard():
@@ -69,8 +71,12 @@ def test_scorecard():
     ]
     out = scorecard(findings)
     c = out["scorecards"]["prod/payments"]
-    assert c["grade"] == "B"  # 100 - 15 - 3 = 82
-    assert c["violations"] == 2
+    # v2: nine axes, each measured (score) or unknown — never inferred
+    assert c["axes"]["reliability"]["score"] == 82  # 100 - 15 - 3
+    assert "PF-K8S-004" in c["axes"]["reliability"]["driving_findings"]
+    assert c["axes"]["security"]["status"] == "unknown"
+    assert c["overall"] == 82
+    assert c["total_violations"] == 6
 
 
 def test_backstage_projection():

@@ -28,11 +28,21 @@ platformforge inspect --repo .             # inventory analyzable artifacts
 platformforge analyze iac ./infra          # HCL → facts
 platformforge analyze k8s ./manifests      # manifests → facts
 platformforge analyze gha --repo .         # workflows → facts
+platformforge analyze kyverno ./policies   # kyverno/gatekeeper → facts (version-aware)
+platformforge analyze cosign bundle.json   # sigstore shape — claimed ≠ verified
+platformforge analyze slsa prov.json       # SLSA requirement/evidence/gap
+platformforge analyze cloud-aws ./dumps    # AWS CLI dumps → T1 facts
 platformforge judge facts.json             # rules → findings
 platformforge graph build facts.json       # facts → provenanced graph
 platformforge graph blast --node X         # blast radius (per impact class)
+platformforge graph identity-become --node role/x   # who can become this role
 platformforge observe slo contract.yaml --sli '{"total_events":1e6,"bad_events":400}'
+platformforge observe postmortem --incident i.json # unresolved root cause stays named
 platformforge finops costs billing.json    # cost facts + summary
+platformforge finops ingest cur.csv        # CUR/Azure/GCP/OpenCost/Kubecost → rows
+platformforge finops focus-validate rows.json # FOCUS 1.0 column compliance
+platformforge finops unit costs.json --denominators d.json # cost/request etc.
+platformforge change review --repo . --patch diff.patch   # sandbox → graph delta → risk
 platformforge product maturity --signals s.json
 platformforge mcp tools                    # bounded MCP capability surface
 platformforge mcp serve                    # stdio server (same core as CLI)

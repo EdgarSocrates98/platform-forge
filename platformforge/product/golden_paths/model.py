@@ -35,7 +35,7 @@ class GoldenPath:
     supported_variants: list[str] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, doc: dict[str, Any]) -> "GoldenPath":
+    def from_dict(cls, doc: dict[str, Any]) -> GoldenPath:
         missing = [f for f in REQUIRED_FIELDS if f not in doc]
         if missing:
             raise ValueError(f"golden path {doc.get('id', '?')} missing "

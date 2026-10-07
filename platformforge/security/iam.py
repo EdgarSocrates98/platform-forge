@@ -15,13 +15,38 @@ def _stmts(doc: dict[str, Any]) -> list[dict[str, Any]]:
     return [s for s in out if isinstance(s, dict)]
 
 
+def _policy_kind(doc: dict[str, Any], stmts: list[dict[str, Any]]) -> str:
+    """§100 — classify the policy shape: trust / identity / resource /
+    SCP / permission boundary / session. Detection is structural, never
+    guessed from filename."""
+    for s in stmts:
+        acts = s.get("Action") or []
+        acts = [acts] if isinstance(acts, str) else acts
+        if "sts:AssumeRole" in acts or "sts:AssumeRoleWithSAML" in acts \
+                or "sts:AssumeRoleWithWebIdentity" in acts:
+            return "trust"
+    if doc.get("PolicyType") == "SCP" or \
+            any("aws:SourceOrgID" in str(s.get("Condition", {}))
+                or s.get("Sid", "").startswith("SCP") for s in stmts):
+        return "scp"
+    if doc.get("PolicyType") == "PermissionsBoundary" or \
+            doc.get("PermissionsBoundary"):
+        return "permission_boundary"
+    if any("Principal" in s for s in stmts):
+        return "resource"
+    return "identity"
+
+
 def analyze_iam_policy(path: str | Path) -> dict[str, Any]:
     doc = json.loads(Path(path).read_text())
     name = doc.get("PolicyName") or doc.get("Id") or Path(path).stem
     stmts = _stmts(doc)
+    ptype = _policy_kind(doc, stmts)
     edges, principals, resources = [], [], []
     wildcard_actions = wildcard_resources = public_principals = 0
     admin = False
+    federated: list[str] = []   # OIDC/SAML providers seen in trust
+    chain_targets: list[str] = []  # roles this policy can assume
     for s in stmts:
         effect = s.get("Effect", "Allow")
         if effect != "Allow":
@@ -33,8 +58,12 @@ def analyze_iam_policy(path: str | Path) -> dict[str, Any]:
         pr = s.get("Principal") or {}
         pr_list = []
         if isinstance(pr, dict):
-            for v in pr.values():
-                pr_list += v if isinstance(v, list) else [v]
+            for ptype_k, v in pr.items():
+                vals = v if isinstance(v, list) else [v]
+                for pv in vals:
+                    pr_list.append(pv)
+                    if ptype_k == "Federated":
+                        federated.append(pv)   # OIDC/SAML provider ARN
         elif isinstance(pr, str):
             pr_list.append(pr)
         pr_list = [p if p != "*" else "wildcard-principal" for p in pr_list]
@@ -57,19 +86,25 @@ def analyze_iam_policy(path: str | Path) -> dict[str, Any]:
         for a in actions:
             if a == "sts:AssumeRole":
                 for r in res:
+                    chain_targets.append(r)
                     for p in pr_list:
                         edges.append({"src_kind": "iam_principal", "src": p,
                                       "dst_kind": "role", "dst": r,
                                       "kind": "assumes"})
-    attrs = {"policy_name": name, "statement_count": len(stmts),
+    attrs = {"policy_name": name, "policy_type": ptype,
+             "statement_count": len(stmts),
              "principals": sorted(set(principals)),
+             "federated_providers": sorted(set(federated)),
+             "assumable_roles": sorted(set(chain_targets)),
              "wildcard_actions": wildcard_actions,
              "wildcard_resources": wildcard_resources,
              "public_principals": public_principals,
              "admin_grant": admin,
              "graph": {"nodes": [{"kind": "policy", "label": name}] +
                        [{"kind": "iam_principal", "label": p}
-                        for p in sorted(set(principals))],
+                        for p in sorted(set(principals))] +
+                       [{"kind": "role", "label": r}
+                        for r in sorted(set(chain_targets))],
                       "edges": edges}}
     return {"facts": [{"fact_id": stable_id("PF-SEC", "iam", str(path)),
                        "kind": "security.iam_policy", "source": str(path),

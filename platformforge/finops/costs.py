@@ -22,8 +22,9 @@ def _rows(path: Path) -> list[dict[str, Any]]:
     return doc if isinstance(doc, list) else doc.get("rows", [])
 
 
-def cost_facts(path: str | Path) -> dict[str, Any]:
-    rows = _rows(Path(path))
+def cost_facts_from_rows(rows: list[dict[str, Any]],
+                         source: str = "rows") -> dict[str, Any]:
+    """Row list → finops.cost facts (shared by file + ingest paths)."""
     facts: list[dict[str, Any]] = []
     skipped = 0
     for r in rows:
@@ -45,11 +46,15 @@ def cost_facts(path: str | Path) -> dict[str, Any]:
         facts.append({"fact_id": stable_id("PF-FIN", r["resource"],
                                            str(r.get("period")),
                                            str(r["amount"])),
-                      "kind": "finops.cost", "source": str(path),
+                      "kind": "finops.cost", "source": source,
                       "location": r["resource"], "tier": 1, "attrs": attrs})
     return {"facts": facts,
             "counts": {"rows": len(rows), "facts": len(facts),
                        "skipped_incomplete": skipped}}
+
+
+def cost_facts(path: str | Path) -> dict[str, Any]:
+    return cost_facts_from_rows(_rows(Path(path)), source=str(path))
 
 
 def cost_summary(facts: list[dict[str, Any]]) -> dict[str, Any]:

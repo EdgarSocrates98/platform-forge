@@ -60,15 +60,27 @@ def assess_change(signals: dict[str, Any]) -> dict[str, Any]:
                    "critical": 3}.get(str(v).lower(), 0)
         decomposition[sig] = {"value": v, "score": raw, "weight": weight}
         total += raw * weight
+    unresolved = [s for s, d in decomposition.items()
+                  if d["value"] == "unresolved"]
+    # §103 — unknown ≠ low risk: unresolved signals don't zero the level,
+    # they flag confidence and can only raise the reported level, never
+    # lower it. A "low" with unresolved signals is a claim, not a fact.
+    confidence = round(1.0 - len(unresolved) / len(SIGNALS), 3)
+    if unresolved and _level(total) in ("low", "medium"):
+        note = ("risk is underreported: unresolved signals could "
+                "raise the level")
+    else:
+        note = ("criticality is taken from declared signals only; "
+                "absence of a signal lowers confidence, not safety")
     return {
         "level": _level(total),
         "score": total,
+        "confidence": confidence,
+        "underreported": bool(unresolved and _level(total) != "critical"),
         "decomposition": decomposition,
         "unknown_signals": sorted(unknown),
-        "unresolved": [s for s, d in decomposition.items()
-                       if d["value"] == "unresolved"],
-        "note": "criticality is taken from declared signals only; "
-                "absence of a signal lowers confidence, not safety",
+        "unresolved": unresolved,
+        "note": note,
     }
 
 

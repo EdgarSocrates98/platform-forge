@@ -420,6 +420,20 @@ def cmd_graph(args: argparse.Namespace) -> int:
         return _emit(G.blast_radius(g, args.node), args)
     if sub == "paths":
         return _emit({"paths": G.paths(g, args.src, args.dst)}, args)
+    if sub.startswith("identity-"):
+        # §100–101 — identity path queries over the graph
+        from platformforge.security.identity import (
+            compromise_blast,
+            who_can_access,
+            who_can_become,
+            workloads_using_identity,
+        )
+        target = args.node or args.dst or args.src
+        fn = {"identity-become": who_can_become,
+              "identity-access": who_can_access,
+              "identity-workloads": workloads_using_identity,
+              "identity-blast": compromise_blast}[sub]
+        return _emit(fn(g, target), args)
     if sub == "diff":
         def _resolve(ref: str):
             if (Path(args.repo) / ".platformforge/graph" / f"{ref}.json").exists():
@@ -463,6 +477,20 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     if sub == "hubble":
         from platformforge.k8s.hubble import analyze_hubble
         return _emit(analyze_hubble(args.path), args)
+    if sub == "kyverno":
+        from platformforge.security.kyverno import analyze_kyverno
+        return _emit(analyze_kyverno(args.path,
+                                     kyverno_version=args.kyverno_version
+                                     or None), args)
+    if sub == "cosign":
+        from platformforge.security.cosign import analyze_cosign
+        return _emit(analyze_cosign(args.path), args)
+    if sub == "slsa":
+        from platformforge.security.slsa import slsa_assess
+        doc = json.loads(Path(args.path).read_text())
+        prov = doc.get("provenance", doc)
+        ev = doc.get("evidence") if isinstance(doc, dict) else None
+        return _emit(slsa_assess(prov, evidence=ev), args)
     if sub == "sbom":
         from platformforge.security import analyze_sbom
         vulns = json.loads(Path(args.vulns).read_text()) if args.vulns else None
@@ -776,6 +804,20 @@ def cmd_change(args: argparse.Namespace) -> int:
     """§85–86 change lifecycle: propose → sandbox → verify (read-only)."""
     from platformforge.sandbox import sandbox_analyze
     sub = args.change_cmd
+    if sub == "review":
+        # §104 — full review pipeline over the sandbox delta
+        from platformforge.sandbox.review import review_change
+        patch = Path(args.patch).read_text() if args.patch else None
+        files = {}
+        for spec in args.file or []:
+            rel, _, src = spec.partition("=")
+            files[rel] = Path(src).read_text() if Path(src).exists() else src
+        signals = {}
+        if getattr(args, "signals", ""):
+            signals = json.loads(Path(args.signals).read_text())
+        out = review_change(args.repo, patch=patch, files=files,
+                            signals=signals)
+        return _emit(out, args, 2 if "refusal" in out else 0)
     if sub in ("propose", "verify", "sandbox"):
         patch = Path(args.patch).read_text() if args.patch else None
         files = {}
@@ -915,6 +957,30 @@ def cmd_observe(args: argparse.Namespace) -> int:
         g = _load_graph_or_refuse(args.repo)
         return _emit(O.correlate(alerts, changes, graph=g,
                                  window_s=args.window), args)
+    if sub == "slo-burn":
+        contract = O.SloContract.load(args.path)
+        wins = json.loads(args.windows) if args.windows else {}
+        return _emit(O.multi_window_burn(contract, wins), args)
+    if sub == "semconv":
+        return _emit(O.analyze_semconv(args.path), args)
+    if sub == "timeline":
+        events = json.loads(Path(args.path).read_text())
+        return _emit(O.timeline(events), args)
+    if sub == "postmortem":
+        inc = json.loads(Path(args.incident or args.path).read_text())
+        return _emit(O.postmortem(inc, inc.get("hypotheses")), args)
+    if sub == "dr":
+        if args.facts:
+            doc = json.loads(Path(args.facts).read_text())
+            facts = doc.get("facts", doc)
+        else:
+            from platformforge.collect import collect
+            facts = collect(args.repo)["facts"]
+        return _emit(O.dr_model(facts), args)
+    if sub == "prometheus":
+        return _emit(O.analyze_prometheus(args.path), args)
+    if sub == "grafana":
+        return _emit(O.analyze_grafana(args.path), args)
     if sub == "capacity":
         items = json.loads(Path(args.path).read_text())
         out = O.capacity(items)
@@ -938,6 +1004,39 @@ def cmd_finops(args: argparse.Namespace) -> int:
         rows = json.loads(Path(args.path).read_text())
         rows = rows if isinstance(rows, list) else rows.get("rows", [])
         return _emit(F.to_focus(rows), args)
+    if sub == "focus-validate":
+        # §92 — never call output FOCUS-compliant without schema check
+        from platformforge.finops.focus import validate_focus
+        rows = json.loads(Path(args.path).read_text())
+        rows = rows if isinstance(rows, list) else rows.get("rows", [])
+        out = validate_focus(rows)
+        return _emit(out, args, 2 if (args.strict
+                                      and not out["focus_compliant"]) else 0)
+    if sub == "unit":
+        # §94 unit economics — denominators must be caller-measured
+        from platformforge.finops.unit import unit_economics
+        doc = F.cost_facts(args.path)
+        denoms = (json.loads(Path(args.denominators).read_text())
+                  if args.denominators else {})
+        out = unit_economics(doc["facts"], denoms)
+        return _emit(out, args, 2 if (args.strict
+                                      and out["unresolved"]) else 0)
+    if sub == "ingest":
+        # §91 — provider billing export → normalized rows + format verdict
+        from platformforge.finops.ingest import ingest_billing
+        return _emit(ingest_billing(args.path), args)
+    if sub == "report":
+        # §90 — composite; each dimension independently evidence-bound
+        from platformforge.finops.insights import finops_report
+        doc = F.cost_facts(args.path)
+        extra = (json.loads(Path(args.denominators).read_text())
+                 if args.denominators else {})
+        return _emit(finops_report(
+            doc["facts"],
+            utilization=extra.get("utilization"),
+            requested_vs_used=extra.get("requested_vs_used"),
+            committed=extra.get("committed"),
+            split=extra.get("split")), args)
     if sub == "graph":
         g = _load_graph_or_refuse(args.repo)
         if g is None:
@@ -1052,7 +1151,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("graph_cmd",
                     choices=["build", "stats", "deps", "dependents", "blast",
-                             "paths", "gaps", "cycles", "diff", "snapshots"])
+                             "paths", "gaps", "cycles", "diff", "snapshots",
+                             "identity-become", "identity-access",
+                             "identity-workloads", "identity-blast"])
     sp.add_argument("facts", nargs="?", default="")
     sp.add_argument("--node", default="")
     sp.add_argument("--src", default="")
@@ -1071,30 +1172,43 @@ def build_parser() -> argparse.ArgumentParser:
                              "gitops", "gha", "iam", "sbom", "secrets",
                              "supply", "catalog", "crossplane", "cloud-aws",
                              "cloud-azure", "cloud-gcp", "helm",
-                             "kustomize", "hubble"])
+                             "kustomize", "hubble", "kyverno", "cosign",
+                             "slsa"])
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")
     sp.add_argument("--vulns", default="", help="offline vuln list JSON")
+    sp.add_argument("--kyverno-version", default="",
+                    help="declared kyverno version for deprecation checks")
     sp.set_defaults(func=cmd_analyze)
 
     sp = sub.add_parser("observe", help="SRE/observability verbs")
     _add_common(sp)
     sp.add_argument("observe_cmd",
-                    choices=["slo", "otel", "incident", "capacity"])
+                    choices=["slo", "slo-burn", "otel", "semconv",
+                             "incident", "timeline", "postmortem",
+                             "capacity", "dr", "prometheus", "grafana"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--sli", default="", help="JSON {good,bad,total}_events")
+    sp.add_argument("--windows", default="",
+                    help="JSON {window: {good,bad}} for slo-burn")
     sp.add_argument("--alerts", default="")
     sp.add_argument("--changes", default="")
+    sp.add_argument("--incident", default="",
+                    help="incident JSON for postmortem")
+    sp.add_argument("--facts", default="", help="facts JSON for dr")
     sp.add_argument("--window", type=int, default=3600)
     sp.set_defaults(func=cmd_observe)
 
     sp = sub.add_parser("finops", help="FinOps cost analysis")
     _add_common(sp)
     sp.add_argument("finops_cmd",
-                    choices=["costs", "allocate", "focus", "graph"])
+                    choices=["costs", "allocate", "focus", "focus-validate",
+                             "unit", "graph", "ingest", "report"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--by", default="cost_center")
+    sp.add_argument("--denominators", default="",
+                    help="JSON {unit: measured_count} for `finops unit`")
     sp.set_defaults(func=cmd_finops)
 
     sp = sub.add_parser("product", help="platform product verbs")
@@ -1207,11 +1321,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("change", help="§85–86 change lifecycle (sandboxed)")
     _add_common(sp)
     sp.add_argument("change_cmd",
-                    choices=["propose", "sandbox", "verify", "approve",
-                             "apply"])
+                    choices=["propose", "sandbox", "verify", "review",
+                             "approve", "apply"])
     sp.add_argument("--patch", default="", help="unified diff file")
     sp.add_argument("--file", action="append",
                     help="rel/path=src-file (or literal content)")
+    sp.add_argument("--signals", default="",
+                    help="JSON risk signals doc (review only)")
     sp.set_defaults(func=cmd_change)
 
     sp = sub.add_parser("explain", help="evidence chain for a finding")

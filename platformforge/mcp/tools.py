@@ -157,6 +157,45 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
         from platformforge.sandbox import sandbox_analyze
         return sandbox_analyze(inp["root"], patch=inp.get("patch"),
                                files=inp.get("files"))
+    if handler == "cli:change_review":
+        from platformforge.sandbox import review_change
+        return review_change(inp["root"], patch=inp.get("patch"),
+                             files=inp.get("files"),
+                             signals=inp.get("signals"))
+    if handler == "cli:finops":
+        from platformforge import finops as F
+        sub = inp.get("op", "costs")
+        if sub == "costs":
+            doc = F.cost_facts(inp["path"])
+            return {**doc, "summary": F.cost_summary(doc["facts"])}
+        if sub == "allocate":
+            return F.allocate(F.cost_facts(inp["path"])["facts"],
+                              by=inp.get("by", "cost_center"))
+        if sub == "focus":
+            rows = json.loads(Path(inp["path"]).read_text())
+            return F.to_focus(rows if isinstance(rows, list)
+                              else rows.get("rows", []))
+        if sub == "focus-validate":
+            rows = json.loads(Path(inp["path"]).read_text())
+            return F.validate_focus(rows if isinstance(rows, list)
+                                    else rows.get("rows", []))
+        if sub == "unit":
+            doc = F.cost_facts(inp["path"])
+            return F.unit_economics(doc["facts"],
+                                    inp.get("denominators") or {})
+        if sub == "ingest":
+            return F.ingest_billing(inp["path"])
+        if sub == "report":
+            doc = F.cost_facts(inp["path"])
+            extra = inp.get("denominators") or {}
+            return F.finops_report(
+                doc["facts"], utilization=extra.get("utilization"),
+                requested_vs_used=extra.get("requested_vs_used"),
+                committed=extra.get("committed"),
+                split=extra.get("split"))
+        raise ValueError(f"unknown finops op {sub}")
+    if handler == "cli:observe":
+        return _observe(inp)
     if handler == "cli:evals":
         from platformforge.evals import run_all
         return run_all(inp["cases"] if inp.get("cases") else
@@ -195,6 +234,43 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
         from platformforge.forge import capability_manifest
         return capability_manifest()
     raise ValueError(f"no handler {handler}")
+
+
+def _observe(inp: dict[str, Any]) -> Any:
+    """Observe sub-verbs — same functions cmd_observe calls."""
+    from platformforge import observe as O
+    sub = inp.get("op", "slo-burn")
+    if sub == "slo":
+        c = O.SloContract.load(inp["contract"])
+        return O.error_budget(c, **(inp.get("sli") or {}))
+    if sub == "slo-burn":
+        c = O.SloContract.load(inp["contract"])
+        return O.multi_window_burn(c, inp.get("windows") or {})
+    if sub == "otel":
+        return O.correlate_spans(inp["path"])
+    if sub == "semconv":
+        return O.analyze_semconv(inp["path"])
+    if sub == "timeline":
+        return O.timeline(json.loads(Path(inp["path"]).read_text()))
+    if sub == "postmortem":
+        inc = json.loads(Path(inp["incident"]).read_text())
+        return O.postmortem(inc, inc.get("hypotheses"))
+    if sub == "dr":
+        doc = json.loads(Path(inp["facts"]).read_text())
+        return O.dr_model(doc.get("facts", doc))
+    if sub == "prometheus":
+        return O.analyze_prometheus(inp["path"])
+    if sub == "grafana":
+        return O.analyze_grafana(inp["path"])
+    if sub == "incident":
+        alerts = json.loads(Path(inp["alerts"]).read_text())
+        changes = json.loads(Path(inp["changes"]).read_text())
+        return O.correlate(alerts, changes,
+                           window_s=int(inp.get("window", 3600)))
+    if sub == "capacity":
+        items = json.loads(Path(inp["path"]).read_text())
+        return O.capacity(items)
+    raise ValueError(f"unknown observe op {sub}")
 
 
 def _default_catalog() -> Path:
@@ -238,6 +314,36 @@ def _analyze(domain: str, path: str) -> Any:
     if domain == "crossplane":
         from platformforge.product import analyze_crossplane
         return analyze_crossplane(path)
+    if domain == "helm":
+        from platformforge.k8s.helm import analyze_helm
+        return analyze_helm(path)
+    if domain == "kustomize":
+        from platformforge.k8s.helm import analyze_kustomize
+        return analyze_kustomize(path)
+    if domain == "hubble":
+        from platformforge.k8s.hubble import analyze_hubble
+        return analyze_hubble(path)
+    if domain == "kyverno":
+        from platformforge.security.kyverno import analyze_kyverno
+        return analyze_kyverno(path)
+    if domain == "cosign":
+        from platformforge.security.cosign import analyze_cosign
+        return analyze_cosign(path)
+    if domain == "slsa":
+        from platformforge.security.slsa import slsa_assess
+        doc = json.loads(Path(path).read_text())
+        return slsa_assess(doc.get("provenance", doc),
+                           evidence=doc.get("evidence")
+                           if isinstance(doc, dict) else None)
+    if domain == "cloud-aws":
+        from platformforge.cloud import analyze_aws_dump
+        return analyze_aws_dump(path)
+    if domain == "cloud-azure":
+        from platformforge.cloud import analyze_azure_dump
+        return analyze_azure_dump(path)
+    if domain == "cloud-gcp":
+        from platformforge.cloud import analyze_gcp_dump
+        return analyze_gcp_dump(path)
     raise ValueError(f"unknown domain {domain}")
 
 
@@ -259,6 +365,21 @@ def _graph(inp: dict[str, Any], repo: str) -> Any:
         return {"cycles": G.cycles(g)}
     if q == "stats":
         return g.stats()
+    if q.startswith("identity"):
+        from platformforge.security.identity import (
+            compromise_blast,
+            who_can_access,
+            who_can_become,
+            workloads_using_identity,
+        )
+        target = inp.get("node") or inp.get("dst") or inp.get("src")
+        fn = {"identity-become": who_can_become,
+              "identity-access": who_can_access,
+              "identity-workloads": workloads_using_identity,
+              "identity-blast": compromise_blast}.get(q)
+        if not fn:
+            raise ValueError(f"unknown graph query {q}")
+        return fn(g, target)
     raise ValueError(f"unknown graph query {q}")
 
 

@@ -88,3 +88,50 @@ rules:
         - {path: attrs.signed, op: equals, value: false}
     message: "unsigned artifacts can't prove origin (cosign/SLSA)"
     sources: ["slsa.dev/spec/v1.0/levels", "sigstore.dev"]
+
+  - rule_id: PF-SEC-040
+    domain: security
+    title: "Legacy Kyverno policy type on deprecated engine version"
+    severity: medium
+    applies_to: {fact_kind: kyverno.policy}
+    conditions:
+      all:
+        - {path: attrs.legacy_type, op: equals, value: true}
+        - {path: attrs.legacy_deprecated, op: equals, value: true}
+    message: "Policy/ClusterPolicy are deprecated on kyverno ≥1.13 — migrate to CEL-based types"
+    sources: ["kyverno.io/docs/"]
+
+  - rule_id: PF-SEC-041
+    domain: security
+    title: "Kyverno policy with no rules"
+    severity: low
+    applies_to: {fact_kind: kyverno.policy}
+    conditions:
+      all:
+        - {path: attrs.rules, op: equals, value: 0}
+        - {path: attrs.policy_kind, op: in, value: [Policy, ClusterPolicy]}
+    message: "empty ruleset enforces nothing — declared intent without effect"
+    sources: ["kyverno.io/docs/"]
+
+  - rule_id: PF-SEC-042
+    domain: security
+    title: "Signature claimed but never verified"
+    severity: high
+    applies_to: {fact_kind: supply.signature}
+    conditions:
+      all:
+        - {path: attrs.claimed_signed, op: equals, value: true}
+        - {path: attrs.verified, op: equals, value: false}
+    message: "signed=true in a document is a claim — verification needs rekor/key lookup (host boundary)"
+    sources: ["docs.sigstore.dev/"]
+
+  - rule_id: PF-SEC-043
+    domain: security
+    title: "OIDC-federated principal in trust policy"
+    severity: info
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      all:
+        - {path: attrs.federated_providers, op: not_empty}
+    message: "web-identity federation — check audience/sub conditions on the provider"
+    sources: ["docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html"]

@@ -94,7 +94,8 @@ def sandbox_analyze(repo: str | Path,
             sb.write_file(rel, content, dst)
         after = _analyze_tree(dst, analyzers)
     return {"before": before, "after": after,
-            "delta": compare_runs(before, after), "applied": applied}
+            "delta": compare_runs(before, after), "applied": applied,
+            "semantic": semantic_delta(before, after)}
 
 
 def compare_runs(before: dict[str, Any],
@@ -116,3 +117,27 @@ def compare_runs(before: dict[str, Any],
             "fact_kinds_changed_count": changed,
             "facts_added": len(ids_a - ids_b),
             "facts_removed": len(ids_b - ids_a)}
+
+
+def semantic_delta(before: dict[str, Any], after: dict[str, Any]
+                   ) -> dict[str, Any]:
+    """§106 — graph-aware delta: build graphs from both runs, diff
+    semantically, score the risk change. Never returns just a count."""
+    from platformforge.graph.build import GraphBuilder
+    from platformforge.graph.diff import diff as graph_diff
+    try:
+        gb = GraphBuilder().from_facts(before["facts"]).graph
+        ga = GraphBuilder().from_facts(after["facts"]).graph
+        gdiff = graph_diff(gb, ga)
+    except Exception as exc:  # noqa: BLE001 — delta failure is data
+        return {"graph_diff": None, "error": str(exc)}
+    # risk delta: new security/exposure edges vs removed ones
+    exposure = (gdiff.get("semantic") or {}).get("exposure") or {}
+    sec = (gdiff.get("semantic") or {}).get("security") or {}
+    return {"graph_diff": gdiff,
+            "exposure_added": any(e.startswith("+")
+                                  for e in exposure.get("edge_changes", [])),
+            "security_edges_changed": sec.get("changed", False),
+            "nodes_added": len(gdiff.get("nodes_added") or []),
+            "nodes_removed": len(gdiff.get("nodes_removed") or []),
+            "note": "semantic delta over graph, not just fact counts"}

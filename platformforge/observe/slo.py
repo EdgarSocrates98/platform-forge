@@ -98,3 +98,28 @@ def error_budget(contract: SloContract,
         "fact_id": stable_id("PF-SLO", contract.service, contract.sli,
                              str(total_events), str(bad_events)),
     }
+
+
+def multi_window_burn(contract: SloContract,
+                      windows: dict[str, dict[str, int]]) -> dict[str, Any]:
+    """§87 — multi-window burn rate (Google SRE alerting shape):
+    {window: {good, bad}} per window; each window reports its own burn
+    and only windows with data produce verdicts."""
+    results = {}
+    for w, ev in sorted(windows.items()):
+        good, bad = ev.get("good_events"), ev.get("bad_events")
+        if good is None or bad is None or (good + bad) <= 0:
+            results[w] = {"status": "unresolved",
+                          "missing": ["good_events|bad_events"]}
+            continue
+        total = good + bad
+        ratio = bad / total
+        burn = (ratio / contract.allowed_error_ratio
+                if contract.allowed_error_ratio else float("inf"))
+        results[w] = {"total_events": total, "burn_rate": round(burn, 4),
+                      "status": "firing" if burn >= 1 else "ok"}
+    firing = [w for w, r in results.items() if r.get("status") == "firing"]
+    return {"service": contract.service, "sli": contract.sli,
+            "windows": results, "firing_windows": firing,
+            "note": "burn is per-window measured; unresolved windows are "
+                    "not smoothed into a verdict"}

@@ -34,14 +34,15 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.diagnose` | 8 | sre | yes | `observe incident` | correlate alerts+changes+graph (never cause-as-certainty) |
 | `platform.explain` | 2 | core | yes | `explain` | evidence chain for a finding |
 | `platform.recommend` | 11 | * | yes | `recommend` | findings→Recommendation objects; no-evidence → refused |
-| `platform.change.*` | 5+ | core | yes | `change propose/sandbox/verify` | copy-tree → apply → analyze → compare; `approve/apply` refuse in core (host boundary) |
+| `platform.change.*` | 5+ | core | yes | `change propose/sandbox/verify/review` | copy-tree → apply → analyze → compare + semantic graph delta + findings delta + risk; `approve/apply` refuse in core (host boundary) |
 | `platform.drift` | 5+ | iac | yes | `analyze drift` | desired↔observed (tfstate) |
 | `platform.risk` | — | core | yes | `risk` | §130 decomposition; criticality declared-only (§131) |
 | `platform.sdd.*` | 3 | sdd | yes | `sdd init/artifact/status/gate/override` | lifecycle + hash cascade |
 | `platform.economy.*` | 2 | economy | yes | `economy`, `tokens`, `rtk`, `caveman`, `route` | measured bytes/tokens |
-| `platform.security.*` | 10 | security | yes | `analyze secrets/iam/sbom/supply` | secrets scan, IAM graph, SLSA |
-| `platform.reliability.*` | 8 | sre | yes | `observe slo/otel/incident/capacity` | SLO, budget, capacity |
-| `platform.finops.*` | 9 | finops | yes | `finops costs/allocate/focus/graph` | allocation, FOCUS, graph costing |
+| `platform.security.*` | 10 | security | yes | `analyze secrets/iam/sbom/supply/kyverno/cosign/slsa` | secrets scan, IAM v2 (trust/SCP/boundary/OIDC/role chaining), Kyverno version-aware, SLSA requirement/evidence/gap, Cosign shape (claimed ≠ verified) |
+| `platform.identity.*` | 4 | security | yes | `graph identity-become/access/workloads/blast` | §100–101 identity paths; no-path-found is named, never "no risk" |
+| `platform.reliability.*` | 8 | sre | yes | `observe slo/slo-burn/otel/semconv/incident/timeline/postmortem/capacity/dr/prometheus/grafana` | SLO multi-window burn, incident/postmortem, DR, prom/grafana, OTel semconv |
+| `platform.finops.*` | 9 | finops | yes | `finops costs/allocate/focus/focus-validate/unit/ingest/report/graph` | allocation, FOCUS 1.0 validation, unit economics, CUR/Azure/GCP/OpenCost/Kubecost ingest, idle/rightsizing/anomaly/forecast/commitments/shared |
 | `platform.lab.*` | 14 | lab | yes | `lab list/run/run-all` | 13 scenarios (L0 static tier) |
 | `platform.product.*` | 11 | product | yes | `product maturity/scorecard/backstage` | CNCF maturity, Backstage projection |
 | `platform.integrate/detach` | 13 | adapters | yes | `mcp integrate/detach` | host parity files |

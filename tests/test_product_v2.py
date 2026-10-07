@@ -1,8 +1,7 @@
 """Cycle 2 Phase F — golden paths, maturity v2, scorecards v2."""
 from __future__ import annotations
 
-from platformforge.product.golden_paths import (analyze_paths, capabilities,
-                                              describe, load_library)
+from platformforge.product.golden_paths import analyze_paths, capabilities, describe, load_library
 from platformforge.product.maturity import maturity_report
 from platformforge.product.scorecards import scorecard
 

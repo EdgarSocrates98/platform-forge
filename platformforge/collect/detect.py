@@ -30,6 +30,11 @@ def _shape_domain(path: Path, doc: Any) -> str | None:
                 return "gitops"
             if "toolkit.fluxcd.io" in str(doc.get("apiVersion")):
                 return "gitops"
+            api = str(doc.get("apiVersion", ""))
+            if "kyverno.io" in api or "policies.kyverno.io" in api or \
+                    "gatekeeper.sh" in api or \
+                    "admissionregistration.k8s.io" in api:
+                return "kyverno"
             return "k8s"
         if doc.get("format_version") or "terraform_version" in doc:
             return "plan" if "planned_values" in doc else "state"
@@ -53,6 +58,21 @@ def _shape_domain(path: Path, doc: Any) -> str | None:
             return "supply"
         if any(k in doc for k in ("BillingAccountId", "ResourceId",
                                   "ServiceName")) and "Charge" in str(doc)[:2000]:
+            return "finops"
+        # billing exports in JSON: OpenCost/Kubecost/CUR-as-JSON shapes
+        first_row = None
+        for key in ("rows", "data", "results", "items"):
+            if isinstance(doc.get(key), list) and doc[key]:
+                first_row = doc[key][0]
+                break
+        probe = first_row if isinstance(first_row, dict) else doc
+        if isinstance(probe, dict) and (
+                any(k.startswith("lineItem/") for k in probe)
+                or "UnblendedCost" in probe or "PreTaxCost" in probe
+                or "CostInBillingCurrency" in probe
+                or "totalCost" in probe
+                or ("cost" in probe and ("usage" in probe
+                                         or "labels" in probe))):
             return "finops"
     if isinstance(doc, dict) and isinstance(doc.get("items"), list) \
             and all(_looks_k8s(i) for i in doc["items"]
@@ -83,10 +103,25 @@ def detect_file(path: Path) -> str | None:
     if name in ("supply.json", "provenance.json", "attestation.json") \
             or "in-toto" in name:
         return "supply"
+    if "sigstore" in name or "cosign" in name \
+            or name.endswith((".sig", ".bundle")):
+        return "cosign"
     if name in ("slo.yaml", "slo.yml"):
         return "slo"
     if name in ("otel.yaml", "otel.yml") or "otel" in name:
         return "otel"
+    if suffix == ".csv":
+        # billing exports by header shape, not filename
+        try:
+            header = path.open().readline()
+        except OSError:
+            return None
+        if "lineItem/" in header or "UnblendedCost" in header or \
+                "PreTaxCost" in header or "CostInBillingCurrency" in header \
+                or ("cost" in header.lower() and
+                    ("sku" in header.lower() or "usage" in header.lower())):
+            return "finops"
+        return None
     if suffix not in (".json", ".yaml", ".yml"):
         return None
     try:
@@ -143,7 +178,14 @@ def collect(path: str | Path) -> dict[str, Any]:
             elif dom == "supply":
                 facts += security.analyze_supply(str(paths[0]))["facts"]
             elif dom == "finops":
-                facts += cost_facts(str(paths[0]))["facts"]
+                from platformforge.finops.costs import cost_facts_from_rows
+                from platformforge.finops.ingest import ingest_billing
+                ing = ingest_billing(str(paths[0]))
+                if ing["rows"]:
+                    facts += cost_facts_from_rows(
+                        ing["rows"], source=str(paths[0]))["facts"]
+                else:
+                    facts += cost_facts(str(paths[0]))["facts"]
             elif dom == "cloud-aws":
                 from platformforge.cloud import analyze_aws_dump
                 for p in paths:
@@ -159,6 +201,14 @@ def collect(path: str | Path) -> dict[str, Any]:
                 from platformforge.k8s.hubble import analyze_hubble
                 for p in paths:
                     facts += analyze_hubble(str(p))["facts"]
+            elif dom == "kyverno":
+                from platformforge.security.kyverno import analyze_kyverno
+                parent = paths[0].parent
+                facts += analyze_kyverno(parent)["facts"]
+            elif dom == "cosign":
+                from platformforge.security.cosign import analyze_cosign
+                for p in paths:
+                    facts += analyze_cosign(str(p))["facts"]
             elif dom in ("k8s", "gitops"):
                 # dir-level domains: run once over the common parent
                 parent = paths[0].parent
