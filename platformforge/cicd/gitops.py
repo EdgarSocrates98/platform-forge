@@ -43,7 +43,8 @@ def analyze_gitops(path: str | Path) -> dict[str, Any]:
             sync = spec.get("syncPolicy") or {}
             src = spec.get("source") or {}
             dest = spec.get("destination") or {}
-            automated = bool(sync.get("automated"))
+            # ArgoCD: presence of `automated` (even `{}`/null) enables sync
+            automated = "automated" in sync
             attrs = {
                 "name": name, "namespace": ns, "tool": "argocd",
                 "automated_sync": automated,

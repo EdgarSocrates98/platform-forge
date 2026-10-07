@@ -31,8 +31,6 @@ def analyze_iam_policy(path: str | Path) -> dict[str, Any]:
         res = s.get("Resource") or []
         res = [res] if isinstance(res, str) else res
         pr = s.get("Principal") or {}
-        if pr == "*":
-            public_principals += 1
         pr_list = []
         if isinstance(pr, dict):
             for v in pr.values():
@@ -40,8 +38,9 @@ def analyze_iam_policy(path: str | Path) -> dict[str, Any]:
         elif isinstance(pr, str):
             pr_list.append(pr)
         pr_list = [p if p != "*" else "wildcard-principal" for p in pr_list]
-        if "*" in actions or "iam:*" in actions or "iam:PassRole" in actions \
-                and "*" in res:
+        public_principals += pr_list.count("wildcard-principal")
+        if "*" in actions or "iam:*" in actions \
+                or ("iam:PassRole" in actions and "*" in res):
             admin = True
         wildcard_actions += sum(1 for a in actions if a.endswith("*"))
         wildcard_resources += sum(1 for r in res if r == "*")

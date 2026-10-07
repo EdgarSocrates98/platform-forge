@@ -95,9 +95,41 @@ def cmd_status(args: argparse.Namespace) -> int:
     }, args)
 
 
+def _member_dirs(path: str | Path) -> list[tuple[str, Path]]:
+    """§126 — a workspace.yaml root expands to its member repos."""
+    from platformforge.core.workspace import load_workspace
+    ws = load_workspace(path)
+    if ws.is_multi_repo:
+        return [(m.name, p) for m, p in
+                zip(ws.members, ws.member_paths(), strict=True)
+                if p.is_dir()]
+    return [("", Path(path))]
+
+
+def _run_over_members(fn, path: str | Path) -> dict[str, Any]:
+    """Run an analyzer per workspace member; facts get `member` tagged."""
+    members = _member_dirs(path)
+    if len(members) == 1 and not members[0][0]:
+        return fn(str(members[0][1]))
+    facts, errors = [], []
+    for name, p in members:
+        try:
+            for f in fn(str(p))["facts"]:
+                f.setdefault("attrs", {})["workspace_member"] = name
+                facts.append(f)
+        except Exception as e:  # noqa: BLE001 — member failure is data
+            errors.append(f"{name or p.name}: {e}")
+    out: dict[str, Any] = {"facts": facts,
+                           "workspace": {n: str(p) for n, p in members}}
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def cmd_inspect(args: argparse.Namespace) -> int:
     """Inventory analyzable artifacts under a root — no content parsing."""
     root = Path(args.repo).resolve()
+    members = _member_dirs(root)
     kinds = {
         "terraform": ("*.tf", "*.tf.json", "*.tfvars"),
         "kubernetes": ("*.yaml", "*.yml"),
@@ -113,15 +145,19 @@ def cmd_inspect(args: argparse.Namespace) -> int:
     inventory: dict[str, list[str]] = {k: [] for k in kinds}
     ignore = {".git", ".venv", "node_modules", ".platformforge", "vendor",
               "__pycache__", "dist", "build"}
-    for p in sorted(root.rglob("*")):
-        if not p.is_file() or any(part in ignore for part in p.parts):
-            continue
-        rel = str(p.relative_to(root))
-        for kind, pats in kinds.items():
-            if any(p.match(pat) or rel.endswith(pat.lstrip("*")) for pat in pats):
-                inventory[kind].append(rel)
+    for mname, mroot in members:
+        for p in sorted(mroot.rglob("*")):
+            if not p.is_file() or any(part in ignore for part in p.parts):
+                continue
+            rel = (f"{mname}/{p.relative_to(mroot)}" if mname
+                   else str(p.relative_to(mroot)))
+            for kind, pats in kinds.items():
+                if any(p.match(pat) or rel.endswith(pat.lstrip("*"))
+                       for pat in pats):
+                    inventory[kind].append(rel)
     inventory = {k: v for k, v in inventory.items() if v}
     return _emit({"root": str(root), "artifacts": inventory,
+                  "members": [n or str(p) for n, p in members],
                   "counts": {k: len(v) for k, v in inventory.items()}}, args)
 
 
@@ -301,11 +337,11 @@ def cmd_graph(args: argparse.Namespace) -> int:
 
 
 def cmd_analyze(args: argparse.Namespace) -> int:
-    """Domain analyzers → fact documents (feed judge/graph)."""
+    """Domain analyzers → fact documents (feed judge/graph).
+
+    Tree-walking domains are workspace-aware: a root with a multi-member
+    workspace.yaml fans out per member repo and tags facts (§126)."""
     sub = args.analyze_cmd
-    if sub == "iac":
-        from platformforge.iac import analyze_hcl
-        return _emit(analyze_hcl(args.path), args)
     if sub == "plan":
         from platformforge.iac import analyze_plan
         return _emit(analyze_plan(args.path), args)
@@ -317,15 +353,6 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         desired = analyze_hcl(args.config)["facts"]
         observed = analyze_state(args.state)["facts"]
         return _emit(drift(desired, observed), args)
-    if sub == "k8s":
-        from platformforge.k8s import analyze_k8s
-        return _emit(analyze_k8s(args.path), args)
-    if sub == "gitops":
-        from platformforge.cicd import analyze_gitops
-        return _emit(analyze_gitops(args.path), args)
-    if sub == "gha":
-        from platformforge.cicd import analyze_gha
-        return _emit(analyze_gha(args.path), args)
     if sub == "iam":
         from platformforge.security import analyze_iam_policy
         return _emit(analyze_iam_policy(args.path), args)
@@ -333,18 +360,21 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         from platformforge.security import analyze_sbom
         vulns = json.loads(Path(args.vulns).read_text()) if args.vulns else None
         return _emit(analyze_sbom(args.path, vuln_db=vulns), args)
-    if sub == "secrets":
-        from platformforge.security import scan_secrets
-        return _emit(scan_secrets(args.path), args)
-    if sub == "supply":
-        from platformforge.security import analyze_supply
-        return _emit(analyze_supply(args.path), args)
-    if sub == "catalog":
-        from platformforge.product import analyze_catalog
-        return _emit(analyze_catalog(args.path), args)
-    if sub == "crossplane":
-        from platformforge.product import analyze_crossplane
-        return _emit(analyze_crossplane(args.path), args)
+    tree_analyzers = {
+        "iac": "platformforge.iac:analyze_hcl",
+        "k8s": "platformforge.k8s:analyze_k8s",
+        "gitops": "platformforge.cicd:analyze_gitops",
+        "gha": "platformforge.cicd:analyze_gha",
+        "secrets": "platformforge.security:scan_secrets",
+        "supply": "platformforge.security:analyze_supply",
+        "catalog": "platformforge.product:analyze_catalog",
+        "crossplane": "platformforge.product:analyze_crossplane",
+    }
+    if sub in tree_analyzers:
+        mod, fn = tree_analyzers[sub].split(":")
+        import importlib
+        return _emit(_run_over_members(getattr(importlib.import_module(mod),
+                                             fn), args.path), args)
     return _emit({"error": f"unknown analyze domain {sub}"}, args, 1)
 
 
@@ -422,6 +452,95 @@ def cmd_lab(args: argparse.Namespace) -> int:
     return _emit(lab.run(args.path or ""), args)
 
 
+def cmd_risk(args: argparse.Namespace) -> int:
+    """§130–131 risk engine + criticality."""
+    from platformforge.risk.engine import assess_change
+    signals: dict[str, Any] = {}
+    if args.signals:
+        signals = json.loads(Path(args.signals).read_text()
+                             if Path(args.signals).exists() else args.signals)
+    if args.node:
+        g = _load_graph_or_refuse(args.repo)
+        if g is None:
+            return _emit({"refusal": "PF-GRAPH-NOGRAPH"}, args, 2)
+        from platformforge.graph import blast_radius
+        from platformforge.risk.signals import signals_from_graph
+        blast = blast_radius(g, args.node)
+        signals = {**signals_from_graph(g, [args.node], blast), **signals}
+        signals.setdefault("blast_radius_nodes", blast.get("impacted"))
+    return _emit(assess_change(signals), args)
+
+
+def cmd_change(args: argparse.Namespace) -> int:
+    """§85–86 change lifecycle: propose → sandbox → verify (read-only)."""
+    from platformforge.sandbox import sandbox_analyze
+    sub = args.change_cmd
+    if sub in ("propose", "verify", "sandbox"):
+        patch = Path(args.patch).read_text() if args.patch else None
+        files = {}
+        for spec in args.file or []:
+            rel, _, src = spec.partition("=")
+            files[rel] = Path(src).read_text() if Path(src).exists() else src
+        out = sandbox_analyze(args.repo, patch=patch, files=files)
+        return _emit(out, args, 2 if "refusal" in out else 0)
+    if sub == "approve" or sub == "apply":
+        # core never mutates — approval emits a receipt-bound refusal unless
+        # a sandbox receipt with verified diff is provided
+        return _emit({"refusal": "platform.change.core_read_only",
+                      "detail": "apply/approve are host-side boundaries; "
+                                "core emits verified sandbox diffs only",
+                      "unlock": "change verify --patch <diff> first"}, args, 2)
+    return _emit({"error": f"unknown change verb {sub}"}, args, 1)
+
+
+def cmd_explain(args: argparse.Namespace) -> int:
+    """Evidence chain for a finding id — facts behind the judgment."""
+    doc = json.loads(Path(args.path).read_text())
+    findings = doc.get("findings", doc if isinstance(doc, list) else [])
+    f = next((x for x in findings if x.get("finding_id") == args.name
+              or x.get("rule_id") == args.name), None)
+    if not f:
+        return _emit({"refusal": "platform.finding.unresolved",
+                      "name": args.name}, args, 2)
+    facts_doc = (json.loads(Path(args.facts).read_text())
+                 if args.facts else doc.get("facts", []))
+    by_id = {x.get("fact_id"): x for x in facts_doc}
+    chain = [{"fact_id": e, "fact": by_id.get(e, "unresolved")}
+             for e in f.get("evidence", [])]
+    return _emit({"finding": f, "evidence_chain": chain}, args)
+
+
+def cmd_recommend(args: argparse.Namespace) -> int:
+    """findings → Recommendation objects with evidence (§recommendation)."""
+    from platformforge.models import Recommendation
+    doc = json.loads(Path(args.path).read_text())
+    findings = doc.get("findings", doc if isinstance(doc, list) else [])
+    recs, skipped = [], []
+    for f in findings:
+        if f.get("status") != "violated":
+            continue
+        if not f.get("evidence"):
+            skipped.append({"rule_id": f["rule_id"],
+                            "reason": "finding without evidence — "
+                                      "recommendation refused by contract"})
+            continue
+        recs.append(Recommendation(
+            title=f.get("title") or f["rule_id"],
+            severity=f.get("severity", "medium"),
+            confidence="declared",
+            evidence=f["evidence"],
+            root_cause=f.get("message", ""),
+            proposed_change=[f.get("remediation",
+                                   "resolve rule violation")],
+            basis={"declared": f["evidence"]},
+            risks=[],
+            validation=["re-run analyze+judge after change"],
+            rollback=["revert the diff"],
+        ).to_dict())
+    return _emit({"recommendations": recs, "count": len(recs),
+                  "refused": skipped}, args)
+
+
 def cmd_capability(args: argparse.Namespace) -> int:
     """Capability registry projection — same source as the MCP adapter."""
     from platformforge.mcp.registry import CAPABILITIES
@@ -463,6 +582,13 @@ def cmd_forge(args: argparse.Namespace) -> int:
     if sub == "verify":
         env = json.loads(Path(args.path).read_text())
         return _emit(FG.verify_envelope(env), args)
+    if sub == "discover":
+        from platformforge.forge.collect import discover
+        return _emit(discover(args.path or args.repo), args)
+    if sub == "collect":
+        from platformforge.forge.collect import collect_manifest
+        out = collect_manifest(args.path or args.repo)
+        return _emit(out, args, 2 if "refusal" in out else 0)
     return _emit({"error": f"unknown forge verb {sub}"}, args, 1)
 
 
@@ -683,7 +809,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("forge", help="Forge interop")
     _add_common(sp)
-    sp.add_argument("forge_cmd", choices=["manifest", "delegate", "verify"])
+    sp.add_argument("forge_cmd", choices=["manifest", "delegate", "verify",
+                                          "discover", "collect"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--name", default="")
     sp.add_argument("--src", default="")
@@ -696,6 +823,34 @@ def build_parser() -> argparse.ArgumentParser:
                     choices=["list", "describe", "manifest"])
     sp.add_argument("--name", default="")
     sp.set_defaults(func=cmd_capability)
+
+    sp = sub.add_parser("risk", help="§130 change-risk assessment")
+    _add_common(sp)
+    sp.add_argument("--node", default="", help="graph node id to assess")
+    sp.add_argument("--signals", default="", help="JSON signals doc")
+    sp.set_defaults(func=cmd_risk)
+
+    sp = sub.add_parser("change", help="§85–86 change lifecycle (sandboxed)")
+    _add_common(sp)
+    sp.add_argument("change_cmd",
+                    choices=["propose", "sandbox", "verify", "approve",
+                             "apply"])
+    sp.add_argument("--patch", default="", help="unified diff file")
+    sp.add_argument("--file", action="append",
+                    help="rel/path=src-file (or literal content)")
+    sp.set_defaults(func=cmd_change)
+
+    sp = sub.add_parser("explain", help="evidence chain for a finding")
+    _add_common(sp)
+    sp.add_argument("path", help="findings doc (json)")
+    sp.add_argument("--name", default="", help="finding_id or rule_id")
+    sp.add_argument("--facts", default="", help="facts doc (json)")
+    sp.set_defaults(func=cmd_explain)
+
+    sp = sub.add_parser("recommend", help="findings → recommendations")
+    _add_common(sp)
+    sp.add_argument("path", help="findings doc (json)")
+    sp.set_defaults(func=cmd_recommend)
     return p
 
 

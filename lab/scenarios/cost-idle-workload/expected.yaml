@@ -1,0 +1,5 @@
+tier: smoke
+description: "Spend-bearing resource with no cost_center tag."
+analyzers: [finops]
+violated_rules: [PF-FIN-001]
+fact_kinds: [finops.cost]

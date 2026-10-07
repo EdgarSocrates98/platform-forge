@@ -1,0 +1,5 @@
+tier: smoke
+description: "SLO burn exceeds the 30d budget — status exhausted."
+analyzers: [slo]
+violated_rules: [PF-SLO-001]
+fact_kinds: [sre.error_budget]

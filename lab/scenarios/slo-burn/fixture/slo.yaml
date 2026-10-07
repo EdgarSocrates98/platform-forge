@@ -1,0 +1,4 @@
+service: payments
+sli: availability
+target: 99.9
+window: 30d

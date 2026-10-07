@@ -30,13 +30,46 @@ _ANALYZERS = {
     "gha": "platformforge.cicd.analyze_gha",
     "catalog": "platformforge.product.analyze_catalog",
     "crossplane": "platformforge.product.analyze_crossplane",
+    "secrets": "platformforge.security.scan_secrets",
+    "iam": "platformforge.security.analyze_iam_policy",
+    "supply": "platformforge.security.analyze_supply",
+    "finops": "platformforge.finops.cost_facts",
 }
+
+
+def _slo_facts(fixture: Path) -> dict[str, Any]:
+    """fixture/slo.yaml + fixture/events.yaml → sre.error_budget facts."""
+    from platformforge.models.base import stable_id
+    from platformforge.observe.slo import SloContract, error_budget
+    contract = SloContract.load(fixture / "slo.yaml")
+    events = yaml.safe_load((fixture / "events.yaml").read_text()) or {}
+    res = error_budget(contract, **{k: events.get(k) for k in
+                                    ("good_events", "bad_events",
+                                     "total_events")})
+    return {"facts": [{"fact_id": res.pop("fact_id", None) or
+                       stable_id("PF-SLO", contract.service, contract.sli),
+                       "kind": "sre.error_budget", "source": "slo.yaml",
+                       "location": str(fixture), "tier": 0,
+                       "attrs": res}]}
 
 
 def _resolve(name: str):
     mod, fn = name.rsplit(".", 1)
     import importlib
     return getattr(importlib.import_module(mod), fn)
+
+
+# file-based domains read fixture/<file> instead of the whole tree
+_FILE_INPUTS = {"iam": "policy.json", "supply": "supply.json",
+                "finops": "costs.json"}
+
+
+def _analyzer(dom: str, fixture: Path):
+    if dom == "slo":
+        return _slo_facts(fixture)
+    fn = _resolve(_ANALYZERS[dom])
+    target = fixture / _FILE_INPUTS[dom] if dom in _FILE_INPUTS else fixture
+    return fn(target)
 
 
 def list_scenarios() -> list[dict[str, Any]]:
@@ -62,9 +95,8 @@ def run(scenario_id: str) -> dict[str, Any]:
     facts: list[dict[str, Any]] = []
     errors = []
     for dom in exp.get("analyzers", []):
-        fn = _resolve(_ANALYZERS[dom])
         try:
-            facts += fn(d / "fixture")["facts"]
+            facts += _analyzer(dom, d / "fixture")["facts"]
         except Exception as e:  # noqa: BLE001 — analyzer failure is a lab error, not a crash
             errors.append(f"{dom}: {e}")
     rule_facts = [Fact.from_dict(f) for f in facts]
