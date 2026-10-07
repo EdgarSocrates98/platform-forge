@@ -1,5 +1,8 @@
-# Platform Forge
+<p align="center">
+  <img src="docs/assets/logo.png" alt="Platform Forge" width="420">
+</p>
 
+# Platform Forge
 **Plataforma de inteligência em Platform Engineering** — determinística,
 offline-first, evidence-first, grafo-ciente, neutra a provedor no núcleo.
 
