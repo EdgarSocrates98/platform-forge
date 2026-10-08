@@ -230,3 +230,31 @@ PROBES = {
     "dx-no-person-metrics": probe_dx_no_person_metrics,
     "history-window-deterministic": probe_history_window_deterministic,
 }
+
+
+def probe_fleet_report_all_cited(tmp) -> dict[str, Any]:
+    """Every invest_next entry in a fleet report must carry evidence;
+    suppressed opportunities stay visible; coverage bounds the verdict."""
+    import argparse
+    import tempfile
+    from pathlib import Path
+
+    from platformforge.cli.fleetcmd import cmd_fleet
+    src = Path("lab/fleets/acme")
+    with tempfile.TemporaryDirectory() as td:
+        for f in src.glob("*.yaml"):
+            (Path(td) / f.name).write_text(f.read_text())
+        ns = argparse.Namespace(fleet_cmd="report", path=td, question="",
+                                window="", limit=5, id="", out="",
+                                format="json")
+        r = cmd_fleet(ns)
+    inv = r.get("invest_next", [])
+    cited = all(i.get("evidence") for i in inv)
+    return {"ok": bool(inv) and cited
+            and r.get("portfolio", {}).get("suppressed", 0) > 0
+            and r.get("coverage", {}).get("min_member", 1) < 1,
+            "detail": {"invest": len(inv), "all_cited": cited,
+                       "suppressed": r.get("portfolio", {}).get("suppressed")}}
+
+
+PROBES["fleet-report-all-cited"] = probe_fleet_report_all_cited

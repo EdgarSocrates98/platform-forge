@@ -297,6 +297,41 @@ def _run_check(kind: str, expect: dict[str, Any], fleet, graph, events,
             _expect_eq("fed.action", got.get("action"),
                        exp.get("action"), f)
 
+    elif kind == "fleet_report":
+        # north-star receipt — drives the real cmd_fleet code path
+        import argparse
+        import tempfile
+
+        import yaml as _yaml
+
+        from platformforge.cli.fleetcmd import cmd_fleet
+        with tempfile.TemporaryDirectory() as td:
+            for name, blob in data.items():
+                (Path(td) / f"{name}.yaml").write_text(
+                    _yaml.safe_dump(blob))
+            ns = argparse.Namespace(
+                fleet_cmd="report", path=td, question="", window="",
+                limit=expect.get("limit", 5), id="", out="", format="json")
+            r = cmd_fleet(ns)
+        out["result"] = r
+        _expect_min("invest_next", len(r.get("invest_next", [])),
+                    expect.get("min_invest"), f)
+        _expect_min("suppressed", r.get("portfolio", {}).get("suppressed"),
+                    expect.get("min_suppressed"), f)
+        for dim in expect.get("dimensions", []):
+            if dim not in r.get("dimensions", {}):
+                f.append(f"dimension missing: {dim}")
+        if expect.get("invest_cited", True):
+            for item in r.get("invest_next", []):
+                if not item.get("evidence"):
+                    f.append(f"uncited invest item: "
+                             f"{item.get('recommendation_id')}")
+        if expect.get("coverage_below") is not None and \
+                r.get("coverage", {}).get("min_member", 1) >= \
+                expect["coverage_below"]:
+            f.append("coverage not bounded as expected: "
+                     f"{r.get('coverage')}")
+
     elif kind == "ai":
         from platformforge.aiplat.models import ai_unit_economics, detect_ai_workloads
         w = detect_ai_workloads(capacity.get("k8s_resources", []))
