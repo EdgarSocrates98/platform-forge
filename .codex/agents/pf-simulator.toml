@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "pf-simulator"
+description = """a change needs an expected-delta document"""
+role = "executor"
+access = "read-only"
+model_tier = "deterministic"
+domains = ["simulate"]
+verbs = ["ops simulate", "diff"]
+verifier = ""
+never = """executes; touches production; omits limitations"""

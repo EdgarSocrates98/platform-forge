@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "pf-extractor"
+description = """artifacts need fact extraction"""
+role = "executor"
+access = "read-only"
+model_tier = "deterministic"
+domains = ["extract"]
+verbs = ["collect", "analyze"]
+verifier = ""
+never = """assigns severity; filters facts silently"""

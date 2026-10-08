@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-architecture-reviewer"
+description = """new subsystem/contract/capability or high-blast-radius change"""
+role = "reviewer"
+access = "read-only"
+model_tier = "critical-review"
+domains = ["architecture"]
+verbs = ["graph blast", "judge", "explain"]
+verifier = ""
+never = """blocks by taste — every objection cites blast radius or a violated boundary"""

@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-finops-specialist"
+description = """cost/allocation/unit-economics question or billing export"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["finops"]
+verbs = ["finops costs", "finops allocate", "finops graph", "finops focus"]
+verifier = ""
+never = """claims savings without a measured baseline"""

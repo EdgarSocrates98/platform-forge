@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-fleet-coordinator"
+description = """fleet/portfolio/org-wide question"""
+role = "coordinator"
+access = "state-writer"
+model_tier = "standard"
+domains = ["fleet"]
+verbs = ["fleet analyze", "analyze drift", "finops costs", "route"]
+verifier = "platform-verifier"
+never = """extrapolates one member to the whole fleet; skips coverage evidence"""

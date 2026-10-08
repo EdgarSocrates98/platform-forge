@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "pf-verifier"
+description = """a document needs mechanical verification"""
+role = "executor"
+access = "read-only"
+model_tier = "deterministic"
+domains = ["proof"]
+verbs = ["diff"]
+verifier = ""
+never = """verifies itself; judges semantics — checks shape and hashes only"""

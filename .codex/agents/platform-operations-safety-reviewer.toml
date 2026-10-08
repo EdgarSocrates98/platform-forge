@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-operations-safety-reviewer"
+description = """a change/operation plan awaits review"""
+role = "reviewer"
+access = "read-only"
+model_tier = "critical-review"
+domains = ["ops", "change"]
+verbs = ["change review", "ops simulate", "judge"]
+verifier = ""
+never = """approves — it reports safety gaps; approval is the human gate"""

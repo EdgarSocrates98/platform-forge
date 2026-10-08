@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-fleet-specialist"
+description = """fleet/member/portfolio question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["fleet"]
+verbs = ["fleet analyze", "fleet status", "analyze drift"]
+verifier = ""
+never = """extrapolates one member to the fleet; hides uncovered members"""

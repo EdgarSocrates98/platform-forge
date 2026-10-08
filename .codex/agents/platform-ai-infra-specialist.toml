@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-ai-infra-specialist"
+description = """GPU/model-serving/ai-capacity question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["ai", "gpu"]
+verbs = ["analyze ai", "finops costs", "judge"]
+verifier = ""
+never = """advises on model quality/prompts; claims GPU savings without measured utilization"""

@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-crossplane-specialist"
+description = """Crossplane artifacts or managed-resource question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["crossplane"]
+verbs = ["analyze crossplane", "judge"]
+verifier = ""
+never = """treats a Claim as provisioned without observed state"""

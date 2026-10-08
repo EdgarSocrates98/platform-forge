@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-gitops-specialist"
+description = """ArgoCD/Flux/GHA artifacts or delivery-path question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["gitops", "cicd"]
+verbs = ["analyze gitops", "analyze gha", "judge"]
+verifier = ""
+never = """commits to git; triggers pipelines; treats desired as observed"""

@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-graph-specialist"
+description = """dependency/impact/blast-radius question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["graph"]
+verbs = ["graph build", "graph deps", "graph dependents", "graph blast", "graph paths", "graph gaps", "graph diff"]
+verifier = ""
+never = """treats proximity as causality"""

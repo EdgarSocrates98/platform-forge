@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-sre-specialist"
+description = """reliability/latency/incident question or telemetry present"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["sre", "slo", "incident", "capacity", "otel"]
+verbs = ["observe slo", "observe otel", "observe incident", "observe capacity", "judge"]
+verifier = ""
+never = """declares causation from correlation; invents SLOs"""

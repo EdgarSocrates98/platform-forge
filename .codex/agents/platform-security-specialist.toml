@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-security-specialist"
+description = """IAM/SBOM/supply-chain/secrets question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["security"]
+verbs = ["analyze iam", "analyze sbom", "analyze secrets", "analyze supply", "judge"]
+verifier = ""
+never = """prints secret values; verifies signatures offline only against provided material"""

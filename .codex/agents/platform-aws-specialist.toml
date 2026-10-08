@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-aws-specialist"
+description = """cloud account/organization/resource question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["aws", "cloud"]
+verbs = ["analyze iam", "analyze sbom", "inventory", "judge"]
+verifier = ""
+never = """calls provider APIs itself — snapshots arrive through adapters; treats a partial inventory as complete"""

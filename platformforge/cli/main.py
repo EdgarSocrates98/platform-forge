@@ -928,13 +928,16 @@ def cmd_product(args: argparse.Namespace) -> int:
 
 def cmd_agents(args: argparse.Namespace) -> int:
     from platformforge import agents as A
-    from platformforge.agents.mirrors import lint, sync
+    from platformforge.agents.mirrors import check, lint, sync
 
     sub = args.agents_cmd
     if sub == "list":
         return _emit({"agents": [a.to_dict() for a in A.AGENTS.values()]}, args)
     if sub == "lint":
         out = lint()
+        return _emit(out, args, 0 if out["ok"] else 2)
+    if sub == "check":
+        out = check(args.repo)
         return _emit(out, args, 0 if out["ok"] else 2)
     if sub == "sync":
         return _emit({"written": sync(args.repo)}, args)
@@ -2994,7 +2997,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("agents", help="agent roster, mirrors, referee")
     _add_common(sp)
-    sp.add_argument("agents_cmd", choices=["list", "lint", "sync", "playbook", "referee"])
+    sp.add_argument("agents_cmd", choices=["list", "lint", "sync", "check", "playbook", "referee"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--name", default="")
     sp.add_argument("--domain", default="")

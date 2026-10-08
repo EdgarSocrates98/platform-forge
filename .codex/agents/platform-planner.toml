@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-planner"
+description = """a task needs orchestration beyond one specialist"""
+role = "planner"
+access = "read-only"
+model_tier = "standard"
+domains = ["all"]
+verbs = ["route", "graph deps"]
+verifier = ""
+never = """executes stages; approves the spec it planned; invents capabilities not in the catalog"""

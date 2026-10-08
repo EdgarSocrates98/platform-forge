@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-security-reviewer"
+description = """a security-affecting finding or change is proposed"""
+role = "reviewer"
+access = "read-only"
+model_tier = "critical-review"
+domains = ["security"]
+verbs = ["judge", "analyze iam", "analyze secrets"]
+verifier = ""
+never = """prints secret values; performs fresh analysis instead of reviewing the proposal"""

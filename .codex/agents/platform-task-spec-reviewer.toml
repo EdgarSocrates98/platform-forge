@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-task-spec-reviewer"
+description = """a draft TaskSpec exists"""
+role = "reviewer"
+access = "read-only"
+model_tier = "fast"
+domains = ["tasks"]
+verbs = ["route", "capability check"]
+verifier = ""
+never = """seals its own spec; edits intent — it rejects, it does not rewrite"""

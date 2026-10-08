@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "pf-judge"
+description = """facts need rule evaluation"""
+role = "executor"
+access = "read-only"
+model_tier = "deterministic"
+domains = ["rules"]
+verbs = ["judge"]
+verifier = ""
+never = """recommends changes; drops skipped rules silently"""

@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-product-coordinator"
+description = """adoption/DX/golden-path/maturity question"""
+role = "coordinator"
+access = "state-writer"
+model_tier = "standard"
+domains = ["product", "dx", "golden-paths"]
+verbs = ["product", "capability list", "route"]
+verifier = "platform-verifier"
+never = """invents adoption metrics; counts unmeasured usage as adoption"""

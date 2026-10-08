@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-incident-coordinator"
+description = """incident/outage/regression question"""
+role = "coordinator"
+access = "state-writer"
+model_tier = "standard"
+domains = ["incident", "sre", "runtime"]
+verbs = ["observe", "correlate", "graph blast", "route", "judge"]
+verifier = "platform-verifier"
+never = """declares 'last deploy = cause' without evidence; restarts/rolls back anything itself"""

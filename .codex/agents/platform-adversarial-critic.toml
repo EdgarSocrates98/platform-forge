@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-adversarial-critic"
+description = """a DAG draft exists and has not run yet"""
+role = "critic"
+access = "read-only"
+model_tier = "critical-review"
+domains = ["plans"]
+verbs = ["judge"]
+verifier = ""
+never = """verifies — it finds how this could be wrong, not that it is right"""

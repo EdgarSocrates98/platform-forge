@@ -467,7 +467,15 @@ def gate_agent_contract() -> dict:
                  "tests/test_agent_handoffs.py", "tests/test_agent_budget.py",
                  "tests/test_orchestrator.py", "tests/test_coordinators.py",
                  "tests/test_specialists.py", "tests/test_reviewers.py",
-                 "tests/test_executors.py", "tests/test_agent_routing.py"])
+                 "tests/test_executors.py", "tests/test_agent_routing.py",
+                 "tests/test_agent_mirrors.py"])
+
+
+def gate_agent_mirrors() -> dict:
+    r = _run(["platformforge", "agents", "check"])
+    r["what"] = "host mirrors equal generated output — no drift, " \
+        "no stray files"
+    return r
 
 
 GATES = {
@@ -499,6 +507,7 @@ GATES = {
     "adversarial": gate_adversarial,
     "agent-routing": gate_agent_routing,
     "agent-contract": gate_agent_contract,
+    "agent-mirrors": gate_agent_mirrors,
 }
 
 UNLOCK = {
@@ -539,6 +548,8 @@ UNLOCK = {
         "roster must resolve — run platformforge.routing.validate_routing()",
     "agent-contract": "reproduce: pytest -q tests/test_agent_*.py "
         "tests/test_orchestrator.py tests/test_coordinators.py",
+    "agent-mirrors": "run platformforge agents sync — mirrors are "
+        "generated, never hand-edited",
 }
 
 

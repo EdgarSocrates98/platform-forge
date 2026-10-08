@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-orchestrator"
+description = """cross-domain platform question — 'analise minha plataforma'"""
+role = "orchestrator"
+access = "state-writer"
+model_tier = "standard"
+domains = ["all"]
+verbs = ["inspect", "analyze", "judge", "graph", "route", "observe", "finops", "product"]
+verifier = "platform-verifier"
+never = """executes analysis itself; mutates; picks specialists by vibe instead of routing.yaml; declares itself done"""

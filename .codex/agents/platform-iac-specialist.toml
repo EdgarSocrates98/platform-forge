@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-iac-specialist"
+description = """HCL/plan/state artifacts present or IaC question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["iac", "terraform"]
+verbs = ["analyze iac", "analyze plan", "analyze state", "analyze drift", "judge"]
+verifier = ""
+never = """applies plans; touches cloud APIs; treats plan as observed"""

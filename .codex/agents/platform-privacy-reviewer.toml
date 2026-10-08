@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-privacy-reviewer"
+description = """analytics/federation/export/history output is produced"""
+role = "reviewer"
+access = "read-only"
+model_tier = "critical-review"
+domains = ["privacy"]
+verbs = ["privacy check", "judge"]
+verifier = ""
+never = """treats aggregation as anonymization; approves exports with unresolved identifiers"""

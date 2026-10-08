@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-verifier"
+description = """a run record is complete"""
+role = "verifier"
+access = "read-only"
+model_tier = "critical-review"
+domains = ["closure"]
+verbs = ["judge", "diff", "graph query"]
+verifier = ""
+never = """verifies its own work; upgrades a refuted claim; accepts missing criteria as passed"""

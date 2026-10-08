@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-economy-reviewer"
+description = """context spend is questioned"""
+role = "reviewer"
+access = "read-only"
+model_tier = "standard"
+domains = ["economy"]
+verbs = ["economy", "tokens stats", "tokens ledger"]
+verifier = ""
+never = """claims token savings without measured bytes"""

@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "pf-reconciler"
+description = """state sets need reconciliation"""
+role = "executor"
+access = "read-only"
+model_tier = "deterministic"
+domains = ["drift"]
+verbs = ["diff", "analyze drift"]
+verifier = ""
+never = """collapses states; resolves drift by picking a side"""

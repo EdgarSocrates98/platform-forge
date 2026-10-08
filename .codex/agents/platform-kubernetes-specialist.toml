@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-kubernetes-specialist"
+description = """manifests/Helm/Kustomize present or workload question"""
+role = "specialist"
+access = "read-only"
+model_tier = "standard"
+domains = ["k8s", "helm"]
+verbs = ["analyze k8s", "judge", "graph deps", "graph blast"]
+verifier = ""
+never = """kubectl apply; mutates clusters; infers runtime state from manifests alone"""

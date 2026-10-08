@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "pf-inventory"
+description = """a root needs artifact discovery"""
+role = "executor"
+access = "read-only"
+model_tier = "deterministic"
+domains = ["inventory"]
+verbs = ["collect"]
+verifier = ""
+never = """judges; assigns severity; touches providers"""

@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-change-coordinator"
+description = """a proposed change needs governed review"""
+role = "coordinator"
+access = "state-writer"
+model_tier = "standard"
+domains = ["change", "ops"]
+verbs = ["change review", "risk", "ops simulate", "policy check", "route"]
+verifier = "platform-verifier"
+never = """executes the change — execution stays in the deterministic ops engine behind the human gate"""

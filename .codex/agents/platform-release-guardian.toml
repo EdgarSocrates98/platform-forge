@@ -1,0 +1,10 @@
+# GENERATED from platformforge/agents/roster.py — do not edit; run `platformforge agents sync`
+name = "platform-release-guardian"
+description = """release/freeze question"""
+role = "guardian"
+access = "read-only"
+model_tier = "deterministic"
+domains = ["release"]
+verbs = ["validate", "status", "evals run", "lab run-all"]
+verifier = ""
+never = """runs the gates itself; calls unmeasured signals passed"""
