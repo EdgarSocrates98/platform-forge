@@ -7,6 +7,12 @@ hand-edited. Deterministic engines remain the authority; agents
 interpret, coordinate, review, verify and explain.
 """
 
+from platformforge.agents.bench import run_agent_bench
+from platformforge.agents.contextpack import (
+    AgentContextPack,
+    build_pack,
+    delta_pack,
+)
 from platformforge.agents.contracts import (
     ACCESS_TIERS,
     BUDGET_CLASSES,
@@ -25,11 +31,6 @@ from platformforge.agents.contracts import (
     PlatformTaskSpec,
     envelope_for,
     refusal,
-)
-from platformforge.agents.contextpack import (
-    AgentContextPack,
-    build_pack,
-    delta_pack,
 )
 from platformforge.agents.coordinators import (
     COORDINATOR_LOOPS,
@@ -146,6 +147,7 @@ __all__ = [
     "resolve",
     "resume",
     "review",
+    "run_agent_bench",
     "run_debate",
     "seal",
     "security_review",

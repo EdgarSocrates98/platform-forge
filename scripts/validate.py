@@ -478,6 +478,34 @@ def gate_agent_mirrors() -> dict:
     return r
 
 
+def gate_agent_economy() -> dict:
+    r = _run(["pytest", "-q", "tests/test_agent_economy.py"])
+    r["what"] = "context packs measured+bounded, delta context, run " \
+        "ledger honesty (observed requires transcript_ref)"
+    return r
+
+
+def gate_agent_debate() -> dict:
+    r = _run(["pytest", "-q", "tests/test_agent_debate.py"])
+    r["what"] = "debate bounded (≤4 participants, ≤3 rounds), " \
+        "evidence-required, referee receipt, verifier still required"
+    return r
+
+
+def gate_agent_independence() -> dict:
+    r = _run(["pytest", "-q", "tests/test_agent_adversarial.py"])
+    r["what"] = "A1–A12 adversarial probes — no fabricated evidence, " \
+        "no skipped verifier, no self-verification, no swarm, " \
+        "no budget reset, no permission gain via mirrors"
+    return r
+
+
+def gate_agent_evals() -> dict:
+    r = _run(["platformforge", "evals", "run"])
+    r["what"] = "eval suite incl. the 10 agent cases (§175) — all pass"
+    return r
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
@@ -505,9 +533,13 @@ GATES = {
     "fleet-evals": gate_fleet_evals,
     "fleet-lab": gate_fleet_lab,
     "adversarial": gate_adversarial,
-    "agent-routing": gate_agent_routing,
-    "agent-contract": gate_agent_contract,
-    "agent-mirrors": gate_agent_mirrors,
+    "agents-routing": gate_agent_routing,
+    "agents-contract": gate_agent_contract,
+    "agents-mirrors": gate_agent_mirrors,
+    "agents-economy": gate_agent_economy,
+    "agents-debate": gate_agent_debate,
+    "agents-independence": gate_agent_independence,
+    "agents-evals": gate_agent_evals,
 }
 
 UNLOCK = {
@@ -544,12 +576,18 @@ UNLOCK = {
     "fleet-evals": "platformforge evals run; fix the failing fleet-inv-* case",
     "fleet-lab": "platformforge lab run-all; fix the failing fleet-* scenario",
     "adversarial": "reproduce: pytest tests/test_fleet_adversarial.py",
-    "agent-routing": "every name in routing.yaml/orchestration.yaml/"
+    "agents-routing": "every name in routing.yaml/orchestration.yaml/"
         "roster must resolve — run platformforge.routing.validate_routing()",
-    "agent-contract": "reproduce: pytest -q tests/test_agent_*.py "
+    "agents-contract": "reproduce: pytest -q tests/test_agent_*.py "
         "tests/test_orchestrator.py tests/test_coordinators.py",
-    "agent-mirrors": "run platformforge agents sync — mirrors are "
+    "agents-mirrors": "run platformforge agents sync — mirrors are "
         "generated, never hand-edited",
+    "agents-economy": "reproduce: pytest -q tests/test_agent_economy.py",
+    "agents-debate": "reproduce: pytest -q tests/test_agent_debate.py",
+    "agents-independence": "reproduce: pytest -q "
+        "tests/test_agent_adversarial.py",
+    "agents-evals": "reproduce: platformforge evals run — fix the "
+        "failing case or the machinery it probes",
 }
 
 

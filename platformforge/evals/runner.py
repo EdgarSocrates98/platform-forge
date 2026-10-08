@@ -28,7 +28,7 @@ import yaml
 EVAL_TYPES = ("unit", "integration", "golden", "contract", "property",
               "metamorphic", "regression", "recall", "precision",
               "token_economy", "graph_correctness", "routing", "security",
-              "knowledge", "version", "live")
+              "knowledge", "version", "live", "agent")
 VARIANTS = ("positive", "negative", "boundary", "unresolved", "version")
 
 from platformforge.resources import data_path
@@ -223,6 +223,8 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
                 "overclaim": overclaim,
                 "missing": missing,
                 "missing_skips": missing_skip}
+    if t == "agent":
+        return _grade_agent(case, case_dir)
     if t == "live":
         return _grade_live(case, case_dir)
     if t in ("property", "metamorphic"):
@@ -424,6 +426,94 @@ def _grade_live(case: dict, case_dir: Path) -> dict[str, Any]:
                 "detail": r.get("detail")}
     return {"verdict": "unresolved",
             "reason": f"unknown live check {check!r}"}
+
+
+def _grade_agent(case: dict, case_dir: Path) -> dict[str, Any]:
+    """cycle5.1 §175–184 — agentic-runtime eval cases. Each case names
+    a `check`; every check is a deterministic probe over the real
+    machinery (router, envelope, finding contract, playbook, mirror
+    renderer) — no model calls, no mocks."""
+    check = case.get("check", "route")
+    exp = case.get("expect", {})
+    try:
+        if check == "route":
+            from platformforge.routing import TaskSignal, route
+            got = route(TaskSignal.from_dict(case.get("signal", {})))
+            problems = []
+            if "mode" in exp and got.get("mode") != exp["mode"]:
+                problems.append(
+                    f"mode {got.get('mode')} != {exp['mode']}")
+            if exp.get("not_mode") and got.get("mode") in (
+                    exp["not_mode"] if isinstance(exp["not_mode"], list)
+                    else [exp["not_mode"]]):
+                problems.append(f"mode {got.get('mode')} forbidden")
+            for k in ("coordinator", "verifier"):
+                if k in exp and got.get(k) != exp[k]:
+                    problems.append(f"{k} {got.get(k)} != {exp[k]}")
+            flat = set(got.get("agents") or ()) \
+                | set(got.get("specialists") or ()) \
+                | set(got.get("reviewers") or ())
+            if got.get("coordinator"):
+                flat.add(got["coordinator"])
+            if got.get("verifier"):
+                flat.add(got["verifier"])
+            for a in exp.get("includes", []):
+                if a not in flat:
+                    problems.append(f"missing agent {a}")
+            for r in exp.get("reviewers_include", []):
+                if r not in set(got.get("reviewers") or ()):
+                    problems.append(f"missing reviewer {r}")
+            for a in exp.get("excludes", []):
+                if a in flat:
+                    problems.append(f"unexpected agent {a}")
+            if exp.get("max_agents") is not None and \
+                    len(flat) > exp["max_agents"]:
+                problems.append(
+                    f"{len(flat)} agents > bound {exp['max_agents']}")
+            if exp.get("verifier_required") and not got.get("verifier"):
+                problems.append("no verifier in dispatch")
+            return {"verdict": "pass" if not problems else "fail",
+                    "problems": problems, "mode": got.get("mode"),
+                    "agents": sorted(flat)}
+        if check == "budget_exhaustion":
+            from platformforge.agents.contracts import envelope_for
+            env = envelope_for(exp.get("budget_class", "tiny"))
+            env.charge(model_calls=env.max_model_calls + 1)
+            out = env.check() or {}
+            ok = out.get("refusal") == exp.get(
+                "refusal", "PF-AGENT-BUDGET-EXHAUSTED")
+            return {"verdict": "pass" if ok else "fail",
+                    "refusal": out.get("refusal"),
+                    "exceeded": out.get("exceeded")}
+        if check == "finding_no_evidence":
+            from platformforge.agents.specialists import finding
+            f = finding("platform-sre-specialist", "claim",
+                        status=exp.get("status", "confirmed"),
+                        evidence=())
+            ok = f["status"] == exp.get("demoted_to", "unsupported")
+            return {"verdict": "pass" if ok else "fail",
+                    "status": f["status"], "demoted": f.get("demoted")}
+        if check == "playbook_equivalence":
+            from platformforge.agents.playbook import playbook
+            pb = playbook(exp.get("agent", "platform-orchestrator"))
+            blob = json.dumps(pb, default=str).lower()
+            missing = [s for s in exp.get("required_sections", [])
+                       if s.lower() not in blob]
+            return {"verdict": "pass" if not missing else "fail",
+                    "missing_sections": missing}
+        if check == "mirror_contract":
+            from platformforge.agents.mirrors import render
+            from platformforge.agents.roster import AGENTS
+            spec = AGENTS[exp.get("agent", "platform-orchestrator")]
+            md = render(spec, "md").lower()
+            missing = [s for s in exp.get("sections", [])
+                       if s.lower() not in md]
+            return {"verdict": "pass" if not missing else "fail",
+                    "missing_sections": missing}
+        return {"verdict": "unresolved",
+                "reason": f"unknown agent check {check!r}"}
+    except Exception as e:  # noqa: BLE001
+        return {"verdict": "fail", "error": str(e)}
 
 
 def run_case(path: str | Path) -> dict[str, Any]:

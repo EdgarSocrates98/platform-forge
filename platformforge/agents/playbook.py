@@ -46,4 +46,6 @@ def playbook(coordinator: str = "platform-orchestrator",
             "contract": {"when": spec.when_to_enter,
                          "when_not_to_enter": spec.when_not_to_enter,
                          "never": spec.never,
+                         "required_evidence": list(spec.required_evidence),
+                         "verifier": spec.verifier,
                          "outputs": list(spec.outputs)}}

@@ -1,0 +1,6 @@
+id: agent-missing-evidence
+type: agent
+check: finding_no_evidence
+expect:
+  status: confirmed
+  demoted_to: unsupported

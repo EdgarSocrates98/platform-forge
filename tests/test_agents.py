@@ -30,7 +30,7 @@ def test_mirrors_generated(tmp_path):
     written = sync(tmp_path)
     assert len(written[".claude/agents"]) == len(AGENTS)
     content = (tmp_path / ".claude/agents/platform-orchestrator.md").read_text()
-    assert "GENERATED" in content and "Never do" in content
+    assert "GENERATED" in content and "## Never" in content
     toml = (tmp_path / ".codex/agents/platform-kubernetes-specialist.toml").read_text()
     assert 'role = "specialist"' in toml
 

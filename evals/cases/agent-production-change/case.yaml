@@ -1,0 +1,15 @@
+id: agent-production-change
+type: agent
+check: route
+signal:
+  task_type: change
+  domains: [iac]
+  production: true
+  mutability: mutate
+  risk: high
+expect:
+  mode: critical-review
+  coordinator: platform-change-coordinator
+  reviewers_include: [platform-operations-safety-reviewer,
+                      platform-security-reviewer]
+  verifier_required: true

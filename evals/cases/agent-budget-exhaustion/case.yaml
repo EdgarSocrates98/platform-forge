@@ -1,0 +1,6 @@
+id: agent-budget-exhaustion
+type: agent
+check: budget_exhaustion
+expect:
+  budget_class: tiny
+  refusal: PF-AGENT-BUDGET-EXHAUSTED

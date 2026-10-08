@@ -943,6 +943,8 @@ def cmd_agents(args: argparse.Namespace) -> int:
         return _emit({"written": sync(args.repo)}, args)
     if sub == "playbook":
         return _emit(A.playbook(args.name or "platform-orchestrator", domain=args.domain), args)
+    if sub == "bench":
+        return _emit(A.run_agent_bench(), args)
     if sub == "referee":
         positions = json.loads(Path(args.path).read_text())
         return _emit(A.referee(positions), args)
@@ -2997,7 +2999,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("agents", help="agent roster, mirrors, referee")
     _add_common(sp)
-    sp.add_argument("agents_cmd", choices=["list", "lint", "sync", "check", "playbook", "referee"])
+    sp.add_argument("agents_cmd", choices=["list", "lint", "sync", "check", "playbook", "referee", "bench"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--name", default="")
     sp.add_argument("--domain", default="")

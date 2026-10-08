@@ -88,6 +88,20 @@ jobs:
         run: python scripts/validate.py --gate fleet-lab
       - name: Adversarial — E1–E12
         run: python scripts/validate.py --gate adversarial
+      - name: Agents — contract
+        run: python scripts/validate.py --gate agents-contract
+      - name: Agents — routing
+        run: python scripts/validate.py --gate agents-routing
+      - name: Agents — mirrors
+        run: python scripts/validate.py --gate agents-mirrors
+      - name: Agents — economy
+        run: python scripts/validate.py --gate agents-economy
+      - name: Agents — debate
+        run: python scripts/validate.py --gate agents-debate
+      - name: Agents — independence (A1–A12)
+        run: python scripts/validate.py --gate agents-independence
+      - name: Agents — evals
+        run: python scripts/validate.py --gate agents-evals
       - name: Self — dogfooding gate
         run: python scripts/validate.py --gate self
 
