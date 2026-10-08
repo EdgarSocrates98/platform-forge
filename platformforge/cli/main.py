@@ -634,6 +634,13 @@ def cmd_cases(args: argparse.Namespace) -> int:
         out = args.out or "case.yaml"
         write_case_template(out)
         return _emit({"written": out}, args)
+    if args.cases_cmd == "ledger":
+        from platformforge.cases.ledgers import ledger_report
+        return _emit(ledger_report(), args)
+    if args.cases_cmd == "ledger-check":
+        from platformforge.cases.ledgers import validate_ledgers
+        r = validate_ledgers()
+        return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
     return 2
 
 
@@ -3255,7 +3262,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("cases", help="real-world case corpus + replay")
     _add_common(sp)
     sp.add_argument("cases_cmd",
-                    choices=["list", "validate", "replay", "template"])
+                    choices=["list", "validate", "replay", "template",
+                             "ledger", "ledger-check"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--tier", default="", choices=["golden", "holdout"])
     sp.add_argument("--out", default="")

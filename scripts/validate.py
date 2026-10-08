@@ -534,8 +534,14 @@ def gate_freeze_docs() -> dict:
 
 def gate_freeze_replay() -> dict:
     r = _run(["platformforge", "cases", "replay"])
+    r2 = _run(["platformforge", "cases", "ledger-check"])
     r["what"] = ("deterministic replay of .platformforge/cases — "
-                 "golden + holdout corpora, canonical-hash stable")
+                 "golden + holdout corpora, canonical-hash stable; "
+                 "FP/FN ledger entries well-formed with resolvable "
+                 "regression pointers")
+    if r["rc"] == 0 and r2["rc"] != 0:
+        r["rc"] = r2["rc"]
+        r["tail"] += r2["tail"]
     return r
 
 
