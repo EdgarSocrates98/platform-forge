@@ -380,6 +380,16 @@ def _grade_live(case: dict, case_dir: Path) -> dict[str, Any]:
                   if s in blob]
         return {"verdict": "pass" if not leaked else "fail",
                 "leaked": leaked}
+    if check == "ops-scenario":
+        # cycle4 — governed pipeline eval over a lab ops.yaml fixture
+        from platformforge.lab.opslab import run_ops_scenario
+        try:
+            r = run_ops_scenario(fx)
+        except Exception as e:  # noqa: BLE001 — fixture error = eval fail
+            return {"verdict": "fail", "error": str(e)}
+        return {"verdict": "pass" if r["passed"] else "fail",
+                "failures": r.get("failures", []),
+                "checks": r.get("checks", [])}
     return {"verdict": "unresolved",
             "reason": f"unknown live check {check!r}"}
 

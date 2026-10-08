@@ -1,0 +1,6 @@
+id: ops-convergence
+type: live
+domain: ops-convergence
+fixture: ../../../lab/scenarios/ops-replica-drift/fixture
+expect:
+  check: ops-scenario

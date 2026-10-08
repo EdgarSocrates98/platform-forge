@@ -95,11 +95,15 @@ class ExecutionEnvelope:
                 if (s := spec_for(a.get("action", ""))) and s.mutating]
 
     def to_dict(self) -> dict[str, Any]:
+        from platformforge.core.redaction import redact_obj
         return {"schema": ENVELOPE_SCHEMA,
                 "execution_id": self.execution_id,
                 "intent_id": self.intent_id,
                 "change_plan_hash": self.change_plan_hash,
-                "executor": self.executor, "actions": self.actions,
+                "executor": self.executor,
+                # action params are redacted at the serialization
+                # boundary — an envelope never emits raw secrets
+                "actions": redact_obj(self.actions),
                 "scope": self.scope, "preconditions": self.preconditions,
                 "policy_decisions": self.policy_decisions,
                 "approvals": self.approvals, "risk": self.risk,

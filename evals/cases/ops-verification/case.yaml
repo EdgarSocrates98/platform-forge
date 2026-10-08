@@ -1,0 +1,6 @@
+id: ops-verification
+type: live
+domain: ops-verification
+fixture: ../../../lab/scenarios/ops-stale-observation/fixture
+expect:
+  check: ops-scenario

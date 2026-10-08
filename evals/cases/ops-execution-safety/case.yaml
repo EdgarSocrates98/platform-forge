@@ -1,0 +1,6 @@
+id: ops-execution-safety
+type: live
+domain: ops-execution-safety
+fixture: ../../../lab/scenarios/ops-conflicting-operation/fixture
+expect:
+  check: ops-scenario

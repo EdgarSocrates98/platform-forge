@@ -1,0 +1,6 @@
+id: ops-policy
+type: live
+domain: ops-policy
+fixture: ../../../lab/scenarios/ops-policy-denial/fixture
+expect:
+  check: ops-scenario

@@ -110,9 +110,11 @@ class OperationLedger:
                ) -> LedgerEntry:
         if actor not in ACTORS:
             actor = "system"
+        from platformforge.core.redaction import redact_obj
         e = LedgerEntry(seq=len(self.entries) + 1, event=event,
                         operation_id=operation_id, actor=actor,
-                        data=dict(data or {}), prev_hash=self._tip)
+                        data=redact_obj(dict(data or {})),
+                        prev_hash=self._tip)
         self.entries.append(e)
         self._tip = e.entry_hash
         return e
@@ -161,6 +163,13 @@ class ExecutionStep:
         return "sha256:" + canonical_hash(
             {"plan": plan_hash, "step": self.step_id,
              "action": self.action, "params": self.params})
+
+    def effect_key(self, plan_hash: str) -> str:
+        """Side-effect identity — action+params only. Two steps with the
+        same effect dedupe to one execution (idempotency gate)."""
+        return "sha256:" + canonical_hash(
+            {"plan": plan_hash, "action": self.action,
+             "params": self.params})
 
 
 @dataclass

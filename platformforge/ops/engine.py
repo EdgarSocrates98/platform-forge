@@ -222,7 +222,7 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
             ex = executor_for(a["action"])
             step = ExecutionStep(step_id=sid, action=a["action"],
                                  params=a.get("params", {}))
-            key = step.key(env.change_plan_hash)
+            key = step.effect_key(env.change_plan_hash)
             if key in idem_seen:
                 ledger.append("step.skipped", op.operation_id,
                               data={"step_id": sid,

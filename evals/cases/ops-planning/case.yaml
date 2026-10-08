@@ -1,0 +1,6 @@
+id: ops-planning
+type: live
+domain: ops-planning
+fixture: ../../../lab/scenarios/ops-broken-selector/fixture
+expect:
+  check: ops-scenario

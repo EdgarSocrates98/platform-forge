@@ -46,12 +46,33 @@ class Approval:
     parameter_bounds: dict[str, Any] = field(default_factory=dict)
     signature: str = ""              # optional adapter signature (§236)
 
+    def __post_init__(self):
+        if not self.created_at:
+            self.created_at = now_iso()   # fixed once — signatures
+                                          # depend on stable payload
+
     def is_expired(self, at: str | None = None) -> bool:
         exp = parse_ts(self.expires_at)
         if exp is None:
             return False             # no TTL = doesn't expire by time
         ref = parse_ts(at) if at else parse_ts(now_iso())
         return bool(ref and ref > exp)
+
+    def signature_valid(self) -> bool | None:
+        """Tamper evidence (§236): None if unsigned; False if the
+        signature doesn't match the canonical payload."""
+        if not self.signature:
+            return None
+        payload = self.to_dict()
+        payload.pop("signature", None)
+        want = "sha256:" + canonical_hash(payload)
+        return self.signature == want
+
+    def sign(self) -> str:
+        payload = self.to_dict()
+        payload.pop("signature", None)
+        self.signature = "sha256:" + canonical_hash(payload)
+        return self.signature
 
     def to_dict(self) -> dict[str, Any]:
         d = {"schema": APPROVAL_SCHEMA, "approval_id": self.approval_id,
@@ -143,9 +164,13 @@ def check_approval(approvals: list[Approval], *,
                    required_type: str = "",
                    at: str | None = None,
                    break_glass: BreakGlass | None = None,
-                   current_plan_hash: str = ""
+                   current_plan_hash: str = "",
+                   allow_actor_kinds: tuple[str, ...] = ("human",)
                    ) -> ApprovalCheck:
-    """§56–61 — validate approvals against the *current* plan hash."""
+    """§56–61 — validate approvals against the *current* plan hash.
+    Approvals minted by non-human actors never satisfy human approval
+    unless the host explicitly widens `allow_actor_kinds` — an agent
+    cannot fabricate human approval."""
     if current_plan_hash and subject_hash != current_plan_hash:
         return ApprovalCheck(refusal={
             "refusal": "PF-OPS-APPROVAL-STALE-PLAN",
@@ -157,6 +182,14 @@ def check_approval(approvals: list[Approval], *,
             continue
         if ap.subject_hash != subject_hash:
             continue                        # bound to another object
+        if ap.signature and ap.signature_valid() is False:
+            return ApprovalCheck(refusal={
+                "refusal": "PF-OPS-APPROVAL-TAMPERED",
+                "unlock": "approval signature mismatch — "
+                          "payload was modified"})
+        if ap.actor_kind not in allow_actor_kinds \
+                and ap.type != "break-glass":
+            continue                        # agent-minted ≠ human approval
         if required_type and ap.type != required_type \
                 and ap.type != "break-glass":
             continue
