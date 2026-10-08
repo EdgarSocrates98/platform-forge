@@ -90,7 +90,7 @@ class Fleet:
                 "policies": self.policies}
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Fleet":
+    def from_dict(cls, d: dict[str, Any]) -> Fleet:
         members = []
         raw = d.get("members", {})
         groups = raw.values() if isinstance(raw, dict) else [raw]
