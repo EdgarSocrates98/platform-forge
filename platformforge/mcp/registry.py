@@ -80,6 +80,8 @@ _V2: dict[str, dict[str, Any]] = {
     "platformforge_integrate": {"domain": "adapters", "risk": "guarded",
                                 "mutable": True},
     "platformforge_capability": {"domain": "core"},
+    "platformforge_live": {"domain": "live", "cost_class": "moderate",
+                           "offline": False},
 }
 
 
@@ -267,6 +269,27 @@ CAPABILITIES: dict[str, Capability] = _apply_v2([
                 "properties": {"op": {"type": "string"},
                                "name": {"type": "string"}}},
                "cli:capability"),
+    Capability("platformforge_live",
+               "Live platform intelligence (cycle3): snapshot|status|"
+               "doctor|reconcile|topology|drift|incident|plan|clusters|"
+               "capability — read-only provider observation",
+               {"type": "object", "required": ["op"],
+                "properties": {"op": {"type": "string"},
+                               "provider": {"type": "string"},
+                               "namespace": {"type": "string"},
+                               "context": {"type": "string"},
+                               "observed": {"type": "string"},
+                               "before": {"type": "string"},
+                               "after": {"type": "string"},
+                               "drift_events": {"type": "string"},
+                               "incident": {"type": "string"},
+                               "changes": {"type": "string"},
+                               "events": {"type": "string"},
+                               "otel": {"type": "string"},
+                               "hubble": {"type": "string"},
+                               "slices": {"type": "string"},
+                               "window": {"type": "integer"}}},
+               "cli:live", max_bytes=64_000),
 ])
 
 

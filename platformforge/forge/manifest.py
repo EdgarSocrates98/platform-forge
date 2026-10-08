@@ -41,7 +41,7 @@ def capability_manifest(repo: str | Path | None = None) -> dict[str, Any]:
         "risk": {c.name: c.risk for c in CAPABILITIES.values()},
         "domains": sorted({r.domain for r in rules if r.domain} |
                           {"iac", "k8s", "gitops", "cicd", "sre", "finops",
-                           "security", "product", "graph"}),
+                           "security", "product", "graph", "live"}),
         "supported_versions": _supported_versions(),
         "tools": sorted(CAPABILITIES),
         "capabilities_v2": [c.contract() for c in CAPABILITIES.values()],

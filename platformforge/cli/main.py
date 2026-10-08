@@ -1438,6 +1438,9 @@ def cmd_live(args: argparse.Namespace) -> int:
         return _emit(out, args,
                      2 if args.strict and
                      out["counts"]["mutating"] else 0)
+    if sub == "capability":
+        from platformforge.live.capability import availability
+        return _emit(availability(args.repo), args)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
@@ -1676,7 +1679,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("live_cmd",
                     choices=["snapshot", "status", "doctor", "reconcile",
                              "rbac", "required-permissions", "topology",
-                             "clusters", "drift", "incident", "plan"])
+                             "clusters", "drift", "incident", "plan",
+                             "capability"])
     sp.add_argument("--provider", default="kubernetes",
                     choices=["kubernetes", "aws"])
     sp.add_argument("--region", action="append",

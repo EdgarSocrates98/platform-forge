@@ -254,7 +254,137 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
                 "name": inp.get("name")}
         from platformforge.forge import capability_manifest
         return capability_manifest()
+    if handler == "cli:live":
+        return _live(inp, repo)
     raise ValueError(f"no handler {handler}")
+
+
+def _live(inp: dict[str, Any], repo: str) -> Any:
+    """Live surface ops — same functions cmd_live calls. All ops are
+    read-only; snapshot uses host transports (kubectl/aws CLI)."""
+    op = inp.get("op", "status")
+    from platformforge.live.store import ObservationStore
+    if op == "status":
+        return ObservationStore(repo).status()
+    if op == "capability":
+        from platformforge.live.capability import availability
+        return availability(repo)
+    if op == "drift":
+        from platformforge.live.drift import diff_observations
+        store = ObservationStore(repo)
+        def _env(ref: str):
+            p = Path(ref)
+            if p.exists():
+                from platformforge.live.envelope import loads
+                return loads(p.read_text())
+            return store.get(ref)
+        b, a = inp.get("before"), inp.get("after")
+        if not (b and a):
+            rows = store.list(limit=2)
+            if len(rows) < 2:
+                return {"refusal": "PF-LIVE-NEED-2-OBS",
+                        "unlock": "collect ≥2 observations or pass "
+                                  "before/after"}
+            a, b = rows[0]["observation_id"], rows[1]["observation_id"]
+        return diff_observations(_env(b), _env(a))
+    if op == "plan":
+        from platformforge.live.remediate import remediate
+        if inp.get("drift_events"):
+            events = json.loads(Path(inp["drift_events"]).read_text())
+        else:
+            from platformforge.live.drift import diff_observations
+            store = ObservationStore(repo)
+            rows = store.list(limit=2)
+            if len(rows) < 2:
+                return {"refusal": "PF-LIVE-NO-DRIFT-INPUT",
+                        "unlock": "pass drift_events or collect "
+                                  "≥2 observations"}
+            events = diff_observations(
+                store.get(rows[1]["observation_id"]),
+                store.get(rows[0]["observation_id"]))["drift"]
+        return remediate(events)
+    if op == "incident":
+        if not inp.get("incident"):
+            return {"refusal": "PF-LIVE-NO-INCIDENT",
+                    "unlock": "pass incident <incident.json>"}
+        from platformforge.live.incident import build_timeline, postmortem_v3, score_candidates
+        inc = json.loads(Path(inp["incident"]).read_text())
+        cands = json.loads(Path(inp["changes"]).read_text()) \
+            if inp.get("changes") else []
+        events = json.loads(Path(inp["events"]).read_text()) \
+            if inp.get("events") else []
+        try:
+            from platformforge import graph as G
+            g = G.load(repo)
+        except FileNotFoundError:
+            g = None
+        tl = build_timeline(events + [inc])
+        ranked = score_candidates(inc, cands,
+                                  window_s=float(inp.get("window", 3600)),
+                                  graph=g)
+        return {**ranked,
+                "postmortem": postmortem_v3(inc, tl, ranked)["postmortem"]}
+    if op == "clusters":
+        from platformforge.live.federation import ClusterRegistry
+        return {"clusters": ClusterRegistry(repo).list()}
+    if op == "topology":
+        from platformforge.live.topology import (
+            classify_behavior,
+            edges_from_endpointslices,
+            edges_from_hubble,
+            edges_from_otel,
+        )
+        edges: list[dict] = []
+        for key, fn in (("otel", edges_from_otel),
+                        ("hubble", edges_from_hubble),
+                        ("slices", edges_from_endpointslices)):
+            if inp.get(key):
+                doc = json.loads(Path(inp[key]).read_text())
+                edges += fn(doc if isinstance(doc, list) else [doc])
+        declared = set()
+        try:
+            from platformforge import graph as G
+            declared = set(G.load(repo).edges)
+        except FileNotFoundError:
+            pass
+        return {"edges": classify_behavior(edges, declared)}
+    if op == "snapshot":
+        return _live_snapshot(inp, repo)
+    raise ValueError(f"unknown live op {op}")
+
+
+def _live_snapshot(inp: dict[str, Any], repo: str) -> Any:
+    provider = inp.get("provider", "kubernetes")
+    from platformforge.live.budget import ObservationBudget
+    from platformforge.live.models import ObservationScope
+    from platformforge.live.store import ObservationStore
+    budget = ObservationBudget()
+    scope = ObservationScope(
+        namespaces=[inp["namespace"]] if inp.get("namespace") else [])
+    if provider == "kubernetes":
+        from platformforge.live.collectors import k8s_transport
+        from platformforge.live.collectors.k8s import K8sCollector
+        if not k8s_transport.kubectl_available():
+            return {"refusal": "PF-LIVE-NO-KUBECTL",
+                    "unlock": "install kubectl + kubeconfig"}
+        env = K8sCollector(
+            transport=k8s_transport.make_transport(
+                inp.get("context", "")),
+            context=inp.get("context", "")).collect(scope, budget)
+    elif provider == "aws":
+        from platformforge.live.collectors import aws_transport
+        from platformforge.live.collectors.aws import AwsCollector
+        if not aws_transport.aws_available():
+            return {"refusal": "PF-LIVE-NO-AWSCLI",
+                    "unlock": "install aws CLI + credentials"}
+        env = AwsCollector(transport=aws_transport.make_transport()
+                           ).collect(scope, budget)
+    else:
+        return {"refusal": "PF-LIVE-UNKNOWN-PROVIDER",
+                "unlock": "provider kubernetes|aws"}
+    res = ObservationStore(repo).put(env)
+    return {**res, "provider": env.provider,
+            "coverage": env.coverage.get("status")}
 
 
 def _observe(inp: dict[str, Any]) -> Any:
