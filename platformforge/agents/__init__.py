@@ -38,6 +38,7 @@ from platformforge.agents.coordinators import (
     dispatch_plan,
 )
 from platformforge.agents.critic import adversarial_review, pre_mortem
+from platformforge.agents.debate import run_debate
 from platformforge.agents.executors import (
     EXECUTORS,
     pf_extract,
@@ -72,6 +73,7 @@ from platformforge.agents.reviewers import (
 )
 from platformforge.agents.roster import AGENTS, AgentSpec, coordinator_for, resolve
 from platformforge.agents.runledger import AgentRunLedger, AgentRunRow
+from platformforge.agents.runstore import RunStore
 from platformforge.agents.specialists import finding, grade
 from platformforge.agents.taskspec import (
     expire,
@@ -107,6 +109,7 @@ __all__ = [
     "DebatePosition",
     "OrchestrationPlan",
     "PlatformTaskSpec",
+    "RunStore",
     "adversarial_review",
     "architecture_review",
     "build_dag",
@@ -143,6 +146,7 @@ __all__ = [
     "resolve",
     "resume",
     "review",
+    "run_debate",
     "seal",
     "security_review",
     "validate_dag",
