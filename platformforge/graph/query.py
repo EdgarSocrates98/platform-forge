@@ -134,6 +134,74 @@ def cycles(g: Graph, max_cycles: int = 100) -> list[list[str]]:
     return out
 
 
+def condensation(g: Graph,
+                 kinds: frozenset[str] | None = DEPENDENCY_KINDS):
+    """SCC condensation of the dependency graph (iterative Tarjan).
+
+    Returns (node→scc int, members per scc, condensed reverse adjacency
+    scc→[parent sccs]). Nodes inside one SCC reach each other, so every
+    blast cone decomposes as: own SCC members + members of ancestor SCCs.
+    """
+    adj_fwd: dict[str, list[str]] = {n: [] for n in g.nodes}
+    for e in g.edges.values():
+        if kinds is None or e.kind in kinds:
+            adj_fwd[e.src].append(e.dst)
+    index: dict[str, int] = {}
+    low: dict[str, int] = {}
+    on_stack: set[str] = set()
+    stack: list[str] = []
+    scc_of: dict[str, int] = {}
+    members: list[list[str]] = []
+    t = 0
+    for root in g.nodes:
+        if root in index:
+            continue
+        work = [(root, 0)]
+        while work:
+            u, pi = work[-1]
+            if pi == 0:
+                index[u] = low[u] = t; t += 1
+                stack.append(u); on_stack.add(u)
+            recurse = False
+            nbrs = adj_fwd.get(u, [])
+            for i in range(pi, len(nbrs)):
+                v = nbrs[i]
+                if v not in index:
+                    work[-1] = (u, i + 1)
+                    work.append((v, 0))
+                    recurse = True
+                    break
+                if v in on_stack:
+                    low[u] = min(low[u], index[v])
+            if recurse:
+                continue
+            work.pop()
+            if work:
+                p = work[-1][0]
+                low[p] = min(low[p], low[u])
+            if low[u] == index[u]:
+                comp = []
+                while True:
+                    w = stack.pop()
+                    on_stack.discard(w)
+                    scc_of[w] = len(members)
+                    comp.append(w)
+                    if w == u:
+                        break
+                members.append(comp)
+    rev: dict[int, list[int]] = {i: [] for i in range(len(members))}
+    seen_pair: set[tuple[int, int]] = set()
+    for e in g.edges.values():
+        if kinds is not None and e.kind not in kinds:
+            continue
+        a, b = scc_of.get(e.dst), scc_of.get(e.src)
+        if a is not None and b is not None and a != b \
+                and (a, b) not in seen_pair:
+            seen_pair.add((a, b))
+            rev[a].append(b)
+    return scc_of, members, rev
+
+
 def _articulation_points(g: Graph) -> list[str]:
     """Undirected cut vertices (iterative Tarjan) — nodes whose removal
     increases the component count of the dependency graph."""
@@ -183,8 +251,9 @@ def gaps(g: Graph) -> dict[str, Any]:
     """Structural gaps: orphans, missing ownership/observability/protection,
     unallocated cost, external exposure, single points of failure,
     unreachable resources."""
-    orphans = [n for n in g.nodes if not _adj(g)[n]
-               and not _adj(g, reverse=True)[n]]
+    fwd = _adj(g)
+    inbound = _adj(g, reverse=True)
+    orphans = [n for n in g.nodes if not fwd[n] and not inbound[n]]
     owned = {e.dst for e in g.edges.values() if e.kind == "owns"}
     observed = {e.src for e in g.edges.values() if e.kind == "observed_by"} | \
         {e.dst for e in g.edges.values() if e.kind == "observed_by"}
@@ -197,7 +266,6 @@ def gaps(g: Graph) -> dict[str, Any]:
     resources = {nid for nid, n in g.nodes.items()
                  if n.kind in ("database", "bucket", "queue", "volume",
                                "cluster", "load_balancer")}
-    inbound = _adj(g, reverse=True)
     # unreachable: a workload/resource nothing depends on, calls, or
     # exposes — present in the platform but dead-ended from consumers.
     unreachable = sorted(

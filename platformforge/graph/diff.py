@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Any
 
 from platformforge.graph.model import Graph
-from platformforge.graph.query import blast_radius, gaps
+from platformforge.graph.query import DEPENDENCY_KINDS, _adj, gaps
 
 # §7 — semantic diff categories. Attr keys / node kinds / edge kinds are
 # mapped to a change class; every reported diff cites the backing fact_ids.
@@ -57,6 +58,75 @@ SEMANTIC_CATEGORIES = ("identity", "network", "exposure", "ownership", "ha",
                        "cost", "security", "slo", "runtime", "region",
                        "storage", "replication", "deployment",
                        "supply_chain")
+
+
+def _descendants(fwd: dict[str, list], nid: str) -> set[str]:
+    """Forward reachability over dependency edges — {nid} ∪ deps*(nid)."""
+    seen = {nid}
+    q = deque([nid])
+    while q:
+        for e in fwd.get(q.popleft(), []):
+            if e.dst not in seen:
+                seen.add(e.dst)
+                q.append(e.dst)
+    return seen
+
+
+def _cone_size(rev: dict[str, list], nid: str) -> int:
+    """impacted_total without per-node bookkeeping — count of all srcs
+    reachable backward (dependents cone)."""
+    seen = {nid}
+    q = deque([nid])
+    while q:
+        for e in rev.get(q.popleft(), []):
+            if e.src not in seen:
+                seen.add(e.src)
+                q.append(e.src)
+    return len(seen) - 1
+
+
+def _cone_map(g: Graph, rev: dict[str, list]) -> dict[str, int]:
+    """impacted_total for every node via SCC condensation: nodes in one
+    SCC share an ancestor set, so ancestors resolve once per SCC —
+    ancestor masks as int bitsets, computed in one iterative
+    post-order pass over the condensed DAG."""
+    from platformforge.graph.query import condensation
+    scc_of, members, rev_scc = condensation(g)
+    # Kahn order: an SCC's parents (ancestors) are strictly before it in
+    # rev_scc's dependency direction — process sources first so every
+    # mask is complete when read.
+    children: dict[int, list[int]] = {s: [] for s in rev_scc}
+    indeg = {s: len(ps) for s, ps in rev_scc.items()}
+    for s, ps in rev_scc.items():
+        for p in ps:
+            children[p].append(s)
+    q = deque(s for s, d in indeg.items() if d == 0)
+    anc: dict[int, int] = {}
+    while q:
+        u = q.popleft()
+        m = 1 << u
+        for p in rev_scc[u]:
+            m |= anc[p]
+        anc[u] = m
+        for c in children[u]:
+            indeg[c] -= 1
+            if indeg[c] == 0:
+                q.append(c)
+    size_of = {i: len(m) for i, m in enumerate(members)}
+    out: dict[str, int] = {}
+    for nid, s in scc_of.items():
+        total = sum(size_of[i] for i in _bits(anc[s]))
+        out[nid] = total - 1
+    return out
+
+
+def _bits(x: int):
+    i = 0
+    while x:
+        if x & 1:
+            yield i
+        x >>= 1
+        i += 1
 
 
 def _node_fact_ids(node: Any) -> list[str]:
@@ -134,11 +204,36 @@ def diff(before: Graph, after: Graph) -> dict[str, Any]:
             "added": sorted(set(g_after[key]) - set(g_before[key])),
             "removed": sorted(set(g_before[key]) - set(g_after[key])),
         }
-    # blast-radius deltas for nodes present in both graphs
+    # blast-radius deltas — incremental (§211). impacted_total(n) is pure
+    # structure: it changes only for n reachable *forward* (depends_on
+    # direction) from the dst of a changed dependency edge. Attr-only
+    # changes and untouched regions are skipped — the delta is identical.
+    fwd_b = _adj(before, kinds=DEPENDENCY_KINDS)
+    fwd_a = _adj(after, kinds=DEPENDENCY_KINDS)
+    candidates: set[str] = set()
+    for ek in be - ae:
+        e = before.edges[ek]
+        if e.kind in DEPENDENCY_KINDS:
+            candidates |= _descendants(fwd_b, e.dst)
+    for ek in ae - be:
+        e = after.edges[ek]
+        if e.kind in DEPENDENCY_KINDS:
+            candidates |= _descendants(fwd_a, e.dst)
+    rev_b = _adj(before, reverse=True, kinds=DEPENDENCY_KINDS)
+    rev_a = _adj(after, reverse=True, kinds=DEPENDENCY_KINDS)
+    need = candidates & (bn & an)
+    if len(need) * 4 > len(bn & an):
+        # dense change — pay the condensation once, then O(SCC) per node
+        cones_b = _cone_map(before, rev_b)
+        cones_a = _cone_map(after, rev_a)
+        sizes_b = {n: cones_b[n] for n in need}
+        sizes_a = {n: cones_a[n] for n in need}
+    else:
+        sizes_b = {n: _cone_size(rev_b, n) for n in need}
+        sizes_a = {n: _cone_size(rev_a, n) for n in need}
     br_delta = {}
-    for n in sorted(bn & an):
-        b = blast_radius(before, n)["impacted_total"]
-        a = blast_radius(after, n)["impacted_total"]
+    for n in sorted(need):
+        b, a = sizes_b[n], sizes_a[n]
         if b != a:
             br_delta[n] = {"before": b, "after": a}
     sem = _semantic_diff(before, after, changed_nodes)
