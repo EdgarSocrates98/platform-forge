@@ -190,3 +190,67 @@ class ObservationStore:
 def redact_for_output(text: str) -> str:
     """Boundary helper: nothing leaving the store carries raw secrets."""
     return redact_text(text)
+
+
+CHANGE_JOURNAL = ".platformforge/live/changes.jsonl"
+
+
+class ChangeJournal:
+    """Append-only journal of provider-observed ChangeEvents (§78).
+
+    JSONL, deduped by event_id, GC-able by age or count. Read path is
+    used by `live drift`/incident correlation to attach causal change
+    evidence to drift events."""
+
+    def __init__(self, root: str | Path):
+        self.path = Path(root) / CHANGE_JOURNAL
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    def append(self, events: list[Any]) -> dict[str, int]:
+        """Append ChangeEvents (dedup on event_id). Returns counts."""
+        from platformforge.live.models import ChangeEvent
+        existing = {e.get("event_id") for e in self.read()}
+        kept = 0
+        with self.path.open("a") as fh:
+            for e in events:
+                d = e.to_dict() if isinstance(e, ChangeEvent) else dict(e)
+                if d.get("event_id") in existing:
+                    continue
+                fh.write(json.dumps(d, sort_keys=True, default=str)
+                         + "\n")
+                existing.add(d.get("event_id"))
+                kept += 1
+        return {"appended": kept, "total": len(self.read())}
+
+    def read(self, *, since: str = "", resource: str = "",
+             limit: int = 1000) -> list[dict[str, Any]]:
+        if not self.path.exists():
+            return []
+        out: list[dict[str, Any]] = []
+        for line in self.path.read_text().splitlines():
+            if not line.strip():
+                continue
+            e = json.loads(line)
+            if since and e.get("timestamp", "") < since:
+                continue
+            if resource and resource not in e.get("resource_ids", []):
+                continue
+            out.append(e)
+        return out[-limit:]
+
+    def gc(self, *, max_events: int = 10000,
+           max_age_days: int = 90) -> dict[str, int]:
+        """Journal GC: keep newest `max_events` and nothing older than
+        `max_age_days`. Returns {removed, kept}."""
+        from datetime import datetime, timedelta, timezone
+        cutoff = (datetime.now(timezone.utc)
+                  - timedelta(days=max_age_days)).isoformat()
+        events = self.read(limit=1_000_000)
+        kept = [e for e in events
+                if e.get("timestamp", "") >= cutoff][-max_events:]
+        removed = len(events) - len(kept)
+        if removed:
+            self.path.write_text("".join(
+                json.dumps(e, sort_keys=True, default=str) + "\n"
+                for e in kept))
+        return {"removed": removed, "kept": len(kept)}

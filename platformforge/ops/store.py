@@ -44,8 +44,10 @@ class OperationStore:
         (self.root / "_schema_version").write_text(
             str(STORE_SCHEMA_VERSION))
 
-    def save(self, op: Operation, ledger: OperationLedger) -> Path:
-        """Append new ledger entries + write op snapshot."""
+    def save(self, op: Operation, ledger: OperationLedger,
+             envelope=None) -> Path:
+        """Append new ledger entries + write op snapshot (+ envelope
+        for later `ops rollback`/`ops status` replay)."""
         op_path = self.root / f"{op.operation_id}.op.json"
         led_path = self.root / f"{op.operation_id}.ledger.jsonl"
         existing = 0
@@ -61,7 +63,24 @@ class OperationStore:
         snap["schema"] = STORE_SCHEMA_VERSION
         snap["stored_at"] = now_iso()
         op_path.write_text(json.dumps(snap, indent=2, sort_keys=True))
+        if envelope is not None:
+            env_d = envelope.to_dict() if hasattr(envelope, "to_dict") \
+                else dict(envelope)
+            (self.root / f"{op.operation_id}.env.json").write_text(
+                json.dumps(env_d, indent=2, sort_keys=True))
         return op_path
+
+    def load_operation(self, operation_id: str) -> Operation | None:
+        p = self.root / f"{operation_id}.op.json"
+        if not p.exists():
+            return None
+        return Operation.from_dict(json.loads(p.read_text()))
+
+    def load_envelope(self, operation_id: str) -> dict[str, Any] | None:
+        p = self.root / f"{operation_id}.env.json"
+        if not p.exists():
+            return None
+        return json.loads(p.read_text())
 
     def load_ledger(self, operation_id: str) -> OperationLedger:
         led = OperationLedger()
@@ -92,6 +111,23 @@ class OperationStore:
 
     def list_operations(self) -> list[str]:
         return sorted(p.stem[:-3] for p in self.root.glob("*.op.json"))
+
+    def projection(self, operation_id: str) -> dict[str, Any] | None:
+        """Rebuild the operational Graphfy projection (phase R) from
+        the stored op/envelope/ledger — derived on read, never a
+        third artifact that could drift from the ledger."""
+        from platformforge.ops.envelope import ExecutionEnvelope
+        from platformforge.ops.opgraph import project_operation
+        op = self.load_operation(operation_id)
+        if op is None:
+            return None
+        env_d = self.load_envelope(operation_id)
+        env = ExecutionEnvelope.from_dict(env_d) if env_d else None
+        ledger = self.load_ledger(operation_id)
+        proj = project_operation(op, envelope=env, ledger=ledger)
+        return {"operation_id": operation_id,
+                "nodes": [n.to_dict() for n in proj["nodes"]],
+                "edges": [e.to_dict() for e in proj["edges"]]}
 
     def audit_digest(self) -> str:
         """Digest of every stored ledger tip — tamper-evident index."""

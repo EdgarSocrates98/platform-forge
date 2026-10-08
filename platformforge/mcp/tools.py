@@ -256,7 +256,75 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
         return capability_manifest()
     if handler == "cli:live":
         return _live(inp, repo)
+    if handler == "cli:ops":
+        return _ops_tool(inp, repo)
     raise ValueError(f"no handler {handler}")
+
+
+def _ops_tool(inp: dict[str, Any], repo: str) -> Any:
+    """Cycle 4 ops surface for MCP — *prepare* side of the governed
+    pipeline plus read views over the operation store.
+
+    The delegation contract applies: this tool can plan, simulate,
+    assess risk, evaluate gates/policies and mint envelopes — it can
+    NEVER execute (`--execute` is not reachable from this surface)."""
+    import argparse  # noqa: F401
+    import contextlib
+    import io
+
+    from platformforge.cli.main import build_parser, cmd_ops
+    op = inp.get("op", "capabilities")
+    argv: list[str] = ["ops", op, "--repo", repo]
+    if op in ("run", "prepare"):
+        if not inp.get("spec"):
+            return {"refusal": "PF-OPS-PREPARE-NEED-SPEC",
+                    "unlock": "pass spec <ops.yaml>"}
+        argv = ["ops", "run", "--spec", inp["spec"], "--repo", repo]
+        # never --execute: MCP delegates preparation, not mutation
+    elif op in ("status", "history", "rollback", "store-verify",
+                "graph"):
+        if inp.get("operation_id"):
+            argv += ["--operation-id", inp["operation_id"]]
+        if op == "rollback":
+            return {"refusal": "PF-OPS-MCP-NO-EXECUTE",
+                    "unlock": "rollback executes via CLI with "
+                              "--execute + hash-bound approval"}
+    elif op == "autorem-eval":
+        if inp.get("plan"):
+            argv += ["--plan", inp["plan"]]
+        if inp.get("environment"):
+            argv += ["--environment", inp["environment"]]
+        if inp.get("evidence_tier"):
+            argv += ["--evidence-tier", inp["evidence_tier"]]
+    elif op in ("intent", "plan", "simulate", "risk", "policy-eval",
+                "runbook", "approve", "delegate", "config",
+                "capabilities", "analytics", "store-list"):
+        for flag, key in (("--intent", "intent"), ("--plan", "plan"),
+                          ("--spec", "spec"), ("--policies", "policies"),
+                          ("--environment", "environment"),
+                          ("--level", "level"), ("--request", "request"),
+                          ("--bind", "bind")):
+            if inp.get(key):
+                argv += [flag, str(inp[key])]
+        if op == "approve":
+            return {"refusal": "PF-OPS-MCP-NO-APPROVAL",
+                    "unlock": "approvals are minted host-side by a "
+                              "human actor; MCP cannot sign"}
+    else:
+        return {"refusal": "PF-OPS-MCP-UNKNOWN-OP",
+                "unlock": "ops: capabilities|prepare|status|history|"
+                          "graph|analytics|autorem-eval|store-list|"
+                          "store-verify"}
+    ns = build_parser().parse_args(argv)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = cmd_ops(ns)
+    try:
+        out = json.loads(buf.getvalue())
+    except json.JSONDecodeError:
+        out = {"raw": buf.getvalue()[-2000:]}
+    out.setdefault("exit_code", rc)
+    return out
 
 
 def _live(inp: dict[str, Any], repo: str) -> Any:

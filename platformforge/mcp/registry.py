@@ -82,6 +82,8 @@ _V2: dict[str, dict[str, Any]] = {
     "platformforge_capability": {"domain": "core"},
     "platformforge_live": {"domain": "live", "cost_class": "moderate",
                            "offline": False},
+    "platformforge_ops": {"domain": "ops", "risk": "guarded",
+                          "cost_class": "moderate"},
 }
 
 
@@ -290,6 +292,24 @@ CAPABILITIES: dict[str, Capability] = _apply_v2([
                                "slices": {"type": "string"},
                                "window": {"type": "integer"}}},
                "cli:live", max_bytes=64_000),
+    Capability("platformforge_ops",
+               "Governed operations (cycle4) — PREPARE side only: "
+               "capabilities|prepare|status|history|graph|analytics|"
+               "autorem-eval|store-list|store-verify. Execution and "
+               "approval signing are refused on this surface.",
+               {"type": "object", "required": ["op"],
+                "properties": {"op": {"type": "string"},
+                               "spec": {"type": "string"},
+                               "plan": {"type": "string"},
+                               "intent": {"type": "string"},
+                               "policies": {"type": "string"},
+                               "environment": {"type": "string"},
+                               "level": {"type": "string"},
+                               "operation_id": {"type": "string"},
+                               "request": {"type": "string"},
+                               "bind": {"type": "string"},
+                               "evidence_tier": {"type": "string"}}},
+               "cli:ops", max_bytes=64_000),
 ])
 
 

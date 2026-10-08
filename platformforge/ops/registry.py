@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from platformforge.ops.actions import _ACTIONS
+from platformforge.ops.actions import catalog
 
 # executor → advertised capability block
 EXECUTOR_CAPS: dict[str, dict[str, Any]] = {
@@ -40,15 +40,15 @@ EXECUTOR_CAPS: dict[str, dict[str, Any]] = {
 def ops_capabilities() -> dict[str, Any]:
     """Machine-readable ops surface for the v3 manifest."""
     per_action: dict[str, Any] = {}
-    for name, spec in _ACTIONS.items():
-        cap = EXECUTOR_CAPS.get(spec.executor, {})
+    for name, spec in catalog().items():
+        cap = EXECUTOR_CAPS.get(spec["executor"], {})
         per_action[name] = {
-            "executor": spec.executor,
-            "risk_class": spec.risk_base,
-            "mutates": spec.mutating,
-            "dry_run": spec.dry_run,
-            "idempotent": spec.idempotent,
-            "rollback_action": spec.rollback_action,
+            "executor": spec["executor"],
+            "risk_class": spec["risk_base"],
+            "mutates": spec["mutating"],
+            "dry_run": spec["dry_run"],
+            "idempotent": spec["idempotent"],
+            "rollback_action": spec["rollback_action"],
             "max_autonomy": cap.get("max_autonomy", "A4"),
             "approval": cap.get("approval", "required"),
             "runtime_available": cap.get("runtime_available", False)}
