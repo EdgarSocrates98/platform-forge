@@ -74,6 +74,8 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.live` | 12 | live | host-side | `live <verb>` | observation envelopes + store + budgets; kubectl/aws collectors (read-only allowlist, credential-flag refusal); identity resolution; desired↔planned↔observed↔runtime reconcile; runtime topology (OTel/Hubble/EndpointSlice); cluster federation; drift journal; incident V3 (factorized ranking, correlation≠causation); remediation planning (never applies); dynamic `live capability` — see LIVE.md |
 | `platform.ops` | 11 | ops | governed | `ops <verb>` | governed control plane (Cycle 4 + 4.1): ChangeIntent → ChangePlan DAG → simulation S0–S5 → risk R0–R5 → policy V2 → hash-bound approval → typed-action envelope → precondition gates → FSM + append-only ledger → verify → converge/rollback → audit. `ops run` dry-runs by default; `--execute` uses host argv transports only; forbidden actions (`shell.run`, …) → `PF-OPS-UNSTRUCTURED`; material-bound rollback v2 (ROLLBACK.md), ExpectedDelta gate, integrity-seal approvals; cross-Forge delegation never carries execution authority — see OPS.md |
 
+| `platform.freeze` | 1 | freeze | internal | `freeze manifest|snapshot|check|exception` | architecture-freeze governance (prompt_evo_freezing): manifest generated from live registries; drift snapshots over schemas/CLI/MCP/capabilities/agents with knowledge allowlist; FeatureException contract for any freeze-scope change. State machine + unfreeze RFC: `docs/freeze/` |
+
 ### Known gaps (declared, not hidden)
 
 - Lab tiers L1–L4 (containers/kind/cloud) — L0 static + graph-simulated

@@ -1,0 +1,21 @@
+{
+  "entries": {
+    "aws/eks.yaml": "e48b6ec7bf786c6ec7ba0ffc2f48298e9d3ba09a7d9cedc22be0fd8ad1acef00",
+    "aws/iam.yaml": "700f7eb3ff31144642d0bd878fbcd27e1459165068250a76764ee8fe068cb098",
+    "aws/network-exposure.yaml": "ae8fa98b5aced98f15fb1baa07c4b0eba38b1d526823f6c85094d3e68abf0d0f",
+    "aws/organizations.yaml": "5a3ed1272d0a68fe138d2c85104a82d80b40ae81f43611bd5f2ef9c564137ffd",
+    "crossplane/composition-providers.yaml": "92548b9bea8a77b8fc625c0bcff5d60772feef4af4e65fbb8f7919d230bf0e78",
+    "crossplane/managed-resources.yaml": "a1922d6c546c7b3cbf4f577bfa7a9e8e19deeb9751590320d8e1b48b7534ea11",
+    "crossplane/v1-v2.yaml": "94237e02a8658c4010466c8b386b8bc6bc910aa36deefad146c31c791d13de80",
+    "kubernetes/api-deprecations.yaml": "6739088cef780cfda90731d63d692de1923ac380cf8a9c7a53089bda52c74f89",
+    "kubernetes/autoscaling-rbac.yaml": "4621465ae0d3126e048be21e6656349670f8557cce20fdd2eb1b64938cf01363",
+    "kubernetes/gateway-api.yaml": "aff8b87a31790e19e1d208487eb7b6e654e39939c457310fc978801d70e416e1",
+    "kubernetes/pod-security.yaml": "fcc43a5f8c97018d6e713a9e302837bf08531f87a44a3c08cf26cbab26ae7f48",
+    "sources.yaml": "7db2a067da7be034436a8877b34eb5f042b2d96aa6615a89517310178ae66705",
+    "terraform/lifecycle.yaml": "73eb5bc8100ef04ed368def9b653b24b4a55bc3569e2afe15244feb7636c1d39",
+    "terraform/plan-semantics.yaml": "2388121bdd3e4bfa963257e2b8cac4ec62b4ea41c5a984512adc46a9d182dff4"
+  },
+  "family": "knowledge",
+  "schema": "platformforge/freeze-snapshot/v1",
+  "sha": "2d874d9f7686c50dba3e8b4588eca4a2c6c39c97"
+}

@@ -196,6 +196,7 @@ artifacts + hash cascade gates.
 | `forge manifest|discover|collect|delegate|verify` | Forge interop manifest + A2A envelope + sibling-forge ingress. |
 | `mcp tools|serve|call|integrate|detach` | MCP server + host parity files. |
 | `integrate --host <h>` | = `mcp integrate`. |
+| `freeze manifest|snapshot|check|exception` | Architecture-freeze governance: generated FREEZE-MANIFEST from live registries; contract snapshots (schemas/CLI/MCP/capabilities/agents) under `docs/freeze/snapshots/`; `check` reports breaking drift (knowledge allowlisted); `exception --spec <file>` validates a §6 FeatureException. |
 
 ## Knowledge & store
 

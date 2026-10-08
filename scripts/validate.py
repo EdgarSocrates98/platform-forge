@@ -506,6 +506,48 @@ def gate_agent_evals() -> dict:
     return r
 
 
+# --- freeze gates (prompt_evo_freezing §7, §196) ------------------------
+
+def gate_freeze_contracts() -> dict:
+    r = _run(["platformforge", "freeze", "check"])
+    r["what"] = ("no breaking drift vs docs/freeze/snapshots — "
+                 "schemas/CLI/MCP/capabilities/agents")
+    return r
+
+
+def gate_freeze_docs() -> dict:
+    expr = (
+        "from pathlib import Path\n"
+        "req = ['FREEZE-MANIFEST.md', 'REAL-WORLD-ISSUES.md',\n"
+        "       'ARCHITECTURE-FREEZE-REVIEW.md', 'FINAL-REPORT.md',\n"
+        "       'FINAL-MATRIX.md']\n"
+        "missing = [f for f in req\n"
+        "           if not Path('docs/freeze', f).exists()]\n"
+        "import sys\n"
+        "if missing:\n"
+        "    print('missing:', missing); sys.exit(1)\n"
+    )
+    r = _py(expr)
+    r["what"] = "docs/freeze required artifacts exist"
+    return r
+
+
+def gate_freeze_exceptions() -> dict:
+    expr = (
+        "import json, sys\n"
+        "from pathlib import Path\n"
+        "from platformforge.freeze.exceptions import exception_errors\n"
+        "bad = []\n"
+        "for f in Path('docs/freeze/exceptions').glob('*.json'):\n"
+        "    errs = exception_errors(json.loads(f.read_text()))\n"
+        "    if errs: bad.append((f.name, errs))\n"
+        "if bad: print(bad); sys.exit(1)\n"
+    )
+    r = _py(expr)
+    r["what"] = "every FeatureException doc validates (§6)"
+    return r
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
@@ -540,6 +582,10 @@ GATES = {
     "agents-debate": gate_agent_debate,
     "agents-independence": gate_agent_independence,
     "agents-evals": gate_agent_evals,
+    # freeze (prompt_evo_freezing §7)
+    "freeze-contracts": gate_freeze_contracts,
+    "freeze-docs": gate_freeze_docs,
+    "freeze-exceptions": gate_freeze_exceptions,
 }
 
 UNLOCK = {
@@ -588,6 +634,11 @@ UNLOCK = {
         "tests/test_agent_adversarial.py",
     "agents-evals": "reproduce: platformforge evals run — fix the "
         "failing case or the machinery it probes",
+    "freeze-contracts": "drift vs docs/freeze/snapshots — re-snapshot "
+        "(freeze snapshot) only through a reviewed FeatureException",
+    "freeze-docs": "create the missing docs/freeze artifact",
+    "freeze-exceptions": "every docs/freeze/exceptions/*.json must "
+        "satisfy the §6 FeatureException contract",
 }
 
 

@@ -578,6 +578,43 @@ def cmd_bench(args: argparse.Namespace) -> int:
     return _emit(fn(repeat=args.repeat), args)
 
 
+def cmd_freeze(args: argparse.Namespace) -> int:
+    """Freeze governance — manifest, snapshots, drift check, exceptions."""
+    import pathlib
+
+    from platformforge import freeze as fz
+    from platformforge.freeze.manifest import render_markdown
+
+    if args.freeze_cmd == "manifest":
+        out = args.out or "docs/freeze/FREEZE-MANIFEST.md"
+        m = fz.build_manifest()
+        if args.out == "-" or (not args.out and args.path == "-"):
+            return _emit(m, args)
+        pathlib.Path(out).parent.mkdir(parents=True, exist_ok=True)
+        pathlib.Path(out).write_text(render_markdown(m))
+        return _emit({"written": out, "sha": m["freeze_start_sha"],
+                      "agents": m["agent_contracts"]["count"]}, args)
+    if args.freeze_cmd == "snapshot":
+        out = fz.write_snapshots(repo=args.path or ".",
+                                 out=args.out or "docs/freeze/snapshots")
+        return _emit({"written": str(out)}, args)
+    if args.freeze_cmd == "check":
+        r = fz.check_snapshots(
+            repo=args.path or ".",
+            snap_dir=args.out or "docs/freeze/snapshots")
+        return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
+    if args.freeze_cmd == "exception":
+        import json as _json
+        if not args.json_file:
+            return _emit({"refusal": "PF-FREEZE-EXCEPTION-INPUT",
+                          "unlock": "freeze exception --spec <file>"}, args, 2)
+        data = _json.loads(pathlib.Path(args.json_file).read_text())
+        errs = fz.exception_errors(data)
+        return _emit({"valid": not errs, "errors": errs}, args,
+                     0 if not errs else 1)
+    return 2
+
+
 def cmd_economy(args: argparse.Namespace) -> int:
     from platformforge.economy import EconomyEngine
 
@@ -3180,6 +3217,18 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--repeat", type=int, default=3)
     sp.add_argument("--sizes", help="comma list for scale bench (default 50,200,800)")
     sp.set_defaults(func=cmd_bench)
+
+    sp = sub.add_parser("freeze", help="architecture freeze governance")
+    _add_common(sp)
+    sp.add_argument(
+        "freeze_cmd",
+        choices=["manifest", "snapshot", "check", "exception"],
+    )
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--out", default="")
+    sp.add_argument("--spec", dest="json_file", default="",
+                    help="FeatureException JSON for `freeze exception`")
+    sp.set_defaults(func=cmd_freeze)
     return p
 
 
