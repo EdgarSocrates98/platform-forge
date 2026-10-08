@@ -744,6 +744,117 @@ AGENTS: dict[str, AgentSpec] = {a.name: a for a in [
         done_when="spend reported with measured bytes or unresolved "
                   "named",
     ),
+    # --- executor subagents (§57–66): one job, structured I/O, -------
+    # --- never dispatch, never self-verify ---------------------------
+    AgentSpec(
+        name="pf-inventory", role="executor", domains=("inventory",),
+        mission="discover artifacts, domains and available evidence; "
+                "emit a coverage map",
+        when_to_enter="a root needs artifact discovery",
+        when_not_to_enter="judgment or severity is asked for",
+        allowed_verbs=("collect",),
+        allowed_capabilities=("platform.collect",),
+        inputs=("path",), outputs=("coverage_map", "artifact_list"),
+        model_tier="deterministic", max_tool_calls=8,
+        never="judges; assigns severity; touches providers",
+        done_when="coverage map + artifact list emitted",
+    ),
+    AgentSpec(
+        name="pf-extractor", role="executor", domains=("extract",),
+        mission="artifact → facts",
+        when_to_enter="artifacts need fact extraction",
+        when_not_to_enter="severity or recommendation is asked for",
+        allowed_verbs=("collect", "analyze"),
+        allowed_capabilities=("platform.collect",),
+        inputs=("artifacts",), outputs=("facts",),
+        model_tier="deterministic", max_tool_calls=16,
+        never="assigns severity; filters facts silently",
+        done_when="facts with fact_ids emitted or artifact named "
+                  "unextractable",
+    ),
+    AgentSpec(
+        name="pf-judge", role="executor", domains=("rules",),
+        mission="facts → rules → findings",
+        when_to_enter="facts need rule evaluation",
+        when_not_to_enter="no rules loaded; change recommendation "
+                          "is asked for",
+        allowed_verbs=("judge",),
+        allowed_capabilities=("platform.judge",),
+        inputs=("facts", "rules"), outputs=("findings", "skipped"),
+        model_tier="deterministic", max_tool_calls=16,
+        never="recommends changes; drops skipped rules silently",
+        done_when="findings + skipped-with-reason emitted",
+    ),
+    AgentSpec(
+        name="pf-graph-builder", role="executor", domains=("graph",),
+        mission="facts → Graphfy graph",
+        when_to_enter="facts need graph materialization",
+        when_not_to_enter="no facts; relationship without evidence "
+                          "is asked for",
+        allowed_verbs=("graph build",),
+        allowed_capabilities=("platform.graph.build",),
+        inputs=("facts",), outputs=("graph",),
+        model_tier="deterministic", max_tool_calls=16,
+        never="creates an edge without a contributing fact_id",
+        done_when="graph emitted; unprovenanced edges reported",
+    ),
+    AgentSpec(
+        name="pf-reconciler", role="executor", domains=("drift",),
+        mission="reconcile desired / planned / observed / runtime",
+        when_to_enter="state sets need reconciliation",
+        when_not_to_enter="only one state exists",
+        allowed_verbs=("diff", "analyze drift"),
+        allowed_capabilities=("platform.diff",),
+        inputs=("desired", "planned", "observed"),
+        outputs=("reconciliation",),
+        model_tier="deterministic", max_tool_calls=8,
+        never="collapses states; resolves drift by picking a side",
+        done_when="reconciliation doc with both states emitted",
+    ),
+    AgentSpec(
+        name="pf-simulator", role="executor", domains=("simulate",),
+        mission="safe simulation: planned graph → expected delta",
+        when_to_enter="a change needs an expected-delta document",
+        when_not_to_enter="production execution is asked for",
+        allowed_verbs=("ops simulate", "diff"),
+        allowed_capabilities=("platform.ops.simulate",),
+        inputs=("observed_graph", "planned_graph"),
+        outputs=("expected_delta",),
+        model_tier="deterministic", max_tool_calls=8,
+        never="executes; touches production; omits limitations",
+        done_when="expected delta + limitations emitted",
+    ),
+    AgentSpec(
+        name="pf-synthesizer", role="executor", domains=("compose",),
+        mission="compose findings + graph + reviews + referee "
+                "decisions into the final document",
+        when_to_enter="a run has material to compose",
+        when_not_to_enter="new facts are needed — it references, "
+                          "never mints",
+        allowed_verbs=(),
+        allowed_capabilities=(),
+        inputs=("findings", "graph", "reviews", "referee"),
+        outputs=("synthesis",),
+        model_tier="fast", max_tool_calls=4,
+        never="creates new facts; hides unresolved items",
+        done_when="synthesis emitted citing only its inputs",
+    ),
+    AgentSpec(
+        name="pf-verifier", role="executor", domains=("proof",),
+        mission="mechanical proof checks: hashes, receipts, "
+                "acceptance shape — used by platform-verifier (§65)",
+        when_to_enter="a document needs mechanical verification",
+        when_not_to_enter="judgment is required — that stays with "
+                          "platform-verifier",
+        allowed_verbs=("diff",),
+        allowed_capabilities=("platform.judge",),
+        inputs=("document", "expected_hash"),
+        outputs=("check_result",),
+        model_tier="deterministic", max_tool_calls=4,
+        never="verifies itself; judges semantics — checks shape and "
+              "hashes only",
+        done_when="ok|problems emitted",
+    ),
 ]}
 
 

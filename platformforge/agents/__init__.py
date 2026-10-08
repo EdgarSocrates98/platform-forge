@@ -33,6 +33,17 @@ from platformforge.agents.coordinators import (
     dispatch_plan,
 )
 from platformforge.agents.critic import adversarial_review, pre_mortem
+from platformforge.agents.executors import (
+    EXECUTORS,
+    pf_extract,
+    pf_graph_build,
+    pf_inventory,
+    pf_judge,
+    pf_reconcile,
+    pf_simulate,
+    pf_synthesize,
+    pf_verify,
+)
 from platformforge.agents.guardian import release_review
 from platformforge.agents.orchestrator import (
     DagNode,
@@ -69,6 +80,7 @@ __all__ = [
     "AGENTS",
     "BUDGET_CLASSES",
     "COORDINATOR_LOOPS",
+    "EXECUTORS",
     "MODEL_TIERS",
     "OPS_SAFETY_CHECKLIST",
     "OUTPUT_STATUSES",
@@ -100,6 +112,14 @@ __all__ = [
     "grade",
     "load_loops",
     "ops_safety_review",
+    "pf_extract",
+    "pf_graph_build",
+    "pf_inventory",
+    "pf_judge",
+    "pf_reconcile",
+    "pf_simulate",
+    "pf_synthesize",
+    "pf_verify",
     "plan",
     "playbook",
     "pre_mortem",
