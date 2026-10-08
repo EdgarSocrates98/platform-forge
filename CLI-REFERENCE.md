@@ -147,15 +147,16 @@ All read-only; consume a **fleet dir** (same shape as
 |---|---|
 | `fleet list|status|coverage <dir>` | Members / FleetSnapshot with coverage ratio. |
 | `fleet graph <dir>` | Org-graph projection (org edges ≠ blast radius). |
-| `fleet risks <dir>` | All 9 fleet questions over the graph. |
+| `fleet risks <dir>` | All 9 fleet questions over the graph (`--question X` runs one). |
 | `fleet costs|capacity <dir>` | FinOps V4 hierarchy/trend/idle/rightsizing · per-member capacity risk (unknown stays unknown). |
 | `fleet incidents|operations|drift <dir>` | Recurring incident patterns / ops hotspots + remediation recurrence / history patterns `--window`. |
 | `fleet golden-path <dir>` | Adoption, friction, escapes + recommendations. |
 | `fleet policies <dir>` | Policy metrics + false-positive candidates (review-only). |
 | `fleet recommendations <dir>` | `optimize scan` → prioritized portfolio. |
+| `fleet report <dir>` | North-star receipt (`fleet-report/v1`): coverage, per-dimension findings, `invest_next` — every claim cited, suppressed kept visible. |
 | `analytics summary|metric <dir>` | Coverage + source counts / `PlatformMetric` (`--id gp-adoption\|unallocated-cost`) / `maturity` (per-dimension). |
 | `optimize scan|list|portfolio <dir>` | Evidence-cited opportunities; suppressed ones stay visible. |
-| `optimize explain|plan <dir> --id R` | One recommendation / emit a `ChangeIntent` doc — **never executes**. |
+| `optimize explain|plan <dir> --id R` | One recommendation / emit a `ChangeIntent` doc — **never executes**. `--out f.yaml` writes the intent for the ops pipeline. |
 | `ai workloads|gpu|economics` | Detect GPU workloads / pool risk / unit economics (denominators required: `--denominators '{"tokens": N}'`). |
 | `federation manifest|export|query` | Node manifest / classified export (secrets always denied) / fleet question fanned to `--nodes` dirs — local answers only, no authority crosses. |
 

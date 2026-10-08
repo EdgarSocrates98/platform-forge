@@ -60,6 +60,11 @@ def cmd_fleet(args) -> dict[str, Any]:
                         "blast radius"}
     if sub == "risks":
         from platformforge.fleet.query import FLEET_QUESTIONS, fleet_query
+        if args.question:
+            if args.question not in FLEET_QUESTIONS:
+                return {"refusal": "PF-FLEET-QUESTION",
+                        "unlock": f"questions: {sorted(FLEET_QUESTIONS)}"}
+            return fleet_query(graph, args.question)
         return {q: fleet_query(graph, q) for q in FLEET_QUESTIONS}
     if sub == "costs":
         from platformforge.analytics.finops_v4 import (
@@ -141,7 +146,64 @@ def cmd_fleet(args) -> dict[str, Any]:
     if sub == "recommendations":
         return _optimize_scan(fleet, graph, data).portfolio(
             top=args.limit or 10)
+    if sub == "report":
+        return _fleet_report(fleet, graph, data, args)
     return {"error": f"unknown fleet verb {sub}"}
+
+
+def _fleet_report(fleet, graph, data, args) -> dict[str, Any]:
+    """North-star receipt (§1/§303): how is the fleet behaving, where
+    are the biggest problems, where to invest — every claim cited."""
+    from platformforge.fleet.query import FLEET_QUESTIONS, fleet_query
+    snap = _snapshot(fleet, data)
+    eng = _optimize_scan(fleet, graph, data)
+    portfolio = eng.portfolio(top=args.limit or 5)
+
+    # per-dimension rollup — each row keeps its evidence
+    risks = {q: fleet_query(graph, q) for q in FLEET_QUESTIONS}
+    dimensions: dict[str, dict[str, Any]] = {}
+    _dim_questions = {
+        "security": ("public-services", "wildcard-iam"),
+        "standardization": ("unsupported-k8s", "unowned"),
+        "reliability": ("no-slo", "cross-env-deps"),
+        "platform-product": ("outside-golden-path",),
+        "cost": ("idle-high-cost",),
+    }
+    for dim, qs in _dim_questions.items():
+        items = [i for q in qs for i in risks[q]["items"]]
+        dimensions[dim] = {
+            "findings": len(items),
+            "nodes": sorted({i["node_id"] for i in items}),
+            "evidence": [f for i in items
+                         for f in (i.get("fact_ids") or [])][:8],
+            "confidence": "low" if snap.coverage < 0.8 else "medium"}
+
+    invest = [
+        {"recommendation_id": r["recommendation_id"], "type": r["type"],
+         "confidence": r["confidence"],
+         "estimated_savings": r.get("estimated_savings"),
+         "savings_unit": r.get("savings_unit"),
+         "evidence": r.get("evidence", []),
+         "priority": r.get("priority", {}).get("rank_score")}
+        for r in portfolio["top"]]
+    return {
+        "schema": "platformforge/fleet-report/v1",
+        "fleet_id": fleet.fleet_id,
+        "coverage": {"ratio": snap.coverage_ratio,
+                     "min_member": snap.coverage,
+                     "note": "fleet conclusions bounded by coverage — "
+                             "partial data never completes"},
+        "dimensions": dimensions,
+        "portfolio": {"opportunities": portfolio["total_opportunities"],
+                      "promoted": portfolio["promoted"],
+                      "suppressed": portfolio["suppressed"]},
+        "invest_next": invest,
+        "verdict": ("evidence-backed answers; suppressed opportunities "
+                    "kept visible; optimization ends at ChangeIntent"),
+        "limitations": [
+            "deterministic aggregates — no ML claims",
+            "correlation is not causality",
+            "coverage < 1 bounds every conclusion"]}
 
 
 def _optimize_scan(fleet, graph, data):
@@ -189,10 +251,18 @@ def cmd_optimize(args) -> dict[str, Any]:
         from platformforge.optimize.engine import OptimizationEngine
         for r in eng.recommendations():
             if r.recommendation_id == args.id:
-                return {"change_intent":
-                        OptimizationEngine.plan(r).to_dict(),
-                        "note": "hand to the ops pipeline — plan does not "
-                                "execute; policy/approval/verify still apply"}
+                ci = OptimizationEngine.plan(r).to_dict()
+                out = {"change_intent": ci,
+                       "note": "hand to the ops pipeline — plan does not "
+                               "execute; policy/approval/verify still apply"}
+                if args.out:
+                    import yaml
+                    Path(args.out).write_text(yaml.safe_dump(
+                        ci, sort_keys=False))
+                    out["written"] = args.out
+                    out["next"] = ("ops intent --intent " + args.out +
+                                   " → ops plan → governed pipeline")
+                return out
         return {"refusal": "PF-OPT-NOTFOUND",
                 "unlock": "platformforge optimize list <dir>"}
     return {"error": f"unknown optimize verb {sub}"}
