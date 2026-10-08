@@ -1418,6 +1418,26 @@ def cmd_live(args: argparse.Namespace) -> int:
                      2 if args.strict and not any(
                          h["status"] in ("confirmed", "supported")
                          for h in ranked["ranked"]) else 0)
+    if sub == "plan":
+        from platformforge.live.remediate import remediate
+        if args.drift_events:
+            events = json.loads(Path(args.drift_events).read_text())
+        else:
+            from platformforge.live.drift import diff_observations
+            store = ObservationStore(args.repo)
+            rows = store.list(limit=2)
+            if len(rows) < 2:
+                return _emit({"refusal": "PF-LIVE-NO-DRIFT-INPUT",
+                              "unlock": "pass --drift-events <file> or "
+                                        "collect ≥2 observations"},
+                             args, 2)
+            events = diff_observations(store.get(rows[1][
+                "observation_id"]),
+                store.get(rows[0]["observation_id"]))["drift"]
+        out = remediate(events)
+        return _emit(out, args,
+                     2 if args.strict and
+                     out["counts"]["mutating"] else 0)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
@@ -1656,7 +1676,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("live_cmd",
                     choices=["snapshot", "status", "doctor", "reconcile",
                              "rbac", "required-permissions", "topology",
-                             "clusters", "drift", "incident"])
+                             "clusters", "drift", "incident", "plan"])
     sp.add_argument("--provider", default="kubernetes",
                     choices=["kubernetes", "aws"])
     sp.add_argument("--region", action="append",
@@ -1701,6 +1721,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="incident: timeline events JSON list")
     sp.add_argument("--window", type=int, default=3600,
                     help="incident: correlation window seconds")
+    sp.add_argument("--drift-events", default="",
+                    help="plan: drift events JSON (default: diff latest "
+                         "two stored observations)")
     sp.add_argument("--max-objects", type=int, default=0)
     sp.add_argument("--max-api-calls", type=int, default=0)
     sp.add_argument("--max-bytes", type=int, default=0)
