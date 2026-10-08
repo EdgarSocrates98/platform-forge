@@ -54,6 +54,12 @@ non-goal. Platform Forge is never an arbitrary shell agent.
   OperationStore (append-only JSONL + hash chain + schema migration +
   audit digest).
 - COMPATIBILITY.md, DEPRECATION.md, config.example.yaml.
+- `platformforge ops` CLI — capabilities/config/delegate/intent/plan/
+  simulate/risk/policy-eval/runbook/run/store verbs; `ops run` dry-runs
+  by default; `--execute` uses host argv-only transports
+  (`host_transport()`, never a shell string) behind hash-bound
+  approval; results persist to the operation store.
+- OPS.md — the Cycle 4 operations reference doc.
 
 ### Security hardening
 - Ledger entries redact secrets at append; envelope serialization

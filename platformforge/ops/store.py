@@ -13,8 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from platformforge.live.models import canonical_hash, now_iso
-from platformforge.ops.operation import (LedgerEntry, Operation,
-                                         OperationLedger)
+from platformforge.ops.operation import LedgerEntry, Operation, OperationLedger
 
 STORE_SCHEMA_VERSION = 2
 

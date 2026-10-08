@@ -78,6 +78,29 @@ LIVE.md.
 | `live plan` | Drift events → safe remediation plan + approval envelope (hash-pinned). Never applies; `--strict` exits 2 on mutating actions. |
 | `live capability` | Dynamic capability availability (host prereqs, budgets, provider access). |
 
+## Operations — `ops <verb>` (Cycle 4)
+
+Governed control plane: intent → plan → simulate → risk → policy →
+hash-bound approval → typed-action execution → verify → converge/rollback
+→ audit. Dry-run is the default; `--execute` wires host argv transports
+(never shell strings) and still requires a valid approval bound to the
+frozen envelope hash. Forbidden verbs (`shell.run`, `kubectl.exec`, …)
+refuse `PF-OPS-UNSTRUCTURED`. See OPS.md.
+
+| Verb | What it does |
+|---|---|
+| `ops capabilities` | Typed action catalog + autonomy ceiling (A4) + delegation contract. |
+| `ops config` | Load `platformforge.yaml` ops config (schema v2) + violations. |
+| `ops delegate --request f.json` | Validate a cross-Forge delegation request (never grants execution authority). |
+| `ops intent --intent f.json` | Propose: intent → source-of-truth resolution + evidence check. |
+| `ops plan --plan f.yaml` | Build + validate a ChangePlan DAG → plan hash. |
+| `ops simulate --plan f.yaml --level S1` | Deterministic S0–S5 simulation receipt. |
+| `ops risk --plan f.yaml --environment E` | R0–R5 risk decomposition per step. |
+| `ops policy-eval --plan f.yaml --policies p.yaml` | Policy V2 decision (deny → exit 2). |
+| `ops runbook [id\|list] [--bind p.json]` | Structured runbooks: list, show, bind params. |
+| `ops run --spec ops.yaml [--execute]` | Full governed pipeline on a spec (intent/steps/policies/approvals/observation/verify). Persists to the operation store. |
+| `ops store-list` / `ops store-verify --operation-id` | Append-only operation store + hash-chain audit. |
+
 ## Compose verbs
 
 | Verb | What it does |

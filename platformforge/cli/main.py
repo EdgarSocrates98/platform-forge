@@ -26,10 +26,26 @@ REPO_ROOT = data_path()
 
 
 _DETAIL_LIST_CAP = {"summary": 3, "normal": 50, "full": None}
-_SUMMARY_KEYS = {"status", "verdict", "ok", "passed", "failed", "exit_code",
-                 "severity", "rule_id", "finding_id", "level", "risk",
-                 "counts", "coverage", "summary", "unresolved", "refused",
-                 "refusals", "skipped"}
+_SUMMARY_KEYS = {
+    "status",
+    "verdict",
+    "ok",
+    "passed",
+    "failed",
+    "exit_code",
+    "severity",
+    "rule_id",
+    "finding_id",
+    "level",
+    "risk",
+    "counts",
+    "coverage",
+    "summary",
+    "unresolved",
+    "refused",
+    "refusals",
+    "skipped",
+}
 
 
 def _detail_bound(obj: Any, level: str, depth: int = 0) -> Any:
@@ -41,8 +57,7 @@ def _detail_bound(obj: Any, level: str, depth: int = 0) -> Any:
         return obj
     if isinstance(obj, list):
         if len(obj) > cap:
-            return ([_detail_bound(x, level, depth + 1) for x in obj[:cap]]
-                    + [{"_truncated": len(obj) - cap}])
+            return [_detail_bound(x, level, depth + 1) for x in obj[:cap]] + [{"_truncated": len(obj) - cap}]
         return [_detail_bound(x, level, depth + 1) for x in obj]
     if isinstance(obj, dict):
         if level == "summary" and depth > 0:
@@ -50,10 +65,8 @@ def _detail_bound(obj: Any, level: str, depth: int = 0) -> Any:
             extra = {k for k in obj if k not in _SUMMARY_KEYS}
             if extra:
                 keep["_elided_keys"] = sorted(extra)
-            return {k: _detail_bound(v, level, depth + 1)
-                    for k, v in keep.items()}
-        return {k: _detail_bound(v, level, depth + 1)
-                for k, v in obj.items()}
+            return {k: _detail_bound(v, level, depth + 1) for k, v in keep.items()}
+        return {k: _detail_bound(v, level, depth + 1) for k, v in obj.items()}
     return obj
 
 
@@ -78,8 +91,7 @@ def _emit(result: Any, args: argparse.Namespace, exit_code: int = 0) -> int:
     if getattr(args, "offline", False) and isinstance(shown, dict):
         shown = {**shown, "offline": True}
     # §110 — strict: any unresolved/refused in the payload exits 2.
-    if getattr(args, "strict", False) and exit_code == 0 \
-            and _has_unresolved(result):
+    if getattr(args, "strict", False) and exit_code == 0 and _has_unresolved(result):
         exit_code = 2
     text = json.dumps(shown, indent=2, sort_keys=True, default=str)
     if getattr(args, "output", None):
@@ -89,20 +101,19 @@ def _emit(result: Any, args: argparse.Namespace, exit_code: int = 0) -> int:
 
 
 def _add_common(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--json", action="store_true", default=True,
-                   help="structured output (default)")
+    p.add_argument("--json", action="store_true", default=True, help="structured output (default)")
     p.add_argument("--output", metavar="FILE", help="write result to FILE")
-    p.add_argument("--detail-level", choices=DETAIL_LEVELS, default="normal",
-                   help="summary|normal|full payload bounding")
-    p.add_argument("--offline", action="store_true",
-                   help="forbid any network-capable adapter")
-    p.add_argument("--strict", action="store_true",
-                   help="unresolved/refusals -> exit code 2")
+    p.add_argument(
+        "--detail-level", choices=DETAIL_LEVELS, default="normal", help="summary|normal|full payload bounding"
+    )
+    p.add_argument("--offline", action="store_true", help="forbid any network-capable adapter")
+    p.add_argument("--strict", action="store_true", help="unresolved/refusals -> exit code 2")
     p.add_argument("--repo", default=".", help="workspace/repo root")
 
 
 def cmd_init(args: argparse.Namespace) -> int:
     from platformforge.core.workspace import init_workspace
+
     pf = init_workspace(args.repo, name=args.name)
     return _emit({"initialized": str(pf)}, args)
 
@@ -114,6 +125,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     config, capability manifest, knowledge freshness, host parity, graph
     integrity, index health and the artifact store — all read-only."""
     import platform
+
     checks: dict[str, Any] = {
         "python": platform.python_version(),
         "platformforge": __version__,
@@ -123,58 +135,69 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         "mcp_adapter": _mod_version("mcp", optional=True),
         "boto3": _mod_version("boto3", optional=True),
     }
-    ok = all(v != "missing" for k, v in checks.items()
-             if k in ("pyyaml", "jsonschema", "python-hcl2"))
+    ok = all(v != "missing" for k, v in checks.items() if k in ("pyyaml", "jsonschema", "python-hcl2"))
     detail: dict[str, Any] = {}
     if getattr(args, "deep", False):
         detail = _doctor_deep(args)
         ok = ok and all(v.get("ok", True) for v in detail.values())
-    return _emit({"ok": ok, "checks": checks, "deep": detail},
-                 args, 0 if ok else 1)
+    return _emit({"ok": ok, "checks": checks, "deep": detail}, args, 0 if ok else 1)
 
 
 def _doctor_deep(args: argparse.Namespace) -> dict[str, Any]:
     out: dict[str, Any] = {}
     from platformforge.core.workspace import load_workspace
+
     ws = load_workspace(getattr(args, "repo", "."))
     # config
-    out["config"] = {"ok": True, "workspace": ws.name,
-                     "multi_repo": ws.is_multi_repo,
-                     "members": len(ws.members) or 1}
+    out["config"] = {
+        "ok": True,
+        "workspace": ws.name,
+        "multi_repo": ws.is_multi_repo,
+        "members": len(ws.members) or 1,
+    }
     # capability manifest
     try:
         from platformforge.forge import capability_manifest
+
         m = capability_manifest(args.repo)
-        out["capability_manifest"] = {"ok": bool(m.get("tools")),
-                                      "tools": len(m.get("tools", [])),
-                                      "rules": m.get("rule_count")}
+        out["capability_manifest"] = {
+            "ok": bool(m.get("tools")),
+            "tools": len(m.get("tools", [])),
+            "rules": m.get("rule_count"),
+        }
     except (OSError, ValueError, KeyError) as e:
         out["capability_manifest"] = {"ok": False, "error": str(e)}
     # knowledge freshness
     try:
         from platformforge.knowledge.registry import SourceRegistry
+
         reg = SourceRegistry.default()
         check = reg.check()
-        stale = [c["id"] for c in check
-                 if c["status"] in ("stale", "unresolved", "conflicted")]
-        out["knowledge_freshness"] = {"ok": True, "entries": len(check),
-                                      "attention": stale,
-                                      "contract": reg.contract_check()}
+        stale = [c["id"] for c in check if c["status"] in ("stale", "unresolved", "conflicted")]
+        out["knowledge_freshness"] = {
+            "ok": True,
+            "entries": len(check),
+            "attention": stale,
+            "contract": reg.contract_check(),
+        }
     except (OSError, ValueError, KeyError) as e:
         out["knowledge_freshness"] = {"ok": False, "error": str(e)}
     # host parity (host adapter files present?)
     parity = {}
-    for host, marker in (("claude", ".claude"), ("devin", ".devin"),
-                         ("agents", ".agents")):
+    for host, marker in (("claude", ".claude"), ("devin", ".devin"), ("agents", ".agents")):
         parity[host] = (ws.root / marker).exists()
     out["host_parity"] = {"ok": True, "adapters": parity}
     # index health (tokensave db)
     idx = ws.pf_dir / "index.db"
-    out["index_health"] = {"ok": True, "present": idx.is_file(),
-                           "bytes": idx.stat().st_size if idx.is_file() else 0}
+    out["index_health"] = {
+        "ok": True,
+        "present": idx.is_file(),
+        "bytes": idx.stat().st_size if idx.is_file() else 0,
+    }
     # artifact store
     try:
         from platformforge.core.store import ArtifactStore
+
         st = ArtifactStore(ws.root).stats()
         out["artifact_store"] = {"ok": True, **st}
     except (OSError, ValueError, KeyError) as e:
@@ -187,6 +210,7 @@ _DIST_NAMES = {"yaml": "PyYAML", "hcl2": "python-hcl2"}
 
 def _mod_version(name: str, optional: bool = False) -> str:
     import importlib.metadata
+
     try:
         __import__(name)
     except ImportError:
@@ -200,24 +224,28 @@ def _mod_version(name: str, optional: bool = False) -> str:
 def cmd_status(args: argparse.Namespace) -> int:
     from platformforge.core.store import ArtifactStore
     from platformforge.core.workspace import load_workspace
+
     ws = load_workspace(args.repo)
     store = ArtifactStore(ws.root)
-    return _emit({
-        "workspace": ws.name, "root": str(ws.root),
-        "multi_repo": ws.is_multi_repo,
-        "members": [m.name for m in ws.members] or [ws.name],
-        "store": store.stats(),
-    }, args)
+    return _emit(
+        {
+            "workspace": ws.name,
+            "root": str(ws.root),
+            "multi_repo": ws.is_multi_repo,
+            "members": [m.name for m in ws.members] or [ws.name],
+            "store": store.stats(),
+        },
+        args,
+    )
 
 
 def _member_dirs(path: str | Path) -> list[tuple[str, Path]]:
     """§126 — a workspace.yaml root expands to its member repos."""
     from platformforge.core.workspace import load_workspace
+
     ws = load_workspace(path)
     if ws.is_multi_repo:
-        return [(m.name, p) for m, p in
-                zip(ws.members, ws.member_paths(), strict=True)
-                if p.is_dir()]
+        return [(m.name, p) for m, p in zip(ws.members, ws.member_paths(), strict=True) if p.is_dir()]
     return [("", Path(path))]
 
 
@@ -234,8 +262,7 @@ def _run_over_members(fn, path: str | Path) -> dict[str, Any]:
                 facts.append(f)
         except Exception as e:  # noqa: BLE001 — member failure is data
             errors.append(f"{name or p.name}: {e}")
-    out: dict[str, Any] = {"facts": facts,
-                           "workspace": {n: str(p) for n, p in members}}
+    out: dict[str, Any] = {"facts": facts, "workspace": {n: str(p) for n, p in members}}
     if errors:
         out["errors"] = errors
     return out
@@ -258,22 +285,25 @@ def cmd_inspect(args: argparse.Namespace) -> int:
         "crossplane": ("*.yaml",),
     }
     inventory: dict[str, list[str]] = {k: [] for k in kinds}
-    ignore = {".git", ".venv", "node_modules", ".platformforge", "vendor",
-              "__pycache__", "dist", "build"}
+    ignore = {".git", ".venv", "node_modules", ".platformforge", "vendor", "__pycache__", "dist", "build"}
     for mname, mroot in members:
         for p in sorted(mroot.rglob("*")):
             if not p.is_file() or any(part in ignore for part in p.parts):
                 continue
-            rel = (f"{mname}/{p.relative_to(mroot)}" if mname
-                   else str(p.relative_to(mroot)))
+            rel = f"{mname}/{p.relative_to(mroot)}" if mname else str(p.relative_to(mroot))
             for kind, pats in kinds.items():
-                if any(p.match(pat) or rel.endswith(pat.lstrip("*"))
-                       for pat in pats):
+                if any(p.match(pat) or rel.endswith(pat.lstrip("*")) for pat in pats):
                     inventory[kind].append(rel)
     inventory = {k: v for k, v in inventory.items() if v}
-    return _emit({"root": str(root), "artifacts": inventory,
-                  "members": [n or str(p) for n, p in members],
-                  "counts": {k: len(v) for k, v in inventory.items()}}, args)
+    return _emit(
+        {
+            "root": str(root),
+            "artifacts": inventory,
+            "members": [n or str(p) for n, p in members],
+            "counts": {k: len(v) for k, v in inventory.items()},
+        },
+        args,
+    )
 
 
 def cmd_judge(args: argparse.Namespace) -> int:
@@ -289,16 +319,22 @@ def cmd_judge(args: argparse.Namespace) -> int:
     catalog_dirs = args.catalog or [data_path("rules", "catalog")]
     rules = load_catalog(*catalog_dirs)
     findings, skipped = RuleEngine(rules, versions).evaluate(facts)
-    out = {"findings": [f.to_dict() for f in findings],
-           "skipped": skipped,
-           "counts": {"facts": len(facts), "rules": len(rules),
-                      "violated": sum(1 for f in findings if f.status == "violated")}}
+    out = {
+        "findings": [f.to_dict() for f in findings],
+        "skipped": skipped,
+        "counts": {
+            "facts": len(facts),
+            "rules": len(rules),
+            "violated": sum(1 for f in findings if f.status == "violated"),
+        },
+    }
     unresolved = any(f.status == "unresolved" for f in findings)
     return _emit(out, args, 2 if (args.strict and unresolved) else 0)
 
 
 def cmd_knowledge(args: argparse.Namespace) -> int:
     from platformforge.knowledge.registry import SourceRegistry
+
     reg = SourceRegistry.default()
     sub = getattr(args, "knowledge_cmd", "check") or "check"
     if sub == "contract":
@@ -310,22 +346,27 @@ def cmd_knowledge(args: argparse.Namespace) -> int:
         return _emit(out, args)
     if sub == "packs":
         from platformforge.knowledge.packs import PackRegistry
+
         packs = PackRegistry.default()
-        out = {"packs": [p.to_dict() for p in sorted(
-            packs.packs.values(), key=lambda x: x.pack_id)],
-            "contract": packs.contract_check()}
-        return _emit(out, args,
-                     2 if (args.strict and not out["contract"]["ok"]) else 0)
+        out = {
+            "packs": [p.to_dict() for p in sorted(packs.packs.values(), key=lambda x: x.pack_id)],
+            "contract": packs.contract_check(),
+        }
+        return _emit(out, args, 2 if (args.strict and not out["contract"]["ok"]) else 0)
     report = reg.check()
-    bad = [r for r in report if r["status"] in ("stale", "unresolved", "conflicted",
-                                              "deprecated", "superseded")]
-    return _emit({"sources": report, "attention": bad,
-                  "counts": {"total": len(report), "attention": len(bad)}},
-                 args, 2 if (args.strict and bad) else 0)
+    bad = [
+        r for r in report if r["status"] in ("stale", "unresolved", "conflicted", "deprecated", "superseded")
+    ]
+    return _emit(
+        {"sources": report, "attention": bad, "counts": {"total": len(report), "attention": len(bad)}},
+        args,
+        2 if (args.strict and bad) else 0,
+    )
 
 
 def _index(args) -> SearchIndex:
     from platformforge.tokensave.index import SearchIndex
+
     return SearchIndex(Path(args.repo) / ".platformforge" / "index.db")
 
 
@@ -333,6 +374,7 @@ def cmd_tokens(args: argparse.Namespace) -> int:
     from platformforge.tokensave.budget import Budget
     from platformforge.tokensave.ledger import TokenLedger
     from platformforge.tokensave.packs import ContextPackBuilder
+
     idx = _index(args)
     out = {}
     if args.tokens_cmd == "index":
@@ -347,7 +389,8 @@ def cmd_tokens(args: argparse.Namespace) -> int:
             changed_files=args.changed or [],
             graph_neighborhood=getattr(args, "graph_nodes", None) or None,
             risk=getattr(args, "risk", None) or None,
-            previous_pack_hash=getattr(args, "prev_pack", None) or None)
+            previous_pack_hash=getattr(args, "prev_pack", None) or None,
+        )
         out = pack
     elif args.tokens_cmd == "delta":
         ledger = TokenLedger(args.repo)
@@ -355,7 +398,8 @@ def cmd_tokens(args: argparse.Namespace) -> int:
             changed_files=args.changed or [],
             budget=Budget(input_budget=args.input_budget),
             previous_pack_hash=getattr(args, "prev_pack", None) or None,
-            risk=getattr(args, "risk", None) or None)
+            risk=getattr(args, "risk", None) or None,
+        )
     elif args.tokens_cmd == "stats":
         out = idx.stats() | {"fingerprint": idx.fingerprint()}
     elif args.tokens_cmd == "ledger":
@@ -367,26 +411,29 @@ def cmd_rtk(args: argparse.Namespace) -> int:
     """Compact a command output file (or stdin) — never run unless asked."""
     from platformforge.core.store import ArtifactStore
     from platformforge.rtk import compact_output
+
     if args.file == "-":
         output = sys.stdin.read()
     else:
         output = Path(args.file).read_text(errors="replace")
     store = ArtifactStore(args.repo)
-    res = compact_output(args.command or "", output,
-                         exit_code=args.exit_code, store=store)
+    res = compact_output(args.command or "", output, exit_code=args.exit_code, store=store)
     return _emit(res.to_dict(), args)
 
 
 def cmd_rtk_expand(args: argparse.Namespace) -> int:
     from platformforge.core.store import ArtifactStore
     from platformforge.rtk.compact import expand
-    out = expand(ArtifactStore(args.repo), args.artifact,
-                 start=args.start, end=args.end, pattern=args.pattern)
+
+    out = expand(
+        ArtifactStore(args.repo), args.artifact, start=args.start, end=args.end, pattern=args.pattern
+    )
     return _emit(out, args)
 
 
 def cmd_caveman(args: argparse.Namespace) -> int:
     from platformforge.caveman import compress
+
     text = Path(args.file).read_text() if args.file != "-" else sys.stdin.read()
     out, receipt = compress(text, mode=args.mode, context_risk=args.context_risk)
     return _emit({"compressed": out, "receipt": receipt.to_dict()}, args)
@@ -397,6 +444,7 @@ def cmd_store(args: argparse.Namespace) -> int:
     import re
 
     from platformforge.core.store import ArtifactStore
+
     store = ArtifactStore(args.repo)
     if args.store_cmd == "stats":
         return _emit({"store": store.stats()}, args)
@@ -408,32 +456,37 @@ def cmd_store(args: argparse.Namespace) -> int:
     for doc in root.rglob("*.json") if root.exists() else []:
         if "store" in doc.parts:
             continue
-        referenced.update(pat.findall(
-            doc.read_text(errors="replace")))
-    out = store.gc(keep_days=args.keep_days, referenced=referenced,
-                   dry_run=not args.execute)
+        referenced.update(pat.findall(doc.read_text(errors="replace")))
+    out = store.gc(keep_days=args.keep_days, referenced=referenced, dry_run=not args.execute)
     return _emit(out, args)
 
 
 def cmd_bench(args: argparse.Namespace) -> int:
     """§148–150 — measured benchmarks over the eval corpus fixtures."""
     from platformforge import bench
-    fn = {"run": bench.run_benchmark,
-          "tokens": bench.token_benchmark}[args.bench_cmd]
+
+    fn = {"run": bench.run_benchmark, "tokens": bench.token_benchmark}[args.bench_cmd]
     return _emit(fn(repeat=args.repeat), args)
 
 
 def cmd_economy(args: argparse.Namespace) -> int:
     from platformforge.economy import EconomyEngine
+
     eng = EconomyEngine(args.repo)
     sub = getattr(args, "economy_cmd", "report") or "report"
     if sub == "strategy":
-        sig = json.loads(args.signal) if args.signal.strip().startswith("{") \
+        sig = (
+            json.loads(args.signal)
+            if args.signal.strip().startswith("{")
             else {"task_type": args.signal or "analysis"}
+        )
         return _emit(eng.strategy(sig), args)
     if sub == "compare":
-        sig = json.loads(args.signal) if args.signal.strip().startswith("{") \
+        sig = (
+            json.loads(args.signal)
+            if args.signal.strip().startswith("{")
             else {"task_type": args.signal or "analysis"}
+        )
         return _emit(eng.compare(sig), args)
     if sub == "qpt":
         # §30–32 — measured quality-per-token over a facts doc
@@ -441,46 +494,51 @@ def cmd_economy(args: argparse.Namespace) -> int:
 
         from platformforge.economy.qpt import quality_per_token
         from platformforge.tokensave.budget import Budget
+
         facts_doc = _json.loads(Path(args.path).read_text())
         facts = facts_doc.get("facts", facts_doc)
         out = quality_per_token(
-            facts_full=facts, findings_full=[],
-            index=_index(args), task=args.task or "analysis",
+            facts_full=facts,
+            findings_full=[],
+            index=_index(args),
+            task=args.task or "analysis",
             budget=Budget(input_budget=args.input_budget),
-            versions=json.loads(args.versions)
-            if getattr(args, "versions", "") else None)
-        return _emit(out, args,
-                     2 if out.get("quality_gate") == "fail" else 0)
+            versions=json.loads(args.versions) if getattr(args, "versions", "") else None,
+        )
+        return _emit(out, args, 2 if out.get("quality_gate") == "fail" else 0)
     if sub == "qpt-bench":
         # §43–46 — fixed corpus: full vs packed envelopes, same judge,
         # receipts per task with quality-before-economy verdicts
         from platformforge.economy.bench import run_qpt_bench
+
         out = run_qpt_bench()
-        bad = [c["id"] for c in out["cases"]
-               if c["verdict"] == "optimization_not_beneficial"]
+        bad = [c["id"] for c in out["cases"] if c["verdict"] == "optimization_not_beneficial"]
         return _emit(out, args, 2 if (args.strict and bad) else 0)
     return _emit(eng.report(), args)
 
 
 def cmd_route(args: argparse.Namespace) -> int:
     from platformforge.routing import TaskSignal, route
+
     sig = TaskSignal.from_dict(json.loads(args.signal))
     return _emit(route(sig), args)
 
 
 def cmd_sdd(args: argparse.Namespace) -> int:
     from platformforge.sdd import SDDProject
+
     proj = SDDProject(args.repo)
     sub = args.sdd_cmd
     if sub == "init":
         return _emit({"initialized": str(proj._feature_dir(args.feature))}, args)
-    if sub in ("discover", "define", "design", "contract", "plan", "review",
-               "learn", "build", "verify"):
-        body: object = json.loads(args.body) if args.body.strip().startswith("{") \
+    if sub in ("discover", "define", "design", "contract", "plan", "review", "learn", "build", "verify"):
+        body: object = (
+            json.loads(args.body)
+            if args.body.strip().startswith("{")
             else (args.body or f"# {sub} for {args.feature}\n")
+        )
         art = proj.write_artifact(args.feature, sub, body)
-        return _emit({"wrote": art.path.name, "phase": sub,
-                      "upstream": art.upstream}, args)
+        return _emit({"wrote": art.path.name, "phase": sub, "upstream": art.upstream}, args)
     if sub == "status":
         return _emit(proj.status(args.feature), args)
     if sub == "check":
@@ -490,16 +548,20 @@ def cmd_sdd(args: argparse.Namespace) -> int:
         return _emit(proj.stamp(args.feature, args.phase), args)
     if sub == "ship":
         verify = json.loads(args.verify) if args.verify else None
-        out = proj.ship(args.feature, verify=verify,
-                        risk_accepted=args.risk_accepted,
-                        override=args.override,
-                        override_reason=args.override_reason)
+        out = proj.ship(
+            args.feature,
+            verify=verify,
+            risk_accepted=args.risk_accepted,
+            override=args.override,
+            override_reason=args.override_reason,
+        )
         return _emit(out, args, 0 if out["shipped"] else 2)
     return _emit({"error": f"unknown sdd verb {sub}"}, args, 1)
 
 
 def _load_graph_or_refuse(repo: str):
     from platformforge.graph import load
+
     try:
         return load(repo)
     except FileNotFoundError:
@@ -508,21 +570,23 @@ def _load_graph_or_refuse(repo: str):
 
 def cmd_graph(args: argparse.Namespace) -> int:
     from platformforge import graph as G
+
     sub = args.graph_cmd
     if sub == "build":
         doc = json.loads(Path(args.facts).read_text())
         facts = doc.get("facts", doc)
         builder = G.GraphBuilder().from_facts(facts)
-        p = G.save(builder.graph, args.repo,
-                   source=args.facts,
-                   source_type=getattr(args, "source_type", "desired"))
+        p = G.save(
+            builder.graph, args.repo, source=args.facts, source_type=getattr(args, "source_type", "desired")
+        )
         return _emit({"wrote": str(p), **builder.graph.stats()}, args)
     if sub == "snapshots":
         return _emit({"snapshots": G.snapshots(args.repo)}, args)
     g = _load_graph_or_refuse(args.repo)
     if g is None:
-        return _emit({"refusal": "PF-GRAPH-NOGRAPH",
-                      "unlock": "platformforge graph build <facts.json>"}, args, 2)
+        return _emit(
+            {"refusal": "PF-GRAPH-NOGRAPH", "unlock": "platformforge graph build <facts.json>"}, args, 2
+        )
     if sub == "stats":
         return _emit(g.stats(), args)
     if sub == "gaps":
@@ -545,17 +609,22 @@ def cmd_graph(args: argparse.Namespace) -> int:
             who_can_become,
             workloads_using_identity,
         )
+
         target = args.node or args.dst or args.src
-        fn = {"identity-become": who_can_become,
-              "identity-access": who_can_access,
-              "identity-workloads": workloads_using_identity,
-              "identity-blast": compromise_blast}[sub]
+        fn = {
+            "identity-become": who_can_become,
+            "identity-access": who_can_access,
+            "identity-workloads": workloads_using_identity,
+            "identity-blast": compromise_blast,
+        }[sub]
         return _emit(fn(g, target), args)
     if sub == "diff":
+
         def _resolve(ref: str):
             if (Path(args.repo) / ".platformforge/graph" / f"{ref}.json").exists():
                 return G.load(args.repo, ref)
             return G.load_snapshot(args.repo, ref)
+
         return _emit(G.diff(_resolve(args.before), _resolve(args.after)), args)
     return _emit({"error": f"unknown graph verb {sub}"}, args, 1)
 
@@ -568,62 +637,81 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     sub = args.analyze_cmd
     if sub == "plan":
         from platformforge.iac import analyze_plan
+
         return _emit(analyze_plan(args.path), args)
     if sub == "state":
         from platformforge.iac import analyze_state
+
         return _emit(analyze_state(args.path), args)
     if sub == "drift":
         from platformforge.iac import analyze_hcl, analyze_state, drift
+
         desired = analyze_hcl(args.config)["facts"]
         observed = analyze_state(args.state)["facts"]
         return _emit(drift(desired, observed), args)
     if sub == "iam":
         from platformforge.security import analyze_iam_policy
+
         return _emit(analyze_iam_policy(args.path), args)
     if sub.startswith("cloud-"):
         from platformforge.cloud import analyze_aws_dump, analyze_azure_dump, analyze_gcp_dump
-        fn = {"cloud-aws": analyze_aws_dump, "cloud-azure": analyze_azure_dump,
-              "cloud-gcp": analyze_gcp_dump}[sub]
+
+        fn = {
+            "cloud-aws": analyze_aws_dump,
+            "cloud-azure": analyze_azure_dump,
+            "cloud-gcp": analyze_gcp_dump,
+        }[sub]
         return _emit(fn(args.path), args)
     if sub == "helm":
         from platformforge.k8s.helm import analyze_helm
+
         return _emit(analyze_helm(args.path), args)
     if sub == "kustomize":
         from platformforge.k8s.helm import analyze_kustomize
+
         return _emit(analyze_kustomize(args.path), args)
     if sub == "hubble":
         from platformforge.k8s.hubble import analyze_hubble
+
         return _emit(analyze_hubble(args.path), args)
     if sub == "kyverno":
         from platformforge.security.kyverno import analyze_kyverno
-        return _emit(analyze_kyverno(args.path,
-                                     kyverno_version=args.kyverno_version
-                                     or None), args)
+
+        return _emit(analyze_kyverno(args.path, kyverno_version=args.kyverno_version or None), args)
     if sub == "cosign":
         from platformforge.security.cosign import analyze_cosign
+
         return _emit(analyze_cosign(args.path), args)
     if sub == "slsa":
         from platformforge.security.slsa import slsa_assess
+
         doc = json.loads(Path(args.path).read_text())
         prov = doc.get("provenance", doc)
         ev = doc.get("evidence") if isinstance(doc, dict) else None
         return _emit(slsa_assess(prov, evidence=ev), args)
     if sub == "sbom":
         from platformforge.security import analyze_sbom
+
         vulns = json.loads(Path(args.vulns).read_text()) if args.vulns else None
         return _emit(analyze_sbom(args.path, vuln_db=vulns), args)
     if sub == "ownership":
         from platformforge.core.ownership import analyze_ownership
-        facts = (_json_doc(args.facts, "facts")
-                 if getattr(args, "facts", "") else None)
+
+        facts = _json_doc(args.facts, "facts") if getattr(args, "facts", "") else None
         return _emit(analyze_ownership(args.path, facts), args)
     if sub == "contradictions":
         from platformforge.core.ownership import detect_contradictions
+
         facts = [f for f in _json_doc(args.path, "facts")]
         out = detect_contradictions(facts)
-        return _emit({"facts": out, "contradictions": len(out),
-                      "boundary": "declared-vs-observed diffs are named, "
-                                  "never resolved silently"}, args)
+        return _emit(
+            {
+                "facts": out,
+                "contradictions": len(out),
+                "boundary": "declared-vs-observed diffs are named, never resolved silently",
+            },
+            args,
+        )
     tree_analyzers = {
         "iac": "platformforge.iac:analyze_hcl",
         "k8s": "platformforge.k8s:analyze_k8s",
@@ -637,43 +725,52 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     if sub in tree_analyzers:
         mod, fn = tree_analyzers[sub].split(":")
         import importlib
-        return _emit(_run_over_members(getattr(importlib.import_module(mod),
-                                             fn), args.path), args)
+
+        return _emit(_run_over_members(getattr(importlib.import_module(mod), fn), args.path), args)
     return _emit({"error": f"unknown analyze domain {sub}"}, args, 1)
 
 
 def cmd_product(args: argparse.Namespace) -> int:
     from platformforge import product as P
+
     sub = args.product_cmd
     if sub == "maturity":
         sig = json.loads(Path(args.signals).read_text())
-        return _emit(P.maturity_report(sig.get("signals", sig),
-                                       sig.get("evidence")), args)
+        return _emit(P.maturity_report(sig.get("signals", sig), sig.get("evidence")), args)
     if sub == "scorecard":
         doc = json.loads(Path(args.findings).read_text())
         findings = doc.get("findings", doc)
         from platformforge.product.scorecards import scorecard
+
         return _emit(scorecard(findings), args)
     if sub == "backstage":
         g = _load_graph_or_refuse(args.repo)
         if g is None:
-            return _emit({"refusal": "PF-GRAPH-NOGRAPH",
-                          "unlock": "platformforge graph build <facts.json>"},
-                         args, 2)
+            return _emit(
+                {"refusal": "PF-GRAPH-NOGRAPH", "unlock": "platformforge graph build <facts.json>"}, args, 2
+            )
         return _emit(P.to_backstage(g), args)
     if sub == "paths":
         from platformforge.product.golden_paths import load_library
+
         lib = load_library()
-        return _emit({"paths": [{"id": p.id, "name": p.name,
-                                 "version": p.version,
-                                 "use_case": p.use_case}
-                                for p in lib["paths"]],
-                      "invalid": lib["invalid"]}, args)
+        return _emit(
+            {
+                "paths": [
+                    {"id": p.id, "name": p.name, "version": p.version, "use_case": p.use_case}
+                    for p in lib["paths"]
+                ],
+                "invalid": lib["invalid"],
+            },
+            args,
+        )
     if sub == "path":
         from platformforge.product.golden_paths import describe
+
         return _emit(describe(args.id), args)
     if sub == "capabilities":
         from platformforge.product.golden_paths import capabilities
+
         return _emit(capabilities(), args)
     if sub == "path-analyze":
         if args.facts:
@@ -681,8 +778,10 @@ def cmd_product(args: argparse.Namespace) -> int:
             facts = doc.get("facts", doc)
         else:
             from platformforge.collect import collect
+
             facts = collect(args.repo)["facts"]
         from platformforge.product.golden_paths import analyze_paths
+
         return _emit(analyze_paths(facts), args)
     return _emit({"error": f"unknown product verb {sub}"}, args, 1)
 
@@ -690,18 +789,17 @@ def cmd_product(args: argparse.Namespace) -> int:
 def cmd_agents(args: argparse.Namespace) -> int:
     from platformforge import agents as A
     from platformforge.agents.mirrors import lint, sync
+
     sub = args.agents_cmd
     if sub == "list":
-        return _emit({"agents": [a.to_dict() for a in A.AGENTS.values()]},
-                     args)
+        return _emit({"agents": [a.to_dict() for a in A.AGENTS.values()]}, args)
     if sub == "lint":
         out = lint()
         return _emit(out, args, 0 if out["ok"] else 2)
     if sub == "sync":
         return _emit({"written": sync(args.repo)}, args)
     if sub == "playbook":
-        return _emit(A.playbook(args.name or "platform-coordinator",
-                                domain=args.domain), args)
+        return _emit(A.playbook(args.name or "platform-coordinator", domain=args.domain), args)
     if sub == "referee":
         positions = json.loads(Path(args.path).read_text())
         return _emit(A.referee(positions), args)
@@ -712,6 +810,7 @@ def cmd_mcp(args: argparse.Namespace) -> int:
     from platformforge import mcp as M
     from platformforge.mcp.parity import detach, integrate
     from platformforge.mcp.registry import tool_descriptors
+
     sub = args.mcp_cmd
     if sub == "tools":
         return _emit({"tools": tool_descriptors()}, args)
@@ -721,6 +820,7 @@ def cmd_mcp(args: argparse.Namespace) -> int:
         return _emit(out, args, 2 if "error" in out or "refusal" in out else 0)
     if sub == "serve":
         from platformforge.mcp.server import serve
+
         return serve(repo=args.repo)
     if sub == "integrate":
         return _emit(integrate(args.host, args.repo), args)
@@ -731,16 +831,16 @@ def cmd_mcp(args: argparse.Namespace) -> int:
 
 def cmd_lab(args: argparse.Namespace) -> int:
     from platformforge import lab
+
     if args.lab_cmd == "list":
         return _emit({"scenarios": lab.list_scenarios()}, args)
     if args.lab_cmd == "run-all":
-        out = lab.runner.run_all(profile=args.profile or None,
-                                 allow_profile=args.allow_profile)
+        out = lab.runner.run_all(profile=args.profile or None, allow_profile=args.allow_profile)
         return _emit(out, args, 0 if not out["failed"] else 2)
     if args.lab_cmd == "chaos":
         from platformforge.lab.chaos import run_scenario
-        return _emit(run_scenario(args.path or "",
-                                  allow_prod=args.allow_prod), args)
+
+        return _emit(run_scenario(args.path or "", allow_prod=args.allow_prod), args)
     out = lab.run(args.path or "", allow_profile=args.allow_profile)
     return _emit(out, args, 2 if "refusal" in out else 0)
 
@@ -748,6 +848,7 @@ def cmd_lab(args: argparse.Namespace) -> int:
 def cmd_collect(args: argparse.Namespace) -> int:
     """§7 collect — sniff a dumps dir/file, run matching analyzers."""
     from platformforge.collect import collect
+
     return _emit(collect(args.path or args.repo), args)
 
 
@@ -762,10 +863,11 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
     """§7 diagnose — compose graph + findings for one node."""
     g = _load_graph_or_refuse(args.repo)
     if g is None:
-        return _emit({"refusal": "PF-GRAPH-NOGRAPH",
-                      "unlock": "platformforge graph build <facts.json>"},
-                     args, 2)
+        return _emit(
+            {"refusal": "PF-GRAPH-NOGRAPH", "unlock": "platformforge graph build <facts.json>"}, args, 2
+        )
     from platformforge.diagnose import diagnose
+
     findings = _json_doc(args.findings, "findings") if args.findings else []
     facts = _json_doc(args.facts, "facts") if args.facts else []
     return _emit(diagnose(g, args.node, findings, facts), args)
@@ -774,35 +876,38 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
 def cmd_plan(args: argparse.Namespace) -> int:
     """§7 plan — findings → ordered remediation plan."""
     from platformforge.plan import remediation_plan
+
     findings = _json_doc(args.path, "findings")
     facts = _json_doc(args.facts, "facts") if args.facts else []
-    g = _load_graph_or_refuse(args.repo)   # optional enrichment
+    g = _load_graph_or_refuse(args.repo)  # optional enrichment
     return _emit(remediation_plan(findings, g, facts), args)
 
 
 def cmd_correlate(args: argparse.Namespace) -> int:
     """§7 correlate — OTel/telemetry correlation (observe otel)."""
     from platformforge import observe as O
+
     return _emit(O.correlate_spans(args.path), args)
 
 
 def _build_graph_from(path: str):
     from platformforge.graph import GraphBuilder
+
     doc = json.loads(Path(path).read_text())
-    return GraphBuilder().from_facts(
-        doc.get("facts", doc if isinstance(doc, list) else [])).graph
+    return GraphBuilder().from_facts(doc.get("facts", doc if isinstance(doc, list) else [])).graph
 
 
 def cmd_diff(args: argparse.Namespace) -> int:
     """§7 diff — graph diff between two facts docs."""
     from platformforge.graph.diff import diff as graph_diff
-    return _emit(graph_diff(_build_graph_from(args.before),
-                            _build_graph_from(args.after)), args)
+
+    return _emit(graph_diff(_build_graph_from(args.before), _build_graph_from(args.after)), args)
 
 
 def cmd_drift(args: argparse.Namespace) -> int:
     """§7 drift — desired (HCL) vs observed (state)."""
     from platformforge.iac import analyze_hcl, analyze_state, drift
+
     desired = analyze_hcl(args.config)["facts"]
     observed = analyze_state(args.state)["facts"]
     return _emit(drift(desired, observed), args)
@@ -812,10 +917,11 @@ def cmd_impact(args: argparse.Namespace) -> int:
     """§7 impact — blast radius for a graph node."""
     g = _load_graph_or_refuse(args.repo)
     if g is None:
-        return _emit({"refusal": "PF-GRAPH-NOGRAPH",
-                      "unlock": "platformforge graph build <facts.json>"},
-                     args, 2)
+        return _emit(
+            {"refusal": "PF-GRAPH-NOGRAPH", "unlock": "platformforge graph build <facts.json>"}, args, 2
+        )
     from platformforge.graph.query import blast_radius
+
     return _emit(blast_radius(g, args.node), args)
 
 
@@ -824,29 +930,34 @@ def cmd_context(args: argparse.Namespace) -> int:
     from platformforge.tokensave.budget import Budget
     from platformforge.tokensave.ledger import TokenLedger
     from platformforge.tokensave.packs import ContextPackBuilder
+
     pack = ContextPackBuilder(_index(args), TokenLedger(args.repo)).build(
-        task=args.task, budget=Budget(input_budget=args.input_budget),
-        changed_files=args.changed or [])
+        task=args.task, budget=Budget(input_budget=args.input_budget), changed_files=args.changed or []
+    )
     return _emit(pack, args)
 
 
 def cmd_policy(args: argparse.Namespace) -> int:
     """§7 policy — the rule catalog IS the policy layer."""
     from platformforge.rules import load_catalog
+
     cat_dir = data_path("rules", "catalog")
     rules = load_catalog(cat_dir)
     if args.policy_cmd == "list":
-        return _emit({"rules": [{"rule_id": r.rule_id, "domain": r.domain,
-                                 "severity": r.severity}
-                                for r in rules]}, args)
+        return _emit(
+            {"rules": [{"rule_id": r.rule_id, "domain": r.domain, "severity": r.severity} for r in rules]},
+            args,
+        )
     from platformforge.models import Fact
     from platformforge.rules import RuleEngine
+
     facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]
     findings, skipped = RuleEngine(rules).evaluate(facts)
-    out = {"findings": [f.to_dict() for f in findings],
-           "skipped": skipped,
-           "violated": [f.rule_id for f in findings
-                        if f.status == "violated"]}
+    out = {
+        "findings": [f.to_dict() for f in findings],
+        "skipped": skipped,
+        "violated": [f.rule_id for f in findings if f.status == "violated"],
+    }
     return _emit(out, args)
 
 
@@ -855,11 +966,14 @@ def cmd_security(args: argparse.Namespace) -> int:
     from platformforge.models import Fact
     from platformforge.rules import RuleEngine, load_catalog
     from platformforge.security import analyze_iam_policy, analyze_sbom, analyze_supply, scan_secrets
+
     root = Path(args.path or args.repo)
     facts = scan_secrets(root)["facts"]
-    extras = {"iam": ("policy.json", analyze_iam_policy),
-              "sbom": ("sbom.json", analyze_sbom),
-              "supply": ("supply.json", analyze_supply)}
+    extras = {
+        "iam": ("policy.json", analyze_iam_policy),
+        "sbom": ("sbom.json", analyze_sbom),
+        "supply": ("supply.json", analyze_supply),
+    }
     present = []
     for name, (fname, fn) in extras.items():
         p = root / fname
@@ -868,37 +982,46 @@ def cmd_security(args: argparse.Namespace) -> int:
             present.append(name)
     cat_dir = data_path("rules", "catalog")
     cat = [r for r in load_catalog(cat_dir) if r.domain == "security"]
-    findings, skipped = RuleEngine(cat).evaluate(
-        [Fact.from_dict(f) for f in facts])
+    findings, skipped = RuleEngine(cat).evaluate([Fact.from_dict(f) for f in facts])
     unresolved = [f for f in findings if f.status != "violated"]
-    return _emit({"facts": facts, "analyzers_run": ["secrets", *present],
-                  "findings": [f.to_dict() for f in findings
-                               if f.status == "violated"],
-                  "unresolved": [f.to_dict() for f in unresolved],
-                  "skipped": skipped}, args)
+    return _emit(
+        {
+            "facts": facts,
+            "analyzers_run": ["secrets", *present],
+            "findings": [f.to_dict() for f in findings if f.status == "violated"],
+            "unresolved": [f.to_dict() for f in unresolved],
+            "skipped": skipped,
+        },
+        args,
+    )
 
 
 def cmd_reliability(args: argparse.Namespace) -> int:
     """§7 reliability — SRE+K8S rules over a facts doc."""
     from platformforge.models import Fact
     from platformforge.rules import RuleEngine, load_catalog
+
     cat_dir = data_path("rules", "catalog")
-    rules = [r for r in load_catalog(cat_dir)
-             if r.domain in ("sre", "k8s")]
+    rules = [r for r in load_catalog(cat_dir) if r.domain in ("sre", "k8s")]
     facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]
     findings, skipped = RuleEngine(rules).evaluate(facts)
     violated = [f for f in findings if f.status == "violated"]
     unresolved = [f for f in findings if f.status == "unresolved"]
-    return _emit({"findings": [f.to_dict() for f in violated],
-                  "unresolved": [f.to_dict() for f in unresolved],
-                  "skipped": skipped,
-                  "counts": {"violated": len(violated),
-                             "unresolved": len(unresolved)}}, args)
+    return _emit(
+        {
+            "findings": [f.to_dict() for f in violated],
+            "unresolved": [f.to_dict() for f in unresolved],
+            "skipped": skipped,
+            "counts": {"violated": len(violated), "unresolved": len(unresolved)},
+        },
+        args,
+    )
 
 
 def cmd_integrate(args: argparse.Namespace) -> int:
     """§7 integrate — host integration via mcp parity."""
     from platformforge.mcp.parity import detach, integrate
+
     fn = detach if args.detach else integrate
     return _emit(fn(args.host, args.repo), args)
 
@@ -906,41 +1029,44 @@ def cmd_integrate(args: argparse.Namespace) -> int:
 def cmd_evals(args: argparse.Namespace) -> int:
     """§94–95 eval framework."""
     from platformforge.evals import run_all
+
     cases = Path(args.cases) if args.cases else None
     if args.evals_cmd == "list":
-        d = cases or __import__("platformforge.evals.runner",
-                                fromlist=["CASES_DIR"]).CASES_DIR
-        return _emit({"cases": [c.parent.name for c in
-                                sorted(d.glob("*/case.yaml"))]
-                      if Path(d).is_dir() else []}, args)
+        d = cases or __import__("platformforge.evals.runner", fromlist=["CASES_DIR"]).CASES_DIR
+        return _emit(
+            {"cases": [c.parent.name for c in sorted(d.glob("*/case.yaml"))] if Path(d).is_dir() else []},
+            args,
+        )
     if args.evals_cmd == "coverage":
         # §122 — rule → variant coverage matrix
         from platformforge.evals.coverage import rule_coverage
+
         out = rule_coverage(cases) if cases else rule_coverage()
         return _emit(out, args)
     if args.evals_cmd == "precision":
         # §127 — measured FP rate over negative/boundary cases
         from platformforge.evals.coverage import precision_report
+
         out = precision_report(cases) if cases else precision_report()
         return _emit(out, args)
-    out = run_all(cases, type_filter=args.type or None) \
-        if cases else run_all(type_filter=args.type or None)
+    out = run_all(cases, type_filter=args.type or None) if cases else run_all(type_filter=args.type or None)
     return _emit(out, args, 2 if out["counts"]["fail"] else 0)
 
 
 def cmd_risk(args: argparse.Namespace) -> int:
     """§130–131 risk engine + criticality."""
     from platformforge.risk.engine import assess_change
+
     signals: dict[str, Any] = {}
     if args.signals:
-        signals = json.loads(Path(args.signals).read_text()
-                             if Path(args.signals).exists() else args.signals)
+        signals = json.loads(Path(args.signals).read_text() if Path(args.signals).exists() else args.signals)
     if args.node:
         g = _load_graph_or_refuse(args.repo)
         if g is None:
             return _emit({"refusal": "PF-GRAPH-NOGRAPH"}, args, 2)
         from platformforge.graph import blast_radius
         from platformforge.risk.signals import signals_from_graph
+
         blast = blast_radius(g, args.node)
         signals = {**signals_from_graph(g, [args.node], blast), **signals}
         signals.setdefault("blast_radius_nodes", blast.get("impacted"))
@@ -950,10 +1076,12 @@ def cmd_risk(args: argparse.Namespace) -> int:
 def cmd_change(args: argparse.Namespace) -> int:
     """§85–86 change lifecycle: propose → sandbox → verify (read-only)."""
     from platformforge.sandbox import sandbox_analyze
+
     sub = args.change_cmd
     if sub == "review":
         # §104 — full review pipeline over the sandbox delta
         from platformforge.sandbox.review import review_change
+
         patch = Path(args.patch).read_text() if args.patch else None
         files = {}
         for spec in args.file or []:
@@ -962,8 +1090,7 @@ def cmd_change(args: argparse.Namespace) -> int:
         signals = {}
         if getattr(args, "signals", ""):
             signals = json.loads(Path(args.signals).read_text())
-        out = review_change(args.repo, patch=patch, files=files,
-                            signals=signals)
+        out = review_change(args.repo, patch=patch, files=files, signals=signals)
         return _emit(out, args, 2 if "refusal" in out else 0)
     if sub in ("propose", "verify", "sandbox"):
         patch = Path(args.patch).read_text() if args.patch else None
@@ -976,10 +1103,15 @@ def cmd_change(args: argparse.Namespace) -> int:
     if sub == "approve" or sub == "apply":
         # core never mutates — approval emits a receipt-bound refusal unless
         # a sandbox receipt with verified diff is provided
-        return _emit({"refusal": "platform.change.core_read_only",
-                      "detail": "apply/approve are host-side boundaries; "
-                                "core emits verified sandbox diffs only",
-                      "unlock": "change verify --patch <diff> first"}, args, 2)
+        return _emit(
+            {
+                "refusal": "platform.change.core_read_only",
+                "detail": "apply/approve are host-side boundaries; core emits verified sandbox diffs only",
+                "unlock": "change verify --patch <diff> first",
+            },
+            args,
+            2,
+        )
     return _emit({"error": f"unknown change verb {sub}"}, args, 1)
 
 
@@ -988,47 +1120,46 @@ def cmd_explain(args: argparse.Namespace) -> int:
     which source, which version, and what unlocks an unresolved state."""
     doc = json.loads(Path(args.path).read_text())
     findings = doc.get("findings", doc if isinstance(doc, list) else [])
-    f = next((x for x in findings if x.get("finding_id") == args.name
-              or x.get("rule_id") == args.name), None)
+    f = next((x for x in findings if x.get("finding_id") == args.name or x.get("rule_id") == args.name), None)
     if not f:
-        return _emit({"refusal": "platform.finding.unresolved",
-                      "name": args.name}, args, 2)
-    facts_doc = (json.loads(Path(args.facts).read_text())
-                 if args.facts else doc.get("facts", []))
+        return _emit({"refusal": "platform.finding.unresolved", "name": args.name}, args, 2)
+    facts_doc = json.loads(Path(args.facts).read_text()) if args.facts else doc.get("facts", [])
     by_id = {x.get("fact_id"): x for x in facts_doc}
-    chain = [{"fact_id": e, "fact": by_id.get(e, "unresolved")}
-             for e in f.get("evidence", [])]
+    chain = [{"fact_id": e, "fact": by_id.get(e, "unresolved")} for e in f.get("evidence", [])]
     # §154 — resolve the rule's provenance: source(s) + version gate
     rule_meta: dict[str, Any] = {"rule_id": f.get("rule_id")}
     try:
         from platformforge.rules import load_catalog
-        rule = next((r for r in load_catalog(REPO_ROOT / "rules" / "catalog")
-                     if r.rule_id == f.get("rule_id")), None)
+
+        rule = next(
+            (r for r in load_catalog(REPO_ROOT / "rules" / "catalog") if r.rule_id == f.get("rule_id")), None
+        )
         if rule:
-            rule_meta.update({
-                "sources": getattr(rule, "sources", []),
-                "versions": getattr(rule, "versions", {}),
-                "severity": getattr(rule, "severity", None)})
+            rule_meta.update(
+                {
+                    "sources": getattr(rule, "sources", []),
+                    "versions": getattr(rule, "versions", {}),
+                    "severity": getattr(rule, "severity", None),
+                }
+            )
     except (OSError, ValueError):
         pass
     # what unlocks an unresolved/verdict-weak state
     unlock = []
     if not f.get("evidence"):
-        unlock.append("collect the facts named by the rule's "
-                      "applies_to and re-run judge")
+        unlock.append("collect the facts named by the rule's applies_to and re-run judge")
     fa = f.get("attrs") or {}
     if fa.get("refusal_code") == "platform.version.unresolved":
-        unlock.append(fa.get("unlock") or
-                      "declare the required product version and re-run judge")
+        unlock.append(fa.get("unlock") or "declare the required product version and re-run judge")
     if f.get("status") == "skipped":
         unlock.append("rule skipped: " + f.get("reason", "?"))
-    return _emit({"finding": f, "evidence_chain": chain,
-                  "rule": rule_meta, "unlock": unlock}, args)
+    return _emit({"finding": f, "evidence_chain": chain, "rule": rule_meta, "unlock": unlock}, args)
 
 
 def cmd_recommend(args: argparse.Namespace) -> int:
     """findings → Recommendation objects with evidence (§recommendation)."""
     from platformforge.models import Recommendation
+
     doc = json.loads(Path(args.path).read_text())
     findings = doc.get("findings", doc if isinstance(doc, list) else [])
     recs, skipped = [], []
@@ -1036,108 +1167,142 @@ def cmd_recommend(args: argparse.Namespace) -> int:
         if f.get("status") != "violated":
             continue
         if not f.get("evidence"):
-            skipped.append({"rule_id": f["rule_id"],
-                            "reason": "finding without evidence — "
-                                      "recommendation refused by contract"})
+            skipped.append(
+                {
+                    "rule_id": f["rule_id"],
+                    "reason": "finding without evidence — recommendation refused by contract",
+                }
+            )
             continue
         # §155 — qualitative expected direction only; quantified effect
         # would require a measured benchmark (model enforces this).
         sev = f.get("severity", "medium")
-        recs.append(Recommendation(
-            title=f.get("title") or f["rule_id"],
-            severity=sev,
-            confidence="declared",
-            evidence=f["evidence"],
-            root_cause=f.get("message", ""),
-            proposed_change=[f.get("remediation",
-                                   "resolve rule violation")],
-            basis={"declared": f["evidence"]},
-            risks=[f"change touches evidence {e}" for e in f["evidence"][:3]]
-                  or ["no evidence — refused upstream"],
-            validation=[("re-run analyze+judge after change; finding "
-                         f"{f.get('rule_id')} must flip to passed")],
-            rollback=["revert the diff; verify no new violations"],
-            tradeoffs=[("remediation may require downtime/coordination "
+        recs.append(
+            Recommendation(
+                title=f.get("title") or f["rule_id"],
+                severity=sev,
+                confidence="declared",
+                evidence=f["evidence"],
+                root_cause=f.get("message", ""),
+                proposed_change=[f.get("remediation", "resolve rule violation")],
+                basis={"declared": f["evidence"]},
+                risks=[f"change touches evidence {e}" for e in f["evidence"][:3]]
+                or ["no evidence — refused upstream"],
+                validation=[
+                    (f"re-run analyze+judge after change; finding {f.get('rule_id')} must flip to passed")
+                ],
+                rollback=["revert the diff; verify no new violations"],
+                tradeoffs=[
+                    (
+                        "remediation may require downtime/coordination "
                         "depending on blast radius — assess before "
-                        "apply")],
-            expected_effect="direction: risk reduction "
-                            "(unquantified — no benchmark exists)",
-        ).to_dict())
-    return _emit({"recommendations": recs, "count": len(recs),
-                  "refused": skipped,
-                  "boundary": "expected_effect is directional; quantified "
-                              "claims require benchmark_ref"}, args)
+                        "apply"
+                    )
+                ],
+                expected_effect="direction: risk reduction (unquantified — no benchmark exists)",
+            ).to_dict()
+        )
+    return _emit(
+        {
+            "recommendations": recs,
+            "count": len(recs),
+            "refused": skipped,
+            "boundary": "expected_effect is directional; quantified claims require benchmark_ref",
+        },
+        args,
+    )
 
 
 def cmd_capability(args: argparse.Namespace) -> int:
     """Capability registry projection — same source as the MCP adapter."""
     from platformforge.mcp.registry import CAPABILITIES
+
     sub = args.capability_cmd
     if sub == "list":
-        return _emit({"capabilities": [c.contract()
-                                       for c in CAPABILITIES.values()]},
-                     args)
+        return _emit({"capabilities": [c.contract() for c in CAPABILITIES.values()]}, args)
     if sub == "describe":
         c = CAPABILITIES.get(args.name or "")
         if not c:
-            return _emit({"refusal": "platform.capability.unresolved",
-                          "name": args.name,
-                          "unlock": "platformforge capability list"},
-                         args, 2)
-        return _emit({**c.contract(), "description": c.description,
-                      "handler": c.handler}, args)
+            return _emit(
+                {
+                    "refusal": "platform.capability.unresolved",
+                    "name": args.name,
+                    "unlock": "platformforge capability list",
+                },
+                args,
+                2,
+            )
+        return _emit({**c.contract(), "description": c.description, "handler": c.handler}, args)
     if sub == "check":
         # §139 — capability negotiation: "can you analyze X at version Y?"
         dom, ver = (args.domain or ""), (args.version or "")
-        matches = [c for c in CAPABILITIES.values()
-                   if c.domain == dom or dom in c.description.lower()
-                   or dom in c.name]
+        matches = [
+            c
+            for c in CAPABILITIES.values()
+            if c.domain == dom or dom in c.description.lower() or dom in c.name
+        ]
         if not matches:
-            return _emit({"supported": False,
-                          "refusal": "platform.capability.unresolved",
-                          "domain": dom,
-                          "unlock": "platformforge capability list"},
-                         args, 2)
-        out = {"supported": True, "domain": dom, "version": ver,
-               "capabilities": [c.contract() for c in matches],
-               "version_note": None}
+            return _emit(
+                {
+                    "supported": False,
+                    "refusal": "platform.capability.unresolved",
+                    "domain": dom,
+                    "unlock": "platformforge capability list",
+                },
+                args,
+                2,
+            )
+        out = {
+            "supported": True,
+            "domain": dom,
+            "version": ver,
+            "capabilities": [c.contract() for c in matches],
+            "version_note": None,
+        }
         if ver:
             from platformforge.knowledge.registry import SourceRegistry
+
             reg = SourceRegistry.default()
-            srcs = [s for s in reg.entries.values()
-                    if dom and dom.split("-")[0] in (s.product or s.id)]
+            srcs = [s for s in reg.entries.values() if dom and dom.split("-")[0] in (s.product or s.id)]
             out["version_note"] = {
                 "declared": ver,
-                "known_sources": [{"id": s.id, "version": s.version,
-                                   "freshness": s.freshness()}
-                                  for s in srcs],
+                "known_sources": [
+                    {"id": s.id, "version": s.version, "freshness": s.freshness()} for s in srcs
+                ],
                 "caveat": "version support is evidence-bound — unknown "
-                          "versions degrade to unresolved, not assumed"}
+                "versions degrade to unresolved, not assumed",
+            }
         return _emit(out, args)
     if sub == "manifest":
         from platformforge.forge import capability_manifest
+
         return _emit(capability_manifest(args.repo), args)
     return _emit({"error": f"unknown capability verb {sub}"}, args, 1)
 
 
 def cmd_forge(args: argparse.Namespace) -> int:
     from platformforge import forge as FG
+
     sub = args.forge_cmd
     if sub == "manifest":
         return _emit(FG.capability_manifest(args.repo), args)
     if sub == "delegate":
-        d = FG.Delegation(from_forge=args.src or "platform-forge",
-                          to_forge=args.dst or "?",
-                          task=args.name or "", )
+        d = FG.Delegation(
+            from_forge=args.src or "platform-forge",
+            to_forge=args.dst or "?",
+            task=args.name or "",
+        )
         return _emit(FG.build_envelope(d), args)
     if sub == "verify":
         env = json.loads(Path(args.path).read_text())
         return _emit(FG.verify_envelope(env), args)
     if sub == "discover":
         from platformforge.forge.collect import discover
+
         return _emit(discover(args.path or args.repo), args)
     if sub == "collect":
         from platformforge.forge.collect import collect_manifest
+
         out = collect_manifest(args.path or args.repo)
         return _emit(out, args, 2 if "refusal" in out else 0)
     return _emit({"error": f"unknown forge verb {sub}"}, args, 1)
@@ -1145,17 +1310,23 @@ def cmd_forge(args: argparse.Namespace) -> int:
 
 def cmd_observe(args: argparse.Namespace) -> int:
     from platformforge import observe as O
+
     sub = args.observe_cmd
     if sub == "slo":
         contract = O.SloContract.load(args.path)
         sli = json.loads(args.sli) if args.sli else {}
-        out = O.error_budget(contract, **{
-            k: v for k, v in sli.items()
-            if k in ("good_events", "bad_events", "total_events")})
+        out = O.error_budget(
+            contract, **{k: v for k, v in sli.items() if k in ("good_events", "bad_events", "total_events")}
+        )
         # wrap as fact so `judge` can evaluate PF-SLO-* rules
-        fact = {"fact_id": out.pop("fact_id", ""),
-                "kind": "sre.error_budget", "source": args.path,
-                "location": contract.service, "tier": 0, "attrs": out}
+        fact = {
+            "fact_id": out.pop("fact_id", ""),
+            "kind": "sre.error_budget",
+            "source": args.path,
+            "location": contract.service,
+            "tier": 0,
+            "attrs": out,
+        }
         return _emit({"result": out, "facts": [fact]}, args)
     if sub == "otel":
         return _emit(O.correlate_spans(args.path), args)
@@ -1163,8 +1334,7 @@ def cmd_observe(args: argparse.Namespace) -> int:
         alerts = json.loads(Path(args.alerts).read_text())
         changes = json.loads(Path(args.changes).read_text())
         g = _load_graph_or_refuse(args.repo)
-        return _emit(O.correlate(alerts, changes, graph=g,
-                                 window_s=args.window), args)
+        return _emit(O.correlate(alerts, changes, graph=g, window_s=args.window), args)
     if sub == "slo-burn":
         contract = O.SloContract.load(args.path)
         wins = json.loads(args.windows) if args.windows else {}
@@ -1183,6 +1353,7 @@ def cmd_observe(args: argparse.Namespace) -> int:
             facts = doc.get("facts", doc)
         else:
             from platformforge.collect import collect
+
             facts = collect(args.repo)["facts"]
         return _emit(O.dr_model(facts), args)
     if sub == "prometheus":
@@ -1192,9 +1363,17 @@ def cmd_observe(args: argparse.Namespace) -> int:
     if sub == "capacity":
         items = json.loads(Path(args.path).read_text())
         out = O.capacity(items)
-        facts = [{"fact_id": "", "kind": "sre.capacity", "source": args.path,
-                  "location": c["resource"] or "?", "tier": 0, "attrs": c}
-                 for c in out["capacity"]]
+        facts = [
+            {
+                "fact_id": "",
+                "kind": "sre.capacity",
+                "source": args.path,
+                "location": c["resource"] or "?",
+                "tier": 0,
+                "attrs": c,
+            }
+            for c in out["capacity"]
+        ]
         return _emit({**out, "facts": facts}, args)
     return _emit({"error": f"unknown observe verb {sub}"}, args, 1)
 
@@ -1207,15 +1386,14 @@ def cmd_live(args: argparse.Namespace) -> int:
     from platformforge.live.cursors import CursorStore
     from platformforge.live.models import ObservationScope
     from platformforge.live.store import ObservationStore
+
     sub = args.live_cmd
     if sub == "rbac":
-        return _emit(required_rbac(
-            namespaced_only=args.namespaced_only), args)
+        return _emit(required_rbac(namespaced_only=args.namespaced_only), args)
     if sub == "required-permissions":
         if args.provider == "aws":
             return _emit(required_permissions(), args)
-        return _emit(required_rbac(
-            namespaced_only=args.namespaced_only), args)
+        return _emit(required_rbac(namespaced_only=args.namespaced_only), args)
     if sub == "doctor":
         checks = {"kubernetes": k8s_transport.preflight(args.context)}
         if args.provider == "aws" or args.deep:
@@ -1223,8 +1401,7 @@ def cmd_live(args: argparse.Namespace) -> int:
         store = ObservationStore(args.repo)
         checks["observation_store"] = {"ok": True, "path": str(store.root)}
         checks["cursors"] = {"cursors": len(CursorStore(args.repo).all())}
-        out = {"checks": checks,
-               "ok": all(c.get("ok", True) for c in checks.values())}
+        out = {"checks": checks, "ok": all(c.get("ok", True) for c in checks.values())}
         return _emit(out, args, 0 if out["ok"] else 1)
     if sub == "status":
         store = ObservationStore(args.repo)
@@ -1232,78 +1409,108 @@ def cmd_live(args: argparse.Namespace) -> int:
         out["cursors"] = CursorStore(args.repo).all()
         return _emit(out, args)
     if sub == "snapshot":
-        scope = ObservationScope(
-            namespaces=args.namespace or [],
-            resource_types=args.resource_type or [])
+        scope = ObservationScope(namespaces=args.namespace or [], resource_types=args.resource_type or [])
         if args.selector:
             scope.selectors["labels"] = args.selector
         budget = _live_budget(args)
         if args.provider == "kubernetes":
             if not k8s_transport.kubectl_available():
-                return _emit({"refusal": "PF-LIVE-NO-KUBECTL",
-                              "unlock": "install kubectl + configure a "
-                                        "kubeconfig context"}, args, 2)
+                return _emit(
+                    {
+                        "refusal": "PF-LIVE-NO-KUBECTL",
+                        "unlock": "install kubectl + configure a kubeconfig context",
+                    },
+                    args,
+                    2,
+                )
             collector = K8sCollector(
-                transport=k8s_transport.make_transport(args.context),
-                context=args.context)
+                transport=k8s_transport.make_transport(args.context), context=args.context
+            )
             env = collector.collect(scope, budget)
         elif args.provider == "aws":
             if not aws_transport.aws_available():
-                return _emit({"refusal": "PF-LIVE-NO-AWSCLI",
-                              "unlock": "install aws CLI + configure "
-                                        "credentials (aws sso login)"},
-                             args, 2)
+                return _emit(
+                    {
+                        "refusal": "PF-LIVE-NO-AWSCLI",
+                        "unlock": "install aws CLI + configure credentials (aws sso login)",
+                    },
+                    args,
+                    2,
+                )
             collector = AwsCollector(transport=aws_transport.make_transport())
             pf = collector.preflight()
             if not pf.get("ok"):
-                return _emit({"refusal": "PF-LIVE-AWS-CREDS",
-                              "unlock": pf.get("hint",
-                                               "configure credentials"),
-                              "detail": pf.get("error", "")}, args, 2)
+                return _emit(
+                    {
+                        "refusal": "PF-LIVE-AWS-CREDS",
+                        "unlock": pf.get("hint", "configure credentials"),
+                        "detail": pf.get("error", ""),
+                    },
+                    args,
+                    2,
+                )
             scope.regions = args.region or ["us-east-1"]
             scope.services = args.service or []
             env = collector.collect(scope, budget)
         else:
-            return _emit({"refusal": "PF-LIVE-UNKNOWN-PROVIDER",
-                          "unlock": "platformforge live snapshot "
-                                    "--provider kubernetes|aws"}, args, 2)
+            return _emit(
+                {
+                    "refusal": "PF-LIVE-UNKNOWN-PROVIDER",
+                    "unlock": "platformforge live snapshot --provider kubernetes|aws",
+                },
+                args,
+                2,
+            )
         if args.no_store:
             return _emit({"envelope": env.to_dict()}, args)
         res = ObservationStore(args.repo).put(env)
         if "refusal" in res:
             return _emit(res, args, 2)
-        return _emit({**res, "provider": env.provider,
-                      "coverage": env.coverage.get("status"),
-                      "fresh_until": env.fresh_until,
-                      "scope": env.scope}, args)
+        return _emit(
+            {
+                **res,
+                "provider": env.provider,
+                "coverage": env.coverage.get("status"),
+                "fresh_until": env.fresh_until,
+                "scope": env.scope,
+            },
+            args,
+        )
     if sub == "reconcile":
         from platformforge.live.reconcile import norm_facts, norm_observed, reconcile
+
         desired = []
         if args.desired:
             doc = json.loads(Path(args.desired).read_text())
             desired = doc.get("facts", doc)
         else:
             from platformforge.collect import collect
+
             desired = collect(args.repo).get("facts", [])
         obs_env = None
         if args.observed:
             p = Path(args.observed)
             if p.exists():
                 from platformforge.live.envelope import loads
+
                 obs_env = loads(p.read_text())
             else:
                 obs_env = ObservationStore(args.repo).get(args.observed)
         elif not args.no_observed:
             latest = ObservationStore(args.repo).latest()
             if latest:
-                obs_env = ObservationStore(args.repo).get(
-                    latest["observation_id"])
+                obs_env = ObservationStore(args.repo).get(latest["observation_id"])
         if obs_env is None and not args.no_observed:
-            return _emit({"refusal": "PF-LIVE-NO-OBSERVATION",
-                          "unlock": "platformforge live snapshot "
-                                    "--provider kubernetes|aws, or pass "
-                                    "--observed <envelope.json|obs-id>"},
-                         args, 2)
+            return _emit(
+                {
+                    "refusal": "PF-LIVE-NO-OBSERVATION",
+                    "unlock": "platformforge live snapshot "
+                    "--provider kubernetes|aws, or pass "
+                    "--observed <envelope.json|obs-id>",
+                },
+                args,
+                2,
+            )
         planned = []
         if args.planned:
             doc = json.loads(Path(args.planned).read_text())
@@ -1311,10 +1518,9 @@ def cmd_live(args: argparse.Namespace) -> int:
         out = reconcile(
             desired=norm_facts(desired, "desired"),
             planned=norm_facts(planned, "planned"),
-            observed=norm_observed(obs_env) if obs_env else None)
-        return _emit(out, args, 2 if args.strict and
-                     (out["totals"]["drift_events"] -
-                      out["accepted"]) else 0)
+            observed=norm_observed(obs_env) if obs_env else None,
+        )
+        return _emit(out, args, 2 if args.strict and (out["totals"]["drift_events"] - out["accepted"]) else 0)
     if sub == "topology":
         from platformforge.live.topology import (
             apply_runtime_edges,
@@ -1323,11 +1529,11 @@ def cmd_live(args: argparse.Namespace) -> int:
             edges_from_hubble,
             edges_from_otel,
         )
+
         edges: list[dict] = []
         if args.otel:
             doc = json.loads(Path(args.otel).read_text())
-            edges += edges_from_otel(
-                doc if isinstance(doc, list) else [doc])
+            edges += edges_from_otel(doc if isinstance(doc, list) else [doc])
         if args.hubble:
             p = Path(args.hubble)
             flows = []
@@ -1336,24 +1542,27 @@ def cmd_live(args: argparse.Namespace) -> int:
                 flows += doc if isinstance(doc, list) else [doc]
             edges += edges_from_hubble(flows)
         if args.slices:
-            edges += edges_from_endpointslices(
-                json.loads(Path(args.slices).read_text()))
+            edges += edges_from_endpointslices(json.loads(Path(args.slices).read_text()))
         declared = set()
         g = _load_graph_or_refuse(args.repo)
         if g is not None:
             declared = set(g.edges)
-        out = {"edges": classify_behavior(edges, declared),
-               "runtime_undeclared":
-                   sum(1 for e in classify_behavior(edges, declared)
-                       if e["behavior"] == "observed-undeclared")}
+        out = {
+            "edges": classify_behavior(edges, declared),
+            "runtime_undeclared": sum(
+                1 for e in classify_behavior(edges, declared) if e["behavior"] == "observed-undeclared"
+            ),
+        }
         if g is not None and args.apply_to_graph:
             n = apply_runtime_edges(g, edges)
             from platformforge.graph import persist as gp
+
             gp.save(g, args.repo, source_type="runtime")
             out["applied_to_graph"] = n
         return _emit(out, args)
     if sub == "clusters":
         from platformforge.live.federation import Cluster, ClusterRegistry
+
         reg = ClusterRegistry(args.repo)
         if args.register:
             spec = json.loads(args.register)
@@ -1363,96 +1572,452 @@ def cmd_live(args: argparse.Namespace) -> int:
     if sub == "drift":
         from platformforge.graph.events import EventLedger
         from platformforge.live.drift import dedup_events, diff_observations
+
         store = ObservationStore(args.repo)
+
         def _env(ref: str):
             p = Path(ref)
             if p.exists():
                 from platformforge.live.envelope import loads
+
                 return loads(p.read_text())
             return store.get(ref)
+
         before_ref, after_ref = args.before, args.after
         if not (before_ref and after_ref):
             rows = store.list(limit=2)
             if len(rows) < 2:
-                return _emit({"refusal": "PF-LIVE-NEED-2-OBS",
-                              "unlock": "collect ≥2 observations or pass "
-                                        "--before/--after"}, args, 2)
-            after_ref, before_ref = (rows[0]["observation_id"],
-                                     rows[1]["observation_id"])
+                return _emit(
+                    {
+                        "refusal": "PF-LIVE-NEED-2-OBS",
+                        "unlock": "collect ≥2 observations or pass --before/--after",
+                    },
+                    args,
+                    2,
+                )
+            after_ref, before_ref = (rows[0]["observation_id"], rows[1]["observation_id"])
         b, a = _env(before_ref), _env(after_ref)
         if b is None or a is None:
-            return _emit({"refusal": "PF-LIVE-NO-OBSERVATION",
-                          "unlock": "valid observation ids or files"},
-                         args, 2)
+            return _emit(
+                {"refusal": "PF-LIVE-NO-OBSERVATION", "unlock": "valid observation ids or files"}, args, 2
+            )
         out = diff_observations(b, a)
         ledger = EventLedger(args.repo)
         prior = ledger.events(kind="drift")
-        kept, suppressed = dedup_events(out["drift"],
-                                        [e.get("event", e) for e in prior])
+        kept, suppressed = dedup_events(out["drift"], [e.get("event", e) for e in prior])
         for e in kept:
-            ledger.append({"kind": "drift", "event": e,
-                           "observation_id": a.observation_id})
+            ledger.append({"kind": "drift", "event": e, "observation_id": a.observation_id})
         out["journaled"] = len(kept)
         out["suppressed_dupes"] = suppressed
         return _emit(out, args, 2 if args.strict and out["drift"] else 0)
     if sub == "incident":
         if not args.incident:
-            return _emit({"refusal": "PF-LIVE-NO-INCIDENT",
-                          "unlock": "pass --incident <incident.json>"},
-                         args, 2)
+            return _emit(
+                {"refusal": "PF-LIVE-NO-INCIDENT", "unlock": "pass --incident <incident.json>"}, args, 2
+            )
         from platformforge.live.incident import build_timeline, postmortem_v3, score_candidates
+
         inc = json.loads(Path(args.incident).read_text())
-        cands = (json.loads(Path(args.changes).read_text())
-                 if args.changes else [])
-        events = (json.loads(Path(args.events).read_text())
-                  if args.events else [])
+        cands = json.loads(Path(args.changes).read_text()) if args.changes else []
+        events = json.loads(Path(args.events).read_text()) if args.events else []
         graph = _load_graph_or_refuse(args.repo)
         tl = build_timeline(events + [inc])
-        ranked = score_candidates(inc, cands,
-                                  window_s=float(args.window),
-                                  graph=graph)
-        out = {**ranked,
-               "postmortem": postmortem_v3(inc, tl, ranked)["postmortem"],
-               "timeline_counts": tl["counts"]}
-        return _emit(out, args,
-                     2 if args.strict and not any(
-                         h["status"] in ("confirmed", "supported")
-                         for h in ranked["ranked"]) else 0)
+        ranked = score_candidates(inc, cands, window_s=float(args.window), graph=graph)
+        out = {
+            **ranked,
+            "postmortem": postmortem_v3(inc, tl, ranked)["postmortem"],
+            "timeline_counts": tl["counts"],
+        }
+        return _emit(
+            out,
+            args,
+            2
+            if args.strict and not any(h["status"] in ("confirmed", "supported") for h in ranked["ranked"])
+            else 0,
+        )
     if sub == "plan":
         from platformforge.live.remediate import remediate
+
         if args.drift_events:
             events = json.loads(Path(args.drift_events).read_text())
         else:
             from platformforge.live.drift import diff_observations
+
             store = ObservationStore(args.repo)
             rows = store.list(limit=2)
             if len(rows) < 2:
-                return _emit({"refusal": "PF-LIVE-NO-DRIFT-INPUT",
-                              "unlock": "pass --drift-events <file> or "
-                                        "collect ≥2 observations"},
-                             args, 2)
-            events = diff_observations(store.get(rows[1][
-                "observation_id"]),
-                store.get(rows[0]["observation_id"]))["drift"]
+                return _emit(
+                    {
+                        "refusal": "PF-LIVE-NO-DRIFT-INPUT",
+                        "unlock": "pass --drift-events <file> or collect ≥2 observations",
+                    },
+                    args,
+                    2,
+                )
+            events = diff_observations(
+                store.get(rows[1]["observation_id"]), store.get(rows[0]["observation_id"])
+            )["drift"]
         out = remediate(events)
-        return _emit(out, args,
-                     2 if args.strict and
-                     out["counts"]["mutating"] else 0)
+        return _emit(out, args, 2 if args.strict and out["counts"]["mutating"] else 0)
     if sub == "capability":
         from platformforge.live.capability import availability
+
         return _emit(availability(args.repo), args)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
+def cmd_ops(args: argparse.Namespace) -> int:
+    """cycle4 — governed operations surface. Dry-run is the default;
+    real mutation requires --execute AND a valid hash-bound approval."""
+    from platformforge.ops import engine
+    from platformforge.ops.config import load_config, validate_config
+    from platformforge.ops.models import ChangeIntent, Reason
+    from platformforge.ops.policy import Policy
+    from platformforge.ops.registry import ops_capabilities, validate_delegate_request
+    from platformforge.ops.store import OperationStore
+
+    sub = args.ops_cmd
+
+    if sub == "capabilities":
+        return _emit(ops_capabilities(), args)
+
+    if sub == "config":
+        r = load_config(root=args.repo)
+        if "refusal" in r:
+            return _emit(r, args, 2)
+        r["violations"] = validate_config(r["config"])
+        return _emit(r, args, 2 if r["violations"] else 0)
+
+    if sub == "delegate":
+        req = json.loads(Path(args.request).read_text()) if args.request else {}
+        out = validate_delegate_request(req)
+        return _emit(out, args, 2 if "refusal" in out else 0)
+
+    if sub == "intent":
+        doc = json.loads(Path(args.intent).read_text())
+        intent = (
+            ChangeIntent.from_dict(doc)
+            if hasattr(ChangeIntent, "from_dict")
+            else ChangeIntent(
+                intent_id=doc.get("intent_id", ""),
+                owner=doc.get("owner", ""),
+                requested_by=doc.get("requested_by", ""),
+                reason=Reason(**doc.get("reason", {"type": "manual"})),
+                target_resources=doc.get("target_resources", []),
+                desired_change=doc.get("desired_change", {}),
+            )
+        )
+        out = engine.propose(intent, resources=doc.get("resources", []), sot_context=doc.get("sot_context"))
+        return _emit(out, args, 2 if not out.get("ok") else 0)
+
+    if sub == "plan":
+        doc = _load_plan_doc(args.plan)
+        plan = engine.plan(doc["intent"], steps=doc["steps"], expected_delta=doc["expected_delta"])
+        v = plan.validate()
+        out = {"plan_id": plan.plan_id, "hash": plan.hash(), "steps": len(plan.steps), "violations": v}
+        return _emit(out, args, 2 if v else 0)
+
+    if sub == "simulate":
+        from platformforge.ops.simulate import simulate
+
+        doc = _load_plan_doc(args.plan)
+        plan = engine.plan(doc["intent"], steps=doc["steps"], expected_delta=doc["expected_delta"])
+        r = simulate(plan, level=args.level)
+        return _emit(r.to_dict(), args, 2 if r.outcome == "fail" else 0)
+
+    if sub == "risk":
+        doc = _load_plan_doc(args.plan)
+        plan = engine.plan(doc["intent"], steps=doc["steps"], expected_delta=doc["expected_delta"])
+        return _emit(engine.assess_risk(plan, {"environment": args.environment}), args)
+
+    if sub == "policy-eval":
+        doc = _load_plan_doc(args.plan)
+        plan = engine.plan(doc["intent"], steps=doc["steps"], expected_delta=doc["expected_delta"])
+        pols = [Policy(**p) for p in _load_yaml_list(args.policies)]
+        d = engine.decide(plan, pols, {"environment": args.environment})
+        return _emit(d.to_dict(), args, 2 if d.decision == "deny" else 0)
+
+    if sub == "runbook":
+        from platformforge.ops.runbook import BUILTIN_RUNBOOKS
+
+        name = args.name_pos or args.name or "list"
+        if name == "list":
+            return _emit(
+                {
+                    "runbooks": [
+                        {
+                            "id": rb.runbook_id,
+                            "title": rb.title,
+                            "risk": rb.risk.get("class", "?"),
+                            "approval_required": rb.approval_required,
+                            "hash": rb.hash(),
+                        }
+                        for rb in BUILTIN_RUNBOOKS.values()
+                    ]
+                },
+                args,
+            )
+        rb = BUILTIN_RUNBOOKS.get(name)
+        if rb is None:
+            return _emit(
+                {"refusal": "PF-OPS-RUNBOOK-UNKNOWN", "unlock": f"known: {sorted(BUILTIN_RUNBOOKS)}"}, args, 2
+            )
+        if args.bind:
+            bound = rb.bind(json.loads(Path(args.bind).read_text()))
+            return _emit(
+                {**bound, "steps": [s.__dict__ for s in bound.get("steps", [])]}
+                if bound.get("ok")
+                else bound,
+                args,
+                0 if bound.get("ok") else 2,
+            )
+        return _emit(rb.to_dict(), args)
+
+    if sub == "run":
+        spec = _load_yaml_or_json(args.spec)
+        return _ops_run(args, spec)
+
+    if sub in ("store-list", "store-verify"):
+        st = OperationStore(Path(args.repo) / ".platformforge/operations")
+        if sub == "store-list":
+            return _emit({"operations": st.list_operations(), "audit_digest": st.audit_digest()}, args)
+        out = st.verify(args.operation_id)
+        return _emit(out, args, 0 if out["chain_valid"] else 2)
+    return _emit({"error": f"unknown ops verb {sub}"}, args, 1)
+
+
+def _ops_run(args, spec: dict) -> int:
+    """platformforge ops run --spec ops.yaml [--execute]
+
+    spec = {intent, steps, policies, approvals, observation, verify,
+            environment, break_glass} — same shape as lab ops.yaml.
+    Without --execute every step is dry-run; transports are the host's.
+    """
+    from platformforge.ops import engine
+    from platformforge.ops.approval import Approval, BreakGlass
+    from platformforge.ops.executors.base import host_transport
+    from platformforge.ops.models import ChangeIntent, ExpectedDelta, PlanStep, Reason
+    from platformforge.ops.operation import LockTable, Operation, OperationLedger
+    from platformforge.ops.policy import Policy
+    from platformforge.ops.rollback import derive_rollback
+    from platformforge.ops.simulate import simulate
+    from platformforge.ops.store import OperationStore
+    from platformforge.ops.verify import verify as do_verify
+
+    i = spec.get("intent", {})
+    intent = ChangeIntent(
+        intent_id=i.get("intent_id", "cli-intent"),
+        owner=i.get("owner", ""),
+        requested_by=i.get("requested_by", ""),
+        reason=Reason(**i.get("reason", {"type": "manual"})),
+        target_resources=list(i.get("target_resources", [])),
+        desired_change=dict(i.get("desired_change", {})),
+    )
+    if not spec.get("steps"):
+        prop = engine.propose(intent, resources=i.get("resources", []), sot_context=i.get("sot_context"))
+        if not prop["ok"]:
+            return _emit(prop, args, 2)
+
+    steps = [
+        PlanStep(step_id=s["step_id"], action=s["action"], params=dict(s.get("params", {})))
+        for s in spec.get("steps", [])
+    ]
+    ed = spec.get("expected_delta") or {}
+    plan = engine.plan(
+        intent,
+        steps=steps,
+        expected_delta=ExpectedDelta(
+            adds=ed.get("adds", {}), removes=ed.get("removes", {}), changes=ed.get("changes", {})
+        ),
+    )
+    sim = simulate(plan, level=spec.get("simulation_level", "S1"))
+    risk = engine.assess_risk(plan, {"environment": spec.get("environment", "unknown")})
+    policies = [Policy(**p) for p in spec.get("policies", [])]
+    decisions = (
+        [
+            engine.decide(
+                plan,
+                policies,
+                {"environment": spec.get("environment", "unknown"), "risk_class": risk["risk_class"]},
+            )
+        ]
+        if policies
+        else []
+    )
+    if not decisions:
+        from platformforge.ops.policy import PolicyDecision
+
+        decisions = [
+            PolicyDecision(
+                policy_id="cli-default",
+                decision="allow",
+                reason="no policies in spec — governance passthrough",
+            )
+        ]
+    rb = derive_rollback(
+        [{"action": s.action, "params": s.params} for s in steps], {"environment": spec.get("environment")}
+    )
+    env = engine.mint_envelope(
+        plan,
+        execution_id=spec.get("execution_id", "cli-ex"),
+        decisions=decisions or None,
+        approvals=[],
+        risk=risk,
+        rollback=rb,
+    )
+    if isinstance(env, dict):
+        return _emit(
+            {"ok": False, "stage": "mint", "refusal": env, "simulation": sim.to_dict(), "risk": risk}, args, 2
+        )
+    env_hash = env.freeze()
+
+    approvals = []
+    for a in spec.get("approvals", []):
+        approvals.append(
+            Approval(
+                approval_id=a.get("approval_id", "ap"),
+                subject_hash=env_hash if a.get("binds", "envelope") == "envelope" else a.get("binds", ""),
+                scope=list(a.get("scope", env.scope)),
+                actor=a.get("actor", ""),
+                role=a.get("role", ""),
+                actor_kind=a.get("actor_kind", "human"),
+                expires_at=a.get("expires_at", ""),
+            )
+        )
+    bg = None
+    if spec.get("break_glass"):
+        b = spec["break_glass"]
+        bg = BreakGlass(
+            break_glass_id=b.get("ticket_id", ""),
+            actor=b.get("actor", ""),
+            invocation_reason=b.get("reason", ""),
+            scope=list(b.get("scope", env.scope)),
+            expires_at=b.get("expires_at", ""),
+        )
+
+    from platformforge.ops.actions import spec_for
+
+    def _stub(rc=0, out="", err=""):
+        return lambda argv, cwd=None, timeout_s=None: (rc, out, err)
+
+    transports = {}
+    # declared stubs (replayable, like lab fixtures)
+    for name, st in (spec.get("transports") or {}).items():
+        transports[name] = _stub(st.get("rc", 0), st.get("stdout", ""), st.get("stderr", ""))
+    if args.execute:
+        t = host_transport()
+        for s in env.actions:
+            sp = spec_for(s["action"])
+            if sp:
+                transports[sp.executor] = t
+    else:
+        # dry-run: executors need a transport handle, but it must never
+        # reach the host — return a marker receipt instead
+        for s in env.actions:
+            sp = spec_for(s["action"])
+            if sp and sp.executor not in transports:
+                transports[sp.executor] = _stub(0, "dry-run — host transport not invoked", "")
+
+    op = Operation(
+        operation_id=spec.get("operation_id", "cli-op"), intent_id=intent.intent_id, resources=list(env.scope)
+    )
+    ledger = OperationLedger()
+    result = engine.execute(
+        op,
+        env,
+        approvals=approvals,
+        transports=transports,
+        ledger=ledger,
+        locks=LockTable(),
+        dry_run=not args.execute,
+        break_glass=bg,
+        preconditions={
+            "observation": spec.get("observation"),
+            "current_plan_hash": env.change_plan_hash,
+            "policy_decision": (decisions[0].decision if decisions else "allow"),
+            "freeze_active": spec.get("freeze_active", False),
+        },
+    )
+
+    if result.get("ok") and spec.get("verify"):
+        v = spec["verify"]
+        vr = do_verify(
+            expected_delta=ed,
+            observations=v.get("observations", {}),
+            slo_contract=v.get("slo"),
+            metrics=v.get("metrics"),
+        )
+        result["verify"] = vr.to_dict()
+        result["final"] = engine.finalize_verify(op, ledger, {"convergence": vr.convergence})
+        result["state"] = op.state
+
+    st = OperationStore(Path(args.repo) / ".platformforge/operations")
+    st.save(op, ledger)
+    result["receipts"] = {
+        "ledger_tip": ledger.tip,
+        "ledger_valid": ledger.verify_chain(),
+        "envelope": env.to_dict(),
+        "simulation": sim.to_dict(),
+        "risk": risk,
+    }
+    result["dry_run"] = not args.execute
+    return _emit(result, args, 0 if result.get("ok") else 2)
+
+
+def _load_plan_doc(path: str) -> dict:
+    doc = _load_yaml_or_json(path)
+    from platformforge.ops.models import ChangeIntent, ExpectedDelta, PlanStep, Reason
+
+    i = doc.get("intent", {})
+    intent = ChangeIntent(
+        intent_id=i.get("intent_id", ""),
+        owner=i.get("owner", ""),
+        requested_by=i.get("requested_by", ""),
+        reason=Reason(**i.get("reason", {"type": "manual"})),
+        target_resources=list(i.get("target_resources", [])),
+        desired_change=dict(i.get("desired_change", {})),
+    )
+    steps = [
+        PlanStep(step_id=s["step_id"], action=s["action"], params=dict(s.get("params", {})))
+        for s in doc.get("steps", [])
+    ]
+    ed = doc.get("expected_delta") or {}
+    return {
+        "intent": intent,
+        "steps": steps,
+        "expected_delta": ExpectedDelta(
+            adds=ed.get("adds", {}), removes=ed.get("removes", {}), changes=ed.get("changes", {})
+        ),
+    }
+
+
+def _load_yaml_or_json(path: str):
+    text = Path(path).read_text()
+    if path.endswith((".yaml", ".yml")):
+        import yaml
+
+        return yaml.safe_load(text)
+    return json.loads(text)
+
+
+def _load_yaml_list(path: str) -> list:
+    import yaml
+
+    doc = yaml.safe_load(Path(path).read_text())
+    return doc if isinstance(doc, list) else doc.get("policies", [])
+
+
 def _live_budget(args: argparse.Namespace):
     from platformforge.live.budget import ObservationBudget
-    return ObservationBudget(max_objects=args.max_objects,
-                             max_api_calls=args.max_api_calls,
-                             max_bytes=args.max_bytes)
+
+    return ObservationBudget(
+        max_objects=args.max_objects, max_api_calls=args.max_api_calls, max_bytes=args.max_bytes
+    )
 
 
 def cmd_finops(args: argparse.Namespace) -> int:
     from platformforge import finops as F
+
     sub = args.finops_cmd
     if sub == "costs":
         doc = F.cost_facts(args.path)
@@ -1467,50 +2032,53 @@ def cmd_finops(args: argparse.Namespace) -> int:
     if sub == "focus-validate":
         # §92 — never call output FOCUS-compliant without schema check
         from platformforge.finops.focus import validate_focus
+
         rows = json.loads(Path(args.path).read_text())
         rows = rows if isinstance(rows, list) else rows.get("rows", [])
         out = validate_focus(rows)
-        return _emit(out, args, 2 if (args.strict
-                                      and not out["focus_compliant"]) else 0)
+        return _emit(out, args, 2 if (args.strict and not out["focus_compliant"]) else 0)
     if sub == "unit":
         # §94 unit economics — denominators must be caller-measured
         from platformforge.finops.unit import unit_economics
+
         doc = F.cost_facts(args.path)
-        denoms = (json.loads(Path(args.denominators).read_text())
-                  if args.denominators else {})
+        denoms = json.loads(Path(args.denominators).read_text()) if args.denominators else {}
         out = unit_economics(doc["facts"], denoms)
-        return _emit(out, args, 2 if (args.strict
-                                      and out["unresolved"]) else 0)
+        return _emit(out, args, 2 if (args.strict and out["unresolved"]) else 0)
     if sub == "ingest":
         # §91 — provider billing export → normalized rows + format verdict
         from platformforge.finops.ingest import ingest_billing
+
         return _emit(ingest_billing(args.path), args)
     if sub == "report":
         # §90 — composite; each dimension independently evidence-bound
         from platformforge.finops.insights import finops_report
+
         doc = F.cost_facts(args.path)
-        extra = (json.loads(Path(args.denominators).read_text())
-                 if args.denominators else {})
-        return _emit(finops_report(
-            doc["facts"],
-            utilization=extra.get("utilization"),
-            requested_vs_used=extra.get("requested_vs_used"),
-            committed=extra.get("committed"),
-            split=extra.get("split")), args)
+        extra = json.loads(Path(args.denominators).read_text()) if args.denominators else {}
+        return _emit(
+            finops_report(
+                doc["facts"],
+                utilization=extra.get("utilization"),
+                requested_vs_used=extra.get("requested_vs_used"),
+                committed=extra.get("committed"),
+                split=extra.get("split"),
+            ),
+            args,
+        )
     if sub == "graph":
         g = _load_graph_or_refuse(args.repo)
         if g is None:
-            return _emit({"refusal": "PF-GRAPH-NOGRAPH",
-                          "unlock": "platformforge graph build <facts.json>"},
-                         args, 2)
+            return _emit(
+                {"refusal": "PF-GRAPH-NOGRAPH", "unlock": "platformforge graph build <facts.json>"}, args, 2
+            )
         doc = F.cost_facts(args.path)
         return _emit(F.graph_cost(g, doc["facts"]), args)
     return _emit({"error": f"unknown finops verb {sub}"}, args, 1)
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="platformforge",
-                                description="Agentic Platform Engineering intelligence")
+    p = argparse.ArgumentParser(prog="platformforge", description="Agentic Platform Engineering intelligence")
     p.add_argument("--version", action="version", version=f"platformforge {__version__}")
     sub = p.add_subparsers(dest="command", required=True)
 
@@ -1521,82 +2089,91 @@ def build_parser() -> argparse.ArgumentParser:
             extra(sp)
         sp.set_defaults(func=fn)
 
-    verb("init", cmd_init, "scaffold .platformforge/",
-         lambda sp: sp.add_argument("--name", default=""))
-    verb("doctor", cmd_doctor, "environment health-check",
-         lambda sp: sp.add_argument("--deep", action="store_true",
-                                    help="§141 contract checks (config, "
-                                         "manifest, knowledge, parity, "
-                                         "index, store)"))
+    verb("init", cmd_init, "scaffold .platformforge/", lambda sp: sp.add_argument("--name", default=""))
+    verb(
+        "doctor",
+        cmd_doctor,
+        "environment health-check",
+        lambda sp: sp.add_argument(
+            "--deep",
+            action="store_true",
+            help="§141 contract checks (config, manifest, knowledge, parity, index, store)",
+        ),
+    )
     verb("status", cmd_status, "workspace + store status")
     verb("inspect", cmd_inspect, "inventory analyzable artifacts")
-    verb("judge", cmd_judge, "apply rule catalog to facts",
-         lambda sp: (sp.add_argument("facts"),
-                     sp.add_argument("--catalog", nargs="*"),
-                     sp.add_argument("--versions", default="",
-                                     help='JSON product versions, e.g. '
-                                          '\'{"kubernetes": "1.29"}\'')))
-    verb("knowledge", cmd_knowledge, "knowledge freshness/drift check",
-         lambda sp: sp.add_argument(
-             "knowledge_cmd", nargs="?", default="check",
-             choices=["check", "contract", "drift", "packs"]))
+    verb(
+        "judge",
+        cmd_judge,
+        "apply rule catalog to facts",
+        lambda sp: (
+            sp.add_argument("facts"),
+            sp.add_argument("--catalog", nargs="*"),
+            sp.add_argument(
+                "--versions", default="", help='JSON product versions, e.g. \'{"kubernetes": "1.29"}\''
+            ),
+        ),
+    )
+    verb(
+        "knowledge",
+        cmd_knowledge,
+        "knowledge freshness/drift check",
+        lambda sp: sp.add_argument(
+            "knowledge_cmd", nargs="?", default="check", choices=["check", "contract", "drift", "packs"]
+        ),
+    )
 
-    sp = sub.add_parser("tokens",
-                        help="tokensave: index/search/pack/delta/stats/ledger")
+    sp = sub.add_parser("tokens", help="tokensave: index/search/pack/delta/stats/ledger")
     _add_common(sp)
-    sp.add_argument("tokens_cmd",
-                    choices=["index", "search", "pack", "delta", "stats",
-                             "ledger"])
+    sp.add_argument("tokens_cmd", choices=["index", "search", "pack", "delta", "stats", "ledger"])
     sp.add_argument("--task", default="")
     sp.add_argument("--query", default="")
     sp.add_argument("--limit", type=int, default=20)
     sp.add_argument("--changed", nargs="*")
     sp.add_argument("--input-budget", type=int, default=None)
-    sp.add_argument("--risk", default=None,
-                    choices=["low", "medium", "high", "critical"])
-    sp.add_argument("--graph-nodes", nargs="*",
-                    help="seed nodes for graph-aware ranking")
-    sp.add_argument("--prev-pack", default=None,
-                    help="previous pack hash — delta-aware dedup")
+    sp.add_argument("--risk", default=None, choices=["low", "medium", "high", "critical"])
+    sp.add_argument("--graph-nodes", nargs="*", help="seed nodes for graph-aware ranking")
+    sp.add_argument("--prev-pack", default=None, help="previous pack hash — delta-aware dedup")
     sp.set_defaults(func=cmd_tokens)
 
     sp = sub.add_parser("rtk", help="compact command output (rtk)")
     _add_common(sp)
-    sp.add_argument("rtk_cmd", choices=["compact", "expand"], nargs="?",
-                    default="compact")
-    sp.add_argument("file", nargs="?", default="-",
-                    help="output file to compact ('-' = stdin)")
+    sp.add_argument("rtk_cmd", choices=["compact", "expand"], nargs="?", default="compact")
+    sp.add_argument("file", nargs="?", default="-", help="output file to compact ('-' = stdin)")
     sp.add_argument("--command", default="", help="command that produced output")
     sp.add_argument("--exit-code", type=int, default=0)
     sp.add_argument("--artifact", default="")
     sp.add_argument("--start", type=int)
     sp.add_argument("--end", type=int)
     sp.add_argument("--pattern", default=None)
+
     def _rtk_dispatch(a):
         return cmd_rtk_expand(a) if a.rtk_cmd == "expand" else cmd_rtk(a)
+
     sp.set_defaults(func=_rtk_dispatch)
 
     sp = sub.add_parser("caveman", help="compress text (caveman)")
     _add_common(sp)
     sp.add_argument("file", help="file to compress ('-' = stdin)")
-    sp.add_argument("--mode", choices=["off", "lite", "full", "auto"],
-                    default="lite")
+    sp.add_argument("--mode", choices=["off", "lite", "full", "auto"], default="lite")
     sp.add_argument("--context-risk", default="normal")
     sp.set_defaults(func=cmd_caveman)
 
     sp = sub.add_parser("economy", help="economy engine report/strategy/qpt")
     _add_common(sp)
-    sp.add_argument("economy_cmd", nargs="?", default="report",
-                    choices=["report", "strategy", "compare", "qpt",
-                             "qpt-bench"])
-    sp.add_argument("--signal", default="",
-                    help="JSON TaskSignal (strategy/compare)")
+    sp.add_argument(
+        "economy_cmd",
+        nargs="?",
+        default="report",
+        choices=["report", "strategy", "compare", "qpt", "qpt-bench"],
+    )
+    sp.add_argument("--signal", default="", help="JSON TaskSignal (strategy/compare)")
     sp.add_argument("--path", default="", help="facts doc for qpt")
     sp.add_argument("--task", default="analysis")
     sp.add_argument("--input-budget", type=int, default=None)
-    sp.add_argument("--versions", default="",
-                    help='JSON product versions for qpt, e.g. '
-                         '\'{"kubernetes": "1.29"}\'')
+    sp.add_argument(
+        "--versions", default="", help='JSON product versions for qpt, e.g. \'{"kubernetes": "1.29"}\''
+    )
     sp.set_defaults(func=cmd_economy)
 
     sp = sub.add_parser("route", help="adaptive routing decision")
@@ -1606,10 +2183,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("sdd", help="native SDD lifecycle")
     _add_common(sp)
-    sp.add_argument("sdd_cmd",
-                    choices=["init", "discover", "define", "design", "contract",
-                             "plan", "build", "review", "verify", "ship",
-                             "learn", "status", "check", "stamp"])
+    sp.add_argument(
+        "sdd_cmd",
+        choices=[
+            "init",
+            "discover",
+            "define",
+            "design",
+            "contract",
+            "plan",
+            "build",
+            "review",
+            "verify",
+            "ship",
+            "learn",
+            "status",
+            "check",
+            "stamp",
+        ],
+    )
     sp.add_argument("--feature", required=True)
     sp.add_argument("--body", default="", help="artifact body or JSON")
     sp.add_argument("--phase", default=None, help="stamp single phase")
@@ -1621,135 +2213,216 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("graph", help="Graphfy platform graph")
     _add_common(sp)
-    sp.add_argument("graph_cmd",
-                    choices=["build", "stats", "deps", "dependents", "blast",
-                             "paths", "gaps", "cycles", "diff", "snapshots",
-                             "identity-become", "identity-access",
-                             "identity-workloads", "identity-blast"])
+    sp.add_argument(
+        "graph_cmd",
+        choices=[
+            "build",
+            "stats",
+            "deps",
+            "dependents",
+            "blast",
+            "paths",
+            "gaps",
+            "cycles",
+            "diff",
+            "snapshots",
+            "identity-become",
+            "identity-access",
+            "identity-workloads",
+            "identity-blast",
+        ],
+    )
     sp.add_argument("facts", nargs="?", default="")
     sp.add_argument("--node", default="")
     sp.add_argument("--src", default="")
     sp.add_argument("--dst", default="")
     sp.add_argument("--before", default="")
     sp.add_argument("--after", default="")
-    sp.add_argument("--source-type", default="desired",
-                    choices=["desired", "planned", "observed", "runtime"],
-                    help="§6 snapshot type for `graph build`")
+    sp.add_argument(
+        "--source-type",
+        default="desired",
+        choices=["desired", "planned", "observed", "runtime"],
+        help="§6 snapshot type for `graph build`",
+    )
     sp.set_defaults(func=cmd_graph)
 
     sp = sub.add_parser("analyze", help="domain analyzers → facts")
     _add_common(sp)
-    sp.add_argument("analyze_cmd",
-                    choices=["iac", "plan", "state", "drift", "k8s",
-                             "gitops", "gha", "iam", "sbom", "secrets",
-                             "supply", "catalog", "crossplane", "cloud-aws",
-                             "cloud-azure", "cloud-gcp", "helm",
-                             "kustomize", "hubble", "kyverno", "cosign",
-                             "slsa", "ownership", "contradictions"])
-    sp.add_argument("--facts", default="",
-                    help="facts doc for ownership/contradiction joins")
+    sp.add_argument(
+        "analyze_cmd",
+        choices=[
+            "iac",
+            "plan",
+            "state",
+            "drift",
+            "k8s",
+            "gitops",
+            "gha",
+            "iam",
+            "sbom",
+            "secrets",
+            "supply",
+            "catalog",
+            "crossplane",
+            "cloud-aws",
+            "cloud-azure",
+            "cloud-gcp",
+            "helm",
+            "kustomize",
+            "hubble",
+            "kyverno",
+            "cosign",
+            "slsa",
+            "ownership",
+            "contradictions",
+        ],
+    )
+    sp.add_argument("--facts", default="", help="facts doc for ownership/contradiction joins")
     sp.add_argument("path", nargs="?", default=".")
     sp.add_argument("--config", default="")
     sp.add_argument("--state", default="")
     sp.add_argument("--vulns", default="", help="offline vuln list JSON")
-    sp.add_argument("--kyverno-version", default="",
-                    help="declared kyverno version for deprecation checks")
+    sp.add_argument("--kyverno-version", default="", help="declared kyverno version for deprecation checks")
     sp.set_defaults(func=cmd_analyze)
 
     sp = sub.add_parser("observe", help="SRE/observability verbs")
     _add_common(sp)
-    sp.add_argument("observe_cmd",
-                    choices=["slo", "slo-burn", "otel", "semconv",
-                             "incident", "timeline", "postmortem",
-                             "capacity", "dr", "prometheus", "grafana"])
+    sp.add_argument(
+        "observe_cmd",
+        choices=[
+            "slo",
+            "slo-burn",
+            "otel",
+            "semconv",
+            "incident",
+            "timeline",
+            "postmortem",
+            "capacity",
+            "dr",
+            "prometheus",
+            "grafana",
+        ],
+    )
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--sli", default="", help="JSON {good,bad,total}_events")
-    sp.add_argument("--windows", default="",
-                    help="JSON {window: {good,bad}} for slo-burn")
+    sp.add_argument("--windows", default="", help="JSON {window: {good,bad}} for slo-burn")
     sp.add_argument("--alerts", default="")
     sp.add_argument("--changes", default="")
-    sp.add_argument("--incident", default="",
-                    help="incident JSON for postmortem")
+    sp.add_argument("--incident", default="", help="incident JSON for postmortem")
     sp.add_argument("--facts", default="", help="facts JSON for dr")
     sp.add_argument("--window", type=int, default=3600)
     sp.set_defaults(func=cmd_observe)
 
     sp = sub.add_parser("live", help="live platform observation (cycle3)")
     _add_common(sp)
-    sp.add_argument("live_cmd",
-                    choices=["snapshot", "status", "doctor", "reconcile",
-                             "rbac", "required-permissions", "topology",
-                             "clusters", "drift", "incident", "plan",
-                             "capability"])
-    sp.add_argument("--provider", default="kubernetes",
-                    choices=["kubernetes", "aws"])
-    sp.add_argument("--region", action="append",
-                    help="aws: restrict regions (repeatable)")
-    sp.add_argument("--service", action="append",
-                    help="aws: restrict services (repeatable)")
-    sp.add_argument("--deep", action="store_true",
-                    help="doctor: probe every provider adapter")
+    sp.add_argument(
+        "live_cmd",
+        choices=[
+            "snapshot",
+            "status",
+            "doctor",
+            "reconcile",
+            "rbac",
+            "required-permissions",
+            "topology",
+            "clusters",
+            "drift",
+            "incident",
+            "plan",
+            "capability",
+        ],
+    )
+    sp.add_argument("--provider", default="kubernetes", choices=["kubernetes", "aws"])
+    sp.add_argument("--region", action="append", help="aws: restrict regions (repeatable)")
+    sp.add_argument("--service", action="append", help="aws: restrict services (repeatable)")
+    sp.add_argument("--deep", action="store_true", help="doctor: probe every provider adapter")
     sp.add_argument("--context", default="", help="kube context")
-    sp.add_argument("--namespace", action="append",
-                    help="restrict to namespace (repeatable)")
-    sp.add_argument("--resource-type", action="append",
-                    help="restrict resource types (repeatable)")
+    sp.add_argument("--namespace", action="append", help="restrict to namespace (repeatable)")
+    sp.add_argument("--resource-type", action="append", help="restrict resource types (repeatable)")
     sp.add_argument("--selector", default="", help="k8s label selector")
-    sp.add_argument("--namespaced-only", action="store_true",
-                    help="rbac: emit Role instead of ClusterRole")
-    sp.add_argument("--no-store", action="store_true",
-                    help="snapshot: emit envelope without persisting")
-    sp.add_argument("--desired", default="",
-                    help="reconcile: facts.json path (default: repo scan)")
-    sp.add_argument("--planned", default="",
-                    help="reconcile: planned facts.json path")
-    sp.add_argument("--observed", default="",
-                    help="reconcile: observation_id or envelope.json")
-    sp.add_argument("--no-observed", action="store_true",
-                    help="reconcile: desired↔planned only")
+    sp.add_argument("--namespaced-only", action="store_true", help="rbac: emit Role instead of ClusterRole")
+    sp.add_argument("--no-store", action="store_true", help="snapshot: emit envelope without persisting")
+    sp.add_argument("--desired", default="", help="reconcile: facts.json path (default: repo scan)")
+    sp.add_argument("--planned", default="", help="reconcile: planned facts.json path")
+    sp.add_argument("--observed", default="", help="reconcile: observation_id or envelope.json")
+    sp.add_argument("--no-observed", action="store_true", help="reconcile: desired↔planned only")
     sp.add_argument("--otel", default="", help="topology: OTLP spans json")
     sp.add_argument("--hubble", default="", help="topology: hubble flows")
-    sp.add_argument("--slices", default="",
-                    help="topology: endpointslices json")
-    sp.add_argument("--apply-to-graph", action="store_true",
-                    help="topology: persist runtime edges into graph")
-    sp.add_argument("--register", default="",
-                    help="clusters: register cluster JSON spec")
+    sp.add_argument("--slices", default="", help="topology: endpointslices json")
+    sp.add_argument(
+        "--apply-to-graph", action="store_true", help="topology: persist runtime edges into graph"
+    )
+    sp.add_argument("--register", default="", help="clusters: register cluster JSON spec")
     sp.add_argument("--before", default="", help="drift: obs id/file")
     sp.add_argument("--after", default="", help="drift: obs id/file")
-    sp.add_argument("--incident", default="",
-                    help="incident: incident JSON {timestamp,resources}")
-    sp.add_argument("--changes", default="",
-                    help="incident: candidate changes JSON list")
-    sp.add_argument("--events", default="",
-                    help="incident: timeline events JSON list")
-    sp.add_argument("--window", type=int, default=3600,
-                    help="incident: correlation window seconds")
-    sp.add_argument("--drift-events", default="",
-                    help="plan: drift events JSON (default: diff latest "
-                         "two stored observations)")
+    sp.add_argument("--incident", default="", help="incident: incident JSON {timestamp,resources}")
+    sp.add_argument("--changes", default="", help="incident: candidate changes JSON list")
+    sp.add_argument("--events", default="", help="incident: timeline events JSON list")
+    sp.add_argument("--window", type=int, default=3600, help="incident: correlation window seconds")
+    sp.add_argument(
+        "--drift-events",
+        default="",
+        help="plan: drift events JSON (default: diff latest two stored observations)",
+    )
     sp.add_argument("--max-objects", type=int, default=0)
     sp.add_argument("--max-api-calls", type=int, default=0)
     sp.add_argument("--max-bytes", type=int, default=0)
     sp.set_defaults(func=cmd_live)
 
+    sp = sub.add_parser("ops", help="governed operations (cycle4)")
+    _add_common(sp)
+    sp.add_argument(
+        "ops_cmd",
+        choices=[
+            "capabilities",
+            "config",
+            "delegate",
+            "intent",
+            "plan",
+            "simulate",
+            "risk",
+            "policy-eval",
+            "runbook",
+            "run",
+            "store-list",
+            "store-verify",
+        ],
+    )
+    sp.add_argument("--intent", default="", help="intent JSON file")
+    sp.add_argument("--plan", default="", help="plan JSON/YAML file")
+    sp.add_argument("--spec", default="", help="ops run spec YAML/JSON")
+    sp.add_argument("--policies", default="", help="policies YAML list")
+    sp.add_argument("--environment", default="unknown")
+    sp.add_argument("--level", default="S1", choices=["S0", "S1", "S2", "S3", "S4", "S5"])
+    sp.add_argument(
+        "--execute",
+        action="store_true",
+        help="real mutation — requires hash-bound approval + host transports; default is dry-run",
+    )
+    sp.add_argument("--request", default="", help="delegate request JSON")
+    sp.add_argument("--name", default="", help="runbook id (positional name overrides)")
+    sp.add_argument("--bind", default="", help="runbook bind params JSON")
+    sp.add_argument("name_pos", nargs="?", default="", help="runbook id or 'list'")
+    sp.add_argument("--operation-id", default="")
+    sp.set_defaults(func=cmd_ops)
+
     sp = sub.add_parser("finops", help="FinOps cost analysis")
     _add_common(sp)
-    sp.add_argument("finops_cmd",
-                    choices=["costs", "allocate", "focus", "focus-validate",
-                             "unit", "graph", "ingest", "report"])
+    sp.add_argument(
+        "finops_cmd",
+        choices=["costs", "allocate", "focus", "focus-validate", "unit", "graph", "ingest", "report"],
+    )
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--by", default="cost_center")
-    sp.add_argument("--denominators", default="",
-                    help="JSON {unit: measured_count} for `finops unit`")
+    sp.add_argument("--denominators", default="", help="JSON {unit: measured_count} for `finops unit`")
     sp.set_defaults(func=cmd_finops)
 
     sp = sub.add_parser("product", help="platform product verbs")
     _add_common(sp)
-    sp.add_argument("product_cmd",
-                    choices=["maturity", "scorecard", "backstage",
-                             "paths", "path", "capabilities",
-                             "path-analyze"])
+    sp.add_argument(
+        "product_cmd",
+        choices=["maturity", "scorecard", "backstage", "paths", "path", "capabilities", "path-analyze"],
+    )
     sp.add_argument("--signals", default="", help="JSON signals doc")
     sp.add_argument("--findings", default="", help="findings JSON doc")
     sp.add_argument("--facts", default="", help="facts JSON for analysis")
@@ -1758,8 +2431,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("agents", help="agent roster, mirrors, referee")
     _add_common(sp)
-    sp.add_argument("agents_cmd",
-                    choices=["list", "lint", "sync", "playbook", "referee"])
+    sp.add_argument("agents_cmd", choices=["list", "lint", "sync", "playbook", "referee"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--name", default="")
     sp.add_argument("--domain", default="")
@@ -1767,77 +2439,126 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("mcp", help="MCP server + host parity")
     _add_common(sp)
-    sp.add_argument("mcp_cmd",
-                    choices=["tools", "call", "serve", "integrate", "detach"])
+    sp.add_argument("mcp_cmd", choices=["tools", "call", "serve", "integrate", "detach"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--name", default="")
     sp.add_argument("--input", default="")
-    sp.add_argument("--host", default="generic",
-                    choices=["claude", "codex", "devin", "copilot", "generic"])
+    sp.add_argument("--host", default="generic", choices=["claude", "codex", "devin", "copilot", "generic"])
     sp.set_defaults(func=cmd_mcp)
 
-    verb("collect", cmd_collect, "ingest artifact dumps → facts",
-         lambda sp: sp.add_argument("path", nargs="?", default=""))
-    verb("diagnose", cmd_diagnose, "node diagnosis: facts+findings+blast",
-         lambda sp: (sp.add_argument("node"),
-                     sp.add_argument("--findings", default=""),
-                     sp.add_argument("--facts", default="")))
-    verb("plan", cmd_plan, "findings → ordered remediation plan",
-         lambda sp: (sp.add_argument("path"),
-                     sp.add_argument("--facts", default="")))
-    verb("correlate", cmd_correlate, "OTel correlation (observe otel)",
-         lambda sp: sp.add_argument("path"))
-    verb("diff", cmd_diff, "graph diff between two facts docs",
-         lambda sp: (sp.add_argument("--before", required=True),
-                     sp.add_argument("--after", required=True)))
-    verb("drift", cmd_drift, "IaC drift: --config dir vs --state file",
-         lambda sp: (sp.add_argument("--config", required=True),
-                     sp.add_argument("--state", required=True)))
-    verb("impact", cmd_impact, "blast radius for a graph node",
-         lambda sp: sp.add_argument("--node", required=True))
-    verb("context", cmd_context, "context pack for a task",
-         lambda sp: (sp.add_argument("--task", default=""),
-                     sp.add_argument("--input-budget", type=int,
-                                     default=None),
-                     sp.add_argument("--changed", nargs="*")))
-    verb("policy", cmd_policy, "policy-as-code catalog check",
-         lambda sp: (sp.add_argument("policy_cmd",
-                                     choices=["check", "list"]),
-                     sp.add_argument("path", nargs="?", default="")))
-    verb("security", cmd_security, "security bundle (secrets+iam+sbom+supply)",
-         lambda sp: sp.add_argument("path", nargs="?", default=""))
-    verb("reliability", cmd_reliability, "SRE+K8S rules over facts",
-         lambda sp: sp.add_argument("path", nargs="?", default=""))
-    verb("integrate", cmd_integrate, "host integration (mcp parity)",
-         lambda sp: (sp.add_argument("--host", required=True,
-                                     choices=["claude", "codex", "devin",
-                                              "copilot", "generic"]),
-                     sp.add_argument("--detach", action="store_true")))
-    verb("evals", cmd_evals, "eval framework (§94–95)",
-         lambda sp: (sp.add_argument("evals_cmd",
-                                     choices=["run", "list", "coverage",
-                                              "precision"], nargs="?",
-                                     default="run"),
-                     sp.add_argument("--type", default=""),
-                     sp.add_argument("--cases", default="")))
+    verb(
+        "collect",
+        cmd_collect,
+        "ingest artifact dumps → facts",
+        lambda sp: sp.add_argument("path", nargs="?", default=""),
+    )
+    verb(
+        "diagnose",
+        cmd_diagnose,
+        "node diagnosis: facts+findings+blast",
+        lambda sp: (
+            sp.add_argument("node"),
+            sp.add_argument("--findings", default=""),
+            sp.add_argument("--facts", default=""),
+        ),
+    )
+    verb(
+        "plan",
+        cmd_plan,
+        "findings → ordered remediation plan",
+        lambda sp: (sp.add_argument("path"), sp.add_argument("--facts", default="")),
+    )
+    verb("correlate", cmd_correlate, "OTel correlation (observe otel)", lambda sp: sp.add_argument("path"))
+    verb(
+        "diff",
+        cmd_diff,
+        "graph diff between two facts docs",
+        lambda sp: (sp.add_argument("--before", required=True), sp.add_argument("--after", required=True)),
+    )
+    verb(
+        "drift",
+        cmd_drift,
+        "IaC drift: --config dir vs --state file",
+        lambda sp: (sp.add_argument("--config", required=True), sp.add_argument("--state", required=True)),
+    )
+    verb(
+        "impact",
+        cmd_impact,
+        "blast radius for a graph node",
+        lambda sp: sp.add_argument("--node", required=True),
+    )
+    verb(
+        "context",
+        cmd_context,
+        "context pack for a task",
+        lambda sp: (
+            sp.add_argument("--task", default=""),
+            sp.add_argument("--input-budget", type=int, default=None),
+            sp.add_argument("--changed", nargs="*"),
+        ),
+    )
+    verb(
+        "policy",
+        cmd_policy,
+        "policy-as-code catalog check",
+        lambda sp: (
+            sp.add_argument("policy_cmd", choices=["check", "list"]),
+            sp.add_argument("path", nargs="?", default=""),
+        ),
+    )
+    verb(
+        "security",
+        cmd_security,
+        "security bundle (secrets+iam+sbom+supply)",
+        lambda sp: sp.add_argument("path", nargs="?", default=""),
+    )
+    verb(
+        "reliability",
+        cmd_reliability,
+        "SRE+K8S rules over facts",
+        lambda sp: sp.add_argument("path", nargs="?", default=""),
+    )
+    verb(
+        "integrate",
+        cmd_integrate,
+        "host integration (mcp parity)",
+        lambda sp: (
+            sp.add_argument(
+                "--host", required=True, choices=["claude", "codex", "devin", "copilot", "generic"]
+            ),
+            sp.add_argument("--detach", action="store_true"),
+        ),
+    )
+    verb(
+        "evals",
+        cmd_evals,
+        "eval framework (§94–95)",
+        lambda sp: (
+            sp.add_argument(
+                "evals_cmd", choices=["run", "list", "coverage", "precision"], nargs="?", default="run"
+            ),
+            sp.add_argument("--type", default=""),
+            sp.add_argument("--cases", default=""),
+        ),
+    )
 
     sp = sub.add_parser("lab", help="Forge Lab scenarios")
     _add_common(sp)
     sp.add_argument("lab_cmd", choices=["list", "run", "run-all", "chaos"])
     sp.add_argument("path", nargs="?", default="")
-    sp.add_argument("--allow-prod", action="store_true",
-                    help="chaos: allow env:production targets")
-    sp.add_argument("--profile", default="",
-                    choices=["static", "container", "kubernetes", "cloud"],
-                    help="§118 lab profile filter")
-    sp.add_argument("--allow-profile", action="store_true",
-                    help="§119 — opt into non-static lab profiles")
+    sp.add_argument("--allow-prod", action="store_true", help="chaos: allow env:production targets")
+    sp.add_argument(
+        "--profile",
+        default="",
+        choices=["static", "container", "kubernetes", "cloud"],
+        help="§118 lab profile filter",
+    )
+    sp.add_argument("--allow-profile", action="store_true", help="§119 — opt into non-static lab profiles")
     sp.set_defaults(func=cmd_lab)
 
     sp = sub.add_parser("forge", help="Forge interop")
     _add_common(sp)
-    sp.add_argument("forge_cmd", choices=["manifest", "delegate", "verify",
-                                          "discover", "collect"])
+    sp.add_argument("forge_cmd", choices=["manifest", "delegate", "verify", "discover", "collect"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--name", default="")
     sp.add_argument("--src", default="")
@@ -1846,13 +2567,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("capability", help="capability registry")
     _add_common(sp)
-    sp.add_argument("capability_cmd",
-                    choices=["list", "describe", "manifest", "check"])
+    sp.add_argument("capability_cmd", choices=["list", "describe", "manifest", "check"])
     sp.add_argument("--name", default="")
-    sp.add_argument("--domain", default="",
-                    help="§139 — domain to negotiate, e.g. k8s")
-    sp.add_argument("--version", default="",
-                    help="§139 — product version to check support for")
+    sp.add_argument("--domain", default="", help="§139 — domain to negotiate, e.g. k8s")
+    sp.add_argument("--version", default="", help="§139 — product version to check support for")
     sp.set_defaults(func=cmd_capability)
 
     sp = sub.add_parser("risk", help="§130 change-risk assessment")
@@ -1863,14 +2581,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("change", help="§85–86 change lifecycle (sandboxed)")
     _add_common(sp)
-    sp.add_argument("change_cmd",
-                    choices=["propose", "sandbox", "verify", "review",
-                             "approve", "apply"])
+    sp.add_argument("change_cmd", choices=["propose", "sandbox", "verify", "review", "approve", "apply"])
     sp.add_argument("--patch", default="", help="unified diff file")
-    sp.add_argument("--file", action="append",
-                    help="rel/path=src-file (or literal content)")
-    sp.add_argument("--signals", default="",
-                    help="JSON risk signals doc (review only)")
+    sp.add_argument("--file", action="append", help="rel/path=src-file (or literal content)")
+    sp.add_argument("--signals", default="", help="JSON risk signals doc (review only)")
     sp.set_defaults(func=cmd_change)
 
     sp = sub.add_parser("explain", help="evidence chain for a finding")
@@ -1889,14 +2603,12 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("store_cmd", choices=["stats", "gc"])
     sp.add_argument("--keep-days", type=float, default=30.0)
-    sp.add_argument("--execute", action="store_true",
-                    help="actually delete (default: dry-run)")
+    sp.add_argument("--execute", action="store_true", help="actually delete (default: dry-run)")
     sp.set_defaults(func=cmd_store)
 
     sp = sub.add_parser("bench", help="§148–150 measured benchmarks")
     _add_common(sp)
-    sp.add_argument("bench_cmd", choices=["run", "tokens"], nargs="?",
-                    default="run")
+    sp.add_argument("bench_cmd", choices=["run", "tokens"], nargs="?", default="run")
     sp.add_argument("--repeat", type=int, default=3)
     sp.set_defaults(func=cmd_bench)
     return p

@@ -2,8 +2,7 @@
 
 import json
 
-from platformforge.ops.config import (DEFAULTS, load_config,
-                                      validate_config)
+from platformforge.ops.config import DEFAULTS, load_config, validate_config
 from platformforge.ops.operation import Operation, OperationLedger
 from platformforge.ops.store import OperationStore
 
@@ -76,7 +75,7 @@ def test_store_schema_migrate(tmp_path):
         "seq": 1, "event": "a", "operation_id": "x", "actor": "system",
         "at": "t", "data": {}, "prev_hash": "genesis",
         "entry_hash": "sha256:abc"}) + "\n")
-    st = OperationStore(d)
+    OperationStore(d)
     assert (d / "_schema_version").read_text() == "2"
     rec = json.loads((d / "x.ledger.jsonl").read_text().strip())
     assert rec["schema"] >= 1
