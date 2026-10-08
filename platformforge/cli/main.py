@@ -1315,6 +1315,43 @@ def cmd_live(args: argparse.Namespace) -> int:
         return _emit(out, args, 2 if args.strict and
                      (out["totals"]["drift_events"] -
                       out["accepted"]) else 0)
+    if sub == "topology":
+        from platformforge.live.topology import (
+            apply_runtime_edges,
+            classify_behavior,
+            edges_from_endpointslices,
+            edges_from_hubble,
+            edges_from_otel,
+        )
+        edges: list[dict] = []
+        if args.otel:
+            doc = json.loads(Path(args.otel).read_text())
+            edges += edges_from_otel(
+                doc if isinstance(doc, list) else [doc])
+        if args.hubble:
+            p = Path(args.hubble)
+            flows = []
+            for f in sorted(p.rglob("*.json*")) if p.is_dir() else [p]:
+                doc = json.loads(f.read_text())
+                flows += doc if isinstance(doc, list) else [doc]
+            edges += edges_from_hubble(flows)
+        if args.slices:
+            edges += edges_from_endpointslices(
+                json.loads(Path(args.slices).read_text()))
+        declared = set()
+        g = _load_graph_or_refuse(args.repo)
+        if g is not None:
+            declared = set(g.edges)
+        out = {"edges": classify_behavior(edges, declared),
+               "runtime_undeclared":
+                   sum(1 for e in classify_behavior(edges, declared)
+                       if e["behavior"] == "observed-undeclared")}
+        if g is not None and args.apply_to_graph:
+            n = apply_runtime_edges(g, edges)
+            from platformforge.graph import persist as gp
+            gp.save(g, args.repo, source_type="runtime")
+            out["applied_to_graph"] = n
+        return _emit(out, args)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
@@ -1552,7 +1589,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("live_cmd",
                     choices=["snapshot", "status", "doctor", "reconcile",
-                             "rbac", "required-permissions"])
+                             "rbac", "required-permissions", "topology"])
     sp.add_argument("--provider", default="kubernetes",
                     choices=["kubernetes", "aws"])
     sp.add_argument("--region", action="append",
@@ -1579,6 +1616,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="reconcile: observation_id or envelope.json")
     sp.add_argument("--no-observed", action="store_true",
                     help="reconcile: desired↔planned only")
+    sp.add_argument("--otel", default="", help="topology: OTLP spans json")
+    sp.add_argument("--hubble", default="", help="topology: hubble flows")
+    sp.add_argument("--slices", default="",
+                    help="topology: endpointslices json")
+    sp.add_argument("--apply-to-graph", action="store_true",
+                    help="topology: persist runtime edges into graph")
     sp.add_argument("--max-objects", type=int, default=0)
     sp.add_argument("--max-api-calls", type=int, default=0)
     sp.add_argument("--max-bytes", type=int, default=0)
