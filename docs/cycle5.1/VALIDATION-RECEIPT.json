@@ -1,0 +1,210 @@
+{
+  "failed": [],
+  "gates": {
+    "adversarial": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_fleet_adversarial.py",
+      "seconds": 0.33
+    },
+    "agents-contract": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_agent_protocol.py tests/test_agent_handoffs.py tests/test_agent_budget.py tests/test_orchestrator.py tests/test_coordinators.py tests/test_specialists.py tests/test_reviewers.py tests/test_executors.py tests/test_agent_routing.py tests/test_agent_mirrors.py",
+      "seconds": 0.96
+    },
+    "agents-debate": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_agent_debate.py",
+      "seconds": 0.28
+    },
+    "agents-economy": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_agent_economy.py",
+      "seconds": 0.28
+    },
+    "agents-evals": {
+      "ok": true,
+      "reproduce": "platformforge evals run",
+      "seconds": 2.93
+    },
+    "agents-independence": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_agent_adversarial.py",
+      "seconds": 0.42
+    },
+    "agents-mirrors": {
+      "ok": true,
+      "reproduce": "platformforge agents check",
+      "seconds": 0.18
+    },
+    "agents-routing": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.routing import validate_routing;r = validate_routing();assert r['ok'], r['problems'];print(r['routes'], 'routes,', r['agents'], 'agents \u2014 no drift')",
+      "seconds": 0.1
+    },
+    "ai-platform": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.aiplat.models import (ai_unit_economics,\n    detect_ai_workloads)\nassert 'cost_per_1m_tokens' not in ai_unit_economics(100)\nassert ai_unit_economics(100, tokens=1000000)['cost_per_1m_tokens'] == 100.0\nw = detect_ai_workloads([{'resources':{'limits':{'nvidia.com/gpu':1}}}])\nassert w\nprint('ai awareness: denominators required')",
+      "seconds": 0.03
+    },
+    "analytics": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.analytics.dx import dx_metrics\nfrom platformforge.analytics.goldenpath import golden_path_analytics\nfrom platformforge.analytics.finops_v4 import cost_hierarchy\nfrom platformforge.analytics.capacity import capacity_risk, CapacitySnapshot\nassert dx_metrics([])['scope'].startswith('team')\nassert 'paths' in golden_path_analytics([])\nassert 'unallocated' in cost_hierarchy([])\nassert capacity_risk(CapacitySnapshot(member_id='m'))['risk']\nprint('analytics engines answer on empty input without crash')",
+      "seconds": 0.1
+    },
+    "coverage": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, subprocess;out = subprocess.run(['platformforge','evals','coverage'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);unc = d['counts'].get('uncovered', []);assert not unc, f'uncovered rules: {unc}';print(d['counts']['rules'], 'rules, 0 uncovered')",
+      "seconds": 0.31
+    },
+    "docs": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_docs_drift.py",
+      "seconds": 0.36
+    },
+    "evals": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, subprocess;out = subprocess.run(['platformforge','evals','run'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);c = d['counts'];assert c.get('fail', 0) == 0 and c.get('unresolved', 0) == 0, c;print(c)",
+      "seconds": 3.0
+    },
+    "federation": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.federation.node import NodeManifest, export_summary\nfrom platformforge.ops.registry import delegation_contract, validate_delegate_request\nnode = NodeManifest(node_id='n')\nassert export_summary(node, {'api_key':'AKIAIOSFODNN7EXAMPLE'}, 'public')['action'] == 'deny'\nassert export_summary(node, {'x':1}, 'restricted')['action'] == 'deny'\nfor bad in ('direct-execution','approval-minting',\n            'full-fleet-dump'):\n    assert bad in delegation_contract()['refuses']\nassert validate_delegate_request({'kind':'shell-command'})['refusal'].startswith('PF-OPS')\nprint('federation bounded; exec refused')",
+      "seconds": 0.1
+    },
+    "fleet-contracts": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.fleet.models import (\n    Fleet, FleetSnapshot, MemberObservation, member_key)\nfrom platformforge.analytics.models import (\n    PlatformMetric, AnalyticsDataQuality, HistoricalPattern)\nf = Fleet.from_dict({'fleet_id':'f','members':{'clusters':[{'kind':'cluster','canonical_id':'c1'}]}})\nassert member_key('cluster','c1') == 'cluster:c1'\ns = FleetSnapshot(fleet_id='f', member_observations=[\n    MemberObservation(member_id='cluster:c1', status='observed')])\nassert s.to_dict()['fleet_id'] == 'f'\nassert PlatformMetric(metric_id='m', dimension='reliability',\n    scope={'fleet':'f'}, value=1, unit='u').to_dict()\nassert AnalyticsDataQuality().confidence_cap in ('low','medium','high')\nassert HistoricalPattern(pattern_id='p', window='90d').to_dict()\nprint('fleet contracts round-trip')",
+      "seconds": 0.1
+    },
+    "fleet-evals": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.evals.runner import run_all\nout = run_all()\nfl = [r for r in out['results']\n      if r['id'].startswith('fleet-inv-')]\nassert len(fl) >= 10, len(fl)\nbad = [r['id'] for r in fl if r['verdict'] != 'pass']\nassert not bad, bad\nprint(len(fl), 'fleet invariant evals pass')",
+      "seconds": 2.98
+    },
+    "fleet-graph": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_fleet.py",
+      "seconds": 0.37
+    },
+    "fleet-lab": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.lab.runner import run_all\nout = run_all()\nres = out.get('scenarios') or out.get('results') or []\nfl = [r for r in res if str(r.get('scenario') or '').startswith('fleet-')]\nassert len(fl) >= 10, len(fl)\nbad = [r['scenario'] for r in fl if not r.get('passed', True)]\nassert not bad, bad\nprint(len(fl), 'fleet lab scenarios pass')",
+      "seconds": 2.2
+    },
+    "history": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.analytics.history import HistoryEngine, WINDOWS\neng = HistoryEngine()\nassert set(WINDOWS) >= {'24h','7d','30d','90d'}\nassert eng.patterns('90d') == []\neng.ingest_events('incident', [{'ts':'bad-ts'}], 't')\nassert eng.patterns('90d') == []  # unparseable never counted\nprint('history windows + insufficient-history honest')",
+      "seconds": 0.1
+    },
+    "knowledge": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.registry import (SourceRegistry, SOURCE_AUTHORITIES);reg = SourceRegistry.default();c = reg.contract_check(); assert c['ok'], c;bad = [e.id for e in reg.entries.values()      if e.source_authority not in SOURCE_AUTHORITIES];assert not bad, f'unknown authority: {bad}';print(len(reg.entries), 'sources valid')",
+      "seconds": 0.09
+    },
+    "lab": {
+      "ok": true,
+      "reproduce": "platformforge lab run-all",
+      "seconds": 2.2
+    },
+    "linkage": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.registry import SourceRegistry;from platformforge.resources import data_path;r = SourceRegistry.default().link_rules(data_path('rules','catalog'));assert not r['unlinked'], r['unlinked'];assert not r['bad_refs'], r['bad_refs'];print(r['coverage'], 'exact-id linked')",
+      "seconds": 0.17
+    },
+    "lint": {
+      "ok": true,
+      "reproduce": "ruff check .",
+      "seconds": 0.02
+    },
+    "mcp-parity": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.mcp.registry import tool_descriptors;t = tool_descriptors(); assert len(t) >= 20, len(t);print(len(t), 'mcp tools')",
+      "seconds": 0.04
+    },
+    "ops-approval": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_ops_approval.py tests/test_ops_models.py",
+      "seconds": 0.33
+    },
+    "ops-contracts": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.ops.actions import (catalog, spec_for,\n    validate_action, FORBIDDEN_ACTIONS)\nfrom platformforge.ops.rollback_builders import BUILDERS\ncat = catalog()\nbad = []\nfor name, s in cat.items():\n    if not s['mutating']:\n        continue\n    if not s['rollback_strategy']:\n        bad.append(f'{name}:no-strategy')\n    if s['rollback_strategy'] in ('direct-inverse',\n            'previous-revision', 'source-revert',\n            'compensating-operation') and not s['rollback_builder']:\n        bad.append(f'{name}:no-builder')\n    if s['rollback_builder'] and \\\n            s['rollback_builder'] not in BUILDERS:\n        bad.append(f'{name}:builder-missing')\nassert not bad, bad\nfor f in FORBIDDEN_ACTIONS:\n    assert validate_action(f, {}) is not None, f\nprint(len(cat), 'actions, contracts ok')",
+      "seconds": 0.03
+    },
+    "ops-evals": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.evals.runner import run_all\nout = run_all()\nops = [r for r in out['results'] if r['id'].startswith('ops-')]\nassert len(ops) >= 8, len(ops)\nbad = [r['id'] for r in ops if r['verdict'] != 'pass']\nassert not bad, bad\nprint(len(ops), 'ops evals pass')",
+      "seconds": 2.95
+    },
+    "ops-execution": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_ops_executors.py tests/test_ops_operation.py tests/test_ops_pipeline.py tests/test_cli_ops.py",
+      "seconds": 0.8
+    },
+    "ops-lab": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.lab.runner import run_all\nout = run_all()\nres = out.get('scenarios') or out.get('results') or []\nops = [r for r in res if 'ops-' in (r.get('scenario') or\n       r.get('id') or '')]\nassert len(ops) >= 10, len(ops)\nbad = [r for r in ops if not r.get('passed', True)]\nassert not bad, [r.get('failures') for r in bad]\nprint(len(ops), 'ops lab scenarios pass')",
+      "seconds": 2.22
+    },
+    "ops-policy": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_ops_policy.py tests/test_ops_autorem.py tests/test_ops_property.py",
+      "seconds": 0.37
+    },
+    "ops-rollback": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_ops_rollback.py tests/test_ops_gapwave.py",
+      "seconds": 0.62
+    },
+    "ops-verification": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_ops_verify.py",
+      "seconds": 0.3
+    },
+    "optimization": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.optimize.engine import OptimizationEngine\nfrom platformforge.optimize.models import (\n    OptimizationOpportunity, OptimizationRecommendation)\nfrom platformforge.ops.models import ChangeIntent\neng = OptimizationEngine()\neng.add_opportunity(OptimizationOpportunity(\n    opportunity_id='o', type='cost', scope={}, evidence=[],\n    uncertainty='high'))\nassert eng.recommendations() == []  # suppressed\nci = OptimizationEngine.plan(OptimizationRecommendation(\n    recommendation_id='r', type='c', scope={'s':'x'}))\nassert isinstance(ci, ChangeIntent)\nassert ci.reason.type == 'recommendation'\nprint('optimization boundary: suppressed + ChangeIntent only')",
+      "seconds": 0.11
+    },
+    "package": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import zipfile, glob;w = zipfile.ZipFile(glob.glob('dist/*.whl')[0]);names = w.namelist();need = ('platformforge/data/rules/catalog/',        'platformforge/data/knowledge/sources.yaml',        'platformforge/data/contracts/fact.schema.json',        'platformforge/data/lab/scenarios/',        'platformforge/data/evals/cases/');miss = [n for n in need         if not any(x.startswith(n) for x in names)];assert not miss, miss;print(sum(1 for x in names if '/data/' in x), 'data files')",
+      "seconds": 0.03
+    },
+    "packs": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.packs import PackRegistry;c = PackRegistry.default().contract_check();assert c['ok'], c;print(c['packs'], 'packs,', c['consumed'], 'consumed')",
+      "seconds": 0.19
+    },
+    "privacy": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.analytics.dx import (FORBIDDEN_METRICS,\n    dx_metrics, guard_no_person_metrics)\nfrom platformforge.ops.config import validate_config\nm = dx_metrics([{'path':'p','status':'ok','person':'x'}])\nassert guard_no_person_metrics(m) == []\nv = validate_config({'privacy':{'dx_metrics':'per-person'},\n                   'retention':{'telemetry':'local-only'}})\nassert any(x['refusal']=='PF-OPS-CONFIG-PRIVACY' for x in v)\nprint('dx team-level only; privacy pinned')",
+      "seconds": 0.04
+    },
+    "provenance": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.rules.engine import catalog_provenance_report;from platformforge.resources import data_path;r = catalog_provenance_report(data_path('rules','catalog'));assert r['coverage'] == 1.0, r; print(r)",
+      "seconds": 0.14
+    },
+    "security": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_redaction.py tests/test_offline.py",
+      "seconds": 0.62
+    },
+    "self": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, subprocess\ndef run(*a):\n    p = subprocess.run(['platformforge', *a], capture_output=True,\n                       text=True)\n    return json.loads(p.stdout[p.stdout.find('{'):]), p.returncode\ninv, rc1 = run('inspect', '--repo', '.')\nassert rc1 == 0 and inv.get('artifacts'), 'inspect found nothing'\nlint, rc2 = run('agents', 'lint')\nassert rc2 == 0 and lint.get('ok', True), 'agents lint failed'\nman, rc3 = run('capability', 'manifest')\nassert rc3 == 0 and (man.get('capabilities_v2') or man.get('capabilities')), 'manifest empty'\nprint('self-gate: inspect+agents+manifest ok')",
+      "seconds": 1.1
+    },
+    "tests": {
+      "ok": true,
+      "reproduce": "pytest -q",
+      "seconds": 33.38
+    }
+  },
+  "kind": "platformforge/validation-receipt/1",
+  "sha": [
+    "525ae20ea774a05bb94292941563aa2c19746bb0"
+  ],
+  "verdict": "validated"
+}
