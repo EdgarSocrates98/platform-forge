@@ -78,3 +78,13 @@ GPU/ml-inference rightsizing (~9.8k/mo), cost allocation gap
 (1750/mo unallocated), wildcard-iam/public-service findings,
 `batch-etl` recurrence → root-cause. All fact-cited — see
 OPTIMIZATION-REPORT.md.
+
+## Postscript — polish waves (commits 29b59ac, c29371b, 8c14cf3, b909f29)
+
+- `fleet report` north-star verb + `--question`/`--out` UX.
+- MCP gap above is now closed: 5 read-only tools, 34 total —
+  `plan` emits the intent document but never writes it via MCP.
+- FOCUS pinned versions (PF-FINOPS-FOCUS-VERSION), dataset detection.
+- Acme fixture node-id normalization: `unowned` corrected 24 → 11.
+- Updated counts: lab 44 scenarios · evals 83 cases · 34 MCP tools;
+  validation re-run green on the final state (see receipts).

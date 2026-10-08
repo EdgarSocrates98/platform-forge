@@ -56,6 +56,23 @@ ChangeIntents; it never executes.
 - Federation exchanges intelligence only — never credentials or
   execution authority.
 
+### Cycle 5 polish waves (post-closure)
+- `fleet report <dir>` — north-star receipt
+  (`platformforge/fleet-report/v1`): coverage, per-dimension findings,
+  `invest_next` cited; suppressed kept visible.
+- `fleet risks --question Q`, `optimize plan --out <file>`
+  (ChangeIntent doc ready for the ops pipeline).
+- MCP exposure — 5 read-only tools (`platformforge_fleet|_analytics|
+  _optimize|_ai|_federation`, 34 total) closing the declared gap;
+  `optimize plan` via MCP can never write files.
+- FOCUS validation honesty — `spec_version` pinned to known 1.0–1.4;
+  unknown versions refuse (`PF-FINOPS-FOCUS-VERSION`);
+  `detect_datasets()` for 1.3/1.4 datasets (detected, not conformant).
+- `fleet_report` lab check kind + `fleet-report` scenario
+  (44 lab scenarios) + `fleet-report-all-cited` eval probe (83 evals).
+- `docs/cycle5/RESEARCH-LEDGER.md` — FOCUS 1.4 / CycloneDX 1.7 /
+  SLSA v1.0 findings and explicit non-claims.
+
 ## [Unreleased] — Cycle 4.1 (Operational Correctness, Rollback Integrity & Closure)
 
 Correctness and closure pass over Cycle 4: rollback becomes
