@@ -64,9 +64,12 @@ def delegation_contract() -> dict[str, Any]:
     """What a sibling forge may ask for — and what is refused."""
     return {
         "accepts": ["change-intent", "runbook-request",
-                    "observation-request", "policy-eval-request"],
+                    "observation-request", "policy-eval-request",
+                    "fleet-summary-request", "analytics-report-request",
+                    "optimization-list-request"],
         "refuses": ["direct-execution", "approval-minting",
-                    "shell-command", "generic-provider-call"],
+                    "shell-command", "generic-provider-call",
+                    "full-fleet-dump", "credential-transfer"],
         "contract": "cross-forge requests mint ChangeIntent + enter "
                     "the governed pipeline; they never skip stages",
         "refusal_code": "PF-OPS-CROSSFORGE-REFUSED"}
@@ -81,12 +84,18 @@ def validate_delegate_request(req: dict[str, Any]
         return {"refusal": "PF-OPS-CROSSFORGE-REFUSED",
                 "unlock": f"kind must be one of "
                           f"{delegation_contract()['accepts']}"}
-    if kind in ("direct-execution", "approval-minting"):
+    if kind in ("direct-execution", "approval-minting",
+                "full-fleet-dump", "credential-transfer"):
         return {"refusal": "PF-OPS-CROSSFORGE-REFUSED",
-                "unlock": "execution and approval are never "
-                          "delegatable"}
+                "unlock": "execution, approval, raw dumps and "
+                          "credentials are never delegatable"}
     if not req.get("requested_by"):
         return {"refusal": "PF-OPS-NO-ACTOR",
                 "unlock": "cross-forge requests need a principal"}
+    if kind in ("fleet-summary-request", "analytics-report-request",
+                "optimization-list-request"):
+        return {"ok": True, "route": "read-only-intelligence",
+                "requested_by": req["requested_by"],
+                "note": "bounded summary only — never a full dump"}
     return {"ok": True, "route": "change-intent",
             "requested_by": req["requested_by"]}

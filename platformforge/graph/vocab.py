@@ -39,7 +39,7 @@ EDGE_IMPACT = {
     "governed_by": "compliance", "alerted_by": "compliance",
     "billed_to": "cost",
     "scales": "capacity", "attached_to": "network",
-    "owns": "unknown", "observed_by": "unknown", "provisioned_by": "unknown",
+    "observed_by": "unknown", "provisioned_by": "unknown",
     "generated_by": "unknown",
     # cycle4 — operational edges get their own impact class so blast
     # radius never conflates execution history with dependencies
