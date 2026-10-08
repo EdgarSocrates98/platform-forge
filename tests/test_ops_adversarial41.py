@@ -274,6 +274,6 @@ def test_r6_failed_rollback_never_marks_rolled_back():
     assert r["ok"] is False and op.state == "failed"
     assert r["escalation"] == "human-required"
     # and a second attempt does not silently re-run
-    r2 = execute_rollback(op, env, transports={"kubernetes": boom},
-                          ledger=led, locks=locks, rollback_plan=rb)
+    execute_rollback(op, env, transports={"kubernetes": boom},
+                     ledger=led, locks=locks, rollback_plan=rb)
     assert op.state == "failed"

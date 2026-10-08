@@ -55,11 +55,12 @@ A4 execute w/ human approval   A5 auto low-risk (lab)   A6 ✗
 | `SimulationResult` | `ops/simulate.py` | S0–S5 levels; deterministic projection receipt |
 | risk R0–R5 | `ops/risk.py` | 12-dimension decomposition; unknown ≠ low |
 | `Policy`/`PolicyDecision` | `ops/policy.py` | deny-overrides, exceptions w/ expiry, shadow mode |
-| `Approval`/`BreakGlass` | `ops/approval.py` | hash-bound, TTL, scope, actor-kind, signature |
+| `Approval`/`BreakGlass` | `ops/approval.py` | hash-bound, TTL, scope, actor-kind, `integrity_seal` (tamper evidence — **not** signer authentication; `signature` remains a deprecated alias) |
 | `ExecutionEnvelope` | `ops/envelope.py` | binds plan hash + decisions + approvals + actions |
 | `Operation`/`OperationLedger` | `ops/operation.py` | FSM + locks + append-only hash-chained ledger |
-| verification | `ops/verify.py` | observed-delta windows + SLO → converged/regressed |
-| `RollbackPlan` | `ops/rollback.py` | derived per action; saga compensation; prod≠auto |
+| verification | `ops/verify.py` | observed-delta windows + SLO + verification coverage → converged/regressed |
+| `RollbackMaterial` | `ops/material.py` | immutable, content-addressed pre/post-state capture per mutating step |
+| `RollbackPlan` v2 | `ops/rollback.py` | material-built strategy/status; executable only from captured evidence — see ROLLBACK.md |
 
 ## Typed action catalog
 
@@ -147,10 +148,20 @@ carries execution or signing authority.
 | `PF-OPS-UNKNOWN-OPERATION` | status/rollback against an unstored op |
 | `PF-OPS-MCP-NO-EXECUTE` | mutating verb requested over the MCP surface |
 | `PF-OPS-MCP-NO-APPROVAL` | approval minting requested over MCP — human, host-side only |
+| `PF-OPS-NO-DELTA` | mutating plan minted without ExpectedDelta/unknown_dimensions |
+| `PF-OPS-ROLLBACK-NOT-EXECUTABLE` | rollback status ≠ executable — replan/manual/impossible/unresolved |
+| `PF-OPS-ROLLBACK-PRECONDITION` | resource drifted since forward failure — human review |
+| `PF-OPS-PLAN-REUSE` | Terraform forward plan reused as its own rollback |
+| `PF-OPS-APPROVAL-TAMPERED` | approval payload modified after integrity seal |
+| `PF-OPS-RUNBOOK-BAD-REF` / `PF-OPS-RUNBOOK-REF-MISSING` | runbook `from:` ref outside allowlisted roots / absent in captured state |
 
 ## Lab & evals
 
-10 `ops-*` lab scenarios (drift, selector, rollout, denial, expiry,
-hash mismatch, staleness, lock conflict, partial failure, break-glass)
-replay the pipeline with scripted transports — `lab run-all` covers
-them; `evals/cases/ops-*` assert the governed verdicts.
+15 `ops-*` lab scenarios (drift, selector, rollout, denial, expiry,
+hash mismatch, staleness, lock conflict, partial failure, break-glass
++ 5 cycle-4.1 rollback scenarios: scale/annotate/gitops/terraform/
+impossible) replay the pipeline with scripted transports —
+`lab run-all` covers them; `evals/cases/ops-*` + `rollback-*` +
+`*-seal|tamper|conflict|refusal` assert the governed verdicts.
+Adversarial R1–R6 evidence: `tests/test_ops_adversarial41.py`.
+See ROLLBACK.md for the material→plan→execution→verification model.

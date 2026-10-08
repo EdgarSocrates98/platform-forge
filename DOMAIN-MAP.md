@@ -27,7 +27,7 @@ it · what a change can affect`
 | capability/interop | `mcp/registry`, `forge` | what can this forge do, and for whom? | contracts, manifests, A2A envelopes |
 | live | `live` | what is actually running, how fresh is the evidence? | observation envelopes, collectors, reconcile, topology, drift journal |
 | lab/evals | `lab`, `evals` | does the machinery prove itself? | scenarios, eval corpus, coverage, precision |
-| ops/control-plane | `ops` | governed change: intent→plan→approve→execute→verify→audit | `ops/*`, typed actions, envelopes, ledger, store |
+| ops/control-plane | `ops` | governed change: intent→plan→approve→execute→verify→audit | `ops/*`, typed actions, envelopes, ledger, store, rollback materials/plans (ROLLBACK.md) |
 | store/bench | `core/artifacts`, `bench` | what does it cost to know? | artifact store, measured benchmarks |
 
 ## Explicit non-goals

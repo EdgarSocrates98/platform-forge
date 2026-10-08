@@ -105,7 +105,7 @@ refuse `PF-OPS-UNSTRUCTURED`. See OPS.md.
 | `ops run --spec ops.yaml [--execute]` | Full governed pipeline on a spec (intent/steps/policies/approvals/observation/verify). Persists to the operation store; emits the operational graph projection. |
 | `ops approve` | Mint a hash-bound approval artifact (`--subject-hash/--actor/--approval-type/--expires-at/--bounds/--scope`). Never executes. |
 | `ops status` / `ops history` | Stored operation state / append-only ledger entries (`--operation-id`, `history --resource`). |
-| `ops rollback --operation-id [--execute]` | Execute the stored rollback plan (dry-run default). |
+| `ops rollback --operation-id [--execute] [--post-rollback obs.json]` | Execute the stored rollback plan (dry-run default). Only `status=executable` plans run; `--post-rollback` supplies post-rollback observation `{step_id: {dim: value}}` for restored/partially/regressed verification. |
 | `ops autorem-eval --plan f.yaml` | A5 auto-remediation eligibility gate. |
 | `ops analytics` | LEARN: outcome/rollback/failure analytics over the store. |
 | `ops graph [--operation-id]` | Operational Graphfy projection rebuilt from ledgers. |

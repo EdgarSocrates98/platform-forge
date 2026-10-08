@@ -2,6 +2,60 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
+## [Unreleased] — Cycle 4.1 (Operational Correctness, Rollback Integrity & Closure)
+
+Correctness and closure pass over Cycle 4: rollback becomes
+material-bound evidence work instead of blind inversion, mutating
+plans must declare expected outcomes, and approval terminology
+stops implying identity proof it doesn't have. See ROLLBACK.md.
+
+### Added
+- `ops/material.py` — `RollbackMaterial` (immutable, content-addressed,
+  pre/post-state + SoT + limitations) + `MaterialStore` write-once CAS.
+- `ops/rollback_builders.py` — per-action registry emitting typed
+  rollback actions or replan descriptors; terraform/tofu saved plans
+  → `requires-replan` (`PF-OPS-PLAN-REUSE` on reuse attempts).
+- `RollbackPlan` v2 — strategy/status/material_hashes/replans/
+  limitations; "ready" only when `status == "executable"`.
+- `engine.execute_rollback()` — typed trigger, shared locks,
+  idempotent repeats, rollback preconditions (drift → human review),
+  failed rollback → `failed` + human escalation, §40 receipt.
+- `engine.verify_rollback()` — restored/partially-restored/regressed/
+  unknown from post-rollback observation vs captured pre-state.
+- `ExpectedDelta` enforcement — mutating plans without
+  adds/removes/changes or `unknown_dimensions` refuse to mint
+  (`PF-OPS-NO-DELTA`); `verification_coverage` downgrades vacuous
+  convergence to `unknown`.
+- `integrity_seal` — approval seal renamed to honest semantics
+  (tamper evidence, never signer authentication); `signature` kept
+  as deprecated serialization alias; tampered approvals →
+  `PF-OPS-APPROVAL-TAMPERED`.
+- SoT conflict handling — `source_of_truth` captured per material;
+  rollback status feeds `assess_risk` (manual-only/impossible lifts
+  the risk ceiling — `git.push` → R5 → dual-human approval).
+- opgraph completeness — edges cite exact ledger entry receipts,
+  step receipts + material hashes on `mutates`, `rolled_back_by`
+  node/edge; `validate_projection()` reports orphans/gaps.
+- Runbook safe refs — `{from: pre_state.x}`/`params.x`/`result.x`
+  allowlisted binding, no eval (`PF-OPS-RUNBOOK-BAD-REF`/`REF-MISSING`).
+- `PlatformRequest.to_change_intent()` — golden-path provisioning
+  uses the same governed contracts; no parallel workflow.
+- 8 `ops-*` validation gates in `scripts/validate.py` (+ CI steps):
+  contracts, approval, execution, rollback, verification, policy,
+  evals, lab.
+- Lab: 5 new scenarios (ops-rollback-scale/-annotate/-gitops/
+  -terraform/-impossible); runner gains rollback expectations +
+  `trigger_rollback`.
+- Evals: 12 new cases + `ops-invariant` probe check (tamper, seal,
+  delta refusal, SoT conflict, plan reuse, blind inverse, builders).
+- `tests/test_ops_adversarial41.py` — R1–R6 adversarial waves.
+
+### Fixed
+- `RollbackMaterial.payload()` deep-copies mutable fields — a mutated
+  `to_dict()` could previously corrupt the live object's hash.
+- `kubernetes.annotate` executor accepts remove-only annotations
+  (`key-` form) — required for pure-additive forward changes.
+
 ## [Unreleased] — Cycle 4 (Governed Platform Engineering Control Plane)
 
 Platform Forge evolves from live intelligence into a governed control

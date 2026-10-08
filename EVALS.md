@@ -24,6 +24,15 @@ rules) or `expect.sources` (knowledge cases).
 grader fails on *overclaim* — a rule expected unresolved that emitted a
 strong verdict.
 
+`type: live` cases grade runtime checks directly:
+
+- `check: ops-scenario` — replays a lab `ops.yaml` fixture through the
+  governed pipeline (cycle 4).
+- `check: ops-invariant` — runs a named correctness probe from
+  `evals/ops_invariants.py` (`expect.probe`): material/approval-seal
+  tamper, no-delta refusal, SoT conflict, plan reuse, blind-inverse
+  refusal, builder semantics, unknown rollback (cycle 4.1).
+
 ## Variants per rule (§121)
 
 positive, negative, boundary, unresolved, version — coverage is reported
@@ -43,6 +52,6 @@ safety contract (credentials, region/context, budget, cleanup).
 
 ## Current corpus
 
-56 eval cases, 27 lab scenarios, coverage 63/63 rules, precision
+68 eval cases, 32 lab scenarios, coverage 63/63 rules, precision
 measured against negative/boundary corpus (§127). Coverage is evidence
 of exercise — not a correctness proof.
