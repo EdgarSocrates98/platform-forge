@@ -439,6 +439,131 @@ AGENTS: dict[str, AgentSpec] = {a.name: a for a in [
         done_when="graph answer emitted with provenance or unresolved "
                   "named",
     ),
+    AgentSpec(
+        name="platform-aws-specialist", role="specialist",
+        domains=("aws", "cloud"),
+        mission="read cloud inventory/IAM/VPC/EKS/RDS/S3 evidence",
+        when_to_enter="cloud account/organization/resource question",
+        when_not_to_enter="no inventory or live-snapshot evidence",
+        allowed_verbs=("analyze iam", "analyze sbom", "inventory",
+                       "judge"),
+        allowed_capabilities=("platform.live.aws.snapshot",
+                              "platform.analyze.security",
+                              "platform.judge"),
+        required_evidence=("fact_ids", "coverage"),
+        never="calls provider APIs itself — snapshots arrive through "
+              "adapters; treats a partial inventory as complete",
+        inputs=("inventory", "iam policies", "config snapshots"),
+        done_when="facts+judge emitted with coverage or unresolved "
+                  "named",
+    ),
+    AgentSpec(
+        name="platform-crossplane-specialist", role="specialist",
+        domains=("crossplane",),
+        mission="read XRD/XR/Claim/Composition/provider evidence",
+        when_to_enter="Crossplane artifacts or managed-resource question",
+        when_not_to_enter="no Crossplane artifacts in scope",
+        allowed_verbs=("analyze crossplane", "judge"),
+        allowed_capabilities=("platform.analyze.crossplane",
+                              "platform.judge"),
+        required_evidence=("fact_ids",),
+        never="treats a Claim as provisioned without observed state",
+        inputs=("xrd", "compositions", "claims"),
+        done_when="facts+judge emitted or unresolved named",
+    ),
+    AgentSpec(
+        name="platform-fleet-specialist", role="specialist",
+        domains=("fleet",),
+        mission="fleet coverage, org topology, multi-cluster/"
+                "multi-account portfolio evidence",
+        when_to_enter="fleet/member/portfolio question",
+        when_not_to_enter="no workspace.yaml members or observations",
+        allowed_verbs=("fleet analyze", "fleet status",
+                       "analyze drift"),
+        allowed_capabilities=("platform.fleet.analyze",),
+        required_evidence=("coverage",),
+        never="extrapolates one member to the fleet; hides uncovered "
+              "members",
+        inputs=("member observations", "workspace.yaml"),
+        done_when="coverage map emitted; uncovered members named",
+    ),
+    AgentSpec(
+        name="platform-policy-specialist", role="specialist",
+        domains=("policy", "governance"),
+        mission="OPA/Rego/Kyverno/CEL evidence, policy analytics, "
+                "exceptions, approval rules, autonomy boundaries",
+        when_to_enter="policy/governance/exceptions question",
+        when_not_to_enter="no policy artifacts; approval decision "
+                          "itself (governance gate)",
+        allowed_verbs=("policy check", "judge", "explain"),
+        allowed_capabilities=("platform.judge", "platform.policy"),
+        required_evidence=("fact_ids",),
+        never="approves or denies a change — it reads policy; the "
+              "human gate decides",
+        inputs=("policies", "exceptions", "approvals"),
+        done_when="policy findings emitted or unresolved named",
+    ),
+    AgentSpec(
+        name="platform-capacity-specialist", role="specialist",
+        domains=("capacity", "reliability"),
+        mission="capacity/headroom/quota/failure-domain/reliability "
+                "hotspot evidence",
+        when_to_enter="capacity/headroom/quota/reliability question",
+        when_not_to_enter="no capacity or telemetry facts",
+        allowed_verbs=("observe capacity", "observe slo", "judge"),
+        allowed_capabilities=("platform.observe", "platform.judge"),
+        required_evidence=("fact_ids", "freshness"),
+        never="projects capacity without measured headroom",
+        inputs=("quota facts", "usage metrics", "topology"),
+        done_when="facts+judge emitted or unresolved named",
+    ),
+    AgentSpec(
+        name="platform-product-specialist", role="specialist",
+        domains=("product", "dx"),
+        mission="self-service/golden-path/developer-friction/capability-"
+                "health/maturity evidence",
+        when_to_enter="DX/adoption/golden-path question",
+        when_not_to_enter="no usage or request signals",
+        allowed_verbs=("product", "capability list"),
+        allowed_capabilities=("platform.product",),
+        required_evidence=("fact_ids",),
+        never="invents adoption; counts intention as usage",
+        inputs=("usage signals", "requests", "capability health"),
+        done_when="DX findings emitted or unresolved named",
+    ),
+    AgentSpec(
+        name="platform-ai-infra-specialist", role="specialist",
+        domains=("ai", "gpu"),
+        mission="AI infrastructure only: GPU/MIG/model-serving/AI "
+                "capacity/cost/SLO evidence",
+        when_to_enter="GPU/model-serving/ai-capacity question",
+        when_not_to_enter="model development, prompt engineering or "
+                          "RAG architecture (explicitly out of scope)",
+        allowed_verbs=("analyze ai", "finops costs", "judge"),
+        allowed_capabilities=("platform.analyze.ai",
+                              "platform.finops.analyze"),
+        required_evidence=("fact_ids",),
+        never="advises on model quality/prompts; claims GPU savings "
+              "without measured utilization",
+        inputs=("gpu inventory", "serving metrics", "cost rows"),
+        done_when="facts+judge emitted or unresolved named",
+    ),
+    AgentSpec(
+        name="platform-federation-specialist", role="specialist",
+        domains=("federation",),
+        mission="ForgeNode/export-policy/summary-exchange/authority-"
+                "boundary/fleet-federation evidence",
+        when_to_enter="federation/forgenode/sibling-forge question",
+        when_not_to_enter="no federation config or export policy",
+        allowed_verbs=("federation status", "federation export",
+                       "judge"),
+        allowed_capabilities=("platform.federation",),
+        required_evidence=("fact_ids",),
+        never="exports raw facts across the authority boundary — "
+              "summaries only, per export policy",
+        inputs=("forgenode configs", "export policies"),
+        done_when="federation findings emitted or unresolved named",
+    ),
     # --- reviewers / referee ------------------------------------------
     AgentSpec(
         name="platform-evidence-reviewer", role="reviewer", domains=("evidence",),

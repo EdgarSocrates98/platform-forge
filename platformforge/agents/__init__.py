@@ -48,6 +48,7 @@ from platformforge.agents.planner import plan
 from platformforge.agents.playbook import playbook
 from platformforge.agents.referee import referee
 from platformforge.agents.roster import AGENTS, AgentSpec, coordinator_for, resolve
+from platformforge.agents.specialists import finding, grade
 from platformforge.agents.taskspec import (
     expire,
     require_sealed,
@@ -86,6 +87,8 @@ __all__ = [
     "dispatch_plan",
     "envelope_for",
     "expire",
+    "finding",
+    "grade",
     "load_loops",
     "plan",
     "playbook",
