@@ -12,7 +12,7 @@ from typing import Any
 
 import yaml
 
-CONFIG_SCHEMA_VERSION = 2
+CONFIG_SCHEMA_VERSION = 3
 CONFIG_PATH = ".platformforge/config.yaml"
 
 # every domain gets safe deterministic defaults — absence ≠ permissive
@@ -45,6 +45,16 @@ DEFAULTS: dict[str, Any] = {
                        "owner": {"autonomy": "A4"},
                        "oncall": {"autonomy": "A4",
                                   "break_glass": True}}},
+    # cycle5 phase O — feature flags + privacy/retention (§319–322)
+    "features": {"fleet": True, "analytics": True,
+                 "optimization": True, "golden_path": True,
+                 "ai_platform": True,
+                 "federation": False},   # trust boundary — opt-in
+    "privacy": {"dx_metrics": "team-level-only",
+                "person_identifiers": "forbidden",
+                "retention": {"analytics_days": 90,
+                              "snapshot_days": 365,
+                              "right_to_forget": True}},
 }
 
 _MIGRATIONS = {}
@@ -70,7 +80,19 @@ def _migrate_1_to_2(raw: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-_MIGRATIONS.update({0: _migrate_0_to_1, 1: _migrate_1_to_2})
+def _migrate_2_to_3(raw: dict[str, Any]) -> dict[str, Any]:
+    """v2 → v3: features + privacy domains (§319); telemetry stays
+    pinned local-only regardless of prior value."""
+    out = dict(raw)
+    out.setdefault("features", dict(DEFAULTS["features"]))
+    out.setdefault("privacy", dict(DEFAULTS["privacy"]))
+    out.setdefault("retention", {})["telemetry"] = "local-only"
+    out["schema_version"] = 3
+    return out
+
+
+_MIGRATIONS.update({0: _migrate_0_to_1, 1: _migrate_1_to_2,
+                    2: _migrate_2_to_3})
 
 
 def load_config(path: str | Path | None = None,
@@ -119,6 +141,14 @@ def _deep_merge(base: dict, over: dict) -> dict:
     return out
 
 
+def feature_enabled(name: str, cfg: dict[str, Any] | None = None,
+                    root: str | Path | None = None) -> bool:
+    """§319 — feature flag check; missing config → documented default
+    (not silently enabled for boundary features)."""
+    c = cfg or load_config(root=root).get("config", DEFAULTS)
+    return bool(c.get("features", {}).get(name, False))
+
+
 def validate_config(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     """Semantic validation — refuse unsafe ceilings."""
     v = []
@@ -131,4 +161,15 @@ def validate_config(cfg: dict[str, Any]) -> list[dict[str, Any]]:
                                 "include prod"})
     for f_ in cfg.get("policies", {}).get("files", []):
         pass   # existence checked by host, not core
+    # §321 — privacy invariants are not configurable downward
+    priv = cfg.get("privacy", {})
+    if priv.get("dx_metrics") not in (None, "team-level-only") or \
+            priv.get("person_identifiers") not in (None, "forbidden"):
+        v.append({"refusal": "PF-OPS-CONFIG-PRIVACY",
+                  "unlock": "dx_metrics must stay team-level-only; "
+                            "person_identifiers stays forbidden"})
+    if cfg.get("retention", {}).get("telemetry") != "local-only":
+        v.append({"refusal": "PF-OPS-CONFIG-TELEMETRY",
+                  "unlock": "telemetry is pinned local-only — no "
+                            "phone-home mode exists"})
     return v

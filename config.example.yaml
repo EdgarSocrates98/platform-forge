@@ -1,8 +1,8 @@
-# Platform Forge — .platformforge/config.yaml (schema v2)
+# Platform Forge — .platformforge/config.yaml (schema v3)
 # Every field shown with its default; the file is optional — missing
 # config means safe defaults (offline-first, dry-run, A4 ceiling).
 
-schema_version: 2
+schema_version: 3
 
 autonomy:
   max: A4                      # platform ceiling; A6 is a non-goal
@@ -32,7 +32,23 @@ operations:
 retention:
   ledger_days: 365
   observation_days: 90
-  telemetry: local-only        # never phones home
+  telemetry: local-only        # pinned — no phone-home mode exists
+
+features:                      # cycle5 — analytics surface flags
+  fleet: true
+  analytics: true
+  optimization: true
+  golden_path: true
+  ai_platform: true
+  federation: false            # trust boundary — opt-in only
+
+privacy:
+  dx_metrics: team-level-only  # per-person metrics are forbidden
+  person_identifiers: forbidden
+  retention:
+    analytics_days: 90
+    snapshot_days: 365
+    right_to_forget: true
 
 live:
   offline_default: true

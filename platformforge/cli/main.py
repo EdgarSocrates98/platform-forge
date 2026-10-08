@@ -568,6 +568,12 @@ def cmd_bench(args: argparse.Namespace) -> int:
     """§148–150 — measured benchmarks over the eval corpus fixtures."""
     from platformforge import bench
 
+    if args.bench_cmd == "scale":
+        # cycle5 §317 — controlled-size graph + analytics store bench
+        from platformforge.graph.bench import run_scale_benchmarks
+        sizes = tuple(int(s) for s in (args.sizes or "50,200,800")
+                      .split(","))
+        return _emit(run_scale_benchmarks(sizes), args)
     fn = {"run": bench.run_benchmark, "tokens": bench.token_benchmark}[args.bench_cmd]
     return _emit(fn(repeat=args.repeat), args)
 
@@ -3092,8 +3098,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("bench", help="§148–150 measured benchmarks")
     _add_common(sp)
-    sp.add_argument("bench_cmd", choices=["run", "tokens"], nargs="?", default="run")
+    sp.add_argument("bench_cmd", choices=["run", "tokens", "scale"], nargs="?", default="run")
     sp.add_argument("--repeat", type=int, default=3)
+    sp.add_argument("--sizes", help="comma list for scale bench (default 50,200,800)")
     sp.set_defaults(func=cmd_bench)
     return p
 
