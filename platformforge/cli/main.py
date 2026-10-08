@@ -1360,6 +1360,41 @@ def cmd_live(args: argparse.Namespace) -> int:
             c = Cluster(spec.pop("cluster_id"), **spec)
             return _emit({"registered": reg.register(c)}, args)
         return _emit({"clusters": reg.list()}, args)
+    if sub == "drift":
+        from platformforge.graph.events import EventLedger
+        from platformforge.live.drift import dedup_events, diff_observations
+        store = ObservationStore(args.repo)
+        def _env(ref: str):
+            p = Path(ref)
+            if p.exists():
+                from platformforge.live.envelope import loads
+                return loads(p.read_text())
+            return store.get(ref)
+        before_ref, after_ref = args.before, args.after
+        if not (before_ref and after_ref):
+            rows = store.list(limit=2)
+            if len(rows) < 2:
+                return _emit({"refusal": "PF-LIVE-NEED-2-OBS",
+                              "unlock": "collect ≥2 observations or pass "
+                                        "--before/--after"}, args, 2)
+            after_ref, before_ref = (rows[0]["observation_id"],
+                                     rows[1]["observation_id"])
+        b, a = _env(before_ref), _env(after_ref)
+        if b is None or a is None:
+            return _emit({"refusal": "PF-LIVE-NO-OBSERVATION",
+                          "unlock": "valid observation ids or files"},
+                         args, 2)
+        out = diff_observations(b, a)
+        ledger = EventLedger(args.repo)
+        prior = ledger.events(kind="drift")
+        kept, suppressed = dedup_events(out["drift"],
+                                        [e.get("event", e) for e in prior])
+        for e in kept:
+            ledger.append({"kind": "drift", "event": e,
+                           "observation_id": a.observation_id})
+        out["journaled"] = len(kept)
+        out["suppressed_dupes"] = suppressed
+        return _emit(out, args, 2 if args.strict and out["drift"] else 0)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
@@ -1598,7 +1633,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("live_cmd",
                     choices=["snapshot", "status", "doctor", "reconcile",
                              "rbac", "required-permissions", "topology",
-                             "clusters"])
+                             "clusters", "drift"])
     sp.add_argument("--provider", default="kubernetes",
                     choices=["kubernetes", "aws"])
     sp.add_argument("--region", action="append",
@@ -1633,6 +1668,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="topology: persist runtime edges into graph")
     sp.add_argument("--register", default="",
                     help="clusters: register cluster JSON spec")
+    sp.add_argument("--before", default="", help="drift: obs id/file")
+    sp.add_argument("--after", default="", help="drift: obs id/file")
     sp.add_argument("--max-objects", type=int, default=0)
     sp.add_argument("--max-api-calls", type=int, default=0)
     sp.add_argument("--max-bytes", type=int, default=0)
