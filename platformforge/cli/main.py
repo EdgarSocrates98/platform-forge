@@ -1395,6 +1395,29 @@ def cmd_live(args: argparse.Namespace) -> int:
         out["journaled"] = len(kept)
         out["suppressed_dupes"] = suppressed
         return _emit(out, args, 2 if args.strict and out["drift"] else 0)
+    if sub == "incident":
+        if not args.incident:
+            return _emit({"refusal": "PF-LIVE-NO-INCIDENT",
+                          "unlock": "pass --incident <incident.json>"},
+                         args, 2)
+        from platformforge.live.incident import build_timeline, postmortem_v3, score_candidates
+        inc = json.loads(Path(args.incident).read_text())
+        cands = (json.loads(Path(args.changes).read_text())
+                 if args.changes else [])
+        events = (json.loads(Path(args.events).read_text())
+                  if args.events else [])
+        graph = _load_graph_or_refuse(args.repo)
+        tl = build_timeline(events + [inc])
+        ranked = score_candidates(inc, cands,
+                                  window_s=float(args.window),
+                                  graph=graph)
+        out = {**ranked,
+               "postmortem": postmortem_v3(inc, tl, ranked)["postmortem"],
+               "timeline_counts": tl["counts"]}
+        return _emit(out, args,
+                     2 if args.strict and not any(
+                         h["status"] in ("confirmed", "supported")
+                         for h in ranked["ranked"]) else 0)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
@@ -1633,7 +1656,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("live_cmd",
                     choices=["snapshot", "status", "doctor", "reconcile",
                              "rbac", "required-permissions", "topology",
-                             "clusters", "drift"])
+                             "clusters", "drift", "incident"])
     sp.add_argument("--provider", default="kubernetes",
                     choices=["kubernetes", "aws"])
     sp.add_argument("--region", action="append",
@@ -1670,6 +1693,14 @@ def build_parser() -> argparse.ArgumentParser:
                     help="clusters: register cluster JSON spec")
     sp.add_argument("--before", default="", help="drift: obs id/file")
     sp.add_argument("--after", default="", help="drift: obs id/file")
+    sp.add_argument("--incident", default="",
+                    help="incident: incident JSON {timestamp,resources}")
+    sp.add_argument("--changes", default="",
+                    help="incident: candidate changes JSON list")
+    sp.add_argument("--events", default="",
+                    help="incident: timeline events JSON list")
+    sp.add_argument("--window", type=int, default=3600,
+                    help="incident: correlation window seconds")
     sp.add_argument("--max-objects", type=int, default=0)
     sp.add_argument("--max-api-calls", type=int, default=0)
     sp.add_argument("--max-bytes", type=int, default=0)
