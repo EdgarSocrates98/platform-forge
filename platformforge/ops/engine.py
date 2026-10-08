@@ -23,7 +23,7 @@ from platformforge.ops.operation import ExecutionStep, LockTable, Operation, Ope
 from platformforge.ops.policy import Policy, evaluate
 from platformforge.ops.preconditions import check_preconditions
 from platformforge.ops.risk import assess, classify_reversibility
-from platformforge.ops.rollback import RollbackPlan, compensate_for, derive_rollback
+from platformforge.ops.rollback import RollbackPlan, build_rollback_plan, compensate_for, derive_rollback
 from platformforge.ops.source_of_truth import resolve
 
 
@@ -118,6 +118,11 @@ def mint_envelope(plan: ChangePlan, *, execution_id: str,
             return {"refusal": "PF-OPS-POLICY-BLOCK",
                     "unlock": f"policy {d.policy_id} → {eff}; resolve "
                               "before minting an envelope"}
+    # Cycle 4.1 §E — a mutating plan with NO declared delta refuses to
+    # mint. `unknown_dimensions` counts as an honest declaration; a
+    # completely empty delta does not.
+    if delta_refusal(plan) is not None:
+        return delta_refusal(plan)
     actions = [{"step_id": s.step_id, "action": s.action,
                 "params": s.params} for s in plan.steps]
     env = ExecutionEnvelope(
@@ -138,6 +143,36 @@ def mint_envelope(plan: ChangePlan, *, execution_id: str,
                 "unlock": "envelope validation failed",
                 "violations": violations}
     return env
+
+
+def delta_refusal(plan: ChangePlan) -> dict[str, Any] | None:
+    """Cycle 4.1 — mutating steps require an ExpectedDelta declaration
+    (adds/removes/changes OR explicit unknown_dimensions). Read-only
+    plans (validate/show/observe/diff) may omit it."""
+    ed = plan.expected_delta
+    declared = bool(getattr(ed, "adds", None)
+                    or getattr(ed, "removes", None)
+                    or getattr(ed, "changes", None)
+                    or getattr(ed, "unknown_dimensions", None))
+    if declared:
+        return None
+    mutating = [s.action for s in plan.steps
+                if (spec_for(s.action) or _MISSING).mutating]
+    if mutating:
+        return {"refusal": "PF-OPS-NO-DELTA",
+                "unlock": "declare expected_delta (adds/removes/changes "
+                          "or explicit unknown_dimensions) — mutating "
+                          "plans cannot mint without an expected "
+                          "outcome",
+                "mutating_steps": mutating}
+    return None
+
+
+class _MissingSpec:
+    mutating = True   # unknown action → treat as mutating (conservative)
+
+
+_MISSING = _MissingSpec()
 
 
 def _dominant_executor(plan: ChangePlan) -> str:
@@ -181,6 +216,7 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
             dry_run: bool = True,
             break_glass: BreakGlass | None = None,
             preconditions: dict[str, Any] | None = None,
+            material_store=None,
             at: str | None = None) -> dict[str, Any]:
     """§8 execution stages: approval → preconditions → locks → steps.
     `dry_run=True` is the default; callers must opt out explicitly."""
@@ -250,7 +286,14 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
             return {"ok": False, "stage": f"transition→{st}",
                     "refusal": r, "state": op.state}
 
-    # 5. DAG execution — waves; mutating steps need transports
+    # 5. DAG execution — waves; mutating steps need transports.
+    # Cycle 4.1 §30: every mutating step captures RollbackMaterial
+    # (pre-state BEFORE the step, execution result AFTER) into the
+    # content-addressed store — never reused forward params.
+    from platformforge.ops.material import MaterialStore, capture_material
+    mstore = material_store or MaterialStore()
+    pre_state_ctx = (preconditions or {}).get("pre_state") or {}
+    materials: dict[str, Any] = {}
     plan_steps = {s["step_id"]: s for s in env.actions}
     results: list[dict[str, Any]] = []
     idem_seen: set[str] = set()
@@ -269,9 +312,21 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
                                     "reason": "idempotent-duplicate"})
                 continue
             idem_seen.add(key)
+            mat = None
+            if spec and spec.mutating:
+                mat = capture_material(
+                    a["action"], sid, op.operation_id,
+                    a.get("params", {}),
+                    spec.pre_state_requirements,
+                    pre_state=_capture_pre_state(
+                        a["action"], a.get("params", {}),
+                        pre_state_ctx.get(sid)),
+                    provenance="observed" if pre_state_ctx.get(sid)
+                    else "declared")
             ledger.append("step.started", op.operation_id,
                           data={"step_id": sid, "action": a["action"],
-                                "dry_run": dry_run})
+                                "dry_run": dry_run,
+                                "material": mat.hash() if mat else None})
             if spec is None or ex is None:
                 r = {"ok": False, "refusal": {
                     "refusal": "PF-OPS-UNKNOWN-ACTION",
@@ -281,6 +336,18 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
                 rec = ex.run_step(sid, a["action"], a.get("params", {}),
                                   transport=t, dry_run=dry_run)
                 r = rec.to_dict()
+            if mat is not None:
+                # post-result capture (§12/§31) + persist immutable
+                mat.execution_result.update(
+                    {k: v for k, v in (r.get("outputs") or {}).items()
+                     if k in spec.post_result_requirements
+                     or k.endswith("commit") or k in ("pr", "output")})
+                for k in spec.post_result_requirements:
+                    if k in r and k not in mat.execution_result:
+                        mat.execution_result[k] = r[k]
+                mstore.put(mat)
+                r["material_hash"] = mat.hash()
+                materials[sid] = mat
             results.append(r)
             if r.get("ok"):
                 ledger.append("step.completed", op.operation_id,
@@ -307,9 +374,74 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
 
     op.transition("verifying", ledger)
     locks.release(op.operation_id, ledger)
+    # §30 — rebuild the rollback plan against captured materials so the
+    # post-execution plan is honest about executability.
+    fwd_steps = [{"step_id": a["step_id"], "action": a["action"],
+                  "params": a.get("params", {})} for a in env.actions]
+    rb = build_rollback_plan(
+        fwd_steps, materials=materials,
+        context={"environment": (preconditions or {}).get(
+            "environment", "unknown"),
+            "automatic_allowed": (preconditions or {}).get(
+                "automatic_rollback", False)})
     return {"ok": True, "stage": "execute", "dry_run": dry_run,
             "results": results, "state": op.state,
-            "ledger_tip": ledger.tip}
+            "ledger_tip": ledger.tip,
+            "materials": {sid: m.to_dict() for sid, m
+                          in materials.items()},
+            "material_hashes": {sid: m.hash() for sid, m
+                                in materials.items()},
+            "rollback_plan": rb.to_dict()}
+
+
+def _capture_pre_state(action: str, params: dict[str, Any],
+                       ctx_state: dict[str, Any] | None
+                       ) -> dict[str, Any]:
+    """§8/§31 — assemble the pre-change snapshot for one step.
+
+    Sources, weakest→strongest:
+      1. params the action itself declares (`current_replicas`,
+         `resource_version`, `to_revision`…)
+      2. caller-supplied `pre_state` ctx (observation-sourced values
+         per step_id) — wins on conflict, provenance observed.
+    """
+    pre: dict[str, Any] = {}
+    if action == "kubernetes.scale":
+        if params.get("current_replicas") is not None:
+            pre["replicas"] = params["current_replicas"]
+        if params.get("resource_version"):
+            pre["resource_version"] = params["resource_version"]
+    elif action == "kubernetes.annotate":
+        if params.get("previous_annotations") is not None:
+            pre["annotations"] = dict(params["previous_annotations"])
+        if params.get("resource_version"):
+            pre["resource_version"] = params["resource_version"]
+    elif action == "kubernetes.rollout_restart":
+        if params.get("current_revision") is not None:
+            pre["revision"] = params["current_revision"]
+    elif action == "argocd.sync":
+        for k in ("history_id", "previous_revision", "repo",
+                  "git_revert_commit"):
+            if params.get(k) is not None:
+                pre[k] = params[k]
+    elif action in ("terraform.apply_saved_plan",
+                    "tofu.apply_saved_plan"):
+        for k in ("source_ref", "workspace", "state_serial",
+                  "resource_addresses", "plan_hash"):
+            if params.get(k) is not None:
+                pre[k] = params[k]
+    elif action in ("git.apply_patch", "git.commit", "git.open_pr"):
+        for k in ("pre_change_commit", "repo"):
+            if params.get(k) is not None:
+                pre[k] = params[k]
+    elif action == "git.delete_branch":
+        if params.get("branch_sha") is not None:
+            pre["branch_sha"] = params["branch_sha"]
+    if ctx_state:
+        for k, v in ctx_state.items():   # observed wins (§7)
+            if v is not None:
+                pre[k] = v
+    return pre
 
 
 def _waves(env: ExecutionEnvelope) -> list[list[str]]:
@@ -348,18 +480,55 @@ def finalize_verify(op: Operation, ledger: OperationLedger,
 def execute_rollback(op: Operation, env: ExecutionEnvelope, *,
                      transports: dict[str, Any] | None = None,
                      ledger: OperationLedger | None = None,
+                     locks: LockTable | None = None,
                      completed_results: list[dict[str, Any]] | None = None,
+                     materials: dict[str, Any] | None = None,
+                     rollback_plan: dict[str, Any] | None = None,
+                     trigger: dict[str, Any] | None = None,
+                     post_rollback_state: dict[str, Any] | None = None,
                      dry_run: bool = True,
                      at: str | None = None) -> dict[str, Any]:
-    """§119–127 — execute the envelope's RollbackPlan through the same
-    typed-action boundary. FSM: rollback-planned → rolling-back →
-    rolled-back. `manual-only`/`impossible`/`unknown` strategies refuse —
-    rollback is never invented. With no plan actions, completed forward
-    steps are compensated in reverse (saga, §105–106)."""
+    """§40–43/§119–127/§149–160 — execute a rollback built from
+    MATERIAL, under the same locks and idempotency as the forward pass.
+
+    - `trigger` (§98): typed cause {type, verification_id,
+      observed_delta, slo_evidence, at}. Never a bare string.
+    - `rollback_plan` (v2): built from captured materials. Only
+      status=executable runs typed actions; manual-only/impossible/
+      unresolved/requires-replan refuse honestly.
+    - Idempotent (§156): an already rolled-back op returns the prior
+      receipt instead of re-executing; same locks as forward (§158).
+    - A failed rollback step lands in `failed` with stage=rollback —
+      never `rolled-back` (§149–153); no automatic second rollback.
+    - `post_rollback_state` (§41–43): caller-supplied observation used
+      to verify restored|partially-restored|regressed|unknown.
+    """
     ledger = ledger or OperationLedger()
-    rb = env.rollback or {}
+    locks = locks or LockTable()
+    trigger = dict(trigger or {"type": "manual"})
+    rb = dict(rollback_plan or env.rollback or {})
     strategy = rb.get("strategy", "unknown")
+    status = rb.get("status", "unresolved")
+
+    # §156 — duplicate rollback request → idempotent receipt
+    if op.state == "rolled-back":
+        return {"ok": True, "state": op.state,
+                "idempotent": "already-rolled-back"}
+
+    # §36 — only executable plans execute; everything else is an
+    # honest refusal, never an invented action
+    if status != "executable":
+        return {"ok": False, "state": op.state,
+                "refusal": {"refusal": "PF-OPS-ROLLBACK-NOT-EXECUTABLE",
+                            "unlock": f"rollback status is "
+                                      f"'{status}' — manual remediation "
+                                      "or a new governed plan required"},
+                "strategy": strategy, "status": status,
+                "replans": rb.get("replans", []),
+                "limitations": rb.get("limitations", [])}
+
     rb_actions = list(rb.get("actions", []))
+    mats = dict(materials or {})
     if not rb_actions and completed_results:
         comp = compensate_for([{"step_id": r.get("step_id"),
                                 "action": r.get("action"),
@@ -367,7 +536,8 @@ def execute_rollback(op: Operation, env: ExecutionEnvelope, *,
                                     "params", {}),
                                 "status": "completed" if r.get("ok")
                                 else "failed"}
-                               for r in completed_results])
+                               for r in completed_results],
+                              materials=mats)
         rb_actions = comp["compensating_actions"]
         if comp["manual_steps"]:
             rb.setdefault("limitations", []).append(
@@ -378,6 +548,28 @@ def execute_rollback(op: Operation, env: ExecutionEnvelope, *,
                             "unlock": "no rollback actions derivable — "
                                       "manual remediation required"}}
 
+    # §158 — rollback holds the same resource locks as the forward op
+    lk = locks.acquire(op.resources or env.scope, op.operation_id,
+                       ledger)
+    if "refusal" in lk:
+        return {"ok": False, "state": op.state, "stage": "locking",
+                "refusal": lk}
+
+    # §159 — rollback preconditions: the resource must still match the
+    # failed-forward state; external drift → human review, never blind
+    # revert of someone else's change.
+    precondition_refusals = _rollback_preconditions(
+        mats, rb.get("steps", []))
+    if precondition_refusals:
+        locks.release(op.operation_id, ledger)
+        return {"ok": False, "state": op.state,
+                "stage": "rollback-preconditions",
+                "refusal": {"refusal": "PF-OPS-ROLLBACK-PRECONDITION",
+                            "unlock": "resource no longer matches "
+                                      "failed-forward state — human "
+                                      "review required (§159)",
+                            "details": precondition_refusals}}
+
     # legal walk into rolling-back
     for st in ("rollback-planned", "rolling-back"):
         if op.state == st:
@@ -387,10 +579,13 @@ def execute_rollback(op: Operation, env: ExecutionEnvelope, *,
             continue  # executing may jump straight to rolling-back
         r = op.transition(st, ledger, data={"strategy": strategy})
         if "refusal" in r:
+            locks.release(op.operation_id, ledger)
             return {"ok": False, "state": op.state, "refusal": r}
 
     ledger.append("rollback.started", op.operation_id,
-                  data={"strategy": strategy,
+                  data={"strategy": strategy, "status": status,
+                        "trigger": trigger,
+                        "material_hashes": rb.get("material_hashes", []),
                         "actions": len(rb_actions)})
     results: list[dict[str, Any]] = []
     transports = transports or {}
@@ -421,11 +616,121 @@ def execute_rollback(op: Operation, env: ExecutionEnvelope, *,
                           data={"step_id": sid,
                                 "refusal": r.get("refusal"),
                                 "rollback": True})
-            op.transition("failed", ledger)
+            # §149–153 — failed rollback → failed + stage detail +
+            # human escalation; NO automatic rollback-of-rollback
+            op.transition("failed", ledger,
+                          data={"stage": "rollback",
+                                "escalation": "human-required"})
+            locks.release(op.operation_id, ledger)
             return {"ok": False, "state": op.state,
+                    "stage": "rollback",
+                    "rollback_failed": True,
+                    "escalation": "human-required",
                     "failed_step": sid, "results": results}
+
+    # §41–43 — rollback verification: command success ≠ restored.
+    ver = verify_rollback(mats, post_rollback_state or {})
     ledger.append("rollback.completed", op.operation_id,
-                  data={"strategy": strategy, "actions": len(results)})
-    op.transition("rolled-back", ledger)
-    return {"ok": True, "state": op.state, "results": results,
-            "strategy": strategy}
+                  data={"strategy": strategy,
+                        "actions": len(results),
+                        "rollback_verification": ver["convergence"]})
+    op.transition("rolled-back", ledger,
+                  data={"rollback_verification": ver["convergence"]})
+    locks.release(op.operation_id, ledger)
+    # §40 — rollback receipt: trigger + material + strategy + result +
+    # verification, hash-linked to the forward operation
+    receipt = {
+        "operation_id": op.operation_id,
+        "stage": "rollback",
+        "result": ver["convergence"],
+        "trigger": trigger,
+        "strategy": strategy,
+        "material_hashes": rb.get("material_hashes", []),
+        "rollback_plan_ref": env.hash(),
+        "actions": len(results),
+        "rollback_verification": ver,
+        "comparisons": ver.get("comparisons", []),
+    }
+    return {"ok": ver["convergence"] in ("restored", "not-applicable"),
+            "state": op.state, "results": results,
+            "strategy": strategy,
+            "rollback_verification": ver["convergence"],
+            "receipt": receipt}
+
+
+def _rollback_preconditions(materials: dict[str, Any],
+                            plan_steps: list[dict[str, Any]]
+                            ) -> list[dict[str, Any]]:
+    """§159 — per-step precondition records. A material whose
+    `pre_state` carries `current_matches_forward=False` (caller flags
+    external drift between forward failure and rollback attempt)
+    requires human review."""
+    bad = []
+    step_map = {s.get("step_id"): s for s in plan_steps}
+    for sid, mat in materials.items():
+        m = mat.to_dict() if hasattr(mat, "to_dict") else dict(mat)
+        pre = m.get("pre_state", {})
+        if pre.get("current_matches_forward") is False:
+            bad.append({"step_id": sid,
+                        "reason": "external-change-detected",
+                        "action": step_map.get(sid, {}).get("action")})
+    return bad
+
+
+def verify_rollback(materials: dict[str, Any],
+                    post_state: dict[str, Any] | None = None
+                    ) -> dict[str, Any]:
+    """§41–43 — compare captured pre-state with the post-rollback
+    observation. Restored only when every captured dimension matches.
+
+    `post_state`: {step_id: {dim: observed_value}} from a fresh
+    observation after rollback. Missing observations → unknown, never
+    restored-by-assumption.
+    """
+    post = post_state or {}
+    if not materials:
+        return {"convergence": "not-applicable",
+            "comparisons": [],
+            "note": "no materials captured — nothing to verify"}
+    if not post:
+        return {"convergence": "unknown",
+                "comparisons": [],
+                "note": "no post-rollback observation — cannot claim "
+                        "restored (§43)"}
+    comps: list[dict[str, Any]] = []
+    restored = regressed = missing = 0
+    # concurrency/provenance tokens are captured for preconditions,
+    # not restorable values — a new write always bumps them
+    non_restorable = {"resource_version", "uid",
+                      "current_matches_forward", "generation"}
+    for sid, mat in materials.items():
+        m = mat.to_dict() if hasattr(mat, "to_dict") else dict(mat)
+        want = {k: v for k, v in m.get("pre_state", {}).items()
+                if k not in non_restorable}
+        got = post.get(sid) or {}
+        for dim, expected in want.items():
+            observed = got.get(dim, "<unobserved>")
+            if observed == "<unobserved>":
+                outcome = "unobserved"
+                missing += 1
+            elif observed == expected:
+                outcome = "restored"
+                restored += 1
+            else:
+                outcome = "different"
+                regressed += 1
+            comps.append({"step_id": sid, "dimension": dim,
+                          "expected": expected, "observed": observed,
+                          "outcome": outcome})
+    total = restored + regressed + missing
+    if missing == total:
+        conv = "unknown"
+    elif regressed:
+        conv = "regressed" if restored == 0 else "partially-restored"
+    elif missing:
+        conv = "partially-restored"
+    else:
+        conv = "restored"
+    return {"convergence": conv, "comparisons": comps,
+            "restored": restored, "different": regressed,
+            "unobserved": missing}

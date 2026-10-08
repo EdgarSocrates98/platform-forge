@@ -45,9 +45,10 @@ class OperationStore:
             str(STORE_SCHEMA_VERSION))
 
     def save(self, op: Operation, ledger: OperationLedger,
-             envelope=None) -> Path:
+             envelope=None, materials: dict | None = None) -> Path:
         """Append new ledger entries + write op snapshot (+ envelope
-        for later `ops rollback`/`ops status` replay)."""
+        for later `ops rollback`/`ops status` replay, + immutable
+        rollback materials captured during execution, §30)."""
         op_path = self.root / f"{op.operation_id}.op.json"
         led_path = self.root / f"{op.operation_id}.ledger.jsonl"
         existing = 0
@@ -68,6 +69,11 @@ class OperationStore:
                 else dict(envelope)
             (self.root / f"{op.operation_id}.env.json").write_text(
                 json.dumps(env_d, indent=2, sort_keys=True))
+        if materials is not None:
+            mats = {sid: (m.to_dict() if hasattr(m, "to_dict") else m)
+                    for sid, m in materials.items()}
+            (self.root / f"{op.operation_id}.materials.json").write_text(
+                json.dumps(mats, indent=2, sort_keys=True))
         return op_path
 
     def load_operation(self, operation_id: str) -> Operation | None:
@@ -80,6 +86,12 @@ class OperationStore:
         p = self.root / f"{operation_id}.env.json"
         if not p.exists():
             return None
+        return json.loads(p.read_text())
+
+    def load_materials(self, operation_id: str) -> dict[str, Any]:
+        p = self.root / f"{operation_id}.materials.json"
+        if not p.exists():
+            return {}
         return json.loads(p.read_text())
 
     def load_ledger(self, operation_id: str) -> OperationLedger:

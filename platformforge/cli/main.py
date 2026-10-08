@@ -1854,11 +1854,13 @@ def cmd_live(args: argparse.Namespace) -> int:
 def cmd_ops(args: argparse.Namespace) -> int:
     """cycle4 — governed operations surface. Dry-run is the default;
     real mutation requires --execute AND a valid hash-bound approval."""
+    from platformforge.live.models import now_iso
     from platformforge.ops import engine
     from platformforge.ops.actions import spec_for
     from platformforge.ops.approval import Approval
     from platformforge.ops.config import load_config, validate_config
     from platformforge.ops.models import ChangeIntent, Reason
+    from platformforge.ops.operation import LockTable
     from platformforge.ops.policy import Policy
     from platformforge.ops.registry import ops_capabilities, validate_delegate_request
     from platformforge.ops.store import OperationStore
@@ -2046,8 +2048,17 @@ def cmd_ops(args: argparse.Namespace) -> int:
             t = host_transport()
             transports = {s.executor: t for s in (spec_for(a["action"]) for a in env.actions) if s}
         ledger = st.load_ledger(args.operation_id)
+        mats = st.load_materials(args.operation_id)
         out = engine.execute_rollback(
-            op, env, transports=transports, ledger=ledger, dry_run=not args.execute
+            op, env, transports=transports, ledger=ledger,
+            locks=LockTable(),
+            materials=mats,
+            trigger={"type": "manual",
+                     "requested_by": getattr(args, "actor", "") or "cli",
+                     "at": now_iso()},
+            post_rollback_state=json.loads(args.post_rollback)
+            if getattr(args, "post_rollback", None) else None,
+            dry_run=not args.execute,
         )
         st.save(op, ledger)
         return _emit(out, args, 0 if out.get("ok") else 2)
@@ -2130,6 +2141,7 @@ def _ops_run(args, spec: dict) -> int:
             environment, break_glass} — same shape as lab ops.yaml.
     Without --execute every step is dry-run; transports are the host's.
     """
+    from platformforge.live.models import now_iso
     from platformforge.ops import engine
     from platformforge.ops.actions import spec_for
     from platformforge.ops.approval import Approval, BreakGlass
@@ -2312,6 +2324,7 @@ def _ops_run(args, spec: dict) -> int:
         break_glass=bg,
         preconditions={
             "observation": spec.get("observation"),
+            "pre_state": spec.get("pre_state"),
             "current_plan_hash": env.change_plan_hash,
             "policy_decision": (decisions[0].decision if decisions else "allow"),
             "freeze_active": spec.get("freeze_active", False),
@@ -2321,6 +2334,7 @@ def _ops_run(args, spec: dict) -> int:
             "current_resource_state": spec.get("current_resource_state"),
             "owner": spec.get("owner", ""),
             "current_owner": spec.get("current_owner", ""),
+            "automatic_rollback": spec.get("auto_rollback", False),
         },
     )
 
@@ -2331,26 +2345,43 @@ def _ops_run(args, spec: dict) -> int:
             observations=v.get("observations", {}),
             slo_contract=v.get("slo"),
             metrics=v.get("metrics"),
+            mutating=any(
+                (spec_for(a["action"]) or None) is not None
+                and spec_for(a["action"]).mutating
+                for a in env.actions),
         )
         result["verify"] = vr.to_dict()
         result["final"] = engine.finalize_verify(op, ledger, {"convergence": vr.convergence})
         result["state"] = op.state
-        # §119–127 — execute the derived rollback when the plan allows
-        # it (lab/non-prod only); otherwise the op stays rollback-planned
-        # for a human `ops rollback` call.
-        if op.state == "rollback-planned" and env.rollback.get("automatic"):
-            result["rollback"] = engine.execute_rollback(
-                op,
-                env,
-                transports=transports,
-                ledger=ledger,
-                completed_results=result.get("results"),
-                dry_run=not args.execute,
-            )
-            result["state"] = op.state
+        # §119–127 — execute the MATERIAL-BUILT rollback when the plan
+        # allows it (lab/non-prod only); otherwise the op stays
+        # rollback-planned for a human `ops rollback` call.
+        if op.state == "rollback-planned":
+            rbp = result.get("rollback_plan") or env.rollback
+            if (rbp or {}).get("status") == "executable" and \
+                    (rbp or {}).get("automatic"):
+                result["rollback"] = engine.execute_rollback(
+                    op,
+                    env,
+                    transports=transports,
+                    ledger=ledger,
+                    completed_results=result.get("results"),
+                    materials=result.get("materials"),
+                    rollback_plan=rbp,
+                    trigger={"type": "verification-failed",
+                             "observed_delta": ed,
+                             "at": now_iso()},
+                    post_rollback_state=(spec.get("post_rollback") or {}),
+                    dry_run=not args.execute,
+                )
+                result["state"] = op.state
 
     st = OperationStore(Path(args.repo) / ".platformforge/operations")
-    st.save(op, ledger, envelope=env)
+    # §30 — persist the material-built rollback plan + immutable
+    # materials so `ops rollback` replays against captured pre-state
+    if result.get("rollback_plan"):
+        env.rollback = result["rollback_plan"]
+    st.save(op, ledger, envelope=env, materials=result.get("materials"))
     result["graph"] = st.projection(op.operation_id)
     result["receipts"] = {
         "ledger_tip": ledger.tip,
@@ -2829,6 +2860,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--bind", default="", help="runbook bind params JSON")
     sp.add_argument("name_pos", nargs="?", default="", help="runbook id or 'list'")
     sp.add_argument("--operation-id", default="")
+    sp.add_argument("--post-rollback", default="",
+                    help="rollback: post-rollback observation JSON "
+                         "{step_id: {dim: value}} for verification")
     sp.add_argument("--resource", default="", help="history filter")
     sp.add_argument("--evidence-tier", default="", help="autorem-eval")
     # ops approve — mint a hash-bound approval artifact (never executes)

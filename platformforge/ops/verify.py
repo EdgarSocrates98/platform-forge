@@ -44,12 +44,14 @@ class VerificationResult:
     slo_gate: dict[str, Any] = field(default_factory=dict)
     checked_at: str = ""
     evidence: list[str] = field(default_factory=list)
+    verification_coverage: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {"convergence": self.convergence,
                 "windows": [w.to_dict() for w in self.windows],
                 "slo_gate": self.slo_gate, "checked_at": self.checked_at,
-                "evidence": self.evidence}
+                "evidence": self.evidence,
+                "verification_coverage": self.verification_coverage}
 
 
 def _flatten(delta: dict[str, Any]) -> set[str]:
@@ -96,16 +98,36 @@ def slo_gate(slo: dict[str, Any] | None,
     return {"status": "fail" if fails else "pass", "violations": fails}
 
 
+def verification_coverage(expected: dict[str, Any],
+                          observed: dict[str, Any]) -> dict[str, Any]:
+    """Cycle 4.1 — how much of the ExpectedDelta was actually
+    observed. `converged` is only meaningful when coverage is 1.0;
+    less → honest partial/unknown, never a silent pass."""
+    exp = _flatten(expected)
+    if not exp:
+        return {"expected_tokens": 0, "matched": 0, "ratio": 0.0,
+                "sufficient": False,
+                "note": "empty expected delta — verification cannot "
+                        "certify convergence (PF-OPS-NO-DELTA guard)"}
+    matched, missing, _ = verify_delta(expected, observed)
+    ratio = len(matched) / len(exp)
+    return {"expected_tokens": len(exp), "matched": len(matched),
+            "missing": len(missing), "ratio": round(ratio, 4),
+            "sufficient": ratio >= 1.0}
+
+
 def verify(*, expected_delta: dict[str, Any],
            observations: dict[str, Any],
            slo_contract: dict[str, Any] | None = None,
            metrics: dict[str, Any] | None = None,
            windows: list[str] | None = None,
-           evidence_refs: list[str] | None = None
-           ) -> VerificationResult:
+           evidence_refs: list[str] | None = None,
+           mutating: bool = True) -> VerificationResult:
     """`observations` maps window → observed-delta dict (already
     computed by the live layer). A window with no observation is
-    `unknown`, never pass."""
+    `unknown`, never pass. `mutating=False` marks read-only plans
+    (validate/show/observe/diff) exempt from the delta sufficiency
+    gate."""
     res = VerificationResult(checked_at=now_iso(),
                              evidence=list(evidence_refs or []))
     for w in (windows or list(WINDOWS)):
@@ -121,6 +143,18 @@ def verify(*, expected_delta: dict[str, Any],
         res.windows.append(wr)
 
     res.slo_gate = slo_gate(slo_contract, metrics)
+
+    # Cycle 4.1 — verification coverage across all supplied windows;
+    # the best-observed window drives the sufficiency claim.
+    coverages = {wname: verification_coverage(expected_delta, obs)
+                 for wname, obs in observations.items()
+                 if obs is not None}
+    res.verification_coverage = {
+        "per_window": coverages,
+        "sufficient": any(c["sufficient"] for c in coverages.values()),
+        "expected_tokens": len(_flatten(expected_delta)),
+        "unknown_dimensions": list(
+            (expected_delta or {}).get("unknown_dimensions", []))}
 
     statuses = [w.status for w in res.windows]
     if "fail" in statuses or res.slo_gate.get("status") == "fail":
@@ -138,6 +172,15 @@ def verify(*, expected_delta: dict[str, Any],
         res.convergence = "partially-converged"
     else:
         res.convergence = "unknown"
+
+    # §110–118 + cycle 4.1: never claim converged on an empty/insufficient
+    # delta for a mutating plan — the token set matched vacuously.
+    if mutating and res.convergence == "converged" \
+            and not res.verification_coverage["sufficient"]:
+        res.convergence = "unknown"
+        res.verification_coverage["note"] = (
+            "convergence claimed without a sufficient expected delta "
+            "— downgraded to unknown (§cycle4.1 verification gate)")
     return res
 
 

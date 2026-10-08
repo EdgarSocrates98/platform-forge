@@ -142,6 +142,7 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
                      break_glass=bg,
                      preconditions={
                          "observation": doc.get("observation"),
+                         "pre_state": doc.get("pre_state"),
                          "current_plan_hash":
                              doc.get("current_plan_hash",
                                      env.change_plan_hash),
@@ -151,7 +152,9 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
                          "maintenance_window":
                              doc.get("maintenance_window"),
                          "freeze_active": doc.get("freeze_active",
-                                                  False)})
+                                                  False),
+                         "automatic_rollback": doc.get(
+                             "auto_rollback", False)})
 
     # verify stage if execution passed
     if result.get("ok") and doc.get("verify"):
@@ -160,20 +163,31 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
         vr = do_verify(expected_delta=ed,
                        observations=v.get("observations", {}),
                        slo_contract=v.get("slo"),
-                       metrics=v.get("metrics"))
+                       metrics=v.get("metrics"),
+                       mutating=any(s.get("mutating", True)
+                                    for s in doc.get("steps", [])))
         result["verify"] = vr.to_dict()
         result["final"] = finalize_verify(
             op, ledger, {"convergence": vr.convergence})
         result["state"] = op.state
-        # rollback execution when the plan allows it (lab/non-prod §123)
-        if op.state == "rollback-planned" and env.rollback.get(
-                "automatic"):
-            from platformforge.ops.engine import execute_rollback
-            result["rollback"] = execute_rollback(
-                op, env, transports=transports, ledger=ledger,
-                completed_results=result.get("results"),
-                dry_run=doc.get("dry_run", True))
-            result["state"] = op.state
+        # rollback execution from the material-built plan (§30 pipeline;
+        # lab/non-prod §123)
+        if op.state == "rollback-planned":
+            rbp = result.get("rollback_plan") or env.rollback
+            if (rbp or {}).get("status") == "executable" and \
+                    (rbp or {}).get("automatic"):
+                from platformforge.ops.engine import execute_rollback
+                result["rollback"] = execute_rollback(
+                    op, env, transports=transports, ledger=ledger,
+                    locks=locks,
+                    completed_results=result.get("results"),
+                    materials=result.get("materials"),
+                    rollback_plan=rbp,
+                    trigger={"type": "verification-failed",
+                             "observed_delta": ed},
+                    post_rollback_state=doc.get("post_rollback") or {},
+                    dry_run=doc.get("dry_run", True))
+                result["state"] = op.state
 
     result["checks"] = checks
     result["ledger_valid"] = ledger.verify_chain()

@@ -14,6 +14,10 @@ expected_delta:
 observation:
   captured_at: "2999-01-01T00:00:00Z"
   coverage: {complete: true}
+pre_state:
+  restart: {revision: "7"}
+post_rollback:
+  restart: {revision: "7"}
 approvals:
   - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
 environment: lab

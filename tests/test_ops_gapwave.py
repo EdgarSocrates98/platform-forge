@@ -23,8 +23,11 @@ def _stack(params=None, env_ctx=None):
         step_id="scale", action="kubernetes.scale",
         params=params or {"kind": "Deployment", "name": "web",
                           "namespace": "apps", "replicas": 3,
-                          "current_replicas": 5})],
-        expected_delta=ExpectedDelta())
+                          "current_replicas": 5,
+                          "resource_version": "rv1"})],
+        expected_delta=ExpectedDelta(
+            changes={"resources": [{"id": "dep/web",
+                                    "replicas": [5, 3]}]}))
     risk = engine.assess_risk(plan, env_ctx or {"environment": "lab"})
     decisions = [PolicyDecision(policy_id="p", decision="allow")]
     env = engine.mint_envelope(plan, execution_id="e1",
@@ -108,7 +111,12 @@ class TestRollbackExecution:
         rb = engine.execute_rollback(
             op, env, transports={
                 "kubernetes": lambda *a, **k: (0, "rolled back", "")},
-            ledger=ledger)
+            ledger=ledger,
+            materials=out.get("materials"),
+            rollback_plan=out.get("rollback_plan"),
+            post_rollback_state={"scale": {"replicas": 5}},
+            trigger={"type": "slo-regression",
+                     "slo_evidence": "burn>2x"})
         assert rb["ok"] is True
         assert op.state == "rolled-back"
         assert ledger.verify_chain()
