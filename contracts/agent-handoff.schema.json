@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/agent-handoff/v1",
+  "title": "PlatformForge AgentHandoff — structured agent transfer",
+  "type": "object",
+  "required": ["schema", "from", "to", "task_id"],
+  "properties": {
+    "schema": {"const": "platformforge/agent-handoff/v1"},
+    "from": {"type": "string", "minLength": 1},
+    "to": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "reason": {"type": "string"},
+    "completed": {"type": "array", "items": {"type": "string"}},
+    "evidence": {"type": "array", "items": {"type": "string"},
+                 "description": "fact_id / artifact refs only — never raw bodies"},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "open_questions": {"type": "array", "items": {"type": "string"}},
+    "unresolved": {"type": "array", "items": {"type": "string"}},
+    "budget_spent": {"type": "object"},
+    "budget_remaining": {"type": "object"},
+    "next_required_capability": {"type": "string"},
+    "context_pack_ref": {"type": "string",
+                         "description": "hash ref to a context pack"}
+  },
+  "additionalProperties": false
+}

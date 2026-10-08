@@ -1,28 +1,37 @@
-"""Phase 12 gate: roster contract, mirrors, referee, playbook."""
+"""Phase 12 gate: roster contract, mirrors, referee, playbook.
+Cycle 5.1: canonical platform-* names; legacy names resolve."""
 
-from platformforge.agents import AGENTS, coordinator_for, playbook, referee
+from platformforge.agents import AGENTS, coordinator_for, playbook, referee, resolve
 from platformforge.agents.mirrors import lint, sync
 
 
 def test_roster_contract():
     assert lint()["ok"]
-    coord = AGENTS["platform-coordinator"]
-    assert coord.role == "coordinator" and coord.executors
+    orch = AGENTS["platform-orchestrator"]
+    assert orch.role == "orchestrator" and orch.delegates_to
     for a in AGENTS.values():
-        assert a.access == "read-only"  # agents propose, never mutate
+        # agents propose, never mutate platform state directly
+        assert a.access in ("read-only", "state-writer")
+        assert a.write_scope in ("none", "runs")
+
+
+def test_legacy_names_resolve():
+    assert resolve("iac-analyst").name == "platform-iac-specialist"
+    assert resolve("consistency-referee").name == "platform-debate-referee"
+    assert resolve("no-such-agent") is None
 
 
 def test_coordinator_routing():
-    assert coordinator_for("k8s").name == "k8s-analyst"
-    assert coordinator_for("unknown-domain").name == "platform-coordinator"
+    assert coordinator_for("k8s").name == "platform-kubernetes-specialist"
+    assert coordinator_for("unknown-domain").name == "platform-orchestrator"
 
 
 def test_mirrors_generated(tmp_path):
     written = sync(tmp_path)
     assert len(written[".claude/agents"]) == len(AGENTS)
-    content = (tmp_path / ".claude/agents/platform-coordinator.md").read_text()
+    content = (tmp_path / ".claude/agents/platform-orchestrator.md").read_text()
     assert "GENERATED" in content and "Never do" in content
-    toml = (tmp_path / ".codex/agents/k8s-analyst.toml").read_text()
+    toml = (tmp_path / ".codex/agents/platform-kubernetes-specialist.toml").read_text()
     assert 'role = "specialist"' in toml
 
 
@@ -43,7 +52,13 @@ def test_referee_evidence_wins():
 
 def test_playbook(tmp_path):
     pb = playbook()
-    assert pb["role"] == "coordinator"
+    assert pb["role"] == "orchestrator"
     assert any("route" in s["verb"] for s in pb["steps"])
     pb2 = playbook(domain="finops")
-    assert pb2["agent"] == "finops-analyst"
+    assert pb2["agent"] == "platform-finops-specialist"
+
+
+def test_playbook_unknown_agent_refuses():
+    out = playbook("ghost-agent")
+    assert out["refusal"] == "PF-AGENT-UNKNOWN-AGENT"
+    assert out["unlock"]

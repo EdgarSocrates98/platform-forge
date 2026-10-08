@@ -74,11 +74,6 @@ def sync(root: str | Path) -> dict[str, list[str]]:
 def lint() -> dict[str, object]:
     problems = []
     for a in AGENTS.values():
-        if not a.when or not a.never:
-            problems.append(f"{a.name}: missing when/never contract")
-        if a.role == "coordinator" and not a.executors:
-            problems.append(f"{a.name}: coordinator without executors")
-        if a.access not in ("read-only", "state-writer", "writer"):
-            problems.append(f"{a.name}: bad access {a.access}")
+        problems.extend(f"{a.name}: {e}" for e in a.contract_errors())
     return {"agents": len(AGENTS), "problems": problems,
             "ok": not problems}

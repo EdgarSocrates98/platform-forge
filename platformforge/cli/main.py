@@ -939,7 +939,7 @@ def cmd_agents(args: argparse.Namespace) -> int:
     if sub == "sync":
         return _emit({"written": sync(args.repo)}, args)
     if sub == "playbook":
-        return _emit(A.playbook(args.name or "platform-coordinator", domain=args.domain), args)
+        return _emit(A.playbook(args.name or "platform-orchestrator", domain=args.domain), args)
     if sub == "referee":
         positions = json.loads(Path(args.path).read_text())
         return _emit(A.referee(positions), args)
