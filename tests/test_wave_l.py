@@ -195,13 +195,14 @@ def test_cross_repo_edges_inferred():
 
 # ── §138/139 manifest + negotiation ────────────────────────────────
 
-def test_manifest_v3_fields():
+def test_manifest_v4_fields():
     from platformforge.forge import capability_manifest
     m = capability_manifest(REPO)
-    assert m["manifest"] == "platformforge/capability-manifest/v3"
+    assert m["manifest"] == "platformforge/capability-manifest/v4"
     for k in ("quality_level", "maturity", "required_evidence",
               "cost_characteristics", "risk", "capabilities_v2",
-              "supported_versions", "operations", "cross_forge"):
+              "supported_versions", "operations", "cross_forge",
+              "fleet", "analytics", "optimization", "ai_platform"):
         assert k in m, k
 
 

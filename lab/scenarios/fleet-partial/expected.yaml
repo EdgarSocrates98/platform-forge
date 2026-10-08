@@ -1,0 +1,10 @@
+id: fleet-partial
+name: Partial fleet — permission-limited member keeps coverage <1, never silent
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - coverage:
+      max_coverage: 0.99
+  - capacity:
+      min_hot: 0

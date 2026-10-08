@@ -1,0 +1,18 @@
+id: fleet-cost
+name: Fleet cost — hierarchy totals, unallocated visible, idle not deletable
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - cost:
+      hierarchy:
+        min_unallocated: 1
+  - cost:
+      trend:
+        direction: up
+  - cost:
+      idle:
+        min: 2
+  - cost:
+      rightsizing:
+        min: 1

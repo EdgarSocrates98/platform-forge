@@ -1,0 +1,51 @@
+schema: platformforge/fleet/v1
+fleet_id: acme
+organization: acme-corp
+environments: [prod, staging, dev]
+members:
+  clusters:
+    - {kind: cluster, canonical_id: prod-1, name: prod-1, environment: prod, region: us-east-1}
+    - {kind: cluster, canonical_id: prod-2, name: prod-2, environment: prod, region: eu-west-1}
+    - {kind: cluster, canonical_id: staging-1, name: staging-1, environment: staging}
+    - {kind: cluster, canonical_id: dev-1, name: dev-1, environment: dev}
+    - {kind: cluster, canonical_id: gpu-1, name: gpu-1, environment: prod, region: us-east-1}
+    - {kind: cluster, canonical_id: legacy-1, name: legacy-1, environment: prod}
+  cloud_accounts:
+    - {kind: cloud_account, canonical_id: aws-111111111111, name: prod-acct, environment: prod}
+    - {kind: cloud_account, canonical_id: aws-222222222222, name: staging-acct, environment: staging}
+    - {kind: cloud_account, canonical_id: aws-333333333333, name: data-acct, environment: prod}
+  repositories:
+    - {kind: repository, canonical_id: checkout-svc, name: checkout-svc}
+    - {kind: repository, canonical_id: payments-svc, name: payments-svc}
+    - {kind: repository, canonical_id: ml-inference, name: ml-inference}
+  services:
+    - {kind: service, canonical_id: checkout, name: checkout, environment: prod, team: payments}
+    - {kind: service, canonical_id: payments, name: payments, environment: prod, team: payments}
+    - {kind: service, canonical_id: search, name: search, environment: prod, team: discovery}
+    - {kind: service, canonical_id: ml-inference, name: ml-inference, environment: prod, team: ai-platform}
+    - {kind: service, canonical_id: batch-etl, name: batch-etl, environment: prod, team: data}
+  teams:
+    - {kind: team, canonical_id: payments, name: Payments}
+    - {kind: team, canonical_id: discovery, name: Discovery}
+    - {kind: team, canonical_id: ai-platform, name: AI Platform}
+    - {kind: team, canonical_id: data, name: Data}
+labels: {cost_center: cc-100}
+ownership: {}
+policies: [require-owner, prod-dual-approval]
+observations:
+  - {member_id: "cluster:prod-1", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:prod-2", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:staging-1", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:dev-1", status: observed, coverage: 0.9, freshness: fresh}
+  - {member_id: "cluster:gpu-1", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:legacy-1", status: permission-limited, coverage: 0.3, freshness: stale}
+federation:
+  node_id: pf-node-a
+  capabilities: [fleet, analytics]
+  exports:
+    - classification: internal
+      payload: {services: [checkout, payments, search], findings: 12}
+    - classification: public
+      payload: {api_key: "AKIAIOSFODNN7EXAMPLE"}
+    - classification: restricted
+      payload: {incident_details: "pii-ish"}

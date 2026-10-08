@@ -1,0 +1,12 @@
+id: fleet-recurring-incident
+name: Recurring incident — batch-etl incidents repeat with deploy correlation
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - history_pattern:
+      window: 90d
+      min_support: 3
+      max_confidence: high
+  - reliability:
+      min_hotspots: 1

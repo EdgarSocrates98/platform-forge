@@ -56,14 +56,19 @@ def test_operational_layer_is_separable():
     assert "service/web" not in sub.nodes
 
 
-def test_manifest_v3_exposes_ops():
+def test_manifest_v4_exposes_ops():
     m = capability_manifest()
-    assert m["manifest"] == "platformforge/capability-manifest/v3"
+    assert m["manifest"] == "platformforge/capability-manifest/v4"
     assert m["modes"]["governed_mutation"] is True
     assert m["operations"]["platform_max_autonomy"] == "A4"
     assert m["operations"]["a6"] == "non-goal"
     assert "kubernetes.scale" in m["operations"]["actions"]
     assert m["cross_forge"]["refusal_code"] == "PF-OPS-CROSSFORGE-REFUSED"
+    # cycle5 — v4 adds the bounded enterprise-intelligence surface
+    assert "unowned" in m["fleet"]["questions"]
+    assert "deterministic-aggregates" in m["analytics"]["guarantees"]
+    assert "ChangeIntent" in m["optimization"]["boundary"]
+    assert m["ai_platform"]["unit_economics"] == "denominator-required"
 
 
 def test_delegation_never_executes():

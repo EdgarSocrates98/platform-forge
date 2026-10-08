@@ -146,6 +146,13 @@ def run(scenario_id: str, allow_profile: bool = False) -> dict[str, Any]:
         r["tier"] = exp.get("tier", "standard")
         r["profile"] = "static"
         return r
+    if exp.get("kind") == "fleet":
+        from platformforge.lab.fleetlab import run_fleet_scenario
+        r = run_fleet_scenario(d)
+        r["tier"] = exp.get("tier", "standard")
+        r["profile"] = "static"
+        r["passed"] = r["verdict"] == "pass"
+        return r
     profile = exp.get("profile", "static")
     if profile != "static":
         if not allow_profile:

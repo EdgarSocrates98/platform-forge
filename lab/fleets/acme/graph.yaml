@@ -1,0 +1,45 @@
+nodes:
+  - {kind: team, id: "team:payments"}
+  - {kind: team, id: "team:discovery"}
+  - {kind: team, id: "team:ai-platform"}
+  - {kind: team, id: "team:data"}
+  - {kind: service, id: "service:checkout", attrs: {environment: prod, exposure: public, criticality: critical, slo: p99<500ms}, fact_ids: [f-ck-1]}
+  - {kind: service, id: "service:payments", attrs: {environment: prod, criticality: critical}, fact_ids: [f-pay-1]}
+  - {kind: service, id: "service:search", attrs: {environment: prod, exposure: public}, fact_ids: [f-srch-1]}
+  - {kind: service, id: "service:ml-inference", attrs: {environment: prod, criticality: high}, fact_ids: [f-ml-1]}
+  - {kind: service, id: "service:batch-etl", attrs: {environment: prod}}
+  - {kind: service, id: "service:orphan-api", attrs: {environment: dev, exposure: public}, fact_ids: [f-orph-1]}
+  - {kind: workload, id: "workload:checkout-web", attrs: {environment: prod}}
+  - {kind: workload, id: "workload:legacy-batch", attrs: {environment: prod, k8s_version: "1.24", supported: false}, fact_ids: [f-legacy-1]}
+  - {kind: cluster, id: "cluster:prod-1", attrs: {environment: prod}}
+  - {kind: cluster, id: "cluster:prod-2", attrs: {environment: prod}}
+  - {kind: cluster, id: "cluster:gpu-1", attrs: {environment: prod}}
+  - {kind: cluster, id: "cluster:staging-1", attrs: {environment: staging}}
+  - {kind: cluster, id: "cluster:legacy-1", attrs: {environment: prod}}
+  - {kind: database, id: "database:orders-pg", attrs: {environment: prod}, fact_ids: [f-db-1]}
+  - {kind: role, id: "role:wildcard-admin", attrs: {wildcard: true}, fact_ids: [f-iam-1]}
+  - {kind: golden_path, id: "web-svc"}
+  - {kind: golden_path, id: "batch-job"}
+  - {kind: cloud_account, id: "cloud_account:aws-111111111111"}
+  - {kind: environment, id: "environment:prod"}
+  - {kind: environment, id: "environment:staging"}
+  - {kind: slo, id: "slo:checkout"}
+edges:
+  - {src_id: "team/teampayments", dst_id: "service/servicecheckout", kind: owns}
+  - {src_id: "team/teampayments", dst_id: "service/servicepayments", kind: owns}
+  - {src_id: "team/teamdiscovery", dst_id: "service/servicesearch", kind: owns}
+  - {src_id: "service/servicecheckout", dst_id: "golden_path/web-svc", kind: uses_golden_path}
+  - {src_id: "service/servicepayments", dst_id: "golden_path/web-svc", kind: uses_golden_path}
+  - {src_id: "service/servicecheckout", dst_id: "cluster/clusterprod-1", kind: runs_on}
+  - {src_id: "service/servicepayments", dst_id: "cluster/clusterprod-1", kind: runs_on}
+  - {src_id: "service/servicesearch", dst_id: "cluster/clusterprod-2", kind: runs_on}
+  - {src_id: "service/servicebatch-etl", dst_id: "cluster/clusterlegacy-1", kind: runs_on}
+  - {src_id: "service/serviceml-inference", dst_id: "cluster/clustergpu-1", kind: runs_on}
+  - {src_id: "service/servicecheckout", dst_id: "database/databaseorders-pg", kind: depends_on}
+  - {src_id: "service/servicepayments", dst_id: "database/databaseorders-pg", kind: depends_on}
+  - {src_id: "service/servicesearch", dst_id: "database/databaseorders-pg", kind: depends_on}
+  - {src_id: "service/servicebatch-etl", dst_id: "database/databaseorders-pg", kind: writes}
+  - {src_id: "workload/workloadlegacy-batch", dst_id: "cluster/clusterlegacy-1", kind: runs_on}
+  - {src_id: "service/servicecheckout", dst_id: "slo/slocheckout", kind: observed_by}
+  - {src_id: "service/servicecheckout", dst_id: "service/servicepayments", kind: calls, fact_ids: [f-call-1]}
+  - {src_id: "service/serviceorphan-api", dst_id: "cluster/clusterstaging-1", kind: runs_on}

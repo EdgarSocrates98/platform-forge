@@ -1,0 +1,10 @@
+id: fleet-policy-friction
+name: Policy friction — require-owner denies + exceptions; recs never execute
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - policy_analytics:
+      min_fp: 1
+      min_recs: 1
+      no_auto_apply: true
