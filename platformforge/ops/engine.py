@@ -72,22 +72,41 @@ def plan(intent: ChangeIntent, *,
     return p
 
 
-def assess_risk(plan: ChangePlan, context: dict[str, Any] | None = None
+def assess_risk(plan: ChangePlan, context: dict[str, Any] | None = None,
+                rollback_status: str | None = None
                 ) -> dict[str, Any]:
-    """Per-step risk assessments + plan ceiling (max class wins)."""
+    """Per-step risk assessments + plan ceiling (max class wins).
+    Cycle 4.1: the material-built rollback status feeds both
+    rollback_confidence and the reversibility class (worst-of)."""
+    from platformforge.ops.risk import RISK_RANK, reversibility_for_status, rollback_confidence
     ctx = context or {}
     per_step = []
     worst = "R0"
-    from platformforge.ops.risk import RISK_RANK
+    rb_conf = rollback_confidence(rollback_status)
     for s in plan.steps:
         rev = classify_reversibility(s.action, s.params, ctx)
-        a = assess(s.action, s.params, {**ctx, "reversibility": rev})
+        rev = reversibility_for_status(rollback_status, rev)
+        spec = spec_for(s.action)
+        step_status = rollback_status
+        if spec and spec.rollback_strategy in ("manual-only",
+                                               "impossible", "unknown"):
+            step_status = spec.rollback_strategy if \
+                spec.rollback_strategy != "unknown" else "unresolved"
+        a = assess(s.action, s.params,
+                   {**ctx, "reversibility": rev,
+                    "rollback_confidence":
+                        rollback_confidence(step_status)})
         per_step.append({"step_id": s.step_id, "action": s.action,
+                         "rollback_status": step_status or "unknown",
                          **a.to_dict()})
         if RISK_RANK[a.risk_class] > RISK_RANK[worst]:
             worst = a.risk_class
-    return {"plan_id": plan.plan_id, "risk_class": worst,
-            "steps": per_step}
+    out = {"plan_id": plan.plan_id, "risk_class": worst,
+           "steps": per_step,
+           "rollback_confidence": rb_conf}
+    if rollback_status:
+        out["rollback_status"] = rollback_status
+    return out
 
 
 def decide(plan: ChangePlan, policies: list[Policy],
@@ -293,6 +312,7 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
     from platformforge.ops.material import MaterialStore, capture_material
     mstore = material_store or MaterialStore()
     pre_state_ctx = (preconditions or {}).get("pre_state") or {}
+    sot_ctx = (preconditions or {}).get("sot") or {}
     materials: dict[str, Any] = {}
     plan_steps = {s["step_id"]: s for s in env.actions}
     results: list[dict[str, Any]] = []
@@ -321,6 +341,8 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
                     pre_state=_capture_pre_state(
                         a["action"], a.get("params", {}),
                         pre_state_ctx.get(sid)),
+                    source_of_truth=sot_ctx.get(sid) or
+                    sot_ctx.get("__default__"),
                     provenance="observed" if pre_state_ctx.get(sid)
                     else "declared")
             ledger.append("step.started", op.operation_id,

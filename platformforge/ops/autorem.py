@@ -71,10 +71,14 @@ def evaluate_eligibility(
         _add(e, "fresh-complete-observation",
              age is not None and age <= max_observation_age_s and complete,
              f"age={age}s complete={complete}")
-    sot_ok = bool(source_of_truth) and bool(
-        source_of_truth.get("resolved"))
+    sot_status = (source_of_truth or {}).get(
+        "status", "resolved" if (source_of_truth or {}).get("resolved")
+        else "unresolved")
+    sot_ok = bool(source_of_truth) and sot_status == "resolved" and \
+        not (source_of_truth or {}).get("requires_human_review")
     _add(e, "source-of-truth-resolved", sot_ok,
-         (source_of_truth or {}).get("source", "unknown"))
+         f"{(source_of_truth or {}).get('source', 'unknown')} "
+         f"status={sot_status}")
     _add(e, "reversible",
          reversibility in ("fully-reversible", "conditionally-reversible"),
          reversibility or "unknown")

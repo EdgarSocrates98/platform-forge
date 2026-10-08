@@ -44,12 +44,27 @@ class Approval:
     policy_context: dict[str, Any] = field(default_factory=dict)
     reason: str = ""
     parameter_bounds: dict[str, Any] = field(default_factory=dict)
-    signature: str = ""              # optional adapter signature (§236)
+    # Cycle 4.1 §G — semantic honesty: this field is a content
+    # integrity seal (canonical hash of the payload), NOT a
+    # cryptographic identity signature. It proves the record was not
+    # modified; it does NOT prove *who* signed it. `signature` remains
+    # as a deprecated serialized alias for back-compat only.
+    integrity_seal: str = ""
 
     def __post_init__(self):
         if not self.created_at:
-            self.created_at = now_iso()   # fixed once — signatures
-                                          # depend on stable payload
+            self.created_at = now_iso()   # fixed once — seals depend
+                                          # on a stable payload
+
+    @property
+    def signature(self) -> str:
+        """Deprecated alias — prefer integrity_seal. A content hash
+        is not proof of signer identity (§G)."""
+        return self.integrity_seal
+
+    @signature.setter
+    def signature(self, v: str):
+        self.integrity_seal = v
 
     def is_expired(self, at: str | None = None) -> bool:
         exp = parse_ts(self.expires_at)
@@ -58,21 +73,30 @@ class Approval:
         ref = parse_ts(at) if at else parse_ts(now_iso())
         return bool(ref and ref > exp)
 
-    def signature_valid(self) -> bool | None:
-        """Tamper evidence (§236): None if unsigned; False if the
-        signature doesn't match the canonical payload."""
-        if not self.signature:
+    def integrity_seal_valid(self) -> bool | None:
+        """Tamper evidence (§236): None if unsealed; False if the seal
+        doesn't match the canonical payload. Detects modification —
+        it does NOT authenticate the actor."""
+        if not self.integrity_seal:
             return None
         payload = self.to_dict()
-        payload.pop("signature", None)
+        for k in ("integrity_seal", "signature", "seal_semantics"):
+            payload.pop(k, None)
         want = "sha256:" + canonical_hash(payload)
-        return self.signature == want
+        return self.integrity_seal == want
 
-    def sign(self) -> str:
+    # backward-compat alias
+    signature_valid = integrity_seal_valid
+
+    def seal(self) -> str:
         payload = self.to_dict()
-        payload.pop("signature", None)
-        self.signature = "sha256:" + canonical_hash(payload)
-        return self.signature
+        for k in ("integrity_seal", "signature", "seal_semantics"):
+            payload.pop(k, None)
+        self.integrity_seal = "sha256:" + canonical_hash(payload)
+        return self.integrity_seal
+
+    # backward-compat alias
+    sign = seal
 
     def to_dict(self) -> dict[str, Any]:
         d = {"schema": APPROVAL_SCHEMA, "approval_id": self.approval_id,
@@ -87,9 +111,21 @@ class Approval:
             d["expires_at"] = self.expires_at
         if self.parameter_bounds:
             d["parameter_bounds"] = self.parameter_bounds
-        if self.signature:
-            d["signature"] = self.signature
+        if self.integrity_seal:
+            d["integrity_seal"] = self.integrity_seal
+            d["signature"] = self.integrity_seal   # deprecated alias
+            d["seal_semantics"] = (
+                "content-integrity-hash — tamper evidence only, "
+                "not signer identity")
         return d
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Approval:
+        return cls(**{k: v for k, v in d.items()
+                      if k in cls.__dataclass_fields__ and
+                      k != "signature"} | {
+            "integrity_seal": d.get("integrity_seal")
+            or d.get("signature", "")})
 
 
 @dataclass
@@ -182,11 +218,13 @@ def check_approval(approvals: list[Approval], *,
             continue
         if ap.subject_hash != subject_hash:
             continue                        # bound to another object
-        if ap.signature and ap.signature_valid() is False:
+        if ap.integrity_seal and ap.integrity_seal_valid() is False:
             return ApprovalCheck(refusal={
                 "refusal": "PF-OPS-APPROVAL-TAMPERED",
-                "unlock": "approval signature mismatch — "
-                          "payload was modified"})
+                "unlock": "approval integrity seal mismatch — "
+                          "payload was modified (seal detects "
+                          "tampering; it does not authenticate the "
+                          "signer)"})
         if ap.actor_kind not in allow_actor_kinds \
                 and ap.type != "break-glass":
             continue                        # agent-minted ≠ human approval

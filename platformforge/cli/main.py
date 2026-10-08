@@ -2181,7 +2181,19 @@ def _ops_run(args, spec: dict) -> int:
         ),
     )
     sim = simulate(plan, level=spec.get("simulation_level", "S1"))
-    risk = engine.assess_risk(plan, {"environment": spec.get("environment", "unknown")})
+    # rollback declaration precedes risk — the status feeds the risk
+    # ceiling and policy inputs (cycle 4.1 §F)
+    rb = derive_rollback(
+        [{"step_id": s.step_id, "action": s.action, "params": s.params}
+         for s in steps],
+        {
+            "environment": spec.get("environment"),
+            "automatic_allowed": spec.get("auto_rollback", False),
+        },
+    )
+    risk = engine.assess_risk(
+        plan, {"environment": spec.get("environment", "unknown")},
+        rollback_status=rb.status)
 
     # §GOVERN — cost/security gates evaluate declared change context
     # before policy/approval. fail blocks everywhere; unknown blocks
@@ -2243,13 +2255,6 @@ def _ops_run(args, spec: dict) -> int:
                 reason="no policies in spec — governance passthrough",
             )
         ]
-    rb = derive_rollback(
-        [{"action": s.action, "params": s.params} for s in steps],
-        {
-            "environment": spec.get("environment"),
-            "automatic_allowed": spec.get("auto_rollback", False),
-        },
-    )
     env = engine.mint_envelope(
         plan,
         execution_id=spec.get("execution_id", "cli-ex"),
@@ -2325,6 +2330,7 @@ def _ops_run(args, spec: dict) -> int:
         preconditions={
             "observation": spec.get("observation"),
             "pre_state": spec.get("pre_state"),
+            "sot": spec.get("sot"),
             "current_plan_hash": env.change_plan_hash,
             "policy_decision": (decisions[0].decision if decisions else "allow"),
             "freeze_active": spec.get("freeze_active", False),

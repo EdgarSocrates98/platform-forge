@@ -138,7 +138,8 @@ def assess(action: str, params: dict[str, Any] | None = None,
         dims[dim] = v
         if v == "unknown":
             unknowns.append(dim)
-        elif v in ("high", "critical"):
+        elif v in ("high", "critical") and dim != "rollback_confidence":
+            # high *confidence* is good — never an escalation
             escalations.append(f"{dim}={v}")
 
     # Content signals — params describing destructive/identity/data ops
@@ -188,3 +189,28 @@ def classify_reversibility(action: str, params: dict[str, Any] | None = None,
     if action in ("kubernetes.rollout_undo", "argocd.rollback"):
         return "conditionally-reversible"
     return "unknown"
+
+
+def rollback_confidence(status: str | None) -> str:
+    """Cycle 4.1 §F — fold the material-built rollback status into the
+    risk model. executable → high confidence; requires-replan /
+    manual-only → conditional; impossible → low; unresolved/unknown →
+    unknown (which *escalates* the class, never downgrades)."""
+    return {"executable": "high",
+            "requires-replan": "conditional",
+            "manual-only": "low",
+            "impossible": "low",
+            "unresolved": "unknown"}.get(status or "", "unknown")
+
+
+def reversibility_for_status(status: str | None, current: str
+                             ) -> str:
+    """A plan whose rollback is impossible/manual-only must not keep a
+    fully-reversible rating — worst-of wins."""
+    worse = {"impossible": "irreversible",
+             "manual-only": "hard-to-reverse",
+             "unresolved": "unknown"}.get(status or "")
+    order = {r: i for i, r in enumerate(REVERSIBILITY)}
+    if worse and order.get(worse, 0) > order.get(current, 0):
+        return worse
+    return current

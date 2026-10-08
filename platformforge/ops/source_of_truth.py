@@ -40,9 +40,33 @@ class Resolution:
     def resolved(self) -> bool:
         return self.unresolved is None and self.source.resolved
 
+    @property
+    def status(self) -> str:
+        """Cycle 4.1 — resolved | conflicted | unresolved. A resource
+        claimed by two systems is NOT 'resolved with precedence' — it
+        is conflicted and defaults to human review (§F)."""
+        if self.unresolved is not None:
+            return "unresolved"
+        if self.conflicts:
+            return "conflicted"
+        if not self.source.resolved:
+            return "unresolved"
+        return "resolved"
+
+    @property
+    def requires_human_review(self) -> bool:
+        """Conflicts and provider-direct/manual ownership never gate
+        automated mutation by themselves (§F)."""
+        return self.status == "conflicted" or \
+            self.preferred_path == "direct-with-review" or \
+            self.source.type == "provider-api"
+
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"resource_id": self.resource_id,
                              "resolved": self.resolved,
+                             "status": self.status,
+                             "requires_human_review":
+                                 self.requires_human_review,
                              "source_of_truth": self.source.to_dict()}
         if self.preferred_path:
             d["preferred_path"] = self.preferred_path

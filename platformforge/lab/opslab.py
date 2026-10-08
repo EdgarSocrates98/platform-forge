@@ -66,8 +66,17 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
     sim = simulate(plan, level=doc.get("simulation_level", "S1"))
     checks.append(f"simulate:{sim.outcome}")
 
-    # risk
-    risk = assess_risk(plan, {"environment": doc.get("environment", "lab")})
+    # rollback — status feeds the risk ceiling (cycle 4.1 §F)
+    rb = derive_rollback([{"step_id": s.get("step_id"),
+                           "action": s["action"],
+                           "params": dict(s.get("params", {}))}
+                          for s in doc.get("steps", [])],
+                         {"environment": doc.get("environment", "lab"),
+                          "automatic_allowed": doc.get(
+                              "auto_rollback", False)})
+    risk = assess_risk(
+        plan, {"environment": doc.get("environment", "lab")},
+        rollback_status=rb.status)
     checks.append(f"risk:{risk['risk_class']}")
 
     # policy
@@ -78,15 +87,7 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
         if policies else []
     checks.append("policy:" + ",".join(d.decision for d in decisions)
                   if decisions else "policy:none")
-
-    # rollback
-    rb = derive_rollback([{"action": s["action"],
-                           "params": dict(s.get("params", {}))}
-                          for s in doc.get("steps", [])],
-                         {"environment": doc.get("environment", "lab"),
-                          "automatic_allowed": doc.get(
-                              "auto_rollback", False)})
-    checks.append(f"rollback:{rb.strategy}")
+    checks.append(f"rollback:{rb.strategy}/{rb.status}")
 
     # envelope
     env = mint_envelope(plan, execution_id="lab-ex",
@@ -143,6 +144,7 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
                      preconditions={
                          "observation": doc.get("observation"),
                          "pre_state": doc.get("pre_state"),
+                         "sot": doc.get("sot"),
                          "current_plan_hash":
                              doc.get("current_plan_hash",
                                      env.change_plan_hash),
