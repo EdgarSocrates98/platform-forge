@@ -26,9 +26,29 @@ from platformforge.agents.contracts import (
     envelope_for,
     refusal,
 )
+from platformforge.agents.critic import adversarial_review, pre_mortem
+from platformforge.agents.guardian import release_review
+from platformforge.agents.orchestrator import (
+    DagNode,
+    OrchestrationPlan,
+    build_dag,
+    checkpoint,
+    load_loops,
+    prepare,
+    resume,
+    validate_dag,
+)
+from platformforge.agents.planner import plan
 from platformforge.agents.playbook import playbook
 from platformforge.agents.referee import referee
 from platformforge.agents.roster import AGENTS, AgentSpec, coordinator_for, resolve
+from platformforge.agents.taskspec import (
+    expire,
+    require_sealed,
+    review,
+    seal,
+)
+from platformforge.agents.verifier import verify_run
 
 __all__ = [
     "ACCESS_TIERS",
@@ -45,13 +65,30 @@ __all__ = [
     "AgentRunEnvelope",
     "AgentRunRecord",
     "AgentSpec",
+    "DagNode",
     "Debate",
     "DebatePosition",
+    "OrchestrationPlan",
     "PlatformTaskSpec",
+    "adversarial_review",
+    "build_dag",
+    "checkpoint",
     "coordinator_for",
     "envelope_for",
+    "expire",
+    "load_loops",
+    "plan",
     "playbook",
+    "pre_mortem",
+    "prepare",
     "referee",
     "refusal",
+    "release_review",
+    "require_sealed",
     "resolve",
+    "resume",
+    "review",
+    "seal",
+    "validate_dag",
+    "verify_run",
 ]

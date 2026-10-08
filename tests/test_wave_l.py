@@ -97,8 +97,10 @@ def test_referee_v2_axes():
          "contradictions": [{"with": "c"}]},
     ])
     assert out["winner"]["agent"] == "a"
-    assert set(out["axes"]) == {"tier", "freshness", "version_compat",
-                                "scope", "contradictory", "completeness"}
+    assert set(out["axes"]) == {
+        "tier", "freshness", "version_compat", "scope", "contradictory",
+        "completeness", "coverage", "runtime_alignment", "risk",
+        "historical_support"}
 
 
 def test_referee_no_evidence_loses():
