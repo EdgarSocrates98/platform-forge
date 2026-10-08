@@ -47,20 +47,24 @@ class RollbackMaterial:
     provenance: str = "declared"
 
     def payload(self) -> dict[str, Any]:
-        """Canonical content — everything the hash binds."""
+        """Canonical content — everything the hash binds. Deep-copied:
+        a serialized material never aliases the live object's mutable
+        fields (mutating the dict must not corrupt the material)."""
+        import copy
         return {"schema": MATERIAL_SCHEMA,
                 "material_id": self.material_id,
                 "operation_id": self.operation_id,
                 "step_id": self.step_id,
                 "action": self.action,
                 "captured_at": self.captured_at,
-                "pre_state": self.pre_state,
-                "execution_result": self.execution_result,
-                "source_of_truth": self.source_of_truth,
-                "artifacts": self.artifacts,
-                "references": self.references,
-                "evidence": self.evidence,
-                "limitations": self.limitations,
+                "pre_state": copy.deepcopy(self.pre_state),
+                "execution_result": copy.deepcopy(
+                    self.execution_result),
+                "source_of_truth": copy.deepcopy(self.source_of_truth),
+                "artifacts": list(self.artifacts),
+                "references": list(self.references),
+                "evidence": copy.deepcopy(self.evidence),
+                "limitations": list(self.limitations),
                 "provenance": self.provenance}
 
     def hash(self) -> str:
