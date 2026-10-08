@@ -2,6 +2,73 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
+## [Unreleased] — Cycle 5.1 (Bounded Agentic Runtime)
+
+Agents become operators of the deterministic engines — bounded,
+evidence-cited, independently verified, budgeted, and replayable.
+
+### Added
+- `agents/` — AgentSpec v2 canonical roster (41 agents):
+  orchestration core (orchestrator, planner, task-spec-reviewer,
+  verifier, adversarial-critic, debate-referee, release-guardian),
+  5 coordinators, 15 domain specialists, 6 reviewers, 8 executor
+  subagents (`pf-*`) wrapping deterministic engines.
+- Contracts — `PlatformTaskSpec` (sealed, evidence requirements
+  mandatory), `AgentHandoff`, `AgentRunEnvelope` (charge-before-spend
+  budgets), `RunRecord`, `Debate`; JSON schemas in `contracts/`.
+- `routing/router.py` — Router V2: extended signals → modes
+  (`deterministic` … `critical-review`) + instantiated DAG + budgets
+  + mandatory reviewers + verifier; `validate_routing()` fails on any
+  dangling agent name.
+- `agents/coordinators.py` — bounded fanout dispatch (`max_parallelism`
+  3–6), closed `delegates_to`, run-state write scope only.
+- `agents/specialists.py` — structured finding contract; evidence-less
+  `supported`/`contradicted` demoted to `unsupported` mechanically.
+- `agents/reviewers.py` — checklist reviewers (evidence, security,
+  ops-safety, architecture, privacy, economy).
+- `agents/verifier.py` — independent closure; producer can never be
+  sole verifier (`PF-AGENT-INDEPENDENCE`).
+- `agents/debate.py` — bounded debates (2+1+1, 1–3 rounds),
+  no-evidence positions refused, referee emits winner/tied/unresolved
+  over 10 axes + receipt.
+- `agents/contextpack.py` + `economy/` — `Task → Graph scope →
+  Evidence → ContextPack`; budget classes tiny→critical; delta
+  context via `previous_hash`; run ledger under
+  `.platformforge/runs/` with resume preserving spent budget.
+- `agents/mirrors.py` — generated mirrors for `agents/`, `.agents/`,
+  `.claude/`, `.codex/`, `.devin/` (205 files); `agents check`
+  reports missing/stale/stray.
+- `agents playbook` — zero-subagent fallback carrying identical
+  evidence + verifier requirements.
+- `graph/diff.py` + `graph/query.py` — SCC condensation + memoized
+  bitset ancestor cones; ~154× faster diff at 5k nodes;
+  `bench scale` measures 10k-node/500k-edge configs and reports
+  `unsupported-on-host` beyond host budget.
+- `analytics/store.py` — schema v2 + declared `_MIGRATIONS`,
+  `(subject,kind)` index, `vacuum()`; `analytics/soak.py` —
+  deterministic replay measuring insert/query/forget/GC/vacuum +
+  restart + crash rollback + migration replay.
+- Evals — 10 agent cases (`simple-iac-single-specialist` …
+  `host-no-subagents`); adversarial A1–A12 suite
+  (`tests/test_agent_adversarial.py`).
+- Validation — 7 `agents-*` gates (contract/routing/mirrors/economy/
+  debate/independence/evals) in `scripts/validate.py` + CI; 40 gates
+  total.
+- Docs — `docs/agents/` (11), ADRs 0041–0052, `docs/cycle5.1/`
+  closure artifacts (baseline, reports, benchmarks, soak, freeze).
+
+### Changed
+- `routing.yaml` → v2 canonical names (6 previously-dangling names
+  fixed).
+- Referee contract expanded to 10 decision axes.
+- `AgentSpec` v1 → v2; `LEGACY_NAMES` preserves old ids.
+
+### Boundaries (unchanged, reasserted)
+- Agents never mutate production, mint evidence, mint approval, or
+  self-verify; `change approve|apply` stays host-side (`PF-OPS-*`).
+- Unsupported scale targets return `unsupported-on-host` — never
+  extrapolated.
+
 ## [Unreleased] — Cycle 5 (Enterprise Platform Intelligence, Fleet Optimization & Organizational Scale)
 
 The north-star question — "how is the whole org platform behaving,

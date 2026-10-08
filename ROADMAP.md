@@ -139,5 +139,44 @@ docs/cycle5/):
 - **11 `fleet-*`/`adversarial` validation gates** mirrored as CI
   steps; `platformforge bench scale` measured benchmarks.
 
+## Cycle 5.1 — frozen (agentic runtime)
+
+Bounded, evidence-first agent orchestration on the deterministic core
+(docs/agents/, docs/cycle5.1/):
+
+- **AgentSpec v2** — canonical 41-agent roster (orchestration 7,
+  coordinators 5, specialists 15, reviewers 6, executors 8) with
+  entry/exit conditions, delegation boundaries, reviewers, verifier,
+  `never` list; JSON schemas for spec/task/handoff/run/debate.
+- **Router V2** — extended signals (risk, blast, security, production,
+  evidence completeness, mutability, fleet scope, conflict) → modes
+  `deterministic|single-specialist|multi-specialist|coordinated|
+  debate|critical-review` + instantiated DAG + budgets; dangling
+  agent names are a build failure (`agents-routing` gate).
+- **Bounded debate** — 2 specialists + critic + referee, 1–3 rounds,
+  evidence-cited positions only; referee emits winner/tied/unresolved
+  over 10 axes + receipt; verifier still closes the loop.
+- **Agent economy** — `Task → Graph scope → Evidence → ContextPack`;
+  budget classes (tiny→critical), charge-before-spend, exhaustion =
+  `partial` not silent success; delta context via previous-hash;
+  run ledger persists calls/bytes/tools/fanout/duration/reuse.
+- **Host mirrors** — 205 generated files over `agents/`, `.agents/`,
+  `.claude/`, `.codex/`, `.devin/`; `agents check` drift gate;
+  `agents playbook` gives zero-subagent hosts the same evidence +
+  verifier requirements.
+- **Independence** — producer is never sole verifier
+  (`PF-AGENT-INDEPENDENCE`); critical routes add operations-safety +
+  security reviewers; no mutation verbs in any spec.
+- **Scale** — graph diff ~154× at 5k nodes (SCC condensation + bitset
+  ancestor cones); 10k-node/500k-edge measured; unattempted sizes
+  return `unsupported-on-host`.
+- **Soak** — analytics store schema v2 + migration chain +
+  retention GC + right-to-forget + vacuum; deterministic replay proves
+  restart/crash/forget invariants.
+- **Gates** — 7 `agents-*` gates (contract/routing/mirrors/economy/
+  debate/independence/evals) in `scripts/validate.py` + CI.
+- **Architecture freeze** — `FREEZE-REVIEW.md` READY; new capability
+  requires explicit unfreeze (ADR-0052).
+
 Definition of done per feature: contract, implementation, tests, negative test,
 unresolved behavior, evidence, docs, source provenance, eval, CLI/MCP exposure.

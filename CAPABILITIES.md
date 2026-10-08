@@ -61,9 +61,9 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.evals` | 14 | lab | yes | `evals run/list/coverage/precision` | §94 types + §95 variants; 63/63 rule coverage (evals + lab); §127 measured precision |
 | `platform.lab.chaos` | 14 | lab | yes | `lab chaos <dir>` | §93 fault injection on the graph (simulation); prod targets refused unless `--allow-prod` |
 | `platform.knowledge` | 2 | economy | yes | `knowledge` | source registry freshness check — stale/unresolved/conflicted flagged |
-| `platform.agents` | 12 | agents | yes | `agents list/lint/sync/playbook/referee` | agent roster + mirror sync + referee arbitration |
+| `platform.agents` | 12 | agents | yes | `agents list/lint/sync/check/playbook/referee/bench` | canonical 41-agent roster (AgentSpec v2), mirror sync + drift check, zero-subagent playbook, bounded debate, strategy bench |
 | `platform.store` | 2 | core | yes | `store stats/gc` | §151 — content-addressed store; gc dry-run by default, never deletes referenced artifacts, `--execute` to delete |
-| `platform.bench` | 16 | core | yes | `bench run/tokens` | §148–150 — measured perf/token/storage on eval fixtures; baseline, never a claim |
+| `platform.bench` | 16 | core | yes | `bench run/tokens/scale` | §148–150 — measured perf/token/storage on eval fixtures; `scale` measures graph+store to 10k nodes / 500k edges; `unsupported-on-host` when a size can't be attempted |
 | `platform.ownership` | 4 | core | yes | `analyze ownership/contradictions` | §116/§136–137 — CODEOWNERS/Backstage/workspace/k8s-labels/cloud-tags signals; `ownership.conflicted` + `state.contradiction` facts |
 | `platform.fleet` | 13 | fleet | yes | `fleet <verb>` | Cycle 5 — Fleet/FleetMember/FleetSnapshot (coverage first-class), org-graph layers, 9 fleet questions, FinOps V4, capacity, history, golden-path, policy intel — fleet-dir inputs, coverage always reported |
 | `platform.analytics` | 3 | analytics | yes | `analytics summary|metric|maturity` | deterministic aggregates only; per-dimension maturity — unknown ≠ 0, no opaque scores, no fake ML |

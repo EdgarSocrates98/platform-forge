@@ -191,7 +191,7 @@ artifacts + hash cascade gates.
 
 | Verb | What it does |
 |---|---|
-| `agents list|lint|sync|playbook|referee` | Roster, host-mirror sync (`.claude/agents`, `.agents/agents`, `.codex/agents`), referee arbitration (6 axes). |
+| `agents list|lint|sync|check|playbook|referee|bench` | Canonical roster; host-mirror sync + drift check (`agents/`, `.agents/agents`, `.claude/agents`, `.codex/agents`, `.devin/agents`); zero-subagent playbook; referee arbitration (10 axes); strategy bench. |
 | `capability list|describe|manifest|check` | Registry v2 contracts; `check --domain k8s --version 1.29` negotiates support — unknown versions degrade to unresolved. |
 | `forge manifest|discover|collect|delegate|verify` | Forge interop manifest + A2A envelope + sibling-forge ingress. |
 | `mcp tools|serve|call|integrate|detach` | MCP server + host parity files. |
