@@ -225,6 +225,26 @@ class Operation:
                            "status": s.status, "attempt": s.attempt}
                           for s in self.steps]}
 
+    @staticmethod
+    def from_dict(d: dict[str, Any]) -> Operation:
+        op = Operation(operation_id=d.get("operation_id", ""),
+                       intent_id=d.get("intent_id", ""),
+                       plan_hash=d.get("plan_hash", ""),
+                       envelope_hash=d.get("envelope_hash", ""),
+                       state=d.get("state", "draft"),
+                       actor=d.get("actor", "system"),
+                       resources=list(d.get("resources", [])),
+                       history=list(d.get("history", [])),
+                       idempotency_key=d.get("idempotency_key", ""),
+                       created_at=d.get("created_at", ""),
+                       meta=dict(d.get("meta", {})))
+        for s in d.get("steps", []):
+            op.steps.append(ExecutionStep(
+                step_id=s.get("step_id", ""), action=s.get("action", ""),
+                status=s.get("status", "pending"),
+                attempt=s.get("attempt", 0)))
+        return op
+
 
 @dataclass
 class OperationLock:

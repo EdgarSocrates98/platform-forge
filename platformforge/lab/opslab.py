@@ -83,7 +83,9 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
     rb = derive_rollback([{"action": s["action"],
                            "params": dict(s.get("params", {}))}
                           for s in doc.get("steps", [])],
-                         {"environment": doc.get("environment", "lab")})
+                         {"environment": doc.get("environment", "lab"),
+                          "automatic_allowed": doc.get(
+                              "auto_rollback", False)})
     checks.append(f"rollback:{rb.strategy}")
 
     # envelope
@@ -107,7 +109,8 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
             scope=list(a.get("scope", env.scope)),
             actor=a.get("actor", "approver"),
             role=a.get("role", "owner"),
-            expires_at=a.get("expires_at", "")))
+            expires_at=a.get("expires_at", ""),
+            actor_kind=a.get("actor_kind", "human")))
     bg = None
     if doc.get("break_glass"):
         b = doc["break_glass"]
@@ -144,6 +147,9 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
                                      env.change_plan_hash),
                          "policy_decision": (decisions[0].decision
                                              if decisions else "allow"),
+                         "environment": doc.get("environment", "lab"),
+                         "maintenance_window":
+                             doc.get("maintenance_window"),
                          "freeze_active": doc.get("freeze_active",
                                                   False)})
 
@@ -159,6 +165,15 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
         result["final"] = finalize_verify(
             op, ledger, {"convergence": vr.convergence})
         result["state"] = op.state
+        # rollback execution when the plan allows it (lab/non-prod §123)
+        if op.state == "rollback-planned" and env.rollback.get(
+                "automatic"):
+            from platformforge.ops.engine import execute_rollback
+            result["rollback"] = execute_rollback(
+                op, env, transports=transports, ledger=ledger,
+                completed_results=result.get("results"),
+                dry_run=doc.get("dry_run", True))
+            result["state"] = op.state
 
     result["checks"] = checks
     result["ledger_valid"] = ledger.verify_chain()

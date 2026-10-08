@@ -23,7 +23,7 @@ from platformforge.ops.operation import ExecutionStep, LockTable, Operation, Ope
 from platformforge.ops.policy import Policy, evaluate
 from platformforge.ops.preconditions import check_preconditions
 from platformforge.ops.risk import assess, classify_reversibility
-from platformforge.ops.rollback import RollbackPlan, derive_rollback
+from platformforge.ops.rollback import RollbackPlan, compensate_for, derive_rollback
 from platformforge.ops.source_of_truth import resolve
 
 
@@ -148,6 +148,31 @@ def _dominant_executor(plan: ChangePlan) -> str:
     return ""
 
 
+_REQUIRE_DECISIONS = {
+    "require-dual-human": "dual-human",
+    "require-security-review": "security-review",
+    "require-owner": "resource-owner",
+    "require-platform-owner": "platform-owner",
+}
+
+
+def required_approval_type(env: ExecutionEnvelope,
+                           environment: str = "") -> str:
+    """§43/§54 — `require-*` policy decisions and prod R4+ risk escalate
+    the approval type an envelope demands (break-glass still bypasses
+    with its own audit trail)."""
+    for d in env.policy_decisions or []:
+        eff = d.get("decision", "")
+        if eff in _REQUIRE_DECISIONS:
+            return _REQUIRE_DECISIONS[eff]
+    risk_class = (env.risk or {}).get("risk_class", "")
+    if environment == "prod" and risk_class in ("R4", "R5"):
+        return "dual-human"
+    if risk_class == "R5":
+        return "dual-human"
+    return ""
+
+
 def execute(op: Operation, env: ExecutionEnvelope, *,
             approvals: list[Approval],
             transports: dict[str, Any] | None = None,
@@ -164,8 +189,16 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
     transports = transports or {}
 
     # 1. hash-bound approval re-check (TOCTOU)
+    # §61 — parameter bounds check against the *actual* step params:
+    # approving replicas 3→5 must not authorize 3→50.
+    merged_params: dict[str, Any] = {}
+    for a in env.actions:
+        merged_params.update(a.get("params") or {})
     chk = check_approval(approvals, subject_hash=env.hash(),
-                         scope=env.scope, params={},
+                         scope=env.scope, params=merged_params,
+                         required_type=required_approval_type(
+                             env, (preconditions or {}).get(
+                                 "environment", "")),
                          break_glass=break_glass,
                          current_plan_hash=env.hash(), at=at)
     if not chk.ok:
@@ -174,14 +207,21 @@ def execute(op: Operation, env: ExecutionEnvelope, *,
         return {"ok": False, "stage": "approval",
                 "refusal": chk.refusal}
 
-    # 2. preconditions
+    # 2. preconditions — including TOCTOU resource-state comparison
+    # (§57–58) and owner drift when the caller supplies them.
     pc = check_preconditions(
         observation=(preconditions or {}).get("observation"),
         max_observation_age_s=(preconditions or {}).get(
             "max_observation_age_s", 900),
+        expected_resource_state=(preconditions or {}).get(
+            "expected_resource_state"),
+        current_resource_state=(preconditions or {}).get(
+            "current_resource_state"),
         plan_hash=env.change_plan_hash,
         current_plan_hash=(preconditions or {}).get(
             "current_plan_hash", env.change_plan_hash),
+        owner=(preconditions or {}).get("owner", ""),
+        current_owner=(preconditions or {}).get("current_owner", ""),
         policy_decision=(preconditions or {}).get("policy_decision"),
         approval_valid=True,
         maintenance_window=(preconditions or {}).get("maintenance_window"),
@@ -303,3 +343,89 @@ def finalize_verify(op: Operation, ledger: OperationLedger,
     ledger.append("verified", op.operation_id, data=verification_result)
     return {"operation_id": op.operation_id, "state": op.state,
             "convergence": conv}
+
+
+def execute_rollback(op: Operation, env: ExecutionEnvelope, *,
+                     transports: dict[str, Any] | None = None,
+                     ledger: OperationLedger | None = None,
+                     completed_results: list[dict[str, Any]] | None = None,
+                     dry_run: bool = True,
+                     at: str | None = None) -> dict[str, Any]:
+    """§119–127 — execute the envelope's RollbackPlan through the same
+    typed-action boundary. FSM: rollback-planned → rolling-back →
+    rolled-back. `manual-only`/`impossible`/`unknown` strategies refuse —
+    rollback is never invented. With no plan actions, completed forward
+    steps are compensated in reverse (saga, §105–106)."""
+    ledger = ledger or OperationLedger()
+    rb = env.rollback or {}
+    strategy = rb.get("strategy", "unknown")
+    rb_actions = list(rb.get("actions", []))
+    if not rb_actions and completed_results:
+        comp = compensate_for([{"step_id": r.get("step_id"),
+                                "action": r.get("action"),
+                                "params": r.get("outputs", {}).get(
+                                    "params", {}),
+                                "status": "completed" if r.get("ok")
+                                else "failed"}
+                               for r in completed_results])
+        rb_actions = comp["compensating_actions"]
+        if comp["manual_steps"]:
+            rb.setdefault("limitations", []).append(
+                f"manual compensation needed for {comp['manual_steps']}")
+    if not rb_actions:
+        return {"ok": False, "state": op.state,
+                "refusal": {"refusal": "PF-OPS-ROLLBACK-EMPTY",
+                            "unlock": "no rollback actions derivable — "
+                                      "manual remediation required"}}
+
+    # legal walk into rolling-back
+    for st in ("rollback-planned", "rolling-back"):
+        if op.state == st:
+            continue
+        if st == "rollback-planned" and op.state in \
+                ("executing", "rolling-back"):
+            continue  # executing may jump straight to rolling-back
+        r = op.transition(st, ledger, data={"strategy": strategy})
+        if "refusal" in r:
+            return {"ok": False, "state": op.state, "refusal": r}
+
+    ledger.append("rollback.started", op.operation_id,
+                  data={"strategy": strategy,
+                        "actions": len(rb_actions)})
+    results: list[dict[str, Any]] = []
+    transports = transports or {}
+    for i, a in enumerate(rb_actions):
+        sid = f"rb-{i}-{a.get('action', '?')}"
+        spec = spec_for(a.get("action", ""))
+        ex = executor_for(a.get("action", ""))
+        ledger.append("step.started", op.operation_id,
+                      data={"step_id": sid, "action": a.get("action"),
+                            "rollback": True, "dry_run": dry_run})
+        if spec is None or ex is None:
+            r = {"ok": False, "refusal": {
+                "refusal": "PF-OPS-UNKNOWN-ACTION",
+                "unlock": f"{a.get('action')} not in vocabulary"}}
+        else:
+            rec = ex.run_step(sid, a["action"], a.get("params", {}),
+                              transport=transports.get(spec.executor),
+                              dry_run=dry_run)
+            r = rec.to_dict()
+        results.append(r)
+        if r.get("ok"):
+            ledger.append("step.completed", op.operation_id,
+                          data={"step_id": sid,
+                                "receipt": r.get("receipt_hash"),
+                                "rollback": True})
+        else:
+            ledger.append("step.failed", op.operation_id,
+                          data={"step_id": sid,
+                                "refusal": r.get("refusal"),
+                                "rollback": True})
+            op.transition("failed", ledger)
+            return {"ok": False, "state": op.state,
+                    "failed_step": sid, "results": results}
+    ledger.append("rollback.completed", op.operation_id,
+                  data={"strategy": strategy, "actions": len(results)})
+    op.transition("rolled-back", ledger)
+    return {"ok": True, "state": op.state, "results": results,
+            "strategy": strategy}

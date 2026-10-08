@@ -17,6 +17,7 @@ observation:
 approvals:
   - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
 environment: lab
+auto_rollback: true
 transports: {kubernetes: {rc: 0, stdout: "restarted"}}
 verify:
   observations:
@@ -25,4 +26,4 @@ verify:
     extended: {changes: {resources: [{id: "dep/web", restarted: true}]}}
   slo: {error_rate_max: 0.01}
   metrics: {error_rate: 0.4}
-expect: {ok: true, state: rollback-planned, convergence: regressed}
+expect: {ok: true, state: rolled-back, convergence: regressed}

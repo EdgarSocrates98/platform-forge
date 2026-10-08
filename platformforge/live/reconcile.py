@@ -21,6 +21,7 @@ from typing import Any
 
 from platformforge.live.models import (
     DRIFT_CLASSES,
+    Coverage,
     DriftEvent,
     ObservationEnvelope,
     ObservationScope,
@@ -60,13 +61,23 @@ class CompareInput:
     layer: str                                   # desired|planned|observed|runtime
     resources: dict[str, dict[str, Any]] = field(default_factory=dict)
     timestamp: str = ""
-    coverage: str = "unknown"                    # observed only
+    coverage: str = "unknown"                    # observed only (global)
+    coverage_detail: dict[str, Any] = field(default_factory=dict)
     scope: dict[str, Any] = field(default_factory=dict)
     fresh: bool = True
 
 
 def _keys_of(res: dict[str, Any]) -> set[str]:
-    """Candidate match keys — strong first, weak triple as fallback."""
+    """Candidate match keys — strong first, weak triple as fallback.
+
+    Normalization (audit X1c): a `resource_id` carrying a `#uid` suffix
+    (k8s collector shape `k8s://cluster/ns/Kind/name#uid`) yields both
+    the full id and the uid-stripped base so desired facts written as
+    `k8s://lab/prod/Deployment/api` match the observed object. The uid
+    fragment is additionally indexed as `uid:<frag>`. Kind triples are
+    emitted for both the full resource_type (`k8s:apps/Deployment`) and
+    its short form (`Deployment`) so facts that only know the short
+    kind still join."""
     keys = set()
     attrs = res.get("attrs") or res.get("attributes") or {}
     for k in ("arn", "uid", "resource_id", "canonical_id",
@@ -76,12 +87,24 @@ def _keys_of(res: dict[str, Any]) -> set[str]:
             keys.add(str(v))
     rid = res.get("resource_id") or res.get("location") or ""
     if rid:
-        keys.add(str(rid))
+        rid = str(rid)
+        keys.add(rid)
+        if "#" in rid:
+            base, _, frag = rid.rpartition("#")
+            if base:
+                keys.add(base)
+            if frag:
+                keys.add(f"uid:{frag}")
+    if res.get("uid"):
+        keys.add(f"uid:{res['uid']}")
     kind = res.get("resource_type") or res.get("kind", "")
     ns = res.get("namespace", "") or attrs.get("namespace", "")
     name = res.get("name", "") or attrs.get("name", "")
     if kind and name:
         keys.add(f"{kind}:{ns}:{name}")
+        short = str(kind).rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+        if short != kind:
+            keys.add(f"{short}:{ns}:{name}")
     return keys
 
 
@@ -105,7 +128,8 @@ def norm_observed(env: ObservationEnvelope | dict[str, Any],
         env = ObservationEnvelope.from_dict(env)
     inp = CompareInput(layer="observed", timestamp=env.captured_at,
                        coverage=(env.coverage or {}).get("status",
-                                                         "unknown"),
+                                                        "unknown"),
+                       coverage_detail=dict(env.coverage or {}),
                        scope=env.scope or {})
     for o in env.objects:
         res = dict(o)
@@ -153,6 +177,7 @@ def reconcile(*, desired: CompareInput | None = None,
               observed: CompareInput | None = None,
               runtime: CompareInput | None = None,
               accepted: list[dict[str, Any]] | None = None,
+              resolve_identities: bool = True,
               at=None) -> dict[str, Any]:
     """N-way reconcile. Returns drift events + unresolved + alignment."""
     desired = desired or CompareInput("desired")
@@ -167,7 +192,57 @@ def reconcile(*, desired: CompareInput | None = None,
               if i.timestamp}
     obs_stale = bool(observed.resources) and not observed.fresh
     obs_cov = observed.coverage
+    cov_detail = Coverage.from_dict(observed.coverage_detail or
+                                    {"status": obs_cov})
     obs_scope = ObservationScope.from_dict(observed.scope)
+
+    # Identity resolution (§42–§49): union strong ids across layers so a
+    # desired terraform_address joins the observed ARN it produced, and
+    # SA↔role contradictions surface as identity-drift — never silently.
+    links: list[dict[str, Any]] = []
+    ident_summary: dict[str, Any] = {}
+    alias_map: dict[str, set[str]] = {}
+    if resolve_identities and (observed.resources or desired.resources
+                               or planned.resources):
+        from platformforge.live.identity import IdentityResolver
+        res = IdentityResolver()
+        seen_objs: set[int] = set()
+        for inp in (observed, desired, planned):
+            for r in inp.resources.values():
+                if id(r) in seen_objs:
+                    continue
+                seen_objs.add(id(r))
+                res.ingest_object(dict(r, attributes=r.get("attrs", {})))
+        resolved = res.resolve()
+        links = resolved["links"]
+        ident_summary = {"counts": resolved["counts"],
+                         "weak_candidates": resolved["weak_candidates"],
+                         "conflicts": resolved["conflicts"]}
+        # every value an identity groups together becomes a match key —
+        # terraform_address ↔ arn ↔ resource_id ↔ uid ↔ aliases
+        for ident in resolved["identities"]:
+            vals = ({str(v) for v in ident.get("provider_ids", {}).values()}
+                    | {str(v) for v in ident.get("graph_nodes", [])}
+                    | {str(v) for v in ident.get("aliases", [])}
+                    | {str(ident.get("canonical_id", ""))})
+            vals.discard("")
+            for v in vals:
+                alias_map.setdefault(v, set()).update(vals - {v})
+        for l in links:
+            a, b = str(l.get("a", "")), str(l.get("b", ""))
+            if a and b:
+                alias_map.setdefault(a, set()).add(b)
+                alias_map.setdefault(b, set()).add(a)
+
+    def _match_keys(res: dict[str, Any]) -> set[str]:
+        """_keys_of + resolved-identity alias expansion."""
+        keys = _keys_of(res)
+        if not alias_map:
+            return keys
+        out = set(keys)
+        for k in keys:
+            out.update(alias_map.get(k, ()))
+        return out
 
     events: list[DriftEvent] = []
     unresolved: list[dict[str, Any]] = []
@@ -206,21 +281,34 @@ def reconcile(*, desired: CompareInput | None = None,
     des_idx, pln_idx, obs_idx = (desired.resources, planned.resources,
                                observed.resources)
 
-    # desired ↔ observed
+    # identity conflicts surface as drift events, never silently merged
+    for c in (ident_summary.get("conflicts") or []):
+        _emit(c.get("resource", "unknown"), "identity-drift",
+              dict(c.get("claim_a", {})), dict(c.get("claim_b", [])))
+
+    # desired ↔ observed — per-type coverage gates absence verdicts
     for rid, d in sorted(des.items()):
         target = {"resource_type": d.get("resource_type", ""),
                   "namespace": d.get("attrs", {}).get("namespace", ""),
                   "name": d.get("name") or d.get("resource_id", "")}
-        match = next((obs_idx[k] for k in _keys_of(d)
+        cov_t = cov_detail.for_type(
+            d.get("resource_type", "")) or obs_cov
+        match = next((obs_idx[k] for k in _match_keys(d)
                       if k in obs_idx), None)
         if match is None:
-            if obs_cov in ("permission-limited", "unknown") or \
-                    obs_cov == "" and not obs:
+            if obs_cov == "" and not obs:
                 unresolved.append({"resource_id": rid,
-                                   "reason": f"coverage={obs_cov or 'none'}",
-                                   "drift_class": "permission-unknown"
-                                   if obs_cov == "permission-limited"
-                                   else "unknown"})
+                                   "reason": "coverage=none",
+                                   "drift_class": "unknown"})
+                continue
+            if cov_t != "complete":
+                unresolved.append(
+                    {"resource_id": rid,
+                     "reason": f"coverage[{d.get('resource_type') or '?'}]"
+                               f"={cov_t}",
+                     "drift_class": "permission-unknown"
+                     if cov_t in ("permission-limited", "unsupported")
+                     else "unknown"})
                 continue
             if obs_stale:
                 _emit(rid, "stale-observation", d, {}, d.get("fact_ids"))
@@ -240,28 +328,30 @@ def reconcile(*, desired: CompareInput | None = None,
         else:
             _emit(rid, "converged", d, match, d.get("fact_ids"))
 
-    # planned-not-applied: in plan, absent from observed (with same
-    # coverage honesty gates as desired-missing-observed)
+    # planned-not-applied: in plan, absent from observed — gated on
+    # per-type coverage: absence is unprovable where the type was not
+    # fully collected (§8/§10)
     for rid, p in sorted(pln.items()):
         if rid in des and _same_resource(des[rid], p):
             continue
-        match = next((obs_idx[k] for k in _keys_of(p)
+        match = next((obs_idx[k] for k in _match_keys(p)
                       if k in obs_idx), None)
-        if match is None and obs and obs_cov == "complete" \
-                and not obs_stale:
+        if match is None and obs and not obs_stale and \
+                cov_detail.for_type(
+                    p.get("resource_type", "")) == "complete":
             _emit(rid, "planned-not-applied", p, {}, p.get("fact_ids"))
 
     # observed-orphan: present in observed, absent from desired+planned
     for rid, o in sorted(obs.items()):
-        if any(k in des_idx for k in _keys_of(o)) or \
-                any(k in pln_idx for k in _keys_of(o)):
+        if any(k in des_idx for k in _match_keys(o)) or \
+                any(k in pln_idx for k in _match_keys(o)):
             continue
         _emit(rid, "observed-orphan", {}, o, o.get("fact_ids"))
 
     # runtime-undeclared: runtime edges with no desired/planned anchor
     for rid, r in sorted(_grouped(runtime).items()):
-        if any(k in des_idx for k in _keys_of(r)) or \
-                any(k in pln_idx for k in _keys_of(r)):
+        if any(k in des_idx for k in _match_keys(r)) or \
+                any(k in pln_idx for k in _match_keys(r)):
             continue
         _emit(rid, "runtime-undeclared", {}, r, r.get("fact_ids"))
 
@@ -275,6 +365,7 @@ def reconcile(*, desired: CompareInput | None = None,
         "drift": [e.to_dict() for e in events],
         "counts": counts, "accepted": accepted_n,
         "unresolved": unresolved,
+        "identities": ident_summary,
         "alignment": {
             "timestamps": stamps,
             "comparable": bool(stamps) and not obs_stale,
