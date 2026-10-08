@@ -97,3 +97,11 @@ failure, not a convention (§91).
   contains mutating actions, so CI can gate on it.
 - Credentials live on the host — the cluster registry stores context/
   role references, never secrets.
+
+## Reporting a vulnerability
+
+Open a private report via GitHub Security Advisories on the repository —
+do not file a public issue with a reproducer. Include: affected command
+or surface, the input that triggers it, and whether a `PF-*` refusal was
+expected but missing (a bypassed boundary is a security bug here).
+Non-vulnerability questions go to regular issues.

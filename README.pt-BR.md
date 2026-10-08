@@ -72,7 +72,14 @@ platformforge policy check facts.json      # catálogo como política
 platformforge security ./dumps             # secrets+iam+sbom+supply bundle
 platformforge sdd status --feature F       # ciclo SDD + cascata de hash
 platformforge forge manifest               # manifesto de capacidade (interop)
-platformforge agents list                  # roster de agentes
+platformforge agents list                  # roster canônico (41 agentes)
+platformforge agents check                 # drift gate dos mirrors de host
+platformforge agents playbook "tarefa"     # fallback sem subagentes
+platformforge agents referee --positions p.json  # debate bounded (10 eixos)
+platformforge route '{"task":"...","risk":"high"}' # decisão do Router V2
+platformforge fleet report lab/fleets/acme # receipt north-star da frota
+platformforge optimize scan lab/fleets/acme  # oportunidades → ChangeIntent
+platformforge bench scale                  # bench medido 10k nós/500k arestas
 platformforge knowledge                    # freshness do registry de fontes
 ```
 
@@ -99,16 +106,23 @@ o que destrava a resposta.
 
 ## Docs de design
 
+Índice: [docs/README.md](docs/README.md) — ADRs, docs de agentes,
+relatórios de ciclo.
+
 [ARCHITECTURE.md](ARCHITECTURE.md) · [GRAPHFY.md](GRAPHFY.md) ·
 [ECONOMY.md](ECONOMY.md) · [SDD.md](SDD.md) · [AGENTIC-OS.md](AGENTIC-OS.md) ·
-[DOMAIN-MAP.md](DOMAIN-MAP.md) · [CAPABILITIES.md](CAPABILITIES.md) ·
-[RESEARCH.md](RESEARCH.md) · [ROADMAP.md](ROADMAP.md) ·
-[KNOWLEDGE.md](KNOWLEDGE.md) · [RULES.md](RULES.md) ·
-[SECURITY.md](SECURITY.md) · [EVALS.md](EVALS.md) · [CLOUD.md](CLOUD.md) ·
-[GOLDEN-PATHS.md](GOLDEN-PATHS.md) · [QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md) ·
+[FLEET.md](FLEET.md) · [PLATFORM-ANALYTICS.md](PLATFORM-ANALYTICS.md) ·
+[OPTIMIZATION.md](OPTIMIZATION.md) · [FEDERATION.md](FEDERATION.md) ·
+[OPS.md](OPS.md) · [DOMAIN-MAP.md](DOMAIN-MAP.md) ·
+[CAPABILITIES.md](CAPABILITIES.md) · [RESEARCH.md](RESEARCH.md) ·
+[ROADMAP.md](ROADMAP.md) · [KNOWLEDGE.md](KNOWLEDGE.md) ·
+[RULES.md](RULES.md) · [SECURITY.md](SECURITY.md) · [EVALS.md](EVALS.md) ·
+[CLOUD.md](CLOUD.md) · [GOLDEN-PATHS.md](GOLDEN-PATHS.md) ·
+[QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md) ·
 [CLI-REFERENCE.md](CLI-REFERENCE.md) · [GLOSSARY.md](GLOSSARY.md) ·
-[MCP.md](MCP.md) · [CONTRIBUTING.md](CONTRIBUTING.md) ·
-[AGENTS.md](AGENTS.md) · [CHANGELOG.md](CHANGELOG.md)
+[MCP.md](MCP.md) · [docs/agents/](docs/agents/) (runtime agentico) ·
+[CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) ·
+[CHANGELOG.md](CHANGELOG.md)
 
 ## Licença
 

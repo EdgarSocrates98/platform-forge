@@ -10,18 +10,22 @@ platformforge doctor --deep # env + workspace + manifest + index health
 ## Gates (run what your change touches)
 
 ```bash
-uv run pytest -q                     # unit/integration (204 tests)
+uv run pytest -q                     # unit/integration (787 tests)
 uv run ruff check .                  # lint — the enforced gate
 uv run pytest tests/test_docs_drift.py   # CLI ↔ docs parity
-uv run platformforge lab run-all     # Forge Lab scenarios
-uv run platformforge evals run       # eval corpus
+uv run platformforge lab run-all     # Forge Lab scenarios (44)
+uv run platformforge evals run       # eval corpus (93 cases)
 uv run platformforge evals coverage  # rule ↔ case coverage
 uv run platformforge evals precision # measured FP rate
 uv run platformforge capability list # registry ↔ CLI ↔ MCP parity
+uv run platformforge agents lint     # AgentSpec contract lint (41 agents)
+uv run platformforge agents check    # host-mirror drift gate
+uv run python scripts/validate.py    # full 40-gate suite → receipt
 ```
 
 CI runs pytest + ruff + a wheel-install smoke (`platformforge doctor`,
-`--help` in a clean env). Match it before pushing.
+`--help` in a clean env) + all gates in `scripts/validate.py` mirrored
+as steps. Match it before pushing.
 
 ## Invariants — do not break these
 
@@ -78,6 +82,27 @@ Fixture files live in `evals/cases/<id>/fixture/`.
 
 `lab/scenarios/<id>/fixture/` + `expected.yaml` (findings matched by
 rule prefix). `lab run <id>` compares expected vs observed.
+
+## Add an agent
+
+1. Add an `AgentSpec` v2 entry in `platformforge/agents/roster.py` —
+   `when_to_enter`/`when_not_to_enter`/`never` are mandatory; executors
+   never delegate; only orchestrator/coordinator roles hold
+   non-read-only access; an agent can never be its own verifier.
+2. If it's routable, register it in `rules/catalog/routing.yaml` —
+   `agents-routing` gate fails on dangling names.
+3. `platformforge agents sync` regenerates the five host-mirror
+   targets; `agents check` must stay clean (never hand-edit mirrors).
+4. Tests: `tests/test_agent_*.py`; evals: `evals/cases/agent-*/`.
+   Doc: `docs/agents/AGENT_*_MATRIX.md`.
+
+## Add a skill
+
+Skills live in `.devin/skills/platformforge-<domain>/SKILL.md` —
+frontmatter (`name`, `description` with triggers *and* non-triggers),
+a canonical verb block, and a discipline section citing invariants and
+`PF-*` refusals. Register it in `AGENTS.md` and in the
+`platformforge-core` routing section.
 
 ## Non-trivial changes → SDD
 

@@ -1,32 +1,65 @@
-# docs/ — design records & cycle reports
+# docs/ — design records, agent docs & cycle reports
+
+## agents/ — agentic runtime (Cycle 5.1)
+
+Contracts and matrices for the bounded agent layer (canonical roster:
+`platformforge/agents/roster.py`):
+
+- [AGENT_PROTOCOL.md](agents/AGENT_PROTOCOL.md) — TaskSpec/Handoff/Envelope/RunRecord lifecycle
+- [AGENT_ARCHITECTURE.md](agents/AGENT_ARCHITECTURE.md) — layered runtime, 41-agent roster
+- [AGENT_OUTPUT_CONTRACT.md](agents/AGENT_OUTPUT_CONTRACT.md) — structured findings; demotion rules
+- [AGENT_SKILL_MATRIX.md](agents/AGENT_SKILL_MATRIX.md) — domains per agent
+- [AGENT_TOOL_MATRIX.md](agents/AGENT_TOOL_MATRIX.md) — verbs/tools/capabilities per agent
+- [AGENT_RISK_MATRIX.md](agents/AGENT_RISK_MATRIX.md) — escalation signals, access/model tiers
+- [HOST_PARITY.md](agents/HOST_PARITY.md) — generated mirrors, drift gate, zero-subagent playbook
+- [ROUTING.md](agents/ROUTING.md) — Router V2 signals, modes, DAG output
+- [DEBATE.md](agents/DEBATE.md) — bounded debate + referee contract (10 axes)
+- [ECONOMY.md](agents/ECONOMY.md) — context packs, budget classes, run ledger
+- [VERIFICATION.md](agents/VERIFICATION.md) — independent verifier, producer ≠ verifier
 
 ## adr/ — Architecture Decision Records
 
-Numbered, immutable-ish records of load-bearing decisions:
+Numbered records of load-bearing decisions:
 
-- [0001](adr/0001-deterministic-core-first.md) — deterministic core-first; LLMs are adapters
-- [0002](adr/0002-graphfy-as-spine.md) — Graphfy as the spine
-- [0003](adr/0003-economy-by-architecture.md) — economy by architecture
-- [0004](adr/0004-planned-provenance.md) — planned edges are never promoted to observed
-- [0005](adr/0005-context-redaction.md) — redaction is a pipeline boundary
-- [0006](adr/0006-rule-provenance.md) — every rule cites a dated source
-- [0007](adr/0007-version-unresolved-semantics.md) — unknown versions → unresolved, not verdicts
-- [0008](adr/0008-quality-per-token.md) — economy is measured per task
-- [0009](adr/0009-cloud-common-model.md) — one cloud model; providers are dump adapters
-- [0010](adr/0010-golden-path-model.md) — golden paths are evidence-checked
+**Foundations (0001–0010)** — deterministic core, Graphfy spine,
+economy-by-architecture, provenance classes, redaction boundary, rule
+provenance, version semantics, quality-per-token, cloud common model,
+golden-path model.
 
-## cycle2/ — Cycle-2 close reports
+**Observation & graph (0011–0020)** — observation model, collector
+boundary, absence semantics, freshness/coverage, temporal Graphfy,
+identity resolution, reconciliation classes, runtime edges, credential
+boundary, provider-call economy.
 
-Evidence-backed final reports for the Cycle-2 hardening spec
-(`prompt_evo_cycle2.md`):
+**Operations (0021–0030)** — no arbitrary shell, source-of-truth first,
+autonomy levels, risk classes, approval hash-binding, operation state
+machine, execution adapter boundary, verification ≠ command success,
+rollback semantics, policy precedence.
 
-- [FINAL-REPORT.md](cycle2/FINAL-REPORT.md) — wave-by-wave delivery + verified numbers
-- [FINAL-MATRIX.md](cycle2/FINAL-MATRIX.md) — capability truth matrix
-- [FINAL-ECONOMY.md](cycle2/FINAL-ECONOMY.md) — measured perf/token baselines
-- [FINAL-QUALITY.md](cycle2/FINAL-QUALITY.md) — test/coverage/precision gates
-- [FINAL-SECURITY.md](cycle2/FINAL-SECURITY.md) — redaction & boundary report
-- [ARCHITECTURAL-REVIEW.md](cycle2/ARCHITECTURAL-REVIEW.md) — honest architecture assessment
-- [NORTH-STAR.md](cycle2/NORTH-STAR.md) — the invariants the platform keeps
+**Fleet & analytics (0031–0040)** — fleet canonical model, org-graph
+layers, history boundaries, deterministic baseline first, metric
+provenance, optimization→ChangeIntent, federation no-credentials, no
+individual scoring, AI-platform boundary, pluggable analytics storage.
+
+**Agentic runtime (0041–0052)** — canonical roster, agents vs engines,
+coordinator dispatch boundary, verifier independence, budget model,
+context economy, debate/referee contract, host mirror generation,
+zero-subagent fallback, operation boundary, fleet-scale context policy,
+architecture freeze.
+
+Browse: [adr/](adr/) — filenames carry the title.
+
+## Cycle reports — evidence-backed close-outs
+
+| Cycle | Dir | Highlights |
+|---|---|---|
+| 2 | [cycle2/](cycle2/) | hardening wave; FINAL-REPORT, matrices, security/economy/quality reports |
+| 2.1 | [cycle2.1/](cycle2.1/) | CI validation + receipt |
+| 3 | [cycle3/](cycle3/) | live observation boundary; research ledger |
+| 4 | [cycle4/](cycle4/) | governed operations; research ledger |
+| 4.1 | [cycle4.1/](cycle4.1/) | rollback integrity, expected-delta gates; receipt |
+| 5 | [cycle5/](cycle5/) | fleet + analytics + federation; 10 closure docs + receipt |
+| 5.1 | [cycle5.1/](cycle5.1/) | agentic runtime: baseline, agent matrix/benchmarks, scale + soak reports, freeze review, final matrix/report, validation receipt |
 
 ## discovery/ — baseline audits
 

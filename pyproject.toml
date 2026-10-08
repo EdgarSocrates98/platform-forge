@@ -41,6 +41,8 @@ platformforge-mcp = "platformforge.mcp.server:main"
 [project.urls]
 Homepage = "https://github.com/EdgarSocrates98/platform-forge"
 Repository = "https://github.com/EdgarSocrates98/platform-forge"
+Documentation = "https://github.com/EdgarSocrates98/platform-forge/blob/main/docs/README.md"
+Changelog = "https://github.com/EdgarSocrates98/platform-forge/blob/main/CHANGELOG.md"
 Issues = "https://github.com/EdgarSocrates98/platform-forge/issues"
 
 [tool.hatch.build.targets.wheel]
