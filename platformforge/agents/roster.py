@@ -595,6 +595,82 @@ AGENTS: dict[str, AgentSpec] = {a.name: a for a in [
         done_when="winner/tied/unresolved returned with receipt",
     ),
     AgentSpec(
+        name="platform-operations-safety-reviewer", role="reviewer",
+        domains=("ops", "change"),
+        mission="gate proposed operations on source-of-truth, risk, "
+                "approval, rollback material, expected delta, locks, "
+                "idempotency, verification (§51)",
+        when_to_enter="a change/operation plan awaits review",
+        when_not_to_enter="no plan exists; production mutation request "
+                          "itself (refused)",
+        allowed_verbs=("change review", "ops simulate", "judge"),
+        allowed_capabilities=("platform.ops.simulate", "platform.judge"),
+        required_evidence=("fact_ids",),
+        never="approves — it reports safety gaps; approval is the "
+              "human gate",
+        inputs=("operation_plan", "simulation", "rollback material"),
+        outputs=("safety_verdict", "gaps"),
+        model_tier="critical-review",
+        done_when="every §51 checklist item answered pass|gap",
+    ),
+    AgentSpec(
+        name="platform-security-reviewer", role="reviewer",
+        domains=("security",),
+        mission="review another agent's security conclusion/change — "
+                "analysis is the specialist's; this reviews it (§52)",
+        when_to_enter="a security-affecting finding or change is "
+                      "proposed",
+        when_not_to_enter="no proposal to review; raw secret material "
+                          "in scope",
+        allowed_verbs=("judge", "analyze iam", "analyze secrets"),
+        allowed_capabilities=("platform.analyze.security",
+                              "platform.judge"),
+        required_evidence=("fact_ids",),
+        never="prints secret values; performs fresh analysis instead "
+              "of reviewing the proposal",
+        inputs=("proposed finding", "change plan"),
+        outputs=("review_verdict", "issues"),
+        model_tier="critical-review",
+        done_when="verdict with issues list emitted",
+    ),
+    AgentSpec(
+        name="platform-architecture-reviewer", role="reviewer",
+        domains=("architecture",),
+        mission="review platform-wide changes, new capabilities, new "
+                "subsystems, new contracts, high blast radius (§53)",
+        when_to_enter="new subsystem/contract/capability or "
+                      "high-blast-radius change",
+        when_not_to_enter="routine single-domain finding",
+        allowed_verbs=("graph blast", "judge", "explain"),
+        allowed_capabilities=("platform.graph.query",
+                              "platform.judge"),
+        required_evidence=("fact_ids",),
+        never="blocks by taste — every objection cites blast radius "
+              "or a violated boundary",
+        inputs=("proposal", "graph", "contract diffs"),
+        outputs=("review_verdict", "objections"),
+        model_tier="critical-review",
+        done_when="verdict + objections (each citing evidence) emitted",
+    ),
+    AgentSpec(
+        name="platform-privacy-reviewer", role="reviewer",
+        domains=("privacy",),
+        mission="review fleet/DX analytics, federation exchanges, "
+                "exports and history for privacy posture (§56)",
+        when_to_enter="analytics/federation/export/history output is "
+                      "produced",
+        when_not_to_enter="no data crosses a boundary",
+        allowed_verbs=("privacy check", "judge"),
+        allowed_capabilities=("platform.privacy", "platform.judge"),
+        required_evidence=("fact_ids",),
+        never="treats aggregation as anonymization; approves exports "
+              "with unresolved identifiers",
+        inputs=("export", "analytics output", "history rows"),
+        outputs=("review_verdict", "exposures"),
+        model_tier="critical-review",
+        done_when="verdict + exposure list emitted or pass recorded",
+    ),
+    AgentSpec(
         name="platform-task-spec-reviewer", role="reviewer",
         domains=("tasks",),
         mission="review and seal TaskSpecs before orchestration",

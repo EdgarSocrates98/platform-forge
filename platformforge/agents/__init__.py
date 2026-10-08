@@ -47,6 +47,13 @@ from platformforge.agents.orchestrator import (
 from platformforge.agents.planner import plan
 from platformforge.agents.playbook import playbook
 from platformforge.agents.referee import referee
+from platformforge.agents.reviewers import (
+    OPS_SAFETY_CHECKLIST,
+    architecture_review,
+    ops_safety_review,
+    privacy_review,
+    security_review,
+)
 from platformforge.agents.roster import AGENTS, AgentSpec, coordinator_for, resolve
 from platformforge.agents.specialists import finding, grade
 from platformforge.agents.taskspec import (
@@ -63,6 +70,7 @@ __all__ = [
     "BUDGET_CLASSES",
     "COORDINATOR_LOOPS",
     "MODEL_TIERS",
+    "OPS_SAFETY_CHECKLIST",
     "OUTPUT_STATUSES",
     "ROLES",
     "ROUTING_MODES",
@@ -79,6 +87,7 @@ __all__ = [
     "OrchestrationPlan",
     "PlatformTaskSpec",
     "adversarial_review",
+    "architecture_review",
     "build_dag",
     "checkpoint",
     "collect",
@@ -90,10 +99,12 @@ __all__ = [
     "finding",
     "grade",
     "load_loops",
+    "ops_safety_review",
     "plan",
     "playbook",
     "pre_mortem",
     "prepare",
+    "privacy_review",
     "referee",
     "refusal",
     "release_review",
@@ -102,6 +113,7 @@ __all__ = [
     "resume",
     "review",
     "seal",
+    "security_review",
     "validate_dag",
     "verify_run",
 ]
