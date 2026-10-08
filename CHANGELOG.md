@@ -2,6 +2,64 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
+## [Unreleased] — Cycle 4 (Governed Platform Engineering Control Plane)
+
+Platform Forge evolves from live intelligence into a governed control
+plane: `OBSERVE → UNDERSTAND → DIAGNOSE → RECOMMEND → PLAN → SIMULATE →
+GOVERN → APPROVE → EXECUTE → VERIFY → CONVERGE/ROLLBACK → AUDIT → LEARN`.
+Target autonomy A4; A5 exists only as lab/non-prod experiments; A6 is a
+non-goal. Platform Forge is never an arbitrary shell agent.
+
+### Added
+- `platformforge/ops/` — ChangeIntent/ChangePlan/ExpectedDelta models,
+  source-of-truth resolution (GitOps→git, TF state→terraform,
+  Crossplane→XR layer, Helm→chart/values; unresolved →
+  `PF-OPS-SOURCE-UNKNOWN`).
+- Risk classes R0–R5 with 13 dimensions + reversibility classes;
+  unknown risk is never low risk.
+- Policy engine V2 — canonical decisions, receipts, precedence,
+  deny-overrides, scoped/expiring exceptions, shadow mode
+  (`would_*`), OPA/Kyverno/CEL adapters fail closed to `unresolved`.
+- Approval engine — exact-hash binding, scope, TTL, parameter bounds,
+  actor/role/kind, break-glass objects, signature tamper detection;
+  agent-minted approvals never satisfy human approval.
+- Operation FSM (19 states), append-only hash-chained ledger with
+  redaction at append, resource locks, idempotency effect-keys,
+  safe resume, precondition gates.
+- ExecutionEnvelope + typed action vocabulary; `shell.run`,
+  `execute_anything`, `aws.call`, `kubectl.exec`, `eval` refused as
+  `PF-OPS-UNSTRUCTURED`.
+- Executors: git (PR evidence body), terraform/tofu (saved-plan hash
+  binding + drift precheck), argocd (GitOps-first), kubernetes (narrow:
+  scale/rollout-restart/annotate+resourceVersion), observe.
+- Verification engine — ExpectedDelta vs ObservedDelta across
+  immediate/stabilization/extended windows + SLO gate; executor
+  success ≠ convergence.
+- Rollback plans (8 strategies, derived per-action) + saga
+  compensation; auto-rollback lab/non-prod only.
+- Simulation levels S0–S5 with honest limitation receipts —
+  "simulation passed ≠ production safe".
+- Auto-remediation eligibility gate (12 checks, any unknown fails).
+- Structured runbooks + 2 builtins; PlatformRequest lifecycle FSM;
+  readiness scoring (unknown ≠ ready); FinOps CostDelta + security
+  gates (IAM/exposure/provenance/vulns, worst-status verdict).
+- Operational Graphfy layer — ops node/edge kinds, impact class
+  `operation`, receipt-cited evidence; `operation_only()` subgraph.
+- Capability manifest v3 — per-action autonomy/mutation/risk +
+  cross-forge delegation contract (accepts intents, never execution).
+- Forge Lab V4 — 10 ops scenarios (drift, selector, rollout, denial,
+  expiry, hash-mismatch, stale-obs, lock-conflict, partial-failure,
+  break-glass); 8 ops eval cases.
+- `.platformforge/config.yaml` schema v2 + migrations;
+  OperationStore (append-only JSONL + hash chain + schema migration +
+  audit digest).
+- COMPATIBILITY.md, DEPRECATION.md, config.example.yaml.
+
+### Security hardening
+- Ledger entries redact secrets at append; envelope serialization
+  redacts action params; approvals carry optional hash signatures;
+  `check_approval` enforces actor_kind allowlist.
+
 ## [Unreleased] — Cycle 2.1 (closure + reproducibility)
 
 Adversarial closure pass over Cycle 2 — every guarantee a reviewer could

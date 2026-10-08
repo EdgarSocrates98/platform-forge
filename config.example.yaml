@@ -1,0 +1,53 @@
+# Platform Forge — .platformforge/config.yaml (schema v2)
+# Every field shown with its default; the file is optional — missing
+# config means safe defaults (offline-first, dry-run, A4 ceiling).
+
+schema_version: 2
+
+autonomy:
+  max: A4                      # platform ceiling; A6 is a non-goal
+  a5_environments: [lab]       # A5 may never include prod
+  per_capability: {}           # executor -> autonomy override
+
+policies:
+  files: []                    # host path to extra policy files
+  shadow_default: false
+  external_adapters: []        # opa|kyverno|cel adapter descriptors
+
+approval:
+  default_ttl_s: 86400
+  required_for_risk: [R3, R4, R5]
+  break_glass:
+    enabled: true
+    max_ttl_s: 3600
+    post_review_required: true
+  actor_kinds: [human]         # agent-minted approvals don't count unless listed
+
+operations:
+  default_dry_run: true
+  require_execute_flag: true
+  max_observation_age_s: 900
+  store: .platformforge/operations
+
+retention:
+  ledger_days: 365
+  observation_days: 90
+  telemetry: local-only        # never phones home
+
+live:
+  offline_default: true
+  budgets:
+    calls_per_collect: 50
+    window_s: 300
+
+economy:
+  enabled: true
+  currency: USD
+  budget_increase_max: null    # null = no hard cap, still reports delta
+
+rbac:
+  roles:
+    viewer:   {autonomy: A1}
+    operator: {autonomy: A4}
+    owner:    {autonomy: A4}
+    oncall:   {autonomy: A4, break_glass: true}
