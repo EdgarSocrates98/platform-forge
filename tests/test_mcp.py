@@ -60,3 +60,36 @@ def test_host_parity(tmp_path):
         assert "wrote" in out
     assert detach("claude", tmp_path)["detached"] is True
     assert detach("claude", tmp_path)["detached"] is False
+
+
+def test_cycle5_tools_exposed_readonly():
+    """Polish — the five cycle5 namespaces reach MCP as read-only tools
+    that resolve the same cmd_* functions the CLI calls."""
+    from platformforge.mcp.registry import CAPABILITIES, tool_descriptors
+    from platformforge.mcp.tools import call_tool
+
+    names = {d["name"] for d in tool_descriptors()}
+    for t in ("platformforge_fleet", "platformforge_analytics",
+              "platformforge_optimize", "platformforge_ai",
+              "platformforge_federation"):
+        cap = CAPABILITIES[t]
+        assert cap.risk == "read" and cap.mutable is False
+        assert t in names
+
+    r = call_tool("platformforge_fleet",
+                  {"op": "risks", "path": "lab/fleets/acme",
+                   "question": "unowned"})
+    assert r["result"]["count"] >= 1
+
+    # optimize plan emits the intent but can never write a file via MCP
+    r = call_tool("platformforge_optimize",
+                  {"op": "plan", "path": "lab/fleets/acme",
+                   "id": "opt-2-scan-3", "out": "/tmp/x-shall-not-exist"})
+    assert "change_intent" in r["result"]
+    assert "written" not in r["result"]
+
+    # federation secrets still denied at the boundary
+    r = call_tool("platformforge_federation",
+                  {"op": "export", "classification": "internal",
+                   "path": "evals/cases/contract-fact/fixture/facts.yaml"})
+    assert "refusal" in r["result"] or r["result"].get("action")

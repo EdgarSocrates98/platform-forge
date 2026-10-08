@@ -258,6 +258,9 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
         return _live(inp, repo)
     if handler == "cli:ops":
         return _ops_tool(inp, repo)
+    if handler in ("cli:fleet", "cli:analytics", "cli:optimize",
+                   "cli:ai", "cli:federation"):
+        return _cycle5(handler, inp)
     raise ValueError(f"no handler {handler}")
 
 
@@ -610,6 +613,43 @@ def _graph(inp: dict[str, Any], repo: str) -> Any:
             raise ValueError(f"unknown graph query {q}")
         return fn(g, target)
     raise ValueError(f"unknown graph query {q}")
+
+
+def _cycle5(handler: str, inp: dict[str, Any]) -> Any:
+    """Cycle 5 read-only surfaces — same cmd_* functions the CLI calls,
+    driven by a Namespace built from the tool input. `optimize plan` is
+    allowed but `out` is forced off — MCP never writes files."""
+    import argparse
+
+    from platformforge.cli import fleetcmd
+    op = inp.get("op", "")
+    common = {"path": inp.get("path", ""), "id": inp.get("id", ""),
+              "question": inp.get("question", ""),
+              "window": inp.get("window", ""),
+              "limit": inp.get("limit") or 0, "out": "",
+              "format": "json"}
+    if handler == "cli:fleet":
+        ns = argparse.Namespace(fleet_cmd=op, **common)
+        return fleetcmd.cmd_fleet(ns)
+    if handler == "cli:analytics":
+        ns = argparse.Namespace(analytics_cmd=op, **common)
+        return fleetcmd.cmd_analytics(ns)
+    if handler == "cli:optimize":
+        ns = argparse.Namespace(optimize_cmd=op, **common)
+        return fleetcmd.cmd_optimize(ns)
+    if handler == "cli:ai":
+        ns = argparse.Namespace(
+            ai_cmd=op, cost=inp.get("cost"),
+            denominators=inp.get("denominators", ""), **common)
+        return fleetcmd.cmd_ai(ns)
+    ns = argparse.Namespace(
+        federation_cmd=op, nodes=list(inp.get("nodes") or []),
+        classification=inp.get("classification", ""),
+        node_id=inp.get("node_id", ""),
+        capabilities=inp.get("capabilities", ""),
+        freshness=inp.get("freshness", ""),
+        manifest=inp.get("manifest", ""), **common)
+    return fleetcmd.cmd_federation(ns)
 
 
 def _bound(result: Any, cap, repo: str) -> dict[str, Any]:

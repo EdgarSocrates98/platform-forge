@@ -84,6 +84,13 @@ _V2: dict[str, dict[str, Any]] = {
                            "offline": False},
     "platformforge_ops": {"domain": "ops", "risk": "guarded",
                           "cost_class": "moderate"},
+    "platformforge_fleet": {"domain": "fleet", "cost_class": "moderate"},
+    "platformforge_analytics": {"domain": "analytics"},
+    "platformforge_optimize": {"domain": "optimize",
+                               "cost_class": "moderate"},
+    "platformforge_ai": {"domain": "ai-platform"},
+    "platformforge_federation": {"domain": "federation",
+                                 "cost_class": "moderate"},
 }
 
 
@@ -310,6 +317,62 @@ CAPABILITIES: dict[str, Capability] = _apply_v2([
                                "bind": {"type": "string"},
                                "evidence_tier": {"type": "string"}}},
                "cli:ops", max_bytes=64_000),
+    Capability("platformforge_fleet",
+               "Fleet intelligence over a fleet dir (cycle5): list|status|"
+               "coverage|graph|risks|costs|capacity|incidents|operations|"
+               "drift|golden-path|policies|recommendations|report. "
+               "Read-only — partial coverage never completes.",
+               {"type": "object", "required": ["op", "path"],
+                "properties": {"op": {"type": "string"},
+                               "path": {"type": "string"},
+                               "question": {"type": "string"},
+                               "window": {"type": "string"},
+                               "limit": {"type": "integer"}}},
+               "cli:fleet", max_bytes=64_000),
+    Capability("platformforge_analytics",
+               "Platform analytics (cycle5): summary|metric|maturity over "
+               "a fleet dir — deterministic aggregates only.",
+               {"type": "object", "required": ["op", "path"],
+                "properties": {"op": {"type": "string"},
+                               "path": {"type": "string"},
+                               "id": {"type": "string"}}},
+               "cli:analytics"),
+    Capability("platformforge_optimize",
+               "Optimization (cycle5): scan|list|explain|portfolio|plan "
+               "over a fleet dir. `plan` emits a ChangeIntent document — "
+               "execution is impossible on this surface (no file writes).",
+               {"type": "object", "required": ["op", "path"],
+                "properties": {"op": {"type": "string"},
+                               "path": {"type": "string"},
+                               "id": {"type": "string"},
+                               "limit": {"type": "integer"}}},
+               "cli:optimize", max_bytes=64_000),
+    Capability("platformforge_ai",
+               "AI platform awareness (cycle5): workloads|gpu|economics — "
+               "unit economics require measured denominators.",
+               {"type": "object", "required": ["op"],
+                "properties": {"op": {"type": "string"},
+                               "path": {"type": "string"},
+                               "cost": {"type": "number"},
+                               "denominators": {"type": "string"}}},
+               "cli:ai"),
+    Capability("platformforge_federation",
+               "Federation (cycle5): manifest|export|query — classified "
+               "summaries only; secrets always denied; no authority or "
+               "credential crosses node boundaries.",
+               {"type": "object", "required": ["op"],
+                "properties": {"op": {"type": "string"},
+                               "path": {"type": "string"},
+                               "question": {"type": "string"},
+                               "nodes": {"type": "array",
+                                         "items": {"type": "string"}},
+                               "classification": {"type": "string"},
+                               "node_id": {"type": "string"},
+                               "capabilities": {"type": "string"},
+                               "freshness": {"type": "string"},
+                               "manifest": {"type": "string"},
+                               "limit": {"type": "integer"}}},
+               "cli:federation", max_bytes=64_000),
 ])
 
 

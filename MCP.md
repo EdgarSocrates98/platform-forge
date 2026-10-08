@@ -60,9 +60,15 @@ simulate/risk/gates/policy/envelope, status/history/graph/analytics;
 `approve` and any execution refuse `PF-OPS-MCP-*` — delegation never
 carries mutation or signing authority).
 
-Cycle 5 fleet/analytics/optimize/federation surfaces are CLI/library
-only for now — no MCP tools expose them yet (declared gap; the
-`platformforge_ops` boundary is unchanged).
+Cycle 5 surfaces are exposed read-only via five tools —
+`platformforge_fleet` (all fleet verbs incl. `report`),
+`platformforge_analytics`, `platformforge_optimize` (`plan` emits the
+ChangeIntent document but can never write it — `out` is forced off on
+this surface), `platformforge_ai`, `platformforge_federation`
+(classified summaries only; secrets always denied; no authority
+crosses). Boundaries unchanged: all `read` risk, `mutable: false`,
+bounded output, same `cmd_*` functions the CLI calls — there is no
+MCP-only code path.
 
 ## Host integration
 
