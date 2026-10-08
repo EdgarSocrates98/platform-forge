@@ -1,45 +1,122 @@
-# Adaptive routing table — data, not judgment. First match sets the mode;
-# every match can add agents. The engine-level policy (deterministic-first,
-# security reviewer on sensitive work) lives in platformforge/routing/router.py.
-schema: platformforge/routing/v1
+# Routing table v2 — data, not judgment (§90). Every match can add
+# specialists/reviewers/a coordinator; the MODE policy (deterministic-
+# first, §88 debate triggers, §89 critical-review mandates) lives in
+# platformforge/routing/router.py. Every name here must resolve to the
+# canonical roster — the agent-routing gate fails on drift (§91).
+schema: platformforge/routing/v2
 routes:
   - name: lint-is-deterministic
     when: {task_type: lint}
-    mode: deterministic
-    agents: []
     reason: "lint runs on rules+facts; no model needed"
 
   - name: incident-coordination
     when: {task_type: incident}
-    mode: coordinated
-    agents: [incident-coordinator]
-    then: "pull specialists for domains present in evidence"
+    coordinator: platform-incident-coordinator
     reason: "incidents need correlation, timeline and blast radius"
+
+  - name: active-incident
+    when: {incident_status: active}
+    coordinator: platform-incident-coordinator
+    reason: "an active incident routes to its coordinator even when task_type is analysis"
 
   - name: security-mandatory-review
     when: {security_sensitive: true}
-    add_agents: [security-reviewer]
+    add_reviewers: [platform-security-reviewer]
     reason: "security-sensitive work always gets a security reviewer"
 
   - name: platform-architecture
     when: {task_type: architecture, blast_radius: [platform, org]}
-    mode: coordinated
-    agents: [platform-coordinator, architecture-reviewer]
+    coordinator: platform-orchestrator
+    add_reviewers: [platform-architecture-reviewer]
     reason: "cross-boundary design needs coordination + review"
 
-  - name: production-change-risk
+  - name: production-change
     when: {task_type: change, production: true}
-    mode: coordinated
-    agents: [change-risk-reviewer]
-    reason: "production changes get blast radius + risk review"
+    coordinator: platform-change-coordinator
+    add_reviewers: [platform-operations-safety-reviewer]
+    reason: "production changes get ops-safety review + human gate"
+
+  - name: fleet-work
+    when: {fleet_scope: true}
+    coordinator: platform-fleet-coordinator
+    reason: "fleet scope needs the fleet coordinator + coverage"
+
+  - name: optimization-coordination
+    when: {optimization: true}
+    coordinator: platform-optimization-coordinator
+    reason: "recommendations coordinate finops/capacity/reliability"
 
   - name: cost-question
     when: {task_type: analysis, domains: [finops]}
-    mode: specialist
-    agents: [finops-coordinator]
+    add_specialists: [platform-finops-specialist]
     reason: "cost decomposition needs the finops graph walk"
 
-  - name: k8s-moderate
-    when: {task_type: analysis, domains: [kubernetes]}
-    mode: specialist
-    agents: [kubernetes-specialist]
+  - name: k8s-question
+    when: {task_type: analysis, domains: [k8s, kubernetes]}
+    add_specialists: [platform-kubernetes-specialist]
+    reason: "manifest/workload question"
+
+  - name: iac-question
+    when: {task_type: analysis, domains: [iac, terraform]}
+    add_specialists: [platform-iac-specialist]
+    reason: "IaC artifact question"
+
+  - name: gitops-question
+    when: {task_type: analysis, domains: [gitops, cicd]}
+    add_specialists: [platform-gitops-specialist]
+    reason: "delivery-path question"
+
+  - name: security-question
+    when: {task_type: analysis, domains: [security]}
+    add_specialists: [platform-security-specialist]
+    reason: "IAM/SBOM/supply-chain question"
+
+  - name: telemetry-question
+    when: {task_type: analysis, domains: [sre, slo, incident, otel]}
+    add_specialists: [platform-sre-specialist]
+    reason: "SLO/incident/telemetry question"
+
+  - name: graph-question
+    when: {task_type: analysis, domains: [graph]}
+    add_specialists: [platform-graph-specialist]
+    reason: "dependency/impact/blast question"
+
+  - name: policy-question
+    when: {task_type: analysis, domains: [policy, governance]}
+    add_specialists: [platform-policy-specialist]
+    reason: "policy/governance question"
+
+  - name: capacity-question
+    when: {task_type: analysis, domains: [capacity, reliability]}
+    add_specialists: [platform-capacity-specialist]
+    reason: "capacity/headroom/reliability question"
+
+  - name: product-question
+    when: {task_type: analysis, domains: [product, dx]}
+    add_specialists: [platform-product-specialist]
+    reason: "DX/adoption/golden-path question"
+
+  - name: ai-infra-question
+    when: {task_type: analysis, domains: [ai, gpu]}
+    add_specialists: [platform-ai-infra-specialist]
+    reason: "GPU/model-serving infrastructure question"
+
+  - name: federation-question
+    when: {task_type: analysis, domains: [federation]}
+    add_specialists: [platform-federation-specialist]
+    reason: "ForgeNode/export-policy question"
+
+  - name: crossplane-question
+    when: {task_type: analysis, domains: [crossplane]}
+    add_specialists: [platform-crossplane-specialist]
+    reason: "Crossplane artifact question"
+
+  - name: aws-question
+    when: {task_type: analysis, domains: [aws, cloud]}
+    add_specialists: [platform-aws-specialist]
+    reason: "cloud inventory/IAM question"
+
+  - name: fleet-analysis-question
+    when: {task_type: analysis, domains: [fleet]}
+    add_specialists: [platform-fleet-specialist]
+    reason: "fleet member/coverage question"

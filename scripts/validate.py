@@ -449,6 +449,27 @@ def gate_adversarial() -> dict:
     return r
 
 
+# --- cycle5.1 (§91) ------------------------------------------------------
+
+
+def gate_agent_routing() -> dict:
+    r = _py("from platformforge.routing import validate_routing;"
+            "r = validate_routing();"
+            "assert r['ok'], r['problems'];"
+            "print(r['routes'], 'routes,', r['agents'], 'agents — no drift')")
+    r["what"] = "every routing.yaml + orchestration.yaml + roster ref " \
+        "resolves — no missing agents"
+    return r
+
+
+def gate_agent_contract() -> dict:
+    return _run(["pytest", "-q", "tests/test_agent_protocol.py",
+                 "tests/test_agent_handoffs.py", "tests/test_agent_budget.py",
+                 "tests/test_orchestrator.py", "tests/test_coordinators.py",
+                 "tests/test_specialists.py", "tests/test_reviewers.py",
+                 "tests/test_executors.py", "tests/test_agent_routing.py"])
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
@@ -476,6 +497,8 @@ GATES = {
     "fleet-evals": gate_fleet_evals,
     "fleet-lab": gate_fleet_lab,
     "adversarial": gate_adversarial,
+    "agent-routing": gate_agent_routing,
+    "agent-contract": gate_agent_contract,
 }
 
 UNLOCK = {
@@ -512,6 +535,10 @@ UNLOCK = {
     "fleet-evals": "platformforge evals run; fix the failing fleet-inv-* case",
     "fleet-lab": "platformforge lab run-all; fix the failing fleet-* scenario",
     "adversarial": "reproduce: pytest tests/test_fleet_adversarial.py",
+    "agent-routing": "every name in routing.yaml/orchestration.yaml/"
+        "roster must resolve — run platformforge.routing.validate_routing()",
+    "agent-contract": "reproduce: pytest -q tests/test_agent_*.py "
+        "tests/test_orchestrator.py tests/test_coordinators.py",
 }
 
 

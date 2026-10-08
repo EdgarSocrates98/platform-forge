@@ -116,9 +116,9 @@ def test_route_incident_and_security():
     inc = route(TaskSignal(task_type="incident", domains=["kubernetes"],
                            production=True))
     assert inc["mode"] == "coordinated"
-    assert "incident-coordinator" in inc["agents"]
+    assert "platform-incident-coordinator" in inc["agents"]
     sec = route(TaskSignal(task_type="review", security_sensitive=True))
-    assert "security-reviewer" in sec["agents"]
+    assert "platform-security-reviewer" in sec["agents"]
     lint = route(TaskSignal(task_type="lint"))
     assert lint["mode"] == "deterministic" and not lint["agents"]
 
