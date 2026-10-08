@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "broken service selector → git PR remediation"

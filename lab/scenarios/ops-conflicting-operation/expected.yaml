@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "resource lock collision → lock refusal"

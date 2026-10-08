@@ -140,6 +140,12 @@ def run(scenario_id: str, allow_profile: bool = False) -> dict[str, Any]:
         return {"refusal": "platform.scenario.unresolved",
                 "unlock": "platformforge lab list"}
     exp = yaml.safe_load(exp_path.read_text()) or {}
+    if exp.get("kind") == "ops":
+        from platformforge.lab.opslab import run_ops_scenario
+        r = run_ops_scenario(d / "fixture")
+        r["tier"] = exp.get("tier", "standard")
+        r["profile"] = "static"
+        return r
     profile = exp.get("profile", "static")
     if profile != "static":
         if not allow_profile:

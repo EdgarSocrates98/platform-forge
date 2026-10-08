@@ -1,0 +1,24 @@
+intent:
+  intent_id: lab-i1
+  owner: team-a
+  requested_by: bob
+  reason: {type: drift, drift_ids: [d1]}
+  target_resources: ["k8s:lab/apps/Deployment/web"]
+  desired_change: {replicas: 3}
+steps:
+  - step_id: scale
+    action: kubernetes.scale
+    params: {kind: Deployment, name: web, namespace: apps, replicas: 3}
+  - step_id: annotate
+    action: kubernetes.annotate
+    params: {kind: Deployment, name: web, namespace: apps, resource_version: "1", annotations: {x: y}}
+expected_delta:
+  changes: {resources: [{id: "dep/web"}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
+environment: lab
+transports: {kubernetes: {rc: 2, stderr: "boom"}}
+expect: {ok: false, stage: execute, state: failed}

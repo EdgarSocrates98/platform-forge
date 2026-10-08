@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "approval bound to stale subject → NO-APPROVAL"
