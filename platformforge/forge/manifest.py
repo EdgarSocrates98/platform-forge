@@ -24,13 +24,15 @@ def capability_manifest(repo: str | Path | None = None) -> dict[str, Any]:
                               check=False).stdout.strip()
     except OSError:
         head = "unknown"
+    from platformforge.ops.registry import delegation_contract, ops_capabilities
     return {
-        "manifest": "platformforge/capability-manifest/v2",
+        "manifest": "platformforge/capability-manifest/v3",
         "forge": "platform-forge",
         "version": "0.1.0",
         "commit": head,
         "modes": {"offline": True, "read_only": True,
-                  "cloud_mutation": False},
+                  "cloud_mutation": False,
+                  "governed_mutation": True},
         # §138 — interop fields a sibling forge can negotiate against
         "quality_level": "self-eval",   # no external audit claimed
         "maturity": "beta",
@@ -39,6 +41,8 @@ def capability_manifest(repo: str | Path | None = None) -> dict[str, Any]:
         "cost_characteristics": {
             c.name: c.cost_class for c in CAPABILITIES.values()},
         "risk": {c.name: c.risk for c in CAPABILITIES.values()},
+        "operations": ops_capabilities(),
+        "cross_forge": delegation_contract(),
         "domains": sorted({r.domain for r in rules if r.domain} |
                           {"iac", "k8s", "gitops", "cicd", "sre", "finops",
                            "security", "product", "graph", "live"}),
