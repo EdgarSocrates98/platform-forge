@@ -2922,9 +2922,11 @@ def build_parser() -> argparse.ArgumentParser:
         "fleet_cmd",
         choices=["list", "status", "coverage", "graph", "risks", "costs",
                  "capacity", "incidents", "operations", "drift",
-                 "golden-path", "policies", "recommendations"])
+                 "golden-path", "policies", "recommendations", "report"])
     sp.add_argument("path", nargs="?", default="",
                     help="fleet dir (lab/fleets/acme shape)")
+    sp.add_argument("--question", default="",
+                    help="risks: run a single fleet question")
     sp.add_argument("--limit", type=int, default=0)
     sp.add_argument("--window", default="", help="drift window (24h/7d/30d/90d)")
     sp.set_defaults(func=lambda a: _emit(cmd_fleet(a), a))
@@ -2944,6 +2946,8 @@ def build_parser() -> argparse.ArgumentParser:
                     choices=["scan", "list", "explain", "plan", "portfolio"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--id", default="", help="recommendation id")
+    sp.add_argument("--out", default="",
+                    help="plan: write the ChangeIntent doc to this file")
     sp.add_argument("--limit", type=int, default=0)
     sp.set_defaults(func=lambda a: _emit(cmd_optimize(a), a))
 
