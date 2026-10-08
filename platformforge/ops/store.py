@@ -136,7 +136,16 @@ class OperationStore:
         env_d = self.load_envelope(operation_id)
         env = ExecutionEnvelope.from_dict(env_d) if env_d else None
         ledger = self.load_ledger(operation_id)
-        proj = project_operation(op, envelope=env, ledger=ledger)
+        # rollback receipt: reconstructed from the ledger events (the
+        # ledger is the source of truth — never a second artifact)
+        rb_rcpt = None
+        for e in ledger.entries:
+            if e.event == "rollback.completed":
+                rb_rcpt = dict(e.data)
+        proj = project_operation(op, envelope=env, ledger=ledger,
+                                 materials=self.load_materials(
+                                     operation_id),
+                                 rollback_receipt=rb_rcpt)
         return {"operation_id": operation_id,
                 "nodes": [n.to_dict() for n in proj["nodes"]],
                 "edges": [e.to_dict() for e in proj["edges"]]}

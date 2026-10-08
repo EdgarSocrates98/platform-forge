@@ -17,6 +17,48 @@ from platformforge.ops.models import PlanStep
 
 RUNBOOK_SCHEMA = "platformforge/runbook/v1"
 
+# Cycle 4.1 §125–127 — safe parameter references. A runbook rollback
+# param may be declared as {"from": "pre_state.replicas"} — bound at
+# rollback-compile time against captured material, never eval()'d and
+# only under allowlisted roots.
+SAFE_REF_ROOTS = ("pre_state", "params", "result")
+
+
+def resolve_ref(ref: dict[str, Any], context: dict[str, Any]
+                ) -> dict[str, Any]:
+    """Resolve {"from": "root.a.b"} against context dicts. Data-only
+    path walking — no eval, no attribute access, allowlisted roots."""
+    path = str(ref.get("from", ""))
+    parts = path.split(".")
+    if len(parts) < 2 or parts[0] not in SAFE_REF_ROOTS:
+        return {"refusal": "PF-OPS-RUNBOOK-BAD-REF",
+                "unlock": f"'{path}' — refs must be "
+                          f"{SAFE_REF_ROOTS}.<field>[.<subfield>]"}
+    cur: Any = context.get(parts[0])
+    for p in parts[1:]:
+        if not isinstance(cur, dict) or p not in cur:
+            return {"refusal": "PF-OPS-RUNBOOK-REF-MISSING",
+                    "unlock": f"'{path}' not present in captured "
+                              f"state — bind cannot proceed"}
+        cur = cur[p]
+    return {"ok": True, "value": cur}
+
+
+def bind_params(declared: dict[str, Any], context: dict[str, Any]
+                ) -> dict[str, Any]:
+    """Bind a params dict — literal values pass through, {"from": …}
+    values resolve via resolve_ref."""
+    out: dict[str, Any] = {}
+    for k, v in declared.items():
+        if isinstance(v, dict) and "from" in v:
+            r = resolve_ref(v, context)
+            if "refusal" in r:
+                return r
+            out[k] = r["value"]
+        else:
+            out[k] = v
+    return {"ok": True, "params": out}
+
 
 @dataclass
 class RunbookStep:
@@ -94,7 +136,55 @@ class Runbook:
                 v.append({"refusal": "PF-OPS-RUNBOOK-DIAG-NO-SOURCE",
                           "unlock": "diagnostics must name an "
                                     "evidence source"})
+        # §124–127 — declared rollback actions must be typed actions and
+        # `from:` refs must point at allowlisted roots; a hardcoded
+        # inverse that just mirrors forward params is a violation.
+        for rb in (self.rollback.get("actions") or []):
+            if spec_for(rb.get("action", "")) is None:
+                v.append({"refusal": "PF-OPS-UNKNOWN-ACTION",
+                          "unlock": f"rollback action "
+                                    f"{rb.get('action')} not in "
+                                    "vocabulary"})
+            for pk, pv in (rb.get("params") or {}).items():
+                if isinstance(pv, dict) and "from" in pv:
+                    root = str(pv["from"]).split(".")[0]
+                    if root not in SAFE_REF_ROOTS:
+                        v.append({"refusal": "PF-OPS-RUNBOOK-BAD-REF",
+                                  "unlock": f"rollback param {pk} "
+                                            f"refs disallowed root "
+                                            f"'{root}'"})
         return v
+
+    def bind_rollback(self, materials: dict[str, Any],
+                      forward_params: dict[str, Any] | None = None
+                      ) -> dict[str, Any]:
+        """§123–127 — compile the declared `rollback.actions` into
+        typed actions whose params resolve against captured material.
+
+        `materials`: {step_id: RollbackMaterial|dict} — `pre_state`
+        values come from the first material (or the step the rollback
+        action names via `for_step`). Params referencing
+        `pre_state.*` never read forward params — captured state only.
+        """
+        out = []
+        mats = {sid: (m.to_dict() if hasattr(m, "to_dict") else dict(m))
+                for sid, m in (materials or {}).items()}
+        for rb in (self.rollback.get("actions") or []):
+            sid = rb.get("for_step") or next(iter(mats), "")
+            ctx = {"pre_state": (mats.get(sid) or {}).get(
+                       "pre_state", {}),
+                   "result": (mats.get(sid) or {}).get(
+                       "execution_result", {}),
+                   "params": forward_params or {}}
+            bound = bind_params(dict(rb.get("params") or {}), ctx)
+            if "refusal" in bound:
+                return {"ok": False,
+                        "refusal": bound,
+                        "action": rb.get("action")}
+            out.append({"action": rb["action"],
+                        "params": bound["params"],
+                        "for_step": sid or None})
+        return {"ok": True, "actions": out}
 
     def bind(self, params: dict[str, Any] | None = None
              ) -> dict[str, Any]:
@@ -170,6 +260,10 @@ BUILTIN_RUNBOOKS: dict[str, Runbook] = {
         approval_required=True,
         verification={"windows": ["immediate", "stabilization"],
                       "check": "burn_rate declines"},
-        rollback={"strategy": "previous-artifact"},
+        rollback={"strategy": "direct-inverse",
+                  "actions": [{"action": "kubernetes.scale",
+                               "for_step": "scale",
+                               "params": {"replicas": {
+                                   "from": "pre_state.replicas"}}}]},
         sources=["sre-scale-out"]),
 }

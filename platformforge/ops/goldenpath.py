@@ -84,6 +84,24 @@ class PlatformRequest:
             self.receipts.append(receipt)
         return {"ok": True, "state": to}
 
+    def to_change_intent(self, steps: list | None = None):
+        """§128–129 — a Golden Path provisions through the *same*
+        governed contracts as everything else: emit a ChangeIntent
+        that feeds intent → plan → policy → approval → execute.
+        There is no parallel provisioning workflow."""
+        from platformforge.ops.models import ChangeIntent
+        return ChangeIntent(
+            intent_id=f"req-{self.request_id}",
+            requested_by=self.requester,
+            owner=self.team,
+            target_resources=list(self.params.get("resources", [])),
+            desired_change={"template": self.template,
+                            "kind": self.kind,
+                            "params": self.params},
+            risk_context={"environment": self.environment},
+            expected_outcome=f"golden path {self.template} provisioned "
+                             f"for {self.team}")
+
     def to_dict(self) -> dict[str, Any]:
         return {"schema": "platformforge/platform-request/v1",
                 "request_id": self.request_id, "requester": self.requester,

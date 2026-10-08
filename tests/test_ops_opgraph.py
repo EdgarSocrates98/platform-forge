@@ -86,3 +86,71 @@ def test_ops_caps_declare_autonomy():
     assert caps["executors"]["kubernetes"]["max_autonomy"] == \
         "A5-lab-only"
     assert caps["executors"]["observe"]["mutates"] is False
+
+
+# --- Cycle 4.1 §I — graph completeness validation ---------------------
+
+def test_projection_complete_no_orphans():
+    from platformforge.ops.opgraph import validate_projection
+    env = _env()
+    op = Operation(operation_id="op1", intent_id="i1",
+                   resources=list(env.scope))
+    led = OperationLedger()
+    led.append("created", "op1")
+    led.append("step.completed", "op1",
+               data={"step_id": "s1", "receipt": "rcpt-1"})
+    mats = {"s1": {"hash": "mat-abc", "pre_state": {"replicas": 3}}}
+    proj = project_operation(op, envelope=env, ledger=led,
+                             materials=mats)
+    assert validate_projection(proj) == []
+    mut = next(e for e in proj["edges"] if e.kind == "mutates")
+    assert mut.layers()[0]["material_hash"] == "mat-abc"
+    assert mut.layers()[0]["step_receipt"] == "rcpt-1"
+
+
+def test_rollback_edge_cites_receipt_and_material():
+    env = _env()
+    op = Operation(operation_id="op1", intent_id="i1")
+    led = OperationLedger()
+    led.append("rollback.completed", "op1",
+               data={"strategy": "direct-inverse",
+                     "rollback_verification": "restored"})
+    proj = project_operation(op, envelope=env, ledger=led,
+                             rollback_receipt={
+                                 "strategy": "direct-inverse",
+                                 "trigger": {"type": "verification-fail"},
+                                 "material_hashes": ["m1"],
+                                 "result": "restored"})
+    rb = [e for e in proj["edges"] if e.kind == "rolled_back_by"]
+    assert rb and rb[0].layers()[0]["material_hashes"] == ["m1"]
+    assert rb[0].layers()[0]["receipt_ids"]
+
+
+def test_validate_projection_flags_orphan_and_missing_receipt():
+    from platformforge.graph.model import Edge, Node
+    from platformforge.ops.opgraph import validate_projection
+    orphan = Node.make("operation", "lonely")
+    proj = {"nodes": [orphan], "edges": []}
+    assert "orphan-node:operation:lonely" in validate_projection(proj)
+    a = Node.make("operation", "o"); b = Node.make("approval", "ap")
+    edge = Edge(a.node_id, b.node_id, "approved_by",
+                provenance="observed",
+                evidence=({"provenance": "observed",
+                           "layer": "operation"},))
+    gaps = validate_projection({"nodes": [a, b], "edges": [edge]})
+    assert any("approved_by" in g for g in gaps)
+
+
+# --- §128–129 — golden path uses the governed contracts ---------------
+
+def test_platform_request_bridges_to_change_intent():
+    from platformforge.ops.goldenpath import PlatformRequest
+    r = PlatformRequest(request_id="r1", requester="edgar",
+                        team="platform", kind="service",
+                        template="web-svc", environment="staging",
+                        params={"resources": ["k8s:x/y/Deployment/z"]})
+    intent = r.to_change_intent()
+    d = intent.to_dict()
+    assert d["intent_id"] == "req-r1"
+    assert "k8s:x/y/Deployment/z" in intent.target_resources
+    assert intent.desired_change["template"] == "web-svc"

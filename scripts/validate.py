@@ -187,6 +187,102 @@ def gate_self() -> dict:
     return r
 
 
+# --- Cycle 4.1 — governed operations gates (§H) -----------------------
+
+def gate_ops_contracts() -> dict:
+    """Typed-action contract: every mutating action declares a rollback
+    strategy + required pre-state or an explicit non-executable
+    strategy; builders exist for executable strategies; forbidden
+    action names stay refused."""
+    r = _py(
+        "from platformforge.ops.actions import (catalog, spec_for,\n"
+        "    validate_action, FORBIDDEN_ACTIONS)\n"
+        "from platformforge.ops.rollback_builders import BUILDERS\n"
+        "cat = catalog()\n"
+        "bad = []\n"
+        "for name, s in cat.items():\n"
+        "    if not s['mutating']:\n"
+        "        continue\n"
+        "    if not s['rollback_strategy']:\n"
+        "        bad.append(f'{name}:no-strategy')\n"
+        "    if s['rollback_strategy'] in ('direct-inverse',\n"
+        "            'previous-revision', 'source-revert',\n"
+        "            'compensating-operation') and not s['rollback_builder']:\n"
+        "        bad.append(f'{name}:no-builder')\n"
+        "    if s['rollback_builder'] and \\\n"
+        "            s['rollback_builder'] not in BUILDERS:\n"
+        "        bad.append(f'{name}:builder-missing')\n"
+        "assert not bad, bad\n"
+        "for f in FORBIDDEN_ACTIONS:\n"
+        "    assert validate_action(f, {}) is not None, f\n"
+        "print(len(cat), 'actions, contracts ok')")
+    r["what"] = "mutating actions declare strategy+prestate+builder; forbidden refused"
+    return r
+
+
+def gate_ops_approval() -> dict:
+    return _run(["pytest", "-q", "tests/test_ops_approval.py",
+                 "tests/test_ops_models.py"])
+
+
+def gate_ops_execution() -> dict:
+    return _run(["pytest", "-q", "tests/test_ops_executors.py",
+                 "tests/test_ops_operation.py",
+                 "tests/test_ops_pipeline.py", "tests/test_cli_ops.py"])
+
+
+def gate_ops_rollback() -> dict:
+    r = _run(["pytest", "-q", "tests/test_ops_rollback.py",
+              "tests/test_ops_gapwave.py"])
+    r["what"] = "material-bound rollback plans + engine"
+    if r["rc"] == 0:
+        inv = _py(
+            "from platformforge.ops.rollback import terraform_plan_reuse_check\n"
+            "assert terraform_plan_reuse_check('sha256:x','sha256:x')\\\n"
+            "    ['refusal'] == 'PF-OPS-PLAN-REUSE'\n"
+            "print('forward-plan reuse refused')")
+        if inv["rc"] != 0:
+            return inv
+    return r
+
+
+def gate_ops_verification() -> dict:
+    return _run(["pytest", "-q", "tests/test_ops_verify.py"])
+
+
+def gate_ops_policy() -> dict:
+    return _run(["pytest", "-q", "tests/test_ops_policy.py",
+                 "tests/test_ops_autorem.py", "tests/test_ops_property.py"])
+
+
+def gate_ops_evals() -> dict:
+    r = _py(
+        "from platformforge.evals.runner import run_all\n"
+        "out = run_all()\n"
+        "ops = [r for r in out['results'] if r['id'].startswith('ops-')]\n"
+        "assert len(ops) >= 8, len(ops)\n"
+        "bad = [r['id'] for r in ops if r['verdict'] != 'pass']\n"
+        "assert not bad, bad\n"
+        "print(len(ops), 'ops evals pass')")
+    r["what"] = "ops-* eval cases all pass"
+    return r
+
+
+def gate_ops_lab() -> dict:
+    r = _py(
+        "from platformforge.lab.runner import run_all\n"
+        "out = run_all()\n"
+        "res = out.get('scenarios') or out.get('results') or []\n"
+        "ops = [r for r in res if 'ops-' in (r.get('scenario') or\n"
+        "       r.get('id') or '')]\n"
+        "assert len(ops) >= 10, len(ops)\n"
+        "bad = [r for r in ops if not r.get('passed', True)]\n"
+        "assert not bad, [r.get('failures') for r in bad]\n"
+        "print(len(ops), 'ops lab scenarios pass')")
+    r["what"] = "ops-* lab scenarios all pass"
+    return r
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
@@ -194,6 +290,14 @@ GATES = {
     "coverage": gate_coverage, "mcp-parity": gate_mcp_parity,
     "docs": gate_docs, "security": gate_security, "package": gate_package,
     "self": gate_self,
+    "ops-contracts": gate_ops_contracts,
+    "ops-approval": gate_ops_approval,
+    "ops-execution": gate_ops_execution,
+    "ops-rollback": gate_ops_rollback,
+    "ops-verification": gate_ops_verification,
+    "ops-policy": gate_ops_policy,
+    "ops-evals": gate_ops_evals,
+    "ops-lab": gate_ops_lab,
 }
 
 UNLOCK = {
@@ -211,6 +315,14 @@ UNLOCK = {
     "security": "keep redaction before index/compress; fix the pattern or FP",
     "package": "check pyproject force-include map; rebuild wheel",
     "self": "run platformforge inspect . / agents lint / capability manifest",
+    "ops-contracts": "declare rollback_strategy/pre_state/builder on the ActionSpec",
+    "ops-approval": "reproduce: pytest tests/test_ops_approval.py",
+    "ops-execution": "reproduce: pytest tests/test_ops_executors.py tests/test_ops_pipeline.py",
+    "ops-rollback": "reproduce: pytest tests/test_ops_rollback.py; material must drive reversal",
+    "ops-verification": "reproduce: pytest tests/test_ops_verify.py",
+    "ops-policy": "reproduce: pytest tests/test_ops_policy.py tests/test_ops_autorem.py",
+    "ops-evals": "platformforge evals run; fix the failing ops-* case",
+    "ops-lab": "platformforge lab run-all; fix the failing ops-* scenario",
 }
 
 

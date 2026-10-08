@@ -49,6 +49,25 @@ jobs:
         run: python scripts/validate.py --gate mcp-parity
       - name: Docs drift
         run: python scripts/validate.py --gate docs
+      # --- Cycle 4.1 — governed operations gates -------------------
+      - name: Ops — typed-action contracts
+        run: python scripts/validate.py --gate ops-contracts
+      - name: Ops — approval integrity
+        run: python scripts/validate.py --gate ops-approval
+      - name: Ops — execution
+        run: python scripts/validate.py --gate ops-execution
+      - name: Ops — rollback integrity
+        run: python scripts/validate.py --gate ops-rollback
+      - name: Ops — verification
+        run: python scripts/validate.py --gate ops-verification
+      - name: Ops — policy + autonomy
+        run: python scripts/validate.py --gate ops-policy
+      - name: Ops — eval cases
+        run: python scripts/validate.py --gate ops-evals
+      - name: Ops — lab scenarios
+        run: python scripts/validate.py --gate ops-lab
+      - name: Self — dogfooding gate
+        run: python scripts/validate.py --gate self
 
   package:
     # Build wheel → gate contents → install in a clean venv → run from
