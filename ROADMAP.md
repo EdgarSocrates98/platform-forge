@@ -98,5 +98,46 @@ docs/cycle4.1/):
 - **5 new rollback lab scenarios + 12 eval cases + R1–R6 adversarial
   suite** (`tests/test_ops_adversarial41.py`).
 
+## Cycle 5 — implemented
+
+Enterprise platform intelligence & fleet scale (FLEET.md,
+PLATFORM-ANALYTICS.md, OPTIMIZATION.md, FEDERATION.md, ENTERPRISE.md,
+docs/cycle5/):
+
+- **Fleet contracts** — `Fleet`/`FleetMember`/`FleetSnapshot`/
+  `MemberObservation`; identity `kind:canonical_id`; coverage is
+  first-class in every answer.
+- **Organizational Graphfy** — 8 layers, `organizational` impact
+  class (ownership ≠ blast radius); pluggable `GraphBackend`
+  (memory + SQLite).
+- **HistoryEngine** — unified event sources, strict windows,
+  `HistoricalPattern` with support/confidence; correlation never
+  causality.
+- **Analytics engines** — measurement by dimension, golden-path
+  adoption/friction/escapes, policy intelligence (evidence-gated
+  false-positive candidates), FinOps V4 (hierarchy/trend/anomaly/
+  rightsizing/idle/unit-economics), capacity+saturation risk,
+  reliability hotspots (centrality ≠ criticality), ops analytics,
+  DX metrics (team-level only — no individual scoring).
+- **OptimizationEngine** — opportunity → recommendation (honest
+  uncertainty, suppressed stays visible) → `plan()` emits a
+  `ChangeIntent` and **nothing else** — the Cycle 4 pipeline still
+  governs (§303).
+- **Federation** — `NodeManifest` + classified `export_summary`
+  (fail-closed, secrets always denied) + `federated_query`;
+  intelligence crosses, authority never does.
+- **AI platform awareness** — GPU/MIG pools, serving detection,
+  denominator-required unit economics.
+- **SQLite analytics store** — retention GC, right-to-forget,
+  secret-refusal; config schema v3 (features + privacy pins).
+- **Lab + evals** — `lab/fleets/acme` shared fixture, 11 fleet
+  scenarios, 14 invariant probes; adversarial E1–E12 suite
+  (`tests/test_fleet_adversarial.py`).
+- **CLI** — `fleet`, `analytics`, `optimize`, `ai`, `federation`
+  namespaces (read-only); `optimize plan` is the only bridge and it
+  emits a ChangeIntent doc.
+- **11 `fleet-*`/`adversarial` validation gates** mirrored as CI
+  steps; `platformforge bench scale` measured benchmarks.
+
 Definition of done per feature: contract, implementation, tests, negative test,
 unresolved behavior, evidence, docs, source provenance, eval, CLI/MCP exposure.

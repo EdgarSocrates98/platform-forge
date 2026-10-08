@@ -27,6 +27,11 @@ it · what a change can affect`
 | capability/interop | `mcp/registry`, `forge` | what can this forge do, and for whom? | contracts, manifests, A2A envelopes |
 | live | `live` | what is actually running, how fresh is the evidence? | observation envelopes, collectors, reconcile, topology, drift journal |
 | lab/evals | `lab`, `evals` | does the machinery prove itself? | scenarios, eval corpus, coverage, precision |
+| fleet | `fleet` | how is the whole org platform behaving? | Fleet/FleetMember/FleetSnapshot, org graph, 9 questions |
+| analytics | `analytics` | what do history, cost, capacity, policy say? | metrics, patterns, hotspots, recurrences |
+| optimize | `optimize` | where should the org invest next? | opportunities, recommendations, ChangeIntents |
+| ai-platform | `aiplat` | GPU/accelerator cost & saturation? | pools, serving, unit economics |
+| federation | `federation` | what may leave this node? | manifests, classified summaries |
 | ops/control-plane | `ops` | governed change: intent→plan→approve→execute→verify→audit | `ops/*`, typed actions, envelopes, ledger, store, rollback materials/plans (ROLLBACK.md) |
 | store/bench | `core/artifacts`, `bench` | what does it cost to know? | artifact store, measured benchmarks |
 

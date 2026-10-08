@@ -105,7 +105,13 @@ platformforge/
   mcp/         registry v2 + bounded/redacted tool surface
   forge/       capability manifest + interop   lab/   scenario runner
   evals/       corpus + coverage + precision   bench.py  measured benchmarks
-  cli/         41 verbs — thin dispatch over the above
+  fleet/       fleet contracts, org-graph layers, loader, 9 questions
+  analytics/   history, measurement, golden-path, policy intel,
+               FinOps V4, capacity, reliability, ops/DX/debt, SQLite store
+  optimize/    opportunity → recommendation → ChangeIntent (only)
+  federation/  node manifest, classified export, federated query
+  aiplat/      GPU pools, MIG, serving, denominator-bound economics
+  cli/         48 verbs — thin dispatch over the above
 ```
 
 Sibling forges consulted during design: `api-forge`, `spark-forge-aws`

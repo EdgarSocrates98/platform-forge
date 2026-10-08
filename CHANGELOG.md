@@ -2,6 +2,60 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
+## [Unreleased] — Cycle 5 (Enterprise Platform Intelligence, Fleet Optimization & Organizational Scale)
+
+The north-star question — "how is the whole org platform behaving,
+where are the biggest problems, and where should we invest?" —
+becomes answerable with evidence. Optimization produces governed
+ChangeIntents; it never executes.
+
+### Added
+- `fleet/` — Fleet/FleetMember/FleetSnapshot/MemberObservation
+  contracts (`platformforge/fleet/v1`), org-graph projection
+  (8 layers, `organizational` impact class), `loader.py` shared
+  fleet-dir loader, 9 deterministic fleet questions.
+- `analytics/` — HistoryEngine (strict windows, support-confidence
+  patterns), measurement by dimension, golden-path analytics,
+  policy intelligence (evidence-gated false-positive candidates),
+  FinOps V4, capacity/saturation risk, reliability hotspots
+  (centrality ≠ criticality), ops analytics, DX metrics
+  (team-level only), debt, SQLite `AnalyticsStore` (retention GC,
+  `forget_subject`, secret-refusal).
+- `optimize/` — OptimizationEngine + `scan_fleet` opportunity
+  generator; honest uncertainty; suppressed stays visible;
+  `plan()` → `ChangeIntent` is the only bridge (§303).
+- `federation/` — NodeManifest, fail-closed FederationPolicy,
+  `export_summary` (secrets denied at every classification),
+  `federated_query` (node-local answers).
+- `aiplat/` — GPU/MIG pools, serving detection, denominator-required
+  unit economics (`ai workloads|gpu|economics`).
+- `graph/backend.py` — pluggable GraphBackend (memory + SQLite).
+- CLI namespaces: `fleet`, `analytics`, `optimize`, `ai`,
+  `federation` — all read-only, fleet-dir inputs.
+- Config schema v3 — `features` flags (`federation` opt-in) +
+  `privacy` pins (dx team-level-only, person ids forbidden,
+  right-to-forget); migration 0→1→2→3.
+- `platformforge bench scale` — measured graph/store benchmarks.
+- Lab: `lab/fleets/acme` shared fixture + 11 `fleet-*` scenarios;
+  14 invariant probes (`evals/fleet_invariants.py`);
+  `tests/test_fleet_adversarial.py` (E1–E12).
+- Validation: 11 new gates (`fleet-*`, `adversarial`) in
+  `scripts/validate.py`, mirrored as CI steps.
+- 10 top-level docs (FLEET.md … ENTERPRISE.md), 10 ADRs
+  (0031–0040), docs/cycle5/ closure artifacts.
+
+### Changed
+- `graph/vocab.py` — organizational node kinds/edges + AI platform
+  kinds; `EDGE_IMPACT` reports `organizational` separately.
+- `fleetlab` uses the shared `fleet.loader`.
+- Capability manifest → `platformforge/capability-manifest/v4`.
+
+### Honest limits (declared, not hidden)
+- Analytics are deterministic aggregates — no ML claims.
+- `fleet drift` on stale inputs returns no fresh patterns by design.
+- Federation exchanges intelligence only — never credentials or
+  execution authority.
+
 ## [Unreleased] — Cycle 4.1 (Operational Correctness, Rollback Integrity & Closure)
 
 Correctness and closure pass over Cycle 4: rollback becomes

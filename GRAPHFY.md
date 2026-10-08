@@ -84,6 +84,25 @@ Graph proximity is not proven causality. Blast radius reports
 `direct | transitive | runtime | security | reliability | cost |
 compliance | unknown` impact classes separately.
 
+## Organizational layers (v3, Cycle 5)
+
+`fleet/orggraph.py` projects a `Fleet` into 8 layers — organization,
+platform-product, application, infrastructure, runtime, operations,
+cost, policy (`layer_of`). Organizational edges (`owns`, `funded_by`,
+`uses_golden_path`, `escapes_golden_path`, `supports`, `deployed_to`…)
+carry `impact_class=organizational` — they answer ownership/adoption
+questions and are **never** blast radius (ADR-0032). `project_fleet`
+merges member technical graphs with `source_member` provenance;
+`layer_view` / `cross_layer_path` slice per layer. New node kinds:
+`organization`, `fleet`, `environment`, `team`, `business_unit`,
+`cloud_account`, `golden_path`, `policy`, `cost_center` + AI kinds
+(`accelerator`, `gpu_pool`, `model`, `model_endpoint`,
+`inference_service`, `training_job`, `vector_store`).
+
+Backends are pluggable (`graph/backend.py`): `MemoryBackend` (default)
+and `SQLiteBackend` share `GraphBackend` — `get/put/remove/query/meta`.
+The canonical provider-neutral graph model is unchanged.
+
 ## Temporal & multi-layer edges (v2, Cycle 3)
 
 - `Edge.temporal = {first_seen, last_seen, sample_count, expired?}` —

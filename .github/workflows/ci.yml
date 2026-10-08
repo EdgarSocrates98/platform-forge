@@ -66,6 +66,28 @@ jobs:
         run: python scripts/validate.py --gate ops-evals
       - name: Ops — lab scenarios
         run: python scripts/validate.py --gate ops-lab
+      - name: Fleet — contracts
+        run: python scripts/validate.py --gate fleet-contracts
+      - name: Fleet — org graph
+        run: python scripts/validate.py --gate fleet-graph
+      - name: Analytics — engines
+        run: python scripts/validate.py --gate analytics
+      - name: History — windows/patterns
+        run: python scripts/validate.py --gate history
+      - name: Optimization — boundary
+        run: python scripts/validate.py --gate optimization
+      - name: Federation — boundary
+        run: python scripts/validate.py --gate federation
+      - name: Privacy — no person metrics
+        run: python scripts/validate.py --gate privacy
+      - name: AI platform — denominators
+        run: python scripts/validate.py --gate ai-platform
+      - name: Fleet — evals
+        run: python scripts/validate.py --gate fleet-evals
+      - name: Fleet — lab
+        run: python scripts/validate.py --gate fleet-lab
+      - name: Adversarial — E1–E12
+        run: python scripts/validate.py --gate adversarial
       - name: Self — dogfooding gate
         run: python scripts/validate.py --gate self
 

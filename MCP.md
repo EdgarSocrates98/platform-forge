@@ -60,6 +60,10 @@ simulate/risk/gates/policy/envelope, status/history/graph/analytics;
 `approve` and any execution refuse `PF-OPS-MCP-*` — delegation never
 carries mutation or signing authority).
 
+Cycle 5 fleet/analytics/optimize/federation surfaces are CLI/library
+only for now — no MCP tools expose them yet (declared gap; the
+`platformforge_ops` boundary is unchanged).
+
 ## Host integration
 
 `platformforge mcp integrate --host <host>` writes the host's parity
