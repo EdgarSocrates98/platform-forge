@@ -641,6 +641,21 @@ def cmd_cases(args: argparse.Namespace) -> int:
         from platformforge.cases.ledgers import validate_ledgers
         r = validate_ledgers()
         return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
+    if args.cases_cmd == "route-audit":
+        from platformforge.cases.routing_audit import audit_corpus
+        return _emit(audit_corpus(root), args)
+    if args.cases_cmd == "route-bench":
+        from platformforge.cases.routing_audit import champion_challenger
+        return _emit(champion_challenger(
+            root, challenger=args.out or None), args)
+    if args.cases_cmd == "context-audit":
+        from platformforge.cases.context_audit import audit_case, write_back
+        from platformforge.cases.context_audit import audit_corpus as ctx_corpus
+        if args.stamp:
+            from platformforge.cases.casefile import discover_cases as dc
+            for c in dc(root):
+                write_back(c, audit_case(c))
+        return _emit(ctx_corpus(root), args)
     return 2
 
 
@@ -3263,10 +3278,15 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("cases_cmd",
                     choices=["list", "validate", "replay", "template",
-                             "ledger", "ledger-check"])
+                             "ledger", "ledger-check", "route-audit",
+                             "route-bench", "context-audit"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--tier", default="", choices=["golden", "holdout"])
-    sp.add_argument("--out", default="")
+    sp.add_argument("--out", default="",
+                    help="challenger routing.yaml for route-bench")
+    sp.add_argument("--stamp", action="store_true",
+                    help="context-audit: write measured context_cost "
+                         "back into case.yaml")
     sp.set_defaults(func=cmd_cases)
     return p
 
