@@ -110,6 +110,17 @@ Index: [docs/README.md](docs/README.md) — ADRs, agent docs, cycle reports.
 [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) ·
 [CHANGELOG.md](CHANGELOG.md)
 
+## Support matrix
+
+| Axis | Supported |
+|---|---|
+| Python | 3.10+ (CI tests 3.10–3.13) |
+| OS | Linux (primary); macOS/Windows run the core — host adapters are platform-dependent |
+| Runtime deps | PyYAML, jsonschema, python-hcl2 — offline core only |
+| Optional extras | `aws` (read-only dumps), `mcp` (host surface), `dev` (pytest, ruff) |
+| Host agent mirrors | `.claude/`, `.agents/`, `.codex/`, `.devin/` — generated, `agents check` gated |
+| Architecture state | **Frozen** — see `docs/freeze/`; new capability requires an unfreeze RFC |
+
 ## License
 
 MIT — see [LICENSE](LICENSE), [SOURCES.md](SOURCES.md), [CREDITS.md](CREDITS.md).

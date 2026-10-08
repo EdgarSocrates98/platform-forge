@@ -178,5 +178,23 @@ Bounded, evidence-first agent orchestration on the deterministic core
 - **Architecture freeze** — `FREEZE-REVIEW.md` READY; new capability
   requires explicit unfreeze (ADR-0052).
 
+## Architecture Freeze — in progress
+
+Stability & real-world validation (prompt_evo_freezing.md,
+docs/freeze/): freeze manifest + contract snapshots
+(`freeze manifest|snapshot|check`), feature-exception governance,
+golden+holdout replay corpus (`.platformforge/cases/`), FP/FN ledgers,
+routing/context audits, measured scale + soak receipts, self/cross-Forge
+dogfooding, security review, release hardening. **No Cycle 6 feature
+expansion** — unfreeze requires an RFC (docs/freeze/UNFREEZE-RFC.md).
+
+| Phase | Deliverable | Status | Gate |
+|---|---|---|---|
+| STABILITY | contracts snapshotted; breaking changes gated; maintenance-mode releases only | active | `freeze-contracts`, `freeze-replay`, `freeze-docs`, `freeze-exceptions` |
+| DOGFOODING | self + cross-Forge runs feed REAL-WORLD-ISSUES.md; every issue → evidence → fix | active | regression test per fixed issue |
+| REAL-WORLD VALIDATION | replay corpus grows from real cases; read-only production pilot (observe → recommend → prepare → governed mutate) | active | `cases replay` green; pilot receipts |
+| KNOWLEDGE MAINTENANCE | monthly source freshness, quarterly compatibility sweep, release-triggered review | active | `knowledge check|drift`, KNOWLEDGE-REVIEW.md |
+| COMMUNITY | sanitized public cases → regression fixtures; operator feedback (useful/incorrect/already-known/unactionable/missing-context) → review, never direct rule training | planned | feedback → issue → evidence → fix |
+
 Definition of done per feature: contract, implementation, tests, negative test,
 unresolved behavior, evidence, docs, source provenance, eval, CLI/MCP exposure.
