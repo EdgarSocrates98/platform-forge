@@ -1,6 +1,6 @@
 ---
 name: platformforge-sdd
-description: "Conduz mudanças no próprio Platform Forge pelo SDD nativo — feature dir com intent/design/plan/tasks, cascata de hashes (mudança upstream invalida downstream), gates por evidência, override com recibo. Use ao iniciar feature/fase, quando `sdd check` recusar, ou para fechar uma fase com gate. Não use para analisar plataformas de usuário (→ platformforge-core)."
+description: "Conduz mudanças no próprio Platform Forge pelo SDD nativo — feature dir com intent/design/contract/plan, cascata de hashes (mudança upstream invalida downstream), gates por evidência, override com recibo, learn no fechamento. Use ao iniciar feature/fase, quando `sdd check` recusar, para re-selar com `sdd stamp`, ou para fechar fase com gate. Não use para analisar plataformas de usuário (→ platformforge-core)."
 ---
 
 # SDD nativo — fases e gates
@@ -19,11 +19,14 @@ Cascata de hashes: mudar uma fase upstream invalida as downstream
 
 ```bash
 platformforge sdd init --feature F --body "objetivo"
+platformforge sdd discover --feature F --body "..."
 platformforge sdd design --feature F --body "..."
+platformforge sdd contract --feature F --body "..."
 platformforge sdd status --feature F       # fases: current/stale/blocked
 platformforge sdd check --feature F --phase plan --verify "pytest -q"
 platformforge sdd stamp --feature F --phase plan   # re-sela após editar
 platformforge sdd ship --feature F --override --override-reason "porquê"
+platformforge sdd learn --feature F --body "o que aprendeu"
 ```
 
 ## Disciplina
@@ -33,3 +36,4 @@ platformforge sdd ship --feature F --override --override-reason "porquê"
   (o recibo fica registrado).
 - `sdd check --verify "cmd"` roda o comando e anexa o resultado como
   evidência da fase.
+- `learn` é fase de fechamento — capture o que mudou a arquitetura real.

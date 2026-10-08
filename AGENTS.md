@@ -53,9 +53,9 @@ via `platformforge agents sync`; never edit a mirror, lint with
 `agents lint`.
 
 Skills that dispatch work here live in `.devin/skills/platformforge-*`
-(core, change, economy, finops, graph, lab, sdd, security, sre). The
-`platformforge-core` skill routes an ambiguous request to the right
-domain skill.
+(core, change, economy, finops, graph, lab, sdd, security, sre, fleet,
+agents). The `platformforge-core` skill routes an ambiguous request to
+the right domain skill.
 
 ## Boundaries
 

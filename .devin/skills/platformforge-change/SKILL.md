@@ -5,8 +5,8 @@ description: "Revisa mudanças sem tocar a árvore original — sandbox copy →
 
 # Change review — §85–86, §130–132
 
-Lifecycle: `inspect → propose → sandbox → verify → approve → apply`.
-O core cobre até `verify`; `approve`/`apply` são boundary do host e o CLI
+Lifecycle: `propose → sandbox → verify → review → approve → apply`.
+O core cobre até `review`; `approve`/`apply` são boundary do host e o CLI
 responde `platform.change.core_read_only` com o unlock.
 
 ## Fluxo
@@ -14,6 +14,7 @@ responde `platform.change.core_read_only` com o unlock.
 ```bash
 platformforge change verify --patch change.diff        # sandbox: antes×depois
 platformforge change verify --file infra/main.tf=novo.tf
+platformforge change review <intent.json>              # verdict + evidence
 platformforge risk --node <grafo-id>                   # sinais derivados do blast
 platformforge risk --signals '{"production":true,"reversibility":false}'
 platformforge explain findings.json --name PF-IAC-010  # cadeia de evidência
@@ -35,3 +36,6 @@ platformforge recommend findings.json                  # Recommendations válida
 - Aplicar patch na árvore original — tudo acontece numa cópia em tmp.
 - Afirmar efeito quantificado sem `benchmark_ref` (Recommendation rejeita).
 - Apresentar recusa de approve/apply como erro — é o boundary desenhado.
+- Deixar um agente executar `change approve|apply` — rota crítica exige
+  operations-safety reviewer + verifier + gate humano (→
+  platformforge-agents).
