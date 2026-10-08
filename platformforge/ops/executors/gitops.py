@@ -94,18 +94,22 @@ class KubernetesExecutor(Executor):
             return argv
         if a == "annotate":
             anns = params.get("annotations", {})
-            if not isinstance(anns, dict) or not anns:
+            rems = params.get("remove_annotations", []) or []
+            if not isinstance(anns, dict) or (not anns and not rems):
                 return {"refusal": "PF-OPS-ANNOTATE-EMPTY",
-                        "unlock": "annotations must be a non-empty map"}
+                        "unlock": "annotations or remove_annotations "
+                                  "must be non-empty"}
             safe = {k: str(v) for k, v in anns.items()
                     if _annotation_allowed(k)}
-            if len(safe) != len(anns):
+            safe_rems = [k for k in rems if _annotation_allowed(k)]
+            if len(safe) != len(anns) or len(safe_rems) != len(rems):
                 return {"refusal": "PF-OPS-ANNOTATE-UNSAFE",
                         "unlock": "only platformforge.io/*, "
                                   "ops.platformforge.io/* annotations "
                                   "or whitelisted keys are writable"}
             argv = ["kubectl", "annotate", target] + ns
-            argv += [f"{k}={v}" for k, v in safe.items()] + ["--overwrite"]
+            argv += [f"{k}={v}" for k, v in safe.items()]
+            argv += [f"{k}-" for k in safe_rems] + ["--overwrite"]
             if params.get("resource_version"):
                 # optimistic concurrency via JSON patch precondition
                 argv = ["kubectl", "patch", target, "--type=json",

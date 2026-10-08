@@ -1,0 +1,6 @@
+id: sot-conflict
+type: live
+domain: ops-rollback
+expect:
+  check: ops-invariant
+  probe: sot-conflict

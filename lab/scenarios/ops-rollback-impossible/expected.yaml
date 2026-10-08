@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "§136 manual-only rollback → honest refusal + escalation"

@@ -390,6 +390,22 @@ def _grade_live(case: dict, case_dir: Path) -> dict[str, Any]:
         return {"verdict": "pass" if r["passed"] else "fail",
                 "failures": r.get("failures", []),
                 "checks": r.get("checks", [])}
+    if check == "ops-invariant":
+        # cycle4.1 — correctness probes (tamper/refusal/builder)
+        import tempfile
+
+        from platformforge.evals.ops_invariants import PROBES
+        probe = PROBES.get(str(exp.get("probe", "")))
+        if probe is None:
+            return {"verdict": "unresolved",
+                    "reason": f"unknown probe {exp.get('probe')!r}"}
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                r = probe(td)
+            except Exception as e:  # noqa: BLE001
+                return {"verdict": "fail", "error": str(e)}
+        return {"verdict": "pass" if r.get("ok") else "fail",
+                "detail": r.get("detail")}
     return {"verdict": "unresolved",
             "reason": f"unknown live check {check!r}"}
 

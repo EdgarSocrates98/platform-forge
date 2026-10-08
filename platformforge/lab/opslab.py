@@ -111,6 +111,7 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
             actor=a.get("actor", "approver"),
             role=a.get("role", "owner"),
             expires_at=a.get("expires_at", ""),
+            type=a.get("type", ""),
             actor_kind=a.get("actor_kind", "human")))
     bg = None
     if doc.get("break_glass"):
@@ -173,11 +174,16 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
             op, ledger, {"convergence": vr.convergence})
         result["state"] = op.state
         # rollback execution from the material-built plan (§30 pipeline;
-        # lab/non-prod §123)
+        # lab/non-prod §123). Auto-rollback needs `automatic`; a manual
+        # trigger (trigger_rollback: true) exercises the human-decided
+        # path for executable plans — and the honest refusal for
+        # non-executable ones.
         if op.state == "rollback-planned":
             rbp = result.get("rollback_plan") or env.rollback
-            if (rbp or {}).get("status") == "executable" and \
-                    (rbp or {}).get("automatic"):
+            auto = (rbp or {}).get("status") == "executable" and \
+                (rbp or {}).get("automatic")
+            manual = doc.get("trigger_rollback", False)
+            if auto or manual:
                 from platformforge.ops.engine import execute_rollback
                 result["rollback"] = execute_rollback(
                     op, env, transports=transports, ledger=ledger,
@@ -224,6 +230,27 @@ def _check_expect(doc, result, checks, failures):
         if got != exp["convergence"]:
             failures.append(f"convergence: expected "
                             f"{exp['convergence']} got {got}")
+    # cycle 4.1 §130–136 — rollback-aware expectations
+    rb_res = result.get("rollback") or {}
+    if exp.get("rollback_status"):
+        got = ((result.get("rollback_plan") or {}).get("status")
+               or rb_res.get("status"))
+        if got != exp["rollback_status"]:
+            failures.append(f"rollback_status: expected "
+                            f"{exp['rollback_status']} got {got}")
+    if exp.get("rollback_verification"):
+        got = rb_res.get("rollback_verification")
+        if got != exp["rollback_verification"]:
+            failures.append(f"rollback_verification: expected "
+                            f"{exp['rollback_verification']} got {got}")
+    if exp.get("rollback_refusal"):
+        ref = rb_res.get("refusal") or {}
+        want = exp["rollback_refusal"]
+        if ref.get("refusal") != want and want not in str(ref):
+            failures.append(f"rollback_refusal: expected {want} "
+                            f"got {ref}")
+    if exp.get("no_rollback") and rb_res:
+        failures.append("expected no rollback execution")
     if exp.get("ledger_event") and exp["ledger_event"] not in (
             result.get("ledger_events") or []):
         failures.append(f"missing ledger event "
