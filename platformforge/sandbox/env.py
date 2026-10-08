@@ -48,7 +48,11 @@ class Sandbox:
                 "stderr": r.stderr[-2000:]}
 
     def write_file(self, rel: str, content: str, dst: Path) -> Path:
-        p = dst / rel
+        p = (dst / rel).resolve()
+        root = dst.resolve()
+        if p != root and root not in p.parents:
+            raise ValueError(
+                f"sandbox path escapes root: {rel!r} -> {p}")
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(content)
         return p
@@ -91,7 +95,11 @@ def sandbox_analyze(repo: str | Path,
                 return {"refusal": "platform.sandbox.patch_failed",
                         "detail": applied["stderr"], "before": before}
         for rel, content in (files or {}).items():
-            sb.write_file(rel, content, dst)
+            try:
+                sb.write_file(rel, content, dst)
+            except ValueError as exc:
+                return {"refusal": "platform.sandbox.path_escape",
+                        "detail": str(exc), "before": before}
         after = _analyze_tree(dst, analyzers)
     return {"before": before, "after": after,
             "delta": compare_runs(before, after), "applied": applied,

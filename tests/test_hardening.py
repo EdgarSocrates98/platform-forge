@@ -78,3 +78,15 @@ def test_workspace_members(tmp_path):
     with tempfile.TemporaryDirectory() as bare_dir:
         bare = Path(bare_dir)
         assert _member_dirs(bare) == [("", bare)]
+
+
+def test_sandbox_write_file_refuses_escape(tmp_path):
+    """freeze review: rel paths must stay inside the sandbox copy — a
+    `../` escape returns a refusal, never writes outside dst."""
+    from platformforge.sandbox.env import sandbox_analyze
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "m.yaml").write_text("apiVersion: v1\nkind: Pod\n")
+    out = sandbox_analyze(repo, files={"../../escape.yaml": "x: 1"})
+    assert out["refusal"] == "platform.sandbox.path_escape"
+    assert not (repo.parent / "escape.yaml").exists()
