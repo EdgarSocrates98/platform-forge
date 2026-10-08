@@ -98,6 +98,9 @@ class ContextPackBuilder:
               graph_neighborhood: list[dict] | None = None,
               risk: str | None = None,
               previous_pack_hash: str | None = None,
+              previous_files: dict[str, str] | None = None,
+              sources: list[str] | None = None,
+              allow_escalate: bool = False,
               max_file_bytes: int = 20_000,
               retain_content: bool = False) -> dict[str, Any]:
         budget = budget or Budget()
@@ -142,10 +145,14 @@ class ContextPackBuilder:
                     skipped += 1
                     continue
             seen_hash.add(sha)
+            # §26 — real delta accounting: identical sha as the previous
+            # pack means the file was reused, not re-read fresh.
+            if previous_files and previous_files.get(path) == sha:
+                reused += 1
             used_tokens += tokens
             entry = {"path": path, "score": score,
                      "reasons": c_reasons, "class": cls,
-                     "tokens": tokens,
+                     "tokens": tokens, "sha256": sha,
                      "delivered_bytes": len(truncated.encode()),
                      "delivered_chars": len(truncated)}
             if retain_content:
@@ -163,7 +170,11 @@ class ContextPackBuilder:
         essential_tokens = estimate_tokens(json.dumps(essential, default=str))
         over_essential = bool(budget.input_budget
                               and essential_tokens > budget.input_budget)
-        if over_essential:
+        if over_essential and allow_escalate:
+            decision = "escalate"
+            decision_reason = ("essential evidence exceeds input budget — "
+                               "escalating beyond budget (caller allowed)")
+        elif over_essential:
             decision = "refuse"
             decision_reason = ("essential evidence exceeds input budget "
                                "— refusing rather than dropping evidence")
@@ -185,7 +196,12 @@ class ContextPackBuilder:
             "findings": findings or [],
             "graph_neighborhood": graph_neighborhood or [],
             "rules": rules or [],
-            "sources": [],
+            "sources": sorted(set(sources or [])),
+            "security": {
+                # §21 contract field — redaction happens at index write
+                # (pre-FTS); packs never carry raw secrets downstream.
+                "redaction": "applied-at-index",
+                "secrets_in_pack": 0},
             "budget": budget.to_dict(),
             "budget_decision": decision,
             "budget_reason": decision_reason,

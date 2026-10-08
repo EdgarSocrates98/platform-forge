@@ -34,19 +34,29 @@ class BudgetVerdict:
 
 
 def check_input_budget(budget: Budget, estimated_tokens: int,
-                       min_essential: int = 0) -> BudgetVerdict:
+                       min_essential: int = 0,
+                       can_escalate: bool = False) -> BudgetVerdict:
     """min_essential = tokens needed for essential evidence — below that, refuse
-    rather than silently drop evidence."""
+    rather than silently drop evidence.
+
+    Canonical decisions (§26–§29): ok | reduced_scope | escalate | refuse.
+    `escalate` means the essential evidence does not fit but the caller
+    permits spending beyond the declared budget — recorded, never silent."""
     if budget.input_budget is None:
         return BudgetVerdict("ok")
     if estimated_tokens <= budget.input_budget:
         return BudgetVerdict("ok")
     if min_essential and budget.input_budget >= min_essential:
-        return BudgetVerdict("reduce_scope",
+        return BudgetVerdict("reduced_scope",
                              f"budget {budget.input_budget} < needed {estimated_tokens}; "
                              f"keeping essential evidence ({min_essential})")
+    if can_escalate:
+        return BudgetVerdict("escalate",
+                             f"budget {budget.input_budget} < essential "
+                             f"{min_essential or estimated_tokens}; "
+                             "escalating beyond declared budget")
     return BudgetVerdict("refuse",
                          f"budget {budget.input_budget} < needed {estimated_tokens}; "
                          "refusing rather than dropping essential evidence — "
                          "raise budget or narrow scope",
-                         reduced_scope="platform.context.budget.unresolved")
+                         reduced_scope="PF-BUDGET-ESSENTIAL")

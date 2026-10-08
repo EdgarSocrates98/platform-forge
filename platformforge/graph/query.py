@@ -134,9 +134,55 @@ def cycles(g: Graph, max_cycles: int = 100) -> list[list[str]]:
     return out
 
 
-def gaps(g: Graph) -> dict[str, list[str]]:
+def _articulation_points(g: Graph) -> list[str]:
+    """Undirected cut vertices (iterative Tarjan) — nodes whose removal
+    increases the component count of the dependency graph."""
+    adj: dict[str, set[str]] = {n: set() for n in g.nodes}
+    for e in g.edges.values():
+        if e.kind in DEPENDENCY_KINDS:
+            adj[e.src].add(e.dst)
+            adj[e.dst].add(e.src)
+    disc: dict[str, int] = {}
+    low: dict[str, int] = {}
+    parent: dict[str, str] = {}
+    aps: set[str] = set()
+    t = 0
+    for root in g.nodes:
+        if root in disc:
+            continue
+        stack = [(root, iter(sorted(adj[root])))]
+        disc[root] = low[root] = t; t += 1
+        parent[root] = ""
+        children = 0
+        while stack:
+            u, it = stack[-1]
+            advanced = False
+            for v in it:
+                if v not in disc:
+                    parent[v] = u
+                    children += 1 if u == root else 0
+                    disc[v] = low[v] = t; t += 1
+                    stack.append((v, iter(sorted(adj[v]))))
+                    advanced = True
+                    break
+                if v != parent.get(u):
+                    low[u] = min(low[u], disc[v])
+            if not advanced:
+                stack.pop()
+                if stack:
+                    p = stack[-1][0]
+                    low[p] = min(low[p], low[u])
+                    if p != root and low[u] >= disc[p]:
+                        aps.add(p)
+        if children > 1:
+            aps.add(root)
+    return sorted(aps)
+
+
+def gaps(g: Graph) -> dict[str, Any]:
     """Structural gaps: orphans, missing ownership/observability/protection,
-    unallocated cost, external exposure."""
+    unallocated cost, external exposure, single points of failure,
+    unreachable resources."""
     orphans = [n for n in g.nodes if not _adj(g)[n]
                and not _adj(g, reverse=True)[n]]
     owned = {e.dst for e in g.edges.values() if e.kind == "owns"}
@@ -151,6 +197,12 @@ def gaps(g: Graph) -> dict[str, list[str]]:
     resources = {nid for nid, n in g.nodes.items()
                  if n.kind in ("database", "bucket", "queue", "volume",
                                "cluster", "load_balancer")}
+    inbound = _adj(g, reverse=True)
+    # unreachable: a workload/resource nothing depends on, calls, or
+    # exposes — present in the platform but dead-ended from consumers.
+    unreachable = sorted(
+        n for n in workloads | resources
+        if n not in orphans and not inbound[n] and n not in exposed)
     return {
         "orphans": sorted(orphans),
         "ownership_gaps": sorted(n for n in workloads | resources
@@ -161,4 +213,6 @@ def gaps(g: Graph) -> dict[str, list[str]]:
         "unallocated_cost": sorted(n for n in workloads | resources
                                    if n not in billed),
         "external_exposure": sorted(exposed),
+        "single_points_of_failure": _articulation_points(g),
+        "unreachable": unreachable,
     }

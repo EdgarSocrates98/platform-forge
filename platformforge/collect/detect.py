@@ -85,6 +85,16 @@ def detect_file(path: Path) -> str | None:
     """Best-effort domain for a single artifact file."""
     name = path.name.lower()
     suffix = path.suffix.lower()
+    parts = {p.lower() for p in path.parts}
+    # path-shaped artifacts first — filename is the contract
+    if {".github", "workflows"} <= parts and suffix in (".yml", ".yaml"):
+        return "cicd-gha"
+    if name == ".gitlab-ci.yml":
+        return "gitlab-ci"
+    if name.startswith("dockerfile") or name.endswith(".dockerfile"):
+        return "dockerfile"
+    if name.startswith("catalog-info.") and suffix in (".yaml", ".yml"):
+        return "backstage"
     if suffix == ".tf":
         return "iac"
     if name == "chart.yaml":
@@ -217,6 +227,22 @@ def collect(path: str | Path) -> dict[str, Any]:
                 m, fn = mod.split(":")
                 import importlib
                 facts += getattr(importlib.import_module(m), fn)(parent)["facts"]
+            elif dom == "cicd-gha":
+                from platformforge.cicd import analyze_gha
+                for p in paths:
+                    facts += analyze_gha(p)["facts"]
+            elif dom == "gitlab-ci":
+                from platformforge.cicd import analyze_gitlab_ci
+                for p in paths:
+                    facts += analyze_gitlab_ci(p)["facts"]
+            elif dom == "dockerfile":
+                from platformforge.cicd import analyze_dockerfile
+                for p in paths:
+                    facts += analyze_dockerfile(p)["facts"]
+            elif dom == "backstage":
+                from platformforge.cicd import analyze_backstage
+                for p in paths:
+                    facts += analyze_backstage(p)["facts"]
         except Exception as exc:  # noqa: BLE001 — analyzer failure degrades to undetected, not a crash
             undetected.append(f"{dom}:{exc!r}")
     # secrets is a baseline dir-scan over everything collected — dumps are

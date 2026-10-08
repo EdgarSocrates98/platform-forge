@@ -52,7 +52,13 @@ def test_budget_refuses_below_essential():
     v = check_input_budget(Budget(input_budget=10), estimated_tokens=500,
                            min_essential=400)
     assert v.decision == "refuse"
-    assert "unresolved" in (v.reduced_scope or "")
+    assert v.reduced_scope == "PF-BUDGET-ESSENTIAL"
+
+
+def test_budget_escalates_when_allowed():
+    v = check_input_budget(Budget(input_budget=10), estimated_tokens=500,
+                           min_essential=400, can_escalate=True)
+    assert v.decision == "escalate"
 
 
 def test_rtk_compact_pytest(tmp_path):

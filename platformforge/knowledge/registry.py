@@ -174,6 +174,69 @@ class SourceRegistry:
         return {"linked": linked, "unlinked": unlinked, "bad_refs": bad_refs,
                 "coverage": len(linked) / max(len(linked) + len(unlinked), 1)}
 
+    def drift_report(self, *catalog_dirs: str | Path,
+                     today: date | None = None) -> dict[str, Any]:
+        """§47 — knowledge drift: new major versions tracked but not
+        reflected, deprecated/superseded sources still cited, unavailable
+        sources, and rules whose backing sources went stale.
+
+        Never a bare "ok": every signal carries the entry/rule it
+        concerns and the reason."""
+        today = today or datetime.now(UTC).date()
+        link = self.link_rules(*catalog_dirs)
+        statuses = {r["id"]: r for r in self.check(today)}
+
+        signals: list[dict[str, Any]] = []
+        for e in sorted(self.entries.values(), key=lambda x: x.id):
+            st = statuses.get(e.id, {}).get("status", "unresolved")
+            if st in (FreshnessStatus.DEPRECATED,):
+                signals.append({"kind": "deprecated-source",
+                                "source": e.id,
+                                "reason": "entry marked deprecated"})
+            if st in (FreshnessStatus.SUPERSEDED,):
+                signals.append({"kind": "superseded-source",
+                                "source": e.id,
+                                "reason": f"superseded_by={e.superseded_by}"})
+            if st in (FreshnessStatus.STALE, FreshnessStatus.UNRESOLVED):
+                signals.append({"kind": "stale-source", "source": e.id,
+                                "reason": f"freshness={st}"})
+            if not e.source:
+                signals.append({"kind": "unavailable-source",
+                                "source": e.id,
+                                "reason": "no source locator"})
+            # new major version: releases_tracked majors newer than the
+            # entry's declared version → knowledge drift signal
+            def _maj(v: str) -> int | None:
+                import re
+                m = re.match(r"\s*v?(\d+)", str(v))
+                return int(m.group(1)) if m else None
+            cur = _maj(e.version)
+            newer = sorted({_maj(r) for r in e.releases_tracked
+                            if _maj(r) is not None and cur is not None
+                            and _maj(r) > cur})
+            for mj in newer:
+                signals.append({
+                    "kind": "new-major-version", "source": e.id,
+                    "reason": f"entry pinned to {e.version} but v{mj} "
+                              "is tracked — re-derive version-gated claims"})
+
+        # rules citing stale/deprecated/superseded sources
+        stale_ids = {s["source"] for s in signals
+                     if s["kind"] in ("deprecated-source",
+                                      "superseded-source", "stale-source")}
+        stale_rules = [
+            {"rule_id": rid, "sources": [s for s in srcs
+                                         if s in stale_ids]}
+            for rid, srcs in link["linked"].items()
+            if any(s in stale_ids for s in srcs)]
+        return {"linkage": link,
+                "signals": signals,
+                "stale_rule_refs": stale_rules,
+                "unresolved": [u["rule_id"] for u in link["unlinked"]],
+                "counts": {"signals": len(signals),
+                           "stale_rules": len(stale_rules),
+                           "unlinked": len(link["unlinked"])}}
+
 
 def knowledge_age_days(retrieved_at: str, today: date | None = None) -> int | None:
     try:
