@@ -1352,6 +1352,14 @@ def cmd_live(args: argparse.Namespace) -> int:
             gp.save(g, args.repo, source_type="runtime")
             out["applied_to_graph"] = n
         return _emit(out, args)
+    if sub == "clusters":
+        from platformforge.live.federation import Cluster, ClusterRegistry
+        reg = ClusterRegistry(args.repo)
+        if args.register:
+            spec = json.loads(args.register)
+            c = Cluster(spec.pop("cluster_id"), **spec)
+            return _emit({"registered": reg.register(c)}, args)
+        return _emit({"clusters": reg.list()}, args)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
@@ -1589,7 +1597,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("live_cmd",
                     choices=["snapshot", "status", "doctor", "reconcile",
-                             "rbac", "required-permissions", "topology"])
+                             "rbac", "required-permissions", "topology",
+                             "clusters"])
     sp.add_argument("--provider", default="kubernetes",
                     choices=["kubernetes", "aws"])
     sp.add_argument("--region", action="append",
@@ -1622,6 +1631,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="topology: endpointslices json")
     sp.add_argument("--apply-to-graph", action="store_true",
                     help="topology: persist runtime edges into graph")
+    sp.add_argument("--register", default="",
+                    help="clusters: register cluster JSON spec")
     sp.add_argument("--max-objects", type=int, default=0)
     sp.add_argument("--max-api-calls", type=int, default=0)
     sp.add_argument("--max-bytes", type=int, default=0)
