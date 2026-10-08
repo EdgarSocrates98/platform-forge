@@ -1201,7 +1201,8 @@ def cmd_observe(args: argparse.Namespace) -> int:
 
 def cmd_live(args: argparse.Namespace) -> int:
     """§7 live — read-only provider observation surface (Cycle 3)."""
-    from platformforge.live.collectors import k8s_transport
+    from platformforge.live.collectors import aws_transport, k8s_transport
+    from platformforge.live.collectors.aws import AwsCollector, required_permissions
     from platformforge.live.collectors.k8s import K8sCollector, required_rbac
     from platformforge.live.cursors import CursorStore
     from platformforge.live.models import ObservationScope
@@ -1210,15 +1211,20 @@ def cmd_live(args: argparse.Namespace) -> int:
     if sub == "rbac":
         return _emit(required_rbac(
             namespaced_only=args.namespaced_only), args)
+    if sub == "required-permissions":
+        if args.provider == "aws":
+            return _emit(required_permissions(), args)
+        return _emit(required_rbac(
+            namespaced_only=args.namespaced_only), args)
     if sub == "doctor":
-        out = {"checks": {"kubernetes": k8s_transport.preflight(
-            args.context)}}
+        checks = {"kubernetes": k8s_transport.preflight(args.context)}
+        if args.provider == "aws" or args.deep:
+            checks["aws"] = aws_transport.preflight()
         store = ObservationStore(args.repo)
-        out["checks"]["observation_store"] = {
-            "ok": True, "path": str(store.root)}
-        out["checks"]["cursors"] = {"cursors": len(
-            CursorStore(args.repo).all())}
-        out["ok"] = all(c.get("ok", True) for c in out["checks"].values())
+        checks["observation_store"] = {"ok": True, "path": str(store.root)}
+        checks["cursors"] = {"cursors": len(CursorStore(args.repo).all())}
+        out = {"checks": checks,
+               "ok": all(c.get("ok", True) for c in checks.values())}
         return _emit(out, args, 0 if out["ok"] else 1)
     if sub == "status":
         store = ObservationStore(args.repo)
@@ -1240,6 +1246,22 @@ def cmd_live(args: argparse.Namespace) -> int:
             collector = K8sCollector(
                 transport=k8s_transport.make_transport(args.context),
                 context=args.context)
+            env = collector.collect(scope, budget)
+        elif args.provider == "aws":
+            if not aws_transport.aws_available():
+                return _emit({"refusal": "PF-LIVE-NO-AWSCLI",
+                              "unlock": "install aws CLI + configure "
+                                        "credentials (aws sso login)"},
+                             args, 2)
+            collector = AwsCollector(transport=aws_transport.make_transport())
+            pf = collector.preflight()
+            if not pf.get("ok"):
+                return _emit({"refusal": "PF-LIVE-AWS-CREDS",
+                              "unlock": pf.get("hint",
+                                               "configure credentials"),
+                              "detail": pf.get("error", "")}, args, 2)
+            scope.regions = args.region or ["us-east-1"]
+            scope.services = args.service or []
             env = collector.collect(scope, budget)
         else:
             return _emit({"refusal": "PF-LIVE-UNKNOWN-PROVIDER",
@@ -1495,9 +1517,15 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument("live_cmd",
                     choices=["snapshot", "status", "doctor", "reconcile",
-                             "rbac"])
+                             "rbac", "required-permissions"])
     sp.add_argument("--provider", default="kubernetes",
                     choices=["kubernetes", "aws"])
+    sp.add_argument("--region", action="append",
+                    help="aws: restrict regions (repeatable)")
+    sp.add_argument("--service", action="append",
+                    help="aws: restrict services (repeatable)")
+    sp.add_argument("--deep", action="store_true",
+                    help="doctor: probe every provider adapter")
     sp.add_argument("--context", default="", help="kube context")
     sp.add_argument("--namespace", action="append",
                     help="restrict to namespace (repeatable)")
