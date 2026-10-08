@@ -39,6 +39,7 @@ identity → reconcile → topology → drift → incident → plan
 | `topology` | OTel/Hubble/EndpointSlice → runtime edges; `--apply-to-graph` layers evidence onto the graph. |
 | `clusters` | Cluster registry (`--register`) + multi-cluster federation view. |
 | `drift` | Observation-to-observation diff → deduplicated drift-event journal. |
+| `changes` | Change-event journal (`live/changes.jsonl`): `--collect` pulls CloudTrail events via the aws adapter, `--events-file` appends offline; `--gc --max-age-days/--max-count` trims; bare `live changes` reads (`--since/--resource`). |
 | `incident` | Canonical timeline + factorized candidate ranking → postmortem V3. |
 | `plan` | Drift events → safe remediation plan + approval envelope. Never applies. |
 | `capability` | Dynamic capability availability (host prereqs, budgets, provider access). |

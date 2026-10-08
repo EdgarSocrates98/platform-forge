@@ -44,8 +44,11 @@ All analyzers are offline, dump-only, and emit tiered `Fact`s.
 
 `build <facts.json>` · `deps` · `dependents` · `blast --node` (impact
 classes: direct/transitive/runtime/security/reliability/cost/compliance/
-unknown) · `paths` · `gaps` · `cycles` · `diff` (semantic categories,
+unknown) · `paths` · `gaps` (incl. SPOF + unreachable analysis) ·
+`cycles` · `diff` (semantic categories,
 every change cites `fact_ids`) · `snapshots` · `stats` ·
+`at --at <ts>` (graph as-of timestamp) · `timeline --edge-id|--node`
+(temporal provenance) ·
 `identity-become|identity-access|identity-workloads|identity-blast`
 (§100–101: no-path-found is a named result, never "no risk").
 
@@ -74,6 +77,7 @@ LIVE.md.
 | `live topology` | `--otel|--hubble|--slices` → runtime edges; `--apply-to-graph` layers evidence. |
 | `live clusters` | Cluster registry (`--register <json>`) + federation view. |
 | `live drift` | Observation↔observation diff → deduplicated drift-event journal. |
+| `live changes` | CloudTrail-style change-event journal: `--collect` (aws adapter, refuses `--offline`), `--events-file` (offline append), `--gc` (journal GC), bare read (`--since/--resource`). |
 | `live incident` | Canonical timeline + factorized candidate ranking → postmortem V3 (`confirmed` needs causal evidence). |
 | `live plan` | Drift events → safe remediation plan + approval envelope (hash-pinned). Never applies; `--strict` exits 2 on mutating actions. |
 | `live capability` | Dynamic capability availability (host prereqs, budgets, provider access). |
@@ -98,7 +102,13 @@ refuse `PF-OPS-UNSTRUCTURED`. See OPS.md.
 | `ops risk --plan f.yaml --environment E` | R0–R5 risk decomposition per step. |
 | `ops policy-eval --plan f.yaml --policies p.yaml` | Policy V2 decision (deny → exit 2). |
 | `ops runbook [id\|list] [--bind p.json]` | Structured runbooks: list, show, bind params. |
-| `ops run --spec ops.yaml [--execute]` | Full governed pipeline on a spec (intent/steps/policies/approvals/observation/verify). Persists to the operation store. |
+| `ops run --spec ops.yaml [--execute]` | Full governed pipeline on a spec (intent/steps/policies/approvals/observation/verify). Persists to the operation store; emits the operational graph projection. |
+| `ops approve` | Mint a hash-bound approval artifact (`--subject-hash/--actor/--approval-type/--expires-at/--bounds/--scope`). Never executes. |
+| `ops status` / `ops history` | Stored operation state / append-only ledger entries (`--operation-id`, `history --resource`). |
+| `ops rollback --operation-id [--execute]` | Execute the stored rollback plan (dry-run default). |
+| `ops autorem-eval --plan f.yaml` | A5 auto-remediation eligibility gate. |
+| `ops analytics` | LEARN: outcome/rollback/failure analytics over the store. |
+| `ops graph [--operation-id]` | Operational Graphfy projection rebuilt from ledgers. |
 | `ops store-list` / `ops store-verify --operation-id` | Append-only operation store + hash-chain audit. |
 
 ## Compose verbs

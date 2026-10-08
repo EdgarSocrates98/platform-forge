@@ -54,7 +54,11 @@ Representative tools: `platformforge_analyze` (all domains incl.
 `platformforge_reliability`, `platformforge_finops`, `platformforge_observe`,
 `platformforge_change` (sandbox review), `platformforge_evals`,
 `platformforge_context`, `platformforge_capability` (negotiation),
-`platformforge_doctor`.
+`platformforge_doctor`, `platformforge_live` (cycle3 observation surface),
+`platformforge_ops` (cycle4 governed operations — PREPARE only: plan/
+simulate/risk/gates/policy/envelope, status/history/graph/analytics;
+`approve` and any execution refuse `PF-OPS-MCP-*` — delegation never
+carries mutation or signing authority).
 
 ## Host integration
 

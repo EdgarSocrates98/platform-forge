@@ -94,7 +94,9 @@ execution authority. `ops delegate --request f.json` validates.
 
 ```
 platformforge ops capabilities|config|delegate|intent|plan|simulate
-                |risk|policy-eval|runbook|run|store-list|store-verify
+                |risk|policy-eval|runbook|run|approve|status|history
+                |rollback|autorem-eval|analytics|graph
+                |store-list|store-verify
 ```
 
 `ops run --spec ops.yaml` runs the full governed pipeline on a spec
@@ -102,6 +104,29 @@ platformforge ops capabilities|config|delegate|intent|plan|simulate
 dry-run receipt; `--execute` attaches the host argv transport and still
 requires a valid hash-bound approval. Results persist to the operation
 store; every refusal preserves a `PF-*` code + unlock instruction.
+
+- `ops approve` mints a hash-bound approval artifact (actor, role,
+  type, TTL, parameter bounds, resource scope) — it never executes;
+  `agent`/`host`/`system` actors cannot satisfy `single-human`
+  requirements.
+- `ops status|history` inspect stored operations and their append-only
+  ledgers (`--operation-id`, `history --resource` filters).
+- `ops rollback --operation-id` executes the stored rollback plan —
+  dry-run by default, `--execute` + approval semantics identical to
+  `ops run`.
+- `ops autorem-eval --plan f.yaml` evaluates the A5 eligibility gate
+  (reversibility, evidence tier, observation freshness, policy,
+  conflicts) — the narrow lab/non-prod auto-execute check.
+- `ops analytics` aggregates the operation store: outcomes, rollback
+  rate, MTTR-style timings, failure classes (LEARN).
+- `ops graph` rebuilds the operational Graphfy projection from stored
+  ledgers (`--operation-id` filters) — derived on read, never a
+  duplicated graph artifact.
+
+The MCP surface `platformforge_ops` exposes the same verbs minus the
+authority-bearing ones: `prepare`/`run` are always dry-run, `approve`
+and `rollback --execute` refuse with `PF-OPS-MCP-*` — delegation never
+carries execution or signing authority.
 
 ## Refusal codes (selection)
 
@@ -117,6 +142,11 @@ store; every refusal preserves a `PF-*` code + unlock instruction.
 | `PF-OPS-POLICY-BLOCK` | deny-overrides policy verdict |
 | `PF-OPS-LOCK-CONFLICT` | resource already locked by an operation |
 | `PF-OPS-RUNBOOK-UNKNOWN` | unknown runbook id |
+| `PF-OPS-OFFLINE` | `--execute` requested under `--offline` |
+| `PF-OPS-GATE-FAIL` | cost/security gate verdict `fail` (or `unknown` in prod) |
+| `PF-OPS-UNKNOWN-OPERATION` | status/rollback against an unstored op |
+| `PF-OPS-MCP-NO-EXECUTE` | mutating verb requested over the MCP surface |
+| `PF-OPS-MCP-NO-APPROVAL` | approval minting requested over MCP — human, host-side only |
 
 ## Lab & evals
 

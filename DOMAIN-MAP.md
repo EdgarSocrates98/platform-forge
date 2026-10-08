@@ -25,7 +25,9 @@ it · what a change can affect`
 | ownership | `core/ownership` | who owns it — and who disagrees? | CODEOWNERS, Backstage, tags, labels |
 | change/risk | `sandbox`, `risk`, `plan` | what does this change touch, in what order? | reviews, risk decompositions, remediation DAGs |
 | capability/interop | `mcp/registry`, `forge` | what can this forge do, and for whom? | contracts, manifests, A2A envelopes |
+| live | `live` | what is actually running, how fresh is the evidence? | observation envelopes, collectors, reconcile, topology, drift journal |
 | lab/evals | `lab`, `evals` | does the machinery prove itself? | scenarios, eval corpus, coverage, precision |
+| ops/control-plane | `ops` | governed change: intent→plan→approve→execute→verify→audit | `ops/*`, typed actions, envelopes, ledger, store |
 | store/bench | `core/artifacts`, `bench` | what does it cost to know? | artifact store, measured benchmarks |
 
 ## Explicit non-goals

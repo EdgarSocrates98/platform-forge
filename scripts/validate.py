@@ -165,12 +165,35 @@ def gate_package() -> dict:
     return r
 
 
+def gate_self() -> dict:
+    """§43 dogfooding — the platform validates its own repo: inspect
+    finds analyzable artifacts, agents lint is clean, the capability
+    manifest builds, collect accounts for every file."""
+    r = _py(
+        "import json, subprocess\n"
+        "def run(*a):\n"
+        "    p = subprocess.run(['platformforge', *a], capture_output=True,\n"
+        "                       text=True)\n"
+        "    return json.loads(p.stdout[p.stdout.find('{'):]), p.returncode\n"
+        "inv, rc1 = run('inspect', '--repo', '.')\n"
+        "assert rc1 == 0 and inv.get('artifacts'), 'inspect found nothing'\n"
+        "lint, rc2 = run('agents', 'lint')\n"
+        "assert rc2 == 0 and lint.get('ok', True), 'agents lint failed'\n"
+        "man, rc3 = run('capability', 'manifest')\n"
+        "assert rc3 == 0 and (man.get('capabilities_v2') or "
+        "man.get('capabilities')), 'manifest empty'\n"
+        "print('self-gate: inspect+agents+manifest ok')")
+    r["what"] = "platformforge inspects/lints/manifests itself (§43)"
+    return r
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
     "packs": gate_packs, "lab": gate_lab, "evals": gate_evals,
     "coverage": gate_coverage, "mcp-parity": gate_mcp_parity,
     "docs": gate_docs, "security": gate_security, "package": gate_package,
+    "self": gate_self,
 }
 
 UNLOCK = {
@@ -187,6 +210,7 @@ UNLOCK = {
     "docs": "update docs to name the real verb (tests/test_docs_drift.py)",
     "security": "keep redaction before index/compress; fix the pattern or FP",
     "package": "check pyproject force-include map; rebuild wheel",
+    "self": "run platformforge inspect . / agents lint / capability manifest",
 }
 
 

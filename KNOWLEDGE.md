@@ -28,6 +28,14 @@ registry entry are the only escape hatch — declared, never inferred.
 The linkage gate reports `unlinked` rules and dangling `bad_refs`;
 CI requires coverage = 1.0 and both lists empty.
 
+## Drift report (cycle 4 gap-closure)
+
+`platformforge knowledge drift` → `SourceRegistry.drift_report()` —
+real drift, not just linkage: deprecated/superseded/stale entries,
+unresolvable locators, entries whose `releases_tracked` list a newer
+major than `version`, **rules backed by decayed sources**, and unlinked
+rules — all with named signals so staleness is actionable.
+
 ## Research ledger (§146)
 
 A new specialization lands only with its source entries updated — source,

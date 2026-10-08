@@ -43,6 +43,6 @@ safety contract (credentials, region/context, budget, cleanup).
 
 ## Current corpus
 
-34 eval cases, 13 lab scenarios, coverage 63/63 rules, precision
+56 eval cases, 27 lab scenarios, coverage 63/63 rules, precision
 measured against negative/boundary corpus (§127). Coverage is evidence
 of exercise — not a correctness proof.

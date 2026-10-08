@@ -22,7 +22,18 @@ rules (role annotations, cluster→account mapping), reported as
 
 Matching consults the **full index** — uid, ARN, TF address,
 `kind:ns:name` — not just `resource_id`, so a resource identified
-differently across layers still matches.
+differently across layers still matches. Resolved identity groups
+(`IdentityResolver`) expand every side's match keys, and identity
+conflicts surface as `identity-drift` rows, never silent merges.
+
+## Coverage gating
+
+Verdicts gate on **per-resource-type** coverage, not only the global
+envelope flag: a desired resource whose type is missing/denied/partial
+in `coverage.resource_types` degrades to `unresolved` /
+`permission-unknown` — global `complete` never upgrades a type the
+collector couldn't enumerate. Kubernetes `#uid` suffixes and
+short↔full kind names normalize before matching.
 
 ## Drift classes (verdicts)
 

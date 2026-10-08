@@ -38,6 +38,10 @@ into `Resource` records for the observation envelope.
   exceptions.
 - Regions: `--region` repeatable; default = SDK/env resolution on host.
 - `live required-permissions` emits the minimum read IAM action list.
+- **Change events**: `live changes --collect` pages CloudTrail
+  `lookup-events` (read-only) into `live/changes.jsonl` — event-id
+  deduped, `--since/--until/--region` scoped, `--gc` trims by
+  age/count. Offline replay: `live changes --events-file <json>`.
 
 ## Fixtures (`live/fixtures.py`)
 

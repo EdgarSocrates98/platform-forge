@@ -94,6 +94,11 @@ compliance | unknown` impact classes separately.
 - `graph/temporal.py` — `edges_between(t0,t1)` window queries;
   `expire_stale_edges(now, max_age_s)` marks `temporal.expired=true`.
   **Marked, never deleted** — history stays auditable.
+- Temporal verbs: `graph at --at <iso8601>` reifies the graph as
+  observed at a timestamp (edges filtered by `first_seen/last_seen`);
+  `graph timeline [--node|--edge-id]` emits the per-element temporal
+  window. Both compose with `live changes` events for time-travel
+  questions.
 - v1→v2 migration: `migrate.py` upgrades persisted snapshots
   (synthesizes evidence layers from v1 provenance); v1 loads stay
   byte-identical (upgrade is on-write, not on-read — graph_hash stable).
