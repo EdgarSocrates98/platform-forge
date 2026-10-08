@@ -197,6 +197,7 @@ artifacts + hash cascade gates.
 | `mcp tools|serve|call|integrate|detach` | MCP server + host parity files. |
 | `integrate --host <h>` | = `mcp integrate`. |
 | `freeze manifest|snapshot|check|exception` | Architecture-freeze governance: generated FREEZE-MANIFEST from live registries; contract snapshots (schemas/CLI/MCP/capabilities/agents) under `docs/freeze/snapshots/`; `check` reports breaking drift (knowledge allowlisted); `exception --spec <file>` validates a §6 FeatureException. |
+| `cases list|validate|replay|template` | Real-world case corpus (`.platformforge/cases/<golden|holdout>/<id>/case.yaml`): structure validation, deterministic offline replay (fixture → facts → rules → canonical hash, run twice), FP/FN accounting vs `expected_known_truth`. Golden and holdout reported separately — never merged. |
 
 ## Knowledge & store
 

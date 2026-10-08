@@ -532,6 +532,13 @@ def gate_freeze_docs() -> dict:
     return r
 
 
+def gate_freeze_replay() -> dict:
+    r = _run(["platformforge", "cases", "replay"])
+    r["what"] = ("deterministic replay of .platformforge/cases — "
+                 "golden + holdout corpora, canonical-hash stable")
+    return r
+
+
 def gate_freeze_exceptions() -> dict:
     expr = (
         "import json, sys\n"
@@ -585,6 +592,7 @@ GATES = {
     # freeze (prompt_evo_freezing §7)
     "freeze-contracts": gate_freeze_contracts,
     "freeze-docs": gate_freeze_docs,
+    "freeze-replay": gate_freeze_replay,
     "freeze-exceptions": gate_freeze_exceptions,
 }
 
@@ -639,6 +647,8 @@ UNLOCK = {
     "freeze-docs": "create the missing docs/freeze artifact",
     "freeze-exceptions": "every docs/freeze/exceptions/*.json must "
         "satisfy the §6 FeatureException contract",
+    "freeze-replay": "platformforge cases replay — fix the case, the "
+        "analyzer, or record a documented FP/FN entry",
 }
 
 

@@ -615,6 +615,28 @@ def cmd_freeze(args: argparse.Namespace) -> int:
     return 2
 
 
+def cmd_cases(args: argparse.Namespace) -> int:
+    """§52–§68 — real-world case corpus: list/validate/replay/template."""
+    from platformforge.cases.casefile import discover_cases
+    from platformforge.cases.replay import replay_all, validate_corpus, write_case_template
+
+    root = args.path or ".platformforge/cases"
+    if args.cases_cmd == "list":
+        return _emit({"cases": [c.to_dict() for c in discover_cases(root)]},
+                     args)
+    if args.cases_cmd == "validate":
+        r = validate_corpus(root)
+        return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
+    if args.cases_cmd == "replay":
+        r = replay_all(root, tier=args.tier or None)
+        return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
+    if args.cases_cmd == "template":
+        out = args.out or "case.yaml"
+        write_case_template(out)
+        return _emit({"written": out}, args)
+    return 2
+
+
 def cmd_economy(args: argparse.Namespace) -> int:
     from platformforge.economy import EconomyEngine
 
@@ -3229,6 +3251,15 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--spec", dest="json_file", default="",
                     help="FeatureException JSON for `freeze exception`")
     sp.set_defaults(func=cmd_freeze)
+
+    sp = sub.add_parser("cases", help="real-world case corpus + replay")
+    _add_common(sp)
+    sp.add_argument("cases_cmd",
+                    choices=["list", "validate", "replay", "template"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--tier", default="", choices=["golden", "holdout"])
+    sp.add_argument("--out", default="")
+    sp.set_defaults(func=cmd_cases)
     return p
 
 

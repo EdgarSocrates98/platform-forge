@@ -6,6 +6,7 @@
     "analyze": "09cbad3beca70ddbcc89819d841b26bc8be195122240185d5388f152f88a107c",
     "bench": "1b32c28cb38c05480eccc1bd60ff97029b57a05c96718b96dad7e9d84894f549",
     "capability": "38a5be91af79d7e5ba9809bf383c699b6864ee50446239fe56a45e32b84638fe",
+    "cases": "352b84777d8dd96ac9c0b3c170ecb2c7cca7fc2dbae41a1ec1ed4286fb2c43db",
     "caveman": "b2bafec94691622980343dfcd8c97c3e703b039db4e99528036947aee743d492",
     "change": "12ea12eace7d655f471ce55e34f89b1b77a3d9d05a445ca82877dd2235beaa51",
     "collect": "81824c90f8a5276bc87ecd88f9a5903277a636589a38f6bbc34a2b991fb2a095",
@@ -52,5 +53,5 @@
   },
   "family": "cli",
   "schema": "platformforge/freeze-snapshot/v1",
-  "sha": "2d874d9f7686c50dba3e8b4588eca4a2c6c39c97"
+  "sha": "73ea9b442cbff122487da357726c12bfd8117016"
 }
