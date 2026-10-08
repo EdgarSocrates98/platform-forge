@@ -14,44 +14,12 @@ from typing import Any
 
 import yaml
 
-from platformforge.fleet.models import Fleet
+from platformforge.fleet.loader import fleet_from, graph_from_doc, load_fleet_dir
 from platformforge.fleet.query import fleet_query
-from platformforge.graph.model import Edge, Graph, Node
 
 
 def _load_fixture(fx: Path) -> dict[str, Any]:
-    out: dict[str, Any] = {}
-    for name in ("fleet", "graph", "events", "costs", "capacity",
-                 "requests", "policies"):
-        p = fx / f"{name}.yaml"
-        out[name] = yaml.safe_load(p.read_text()) if p.exists() else None
-    return out
-
-
-def _graph_from_doc(doc: dict[str, Any] | None) -> Graph:
-    g = Graph()
-    for n in (doc or {}).get("nodes", []):
-        g.add_node(Node.make(n["kind"], n["id"], attrs=n.get("attrs", {}),
-                             fact_ids=n.get("fact_ids", ())))
-    for e in (doc or {}).get("edges", []):
-        src_id = e["src_id"]
-        dst_id = e["dst_id"]
-        if src_id not in g.nodes:
-            kind, _, label = src_id.partition("/")
-            try:
-                g.add_node(Node.make(kind, label or src_id))
-            except ValueError:
-                continue
-        if dst_id not in g.nodes:
-            kind, _, label = dst_id.partition("/")
-            try:
-                g.add_node(Node.make(kind, label or dst_id))
-            except ValueError:
-                continue
-        g.add_edge(Edge(src_id, dst_id, e["kind"],
-                        provenance=e.get("provenance", "declared"),
-                        source_fact_ids=tuple(e.get("fact_ids", ()))))
-    return g
+    return load_fleet_dir(fx)
 
 
 def run_fleet_scenario(scenario_dir) -> dict[str, Any]:
@@ -75,10 +43,8 @@ def run_fleet_scenario(scenario_dir) -> dict[str, Any]:
     failures: list[str] = []
     results: dict[str, Any] = {}
 
-    fleet_doc = data.get("fleet") or {}
-    fleet = Fleet.from_dict(fleet_doc) if fleet_doc.get("fleet_id") \
-        else Fleet(fleet_id=fleet_doc.get("fleet_id", "lab"))
-    graph = _graph_from_doc(data.get("graph"))
+    fleet = fleet_from(data)
+    graph = graph_from_doc(data.get("graph"))
     events = data.get("events") or {}
     costs = data.get("costs") or {}
     capacity = data.get("capacity") or {}

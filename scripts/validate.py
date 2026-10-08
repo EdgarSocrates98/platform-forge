@@ -283,6 +283,172 @@ def gate_ops_lab() -> dict:
     return r
 
 
+# ── cycle5 gates (§364) ─────────────────────────────────────────────
+
+
+def gate_fleet_contracts() -> dict:
+    r = _py(
+        "from platformforge.fleet.models import (\n"
+        "    Fleet, FleetSnapshot, MemberObservation, member_key)\n"
+        "from platformforge.analytics.models import (\n"
+        "    PlatformMetric, AnalyticsDataQuality, HistoricalPattern)\n"
+        "f = Fleet.from_dict({'fleet_id':'f','members':{'clusters':"
+        "[{'kind':'cluster','canonical_id':'c1'}]}})\n"
+        "assert member_key('cluster','c1') == 'cluster:c1'\n"
+        "s = FleetSnapshot(fleet_id='f', member_observations=[\n"
+        "    MemberObservation(member_id='cluster:c1', status='observed')])\n"
+        "assert s.to_dict()['fleet_id'] == 'f'\n"
+        "assert PlatformMetric(metric_id='m', dimension='reliability',\n"
+        "    scope={'fleet':'f'}, value=1, unit='u').to_dict()\n"
+        "assert AnalyticsDataQuality().confidence_cap in "
+        "('low','medium','high')\n"
+        "assert HistoricalPattern(pattern_id='p', window='90d')"
+        ".to_dict()\n"
+        "print('fleet contracts round-trip')")
+    r["what"] = "fleet + analytics contracts serialize/round-trip"
+    return r
+
+
+def gate_fleet_graph() -> dict:
+    r = _run(["pytest", "-q", "tests/test_fleet.py"])
+    r["what"] = "org layers, fleet questions, memory+sqlite backends"
+    return r
+
+
+def gate_analytics() -> dict:
+    r = _py(
+        "from platformforge.analytics.dx import dx_metrics\n"
+        "from platformforge.analytics.goldenpath import golden_path_analytics\n"
+        "from platformforge.analytics.finops_v4 import cost_hierarchy\n"
+        "from platformforge.analytics.capacity import capacity_risk, "
+        "CapacitySnapshot\n"
+        "assert dx_metrics([])['scope'].startswith('team')\n"
+        "assert 'paths' in golden_path_analytics([])\n"
+        "assert 'unallocated' in cost_hierarchy([])\n"
+        "assert capacity_risk(CapacitySnapshot(member_id='m'))['risk']\n"
+        "print('analytics engines answer on empty input without crash')")
+    r["what"] = "measurement/golden-path/finops/capacity on empty input"
+    return r
+
+
+def gate_history() -> dict:
+    r = _py(
+        "from platformforge.analytics.history import HistoryEngine, WINDOWS\n"
+        "eng = HistoryEngine()\n"
+        "assert set(WINDOWS) >= {'24h','7d','30d','90d'}\n"
+        "assert eng.patterns('90d') == []\n"
+        "eng.ingest_events('incident', [{'ts':'bad-ts'}], 't')\n"
+        "assert eng.patterns('90d') == []  # unparseable never counted\n"
+        "print('history windows + insufficient-history honest')")
+    r["what"] = "windows exist; empty/invalid input → no pattern"
+    return r
+
+
+def gate_optimization() -> dict:
+    r = _py(
+        "from platformforge.optimize.engine import OptimizationEngine\n"
+        "from platformforge.optimize.models import (\n"
+        "    OptimizationOpportunity, OptimizationRecommendation)\n"
+        "from platformforge.ops.models import ChangeIntent\n"
+        "eng = OptimizationEngine()\n"
+        "eng.add_opportunity(OptimizationOpportunity(\n"
+        "    opportunity_id='o', type='cost', scope={}, evidence=[],\n"
+        "    uncertainty='high'))\n"
+        "assert eng.recommendations() == []  # suppressed\n"
+        "ci = OptimizationEngine.plan(OptimizationRecommendation(\n"
+        "    recommendation_id='r', type='c', scope={'s':'x'}))\n"
+        "assert isinstance(ci, ChangeIntent)\n"
+        "assert ci.reason.type == 'recommendation'\n"
+        "print('optimization boundary: suppressed + ChangeIntent only')")
+    r["what"] = "uncertain suppressed; plan() → ChangeIntent only"
+    return r
+
+
+def gate_federation() -> dict:
+    r = _py(
+        "from platformforge.federation.node import NodeManifest, export_summary\n"
+        "from platformforge.ops.registry import delegation_contract, "
+        "validate_delegate_request\n"
+        "node = NodeManifest(node_id='n')\n"
+        "assert export_summary(node, {'api_key':'AKIAIOSFODNN7EXAMPLE'},"
+        " 'public')['action'] == 'deny'\n"
+        "assert export_summary(node, {'x':1}, 'restricted')['action'] "
+        "== 'deny'\n"
+        "for bad in ('direct-execution','approval-minting',\n"
+        "            'full-fleet-dump'):\n"
+        "    assert bad in delegation_contract()['refuses']\n"
+        "assert validate_delegate_request({'kind':'shell-command'})"
+        "['refusal'].startswith('PF-OPS')\n"
+        "print('federation bounded; exec refused')")
+    r["what"] = "secrets/restricted denied; delegation refuses exec"
+    return r
+
+
+def gate_privacy() -> dict:
+    r = _py(
+        "from platformforge.analytics.dx import (FORBIDDEN_METRICS,\n"
+        "    dx_metrics, guard_no_person_metrics)\n"
+        "from platformforge.ops.config import validate_config\n"
+        "m = dx_metrics([{'path':'p','status':'ok','person':'x'}])\n"
+        "assert guard_no_person_metrics(m) == []\n"
+        "v = validate_config({'privacy':{'dx_metrics':'per-person'},\n"
+        "                   'retention':{'telemetry':'local-only'}})\n"
+        "assert any(x['refusal']=='PF-OPS-CONFIG-PRIVACY' for x in v)\n"
+        "print('dx team-level only; privacy pinned')")
+    r["what"] = "no person metrics; privacy not configurable downward"
+    return r
+
+
+def gate_ai_platform() -> dict:
+    r = _py(
+        "from platformforge.aiplat.models import (ai_unit_economics,\n"
+        "    detect_ai_workloads)\n"
+        "assert 'cost_per_1m_tokens' not in ai_unit_economics(100)\n"
+        "assert ai_unit_economics(100, tokens=1000000)"
+        "['cost_per_1m_tokens'] == 100.0\n"
+        "w = detect_ai_workloads([{'resources':{'limits':"
+        "{'nvidia.com/gpu':1}}}])\n"
+        "assert w\n"
+        "print('ai awareness: denominators required')")
+    r["what"] = "unit economics only with denominators; gpu detected"
+    return r
+
+
+def gate_fleet_evals() -> dict:
+    r = _py(
+        "from platformforge.evals.runner import run_all\n"
+        "out = run_all()\n"
+        "fl = [r for r in out['results']\n"
+        "      if r['id'].startswith('fleet-inv-')]\n"
+        "assert len(fl) >= 10, len(fl)\n"
+        "bad = [r['id'] for r in fl if r['verdict'] != 'pass']\n"
+        "assert not bad, bad\n"
+        "print(len(fl), 'fleet invariant evals pass')")
+    r["what"] = "fleet-inv-* eval cases all pass"
+    return r
+
+
+def gate_fleet_lab() -> dict:
+    r = _py(
+        "from platformforge.lab.runner import run_all\n"
+        "out = run_all()\n"
+        "res = out.get('scenarios') or out.get('results') or []\n"
+        "fl = [r for r in res if str(r.get('scenario') or '')"
+        ".startswith('fleet-')]\n"
+        "assert len(fl) >= 10, len(fl)\n"
+        "bad = [r['scenario'] for r in fl if not r.get('passed', True)]\n"
+        "assert not bad, bad\n"
+        "print(len(fl), 'fleet lab scenarios pass')")
+    r["what"] = "fleet-* lab scenarios all pass"
+    return r
+
+
+def gate_adversarial() -> dict:
+    r = _run(["pytest", "-q", "tests/test_fleet_adversarial.py"])
+    r["what"] = "E1–E12 adversarial invariants fail closed"
+    return r
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
@@ -298,6 +464,18 @@ GATES = {
     "ops-policy": gate_ops_policy,
     "ops-evals": gate_ops_evals,
     "ops-lab": gate_ops_lab,
+    # cycle5 (§364)
+    "fleet-contracts": gate_fleet_contracts,
+    "fleet-graph": gate_fleet_graph,
+    "analytics": gate_analytics,
+    "history": gate_history,
+    "optimization": gate_optimization,
+    "federation": gate_federation,
+    "privacy": gate_privacy,
+    "ai-platform": gate_ai_platform,
+    "fleet-evals": gate_fleet_evals,
+    "fleet-lab": gate_fleet_lab,
+    "adversarial": gate_adversarial,
 }
 
 UNLOCK = {
@@ -323,6 +501,17 @@ UNLOCK = {
     "ops-policy": "reproduce: pytest tests/test_ops_policy.py tests/test_ops_autorem.py",
     "ops-evals": "platformforge evals run; fix the failing ops-* case",
     "ops-lab": "platformforge lab run-all; fix the failing ops-* scenario",
+    "fleet-contracts": "fix the dataclass in platformforge/fleet|analytics models",
+    "fleet-graph": "reproduce: pytest tests/test_fleet.py",
+    "analytics": "analytics engines must answer empty input without crash",
+    "history": "windows exist in analytics/history.WINDOWS; unparseable ts skipped",
+    "optimization": "uncertainty high suppresses; plan() returns ChangeIntent only",
+    "federation": "export_summary deny secrets/restricted; delegation refuses exec",
+    "privacy": "dx_metrics must stay team-level; privacy pins not overridable",
+    "ai-platform": "ai_unit_economics requires a real denominator",
+    "fleet-evals": "platformforge evals run; fix the failing fleet-inv-* case",
+    "fleet-lab": "platformforge lab run-all; fix the failing fleet-* scenario",
+    "adversarial": "reproduce: pytest tests/test_fleet_adversarial.py",
 }
 
 

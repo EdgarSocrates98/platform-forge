@@ -14,16 +14,18 @@ def test_defaults_when_no_file(tmp_path):
     assert r["config"]["operations"]["default_dry_run"] is True
 
 
-def test_migration_v0_to_v2(tmp_path):
+def test_migration_v0_to_v3(tmp_path):
     cfg = tmp_path / ".platformforge"
     cfg.mkdir()
     (cfg / "config.yaml").write_text(
         "approval_ttl: 3600\n")
     r = load_config(root=tmp_path)
-    assert r["config"]["schema_version"] == 2
+    assert r["config"]["schema_version"] == 3
     assert r["config"]["approval"]["default_ttl_s"] == 3600
-    assert r["migrated"] == [0, 1]
+    assert r["migrated"] == [0, 1, 2]
     assert r["config"]["rbac"]["roles"]["oncall"]["break_glass"]
+    assert r["config"]["features"]["fleet"] is True
+    assert r["config"]["privacy"]["dx_metrics"] == "team-level-only"
 
 
 def test_future_version_refused(tmp_path):

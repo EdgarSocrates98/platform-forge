@@ -2907,6 +2907,75 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--denominators", default="", help="JSON {unit: measured_count} for `finops unit`")
     sp.set_defaults(func=cmd_finops)
 
+    # --- cycle 5 namespaces (read-only, fleet-dir inputs) -----------
+    from platformforge.cli.fleetcmd import (
+        cmd_ai,
+        cmd_analytics,
+        cmd_federation,
+        cmd_fleet,
+        cmd_optimize,
+    )
+
+    sp = sub.add_parser("fleet", help="fleet intelligence (dir input)")
+    _add_common(sp)
+    sp.add_argument(
+        "fleet_cmd",
+        choices=["list", "status", "coverage", "graph", "risks", "costs",
+                 "capacity", "incidents", "operations", "drift",
+                 "golden-path", "policies", "recommendations"])
+    sp.add_argument("path", nargs="?", default="",
+                    help="fleet dir (lab/fleets/acme shape)")
+    sp.add_argument("--limit", type=int, default=0)
+    sp.add_argument("--window", default="", help="drift window (24h/7d/30d/90d)")
+    sp.set_defaults(func=lambda a: _emit(cmd_fleet(a), a))
+
+    sp = sub.add_parser("analytics", help="analytics summary/metric/maturity")
+    _add_common(sp)
+    sp.add_argument("analytics_cmd",
+                    choices=["summary", "metric", "maturity"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--id", default="", help="metric id")
+    sp.set_defaults(func=lambda a: _emit(cmd_analytics(a), a))
+
+    sp = sub.add_parser("optimize",
+                        help="optimization scan → ChangeIntent only")
+    _add_common(sp)
+    sp.add_argument("optimize_cmd",
+                    choices=["scan", "list", "explain", "plan", "portfolio"])
+    sp.add_argument("path", nargs="?", default="")
+    sp.add_argument("--id", default="", help="recommendation id")
+    sp.add_argument("--limit", type=int, default=0)
+    sp.set_defaults(func=lambda a: _emit(cmd_optimize(a), a))
+
+    sp = sub.add_parser("ai", help="AI platform awareness (bounded)")
+    _add_common(sp)
+    sp.add_argument("ai_cmd", choices=["workloads", "gpu", "economics"])
+    sp.add_argument("path", nargs="?", default="",
+                    help="yaml input (resources / capacity doc)")
+    sp.add_argument("--cost", type=float, default=None)
+    sp.add_argument("--denominators", default="",
+                    help='JSON {tokens,inferences,gpu_hours}')
+    sp.set_defaults(func=lambda a: _emit(cmd_ai(a), a))
+
+    sp = sub.add_parser("federation",
+                        help="intelligence exchange — no credentials")
+    _add_common(sp)
+    sp.add_argument("federation_cmd",
+                    choices=["manifest", "export", "query"])
+    sp.add_argument("path", nargs="?", default="",
+                    help="payload yaml (export)")
+    sp.add_argument("question", nargs="?", default="",
+                    help="fleet question (query)")
+    sp.add_argument("--nodes", nargs="*", default=[],
+                    help="fleet dirs (query)")
+    sp.add_argument("--classification", default="")
+    sp.add_argument("--manifest", default="")
+    sp.add_argument("--node-id", default="")
+    sp.add_argument("--capabilities", default="")
+    sp.add_argument("--freshness", default="")
+    sp.add_argument("--limit", type=int, default=0)
+    sp.set_defaults(func=lambda a: _emit(cmd_federation(a), a))
+
     sp = sub.add_parser("product", help="platform product verbs")
     _add_common(sp)
     sp.add_argument(
