@@ -1277,9 +1277,44 @@ def cmd_live(args: argparse.Namespace) -> int:
                       "fresh_until": env.fresh_until,
                       "scope": env.scope}, args)
     if sub == "reconcile":
-        return _emit({"refusal": "PF-LIVE-RECONCILE-PENDING",
-                      "unlock": "cycle3 phase F wires reconciliation"},
-                     args, 2)
+        from platformforge.live.reconcile import norm_facts, norm_observed, reconcile
+        desired = []
+        if args.desired:
+            doc = json.loads(Path(args.desired).read_text())
+            desired = doc.get("facts", doc)
+        else:
+            from platformforge.collect import collect
+            desired = collect(args.repo).get("facts", [])
+        obs_env = None
+        if args.observed:
+            p = Path(args.observed)
+            if p.exists():
+                from platformforge.live.envelope import loads
+                obs_env = loads(p.read_text())
+            else:
+                obs_env = ObservationStore(args.repo).get(args.observed)
+        elif not args.no_observed:
+            latest = ObservationStore(args.repo).latest()
+            if latest:
+                obs_env = ObservationStore(args.repo).get(
+                    latest["observation_id"])
+        if obs_env is None and not args.no_observed:
+            return _emit({"refusal": "PF-LIVE-NO-OBSERVATION",
+                          "unlock": "platformforge live snapshot "
+                                    "--provider kubernetes|aws, or pass "
+                                    "--observed <envelope.json|obs-id>"},
+                         args, 2)
+        planned = []
+        if args.planned:
+            doc = json.loads(Path(args.planned).read_text())
+            planned = doc.get("facts", doc)
+        out = reconcile(
+            desired=norm_facts(desired, "desired"),
+            planned=norm_facts(planned, "planned"),
+            observed=norm_observed(obs_env) if obs_env else None)
+        return _emit(out, args, 2 if args.strict and
+                     (out["totals"]["drift_events"] -
+                      out["accepted"]) else 0)
     return _emit({"error": f"unknown live verb {sub}"}, args, 1)
 
 
@@ -1536,6 +1571,14 @@ def build_parser() -> argparse.ArgumentParser:
                     help="rbac: emit Role instead of ClusterRole")
     sp.add_argument("--no-store", action="store_true",
                     help="snapshot: emit envelope without persisting")
+    sp.add_argument("--desired", default="",
+                    help="reconcile: facts.json path (default: repo scan)")
+    sp.add_argument("--planned", default="",
+                    help="reconcile: planned facts.json path")
+    sp.add_argument("--observed", default="",
+                    help="reconcile: observation_id or envelope.json")
+    sp.add_argument("--no-observed", action="store_true",
+                    help="reconcile: desired↔planned only")
     sp.add_argument("--max-objects", type=int, default=0)
     sp.add_argument("--max-api-calls", type=int, default=0)
     sp.add_argument("--max-bytes", type=int, default=0)
