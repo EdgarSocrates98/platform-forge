@@ -26,6 +26,12 @@ from platformforge.agents.contracts import (
     envelope_for,
     refusal,
 )
+from platformforge.agents.coordinators import (
+    COORDINATOR_LOOPS,
+    collect,
+    coordinator_loop,
+    dispatch_plan,
+)
 from platformforge.agents.critic import adversarial_review, pre_mortem
 from platformforge.agents.guardian import release_review
 from platformforge.agents.orchestrator import (
@@ -54,6 +60,7 @@ __all__ = [
     "ACCESS_TIERS",
     "AGENTS",
     "BUDGET_CLASSES",
+    "COORDINATOR_LOOPS",
     "MODEL_TIERS",
     "OUTPUT_STATUSES",
     "ROLES",
@@ -73,7 +80,10 @@ __all__ = [
     "adversarial_review",
     "build_dag",
     "checkpoint",
+    "collect",
     "coordinator_for",
+    "coordinator_loop",
+    "dispatch_plan",
     "envelope_for",
     "expire",
     "load_loops",

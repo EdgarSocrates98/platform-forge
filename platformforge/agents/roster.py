@@ -186,6 +186,153 @@ AGENTS: dict[str, AgentSpec] = {a.name: a for a in [
         done_when="loop + DAG + envelope emitted or refused",
         escalation="platform-orchestrator",
     ),
+    # --- coordinators (§28–34) ----------------------------------------
+    AgentSpec(
+        name="platform-incident-coordinator", role="coordinator",
+        domains=("incident", "sre", "runtime"),
+        mission="own incident scope, timeline, runtime evidence, "
+                "change correlation and candidate causes",
+        when_to_enter="incident/outage/regression question",
+        when_not_to_enter="no runtime evidence; hypothetical postmortem",
+        allowed_verbs=("observe", "correlate", "graph blast",
+                       "route", "judge"),
+        allowed_capabilities=("platform.observe", "platform.graph.query",
+                              "platform.route"),
+        never="declares 'last deploy = cause' without evidence; "
+              "restarts/rolls back anything itself",
+        inputs=("alerts", "spans", "deploy timeline", "task_spec"),
+        delegates_to=("platform-sre-specialist",
+                      "platform-kubernetes-specialist",
+                      "platform-aws-specialist",
+                      "platform-security-specialist",
+                      "platform-graph-specialist",
+                      "platform-gitops-specialist"),
+        reviewers=("platform-evidence-reviewer",),
+        verifier="platform-verifier",
+        access="state-writer", write_scope="runs", model_tier="standard",
+        max_parallelism=4,
+        done_when="scope+timeline+candidate causes with evidence or "
+                  "unresolved named; verifier closed",
+        escalation="human operator",
+    ),
+    AgentSpec(
+        name="platform-change-coordinator", role="coordinator",
+        domains=("change", "ops"),
+        mission="drive Finding→Recommendation→ChangeIntent→Simulation→"
+                "Risk→Policy→Approval→Operation plan",
+        when_to_enter="a proposed change needs governed review",
+        when_not_to_enter="no finding/recommendation to govern; "
+                          "execution request (refused)",
+        allowed_verbs=("change review", "risk", "ops simulate",
+                       "policy check", "route"),
+        allowed_capabilities=("platform.ops.simulate", "platform.judge",
+                              "platform.route"),
+        never="executes the change — execution stays in the "
+              "deterministic ops engine behind the human gate",
+        inputs=("finding", "recommendation", "change_intent"),
+        outputs=("operation_plan", "approval_requirement"),
+        delegates_to=("platform-iac-specialist",
+                      "platform-kubernetes-specialist",
+                      "platform-gitops-specialist",
+                      "platform-policy-specialist"),
+        reviewers=("platform-operations-safety-reviewer",),
+        verifier="platform-verifier",
+        access="state-writer", write_scope="runs", model_tier="standard",
+        max_parallelism=3,
+        done_when="operation plan + approval requirement emitted; "
+                  "human gate named",
+        escalation="human operator",
+    ),
+    AgentSpec(
+        name="platform-fleet-coordinator", role="coordinator",
+        domains=("fleet",),
+        mission="fleet-wide analysis: coverage, org graph, portfolio, "
+                "capacity, cost, reliability, policy, golden paths",
+        when_to_enter="fleet/portfolio/org-wide question",
+        when_not_to_enter="single-repo question; no fleet inventory",
+        allowed_verbs=("fleet analyze", "analyze drift", "finops costs",
+                       "route"),
+        allowed_capabilities=("platform.fleet.analyze",
+                              "platform.route"),
+        never="extrapolates one member to the whole fleet; skips "
+              "coverage evidence",
+        inputs=("workspace.yaml", "member observations"),
+        delegates_to=("platform-fleet-specialist",
+                      "platform-finops-specialist",
+                      "platform-capacity-specialist",
+                      "platform-sre-specialist",
+                      "platform-security-specialist",
+                      "platform-policy-specialist",
+                      "platform-product-specialist",
+                      "platform-optimization-coordinator"),
+        reviewers=("platform-evidence-reviewer",
+                   "platform-privacy-reviewer"),
+        verifier="platform-verifier",
+        access="state-writer", write_scope="runs", model_tier="standard",
+        max_parallelism=6,
+        done_when="coverage map + per-member evidence or unresolved "
+                  "named; verifier closed",
+        escalation="human operator",
+    ),
+    AgentSpec(
+        name="platform-optimization-coordinator", role="coordinator",
+        domains=("optimization", "finops", "capacity"),
+        mission="coordinate finops/capacity/reliability/security/ops/"
+                "golden-path/fleet/ai-platform signals into one "
+                "OptimizationRecommendation",
+        when_to_enter="cost/efficiency/rightsizing question or "
+                      "optimization wave",
+        when_not_to_enter="no measured baseline; request to execute "
+                          "the recommendation",
+        allowed_verbs=("finops costs", "observe capacity", "route",
+                       "economy"),
+        allowed_capabilities=("platform.finops.analyze",
+                              "platform.route"),
+        never="emits an ExecutionEnvelope — output is a "
+              "OptimizationRecommendation; ChangeIntent only if "
+              "accepted",
+        inputs=("signals", "baselines"),
+        outputs=("optimization_recommendation",),
+        delegates_to=("platform-finops-specialist",
+                      "platform-capacity-specialist",
+                      "platform-sre-specialist",
+                      "platform-security-specialist",
+                      "platform-product-specialist",
+                      "platform-fleet-specialist",
+                      "platform-ai-infra-specialist"),
+        reviewers=("platform-evidence-reviewer",
+                   "platform-economy-reviewer"),
+        verifier="platform-verifier",
+        access="state-writer", write_scope="runs", model_tier="standard",
+        max_parallelism=6,
+        done_when="recommendation with measured baseline + expected "
+                  "delta, or unresolved named",
+        escalation="platform-change-coordinator",
+    ),
+    AgentSpec(
+        name="platform-product-coordinator", role="coordinator",
+        domains=("product", "dx", "golden-paths"),
+        mission="golden paths, self-service, PlatformRequest, "
+                "capability health, adoption, friction, maturity, DX",
+        when_to_enter="adoption/DX/golden-path/maturity question",
+        when_not_to_enter="pure infra question with no DX angle",
+        allowed_verbs=("product", "capability list", "route"),
+        allowed_capabilities=("platform.product", "platform.route"),
+        never="invents adoption metrics; counts unmeasured usage as "
+              "adoption",
+        inputs=("capability health", "usage signals", "requests"),
+        delegates_to=("platform-product-specialist",
+                      "platform-fleet-specialist",
+                      "platform-policy-specialist"),
+        reviewers=("platform-evidence-reviewer",
+                   "platform-privacy-reviewer"),
+        verifier="platform-verifier",
+        access="state-writer", write_scope="runs", model_tier="standard",
+        max_parallelism=3,
+        done_when="DX/maturity findings with measured signals or "
+                  "unresolved named",
+        escalation="human operator",
+    ),
     # --- specialists --------------------------------------------------
     AgentSpec(
         name="platform-iac-specialist", role="specialist", domains=("iac", "terraform"),
@@ -233,7 +380,7 @@ AGENTS: dict[str, AgentSpec] = {a.name: a for a in [
     ),
     AgentSpec(
         name="platform-sre-specialist", role="specialist",
-        domains=("slo", "incident", "capacity", "otel"),
+        domains=("sre", "slo", "incident", "capacity", "otel"),
         mission="interpret telemetry/SLO/incident evidence",
         when_to_enter="reliability/latency/incident question or telemetry "
                       "present",
