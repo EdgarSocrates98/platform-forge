@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/change-intent/v1",
+  "title": "ChangeIntent",
+  "type": "object",
+  "required": ["schema", "intent_id", "reason", "target", "evidence", "owner"],
+  "properties": {
+    "schema": {"const": "platformforge/change-intent/v1"},
+    "intent_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "reason": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["finding", "incident", "drift", "recommendation",
+                          "request", "maintenance", "security", "cost",
+                          "other"]},
+        "finding_ids": {"type": "array", "items": {"type": "string"}},
+        "incident_ids": {"type": "array", "items": {"type": "string"}},
+        "drift_ids": {"type": "array", "items": {"type": "string"}},
+        "recommendation_ids": {"type": "array", "items": {"type": "string"}},
+        "detail": {"type": "string"}
+      }
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "canonical_resource_ids": {"type": "array", "items": {"type": "string"}},
+        "graph_nodes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "source_of_truth": {
+      "type": "object",
+      "properties": {
+        "type": {"enum": ["gitops", "terraform", "tofu", "crossplane",
+                          "helm", "declarative-config", "provider-api",
+                          "manual", "unknown"]},
+        "repository": {"type": "string"},
+        "path": {"type": "string"},
+        "ref": {"type": "string"},
+        "confidence": {"enum": ["high", "medium", "low", "unknown"]},
+        "evidence": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "desired_change": {"type": "object"},
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "fact_ids": {"type": "array", "items": {"type": "string"}},
+        "observation_ids": {"type": "array", "items": {"type": "string"}},
+        "finding_ids": {"type": "array", "items": {"type": "string"}},
+        "incident_ids": {"type": "array", "items": {"type": "string"}},
+        "drift_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "risk_context": {"type": "object"},
+    "expected_outcome": {"type": "string"},
+    "owner": {"type": "string", "minLength": 1},
+    "requested_by": {"type": "string"},
+    "expires_at": {"type": "string", "format": "date-time"}
+  }
+}
