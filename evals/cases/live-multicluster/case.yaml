@@ -1,0 +1,7 @@
+id: live-multicluster
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: multicluster
+  clusters: [eks-prod, kind-lab]

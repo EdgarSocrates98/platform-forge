@@ -1,0 +1,8 @@
+[
+  {"drift_class": "config-drift", "resource": "deploy/api",
+   "fact_ids": ["f1"]},
+  {"drift_class": "security-drift", "resource": "s3/app",
+   "fact_ids": ["f2"]},
+  {"drift_class": "observed-out-of-band", "resource": "pod/rogue",
+   "fact_ids": ["f3"]}
+]

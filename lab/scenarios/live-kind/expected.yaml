@@ -1,0 +1,14 @@
+tier: full
+profile: kubernetes
+description: >
+  kind-cluster collection replay — mirrors what `live snapshot` reads
+  from a kind cluster (kind create cluster → kubectl get -o json).
+  Fixture replay is byte-identical to the transport contract; a real
+  kind run is host-side and gated by --allow-profile.
+safety:
+  credentials: user kubeconfig — collector never parses it
+  region_or_context: kind-live
+  budget_limit: 40 api calls / 512KiB
+  cleanup: kind delete cluster --name pf-lab
+analyzers: [live-k8s]
+fact_kinds: [live.observation, live.object]

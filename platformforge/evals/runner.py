@@ -28,7 +28,7 @@ import yaml
 EVAL_TYPES = ("unit", "integration", "golden", "contract", "property",
               "metamorphic", "regression", "recall", "precision",
               "token_economy", "graph_correctness", "routing", "security",
-              "knowledge", "version")
+              "knowledge", "version", "live")
 VARIANTS = ("positive", "negative", "boundary", "unresolved", "version")
 
 from platformforge.resources import data_path
@@ -223,6 +223,8 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
                 "overclaim": overclaim,
                 "missing": missing,
                 "missing_skips": missing_skip}
+    if t == "live":
+        return _grade_live(case, case_dir)
     if t in ("property", "metamorphic"):
         if exp.get("check") == "rtk_round_trip":
             from platformforge.core.store import ArtifactStore
@@ -239,6 +241,147 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
         return {"verdict": "unresolved",
                 "reason": f"unknown property check {exp.get('check')!r}"}
     return {"verdict": "unresolved", "reason": f"unimplemented type {t}"}
+
+
+def _env_from(path: Path):
+    from platformforge.live.envelope import loads
+    return loads(path.read_text())
+
+
+def _grade_live(case: dict, case_dir: Path) -> dict[str, Any]:
+    """cycle3 §258 — live-surface evals over recorded fixtures.
+
+    expect.check ∈ collect-k8s | collect-aws | drift | reconcile |
+    incident | plan | multicluster | secret-free."""
+    exp = case.get("expect", {})
+    fx = case_dir / case.get("fixture", "fixture")
+    check = exp.get("check", "")
+    if check in ("collect-k8s", "collect-aws"):
+        from platformforge.live.fixtures import collect_fixture
+        from platformforge.live.models import ObservationScope
+        provider = "kubernetes" if check == "collect-k8s" else "aws"
+        scope = ObservationScope(
+            provider=provider,
+            resource_types=exp.get("resource_types", []),
+            namespaces=exp.get("namespaces", []),
+            regions=exp.get("regions", []),
+            services=exp.get("services", []))
+        try:
+            env = collect_fixture(provider, fx, scope=scope).to_dict()
+            out = {"envelope": env}
+        except Exception as e:  # noqa: BLE001 — fixture error = eval fail
+            return {"verdict": "fail", "error": str(e)}
+        env = out["envelope"]
+        cov = env.get("coverage", {}).get("status")
+        n = len(env.get("objects", []))
+        failures = []
+        if "objects_min" in exp and n < exp["objects_min"]:
+            failures.append(f"objects {n} < {exp['objects_min']}")
+        if "coverage" in exp and cov != exp["coverage"]:
+            failures.append(f"coverage {cov} != {exp['coverage']}")
+        for rt in exp.get("denied_types", []):
+            if env["coverage"].get("per_resource_type", {}).get(rt) \
+                    != "permission-limited":
+                failures.append(f"{rt} not marked permission-limited")
+        for rt in exp.get("unsupported_types", []):
+            if env["coverage"].get("per_resource_type", {}).get(rt) \
+                    != "unsupported":
+                failures.append(f"{rt} not marked unsupported")
+        return {"verdict": "pass" if not failures else "fail",
+                "failures": failures, "objects": n, "coverage": cov}
+    if check == "drift":
+        from platformforge.live.drift import diff_observations
+        out = diff_observations(_env_from(fx / "before.json"),
+                                _env_from(fx / "after.json"))
+        got = {e["drift_class"] for e in out["drift"]}
+        want = set(exp.get("drift_classes", []))
+        absent = set(exp.get("absent_classes", []))
+        ok = want <= got and not (got & absent)
+        return {"verdict": "pass" if ok else "fail",
+                "drift_classes": sorted(got),
+                "missing": sorted(want - got),
+                "unexpected": sorted(got & absent)}
+    if check == "reconcile":
+        from platformforge.live.reconcile import norm_facts, norm_observed, reconcile
+        desired = json.loads((fx / "desired.json").read_text())
+        desired = desired.get("facts", desired)
+        obs = _env_from(fx / "observed.json") \
+            if (fx / "observed.json").exists() else None
+        out = reconcile(desired=norm_facts(desired, "desired"),
+                        planned=[], observed=norm_observed(obs))
+        got = {e["drift_class"] for e in out["drift"]}
+        want = set(exp.get("drift_classes", []))
+        ok = want <= got
+        return {"verdict": "pass" if ok else "fail",
+                "drift_classes": sorted(got),
+                "missing": sorted(want - got)}
+    if check == "incident":
+        from platformforge.live.incident import score_candidates
+        inc = json.loads((fx / "incident.json").read_text())
+        cands = json.loads((fx / "changes.json").read_text())
+        ranked = score_candidates(inc, cands)["ranked"]
+        top = ranked[0]["status"] if ranked else "none"
+        ok = top == exp.get("top_status", top)
+        return {"verdict": "pass" if ok else "fail",
+                "top_status": top, "ranked": len(ranked)}
+    if check == "plan":
+        from platformforge.live.remediate import remediate
+        events = json.loads((fx / "drift.json").read_text())
+        out = remediate(events)
+        c = out["counts"]
+        failures = []
+        for k, v in exp.get("counts", {}).items():
+            if c.get(k) != v:
+                failures.append(f"counts.{k} {c.get(k)} != {v}")
+        env = out["envelope"]
+        if env["auto_apply"] or env["status"] != "awaiting-approval":
+            failures.append("envelope must be awaiting-approval")
+        return {"verdict": "pass" if not failures else "fail",
+                "failures": failures, "counts": c}
+    if check == "multicluster":
+        from platformforge.live.federation import Cluster, ClusterRegistry
+        specs = json.loads((fx / "clusters.json").read_text())
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            reg = ClusterRegistry(td)
+            for s in specs:
+                s = dict(s)
+                reg.register(Cluster(s.pop("cluster_id"), **s))
+            clusters = reg.list()
+        want = set(exp.get("clusters", []))
+        got = {c["cluster_id"] for c in clusters}
+        return {"verdict": "pass" if got == want else "fail",
+                "clusters": sorted(got), "missing": sorted(want - got)}
+    if check == "temporal":
+        # §258 — temporal graph eval: fixture graph.json (v2) +
+        # expect.now/max_age_s → expire_stale_edges verdict
+        from platformforge.graph.model import Graph
+        from platformforge.graph.temporal import expire_stale_edges
+        g = Graph.from_dict(json.loads((fx / "graph.json").read_text()))
+        expired = expire_stale_edges(
+            g, now=exp.get("now", "2100-01-01T00:00:00Z"),
+            max_age_s=float(exp.get("max_age_s", 3600)))
+        want = sorted(exp.get("expired_edges", []))
+        failures = []
+        if expired != want:
+            failures.append(f"expired {expired} != {want}")
+        # expired edges are marked, never deleted (§92)
+        for eid in expired:
+            if eid not in g.edges:
+                failures.append(f"{eid} deleted instead of marked")
+            elif not g.edges[eid].temporal.get("expired"):
+                failures.append(f"{eid} not marked expired")
+        return {"verdict": "pass" if not failures else "fail",
+                "failures": failures, "expired": expired}
+    if check == "secret-free":
+        # §266 — serialized envelope must not contain banned strings
+        blob = (fx / "envelope.json").read_text()
+        leaked = [s for s in exp.get("must_not_contain", [])
+                  if s in blob]
+        return {"verdict": "pass" if not leaked else "fail",
+                "leaked": leaked}
+    return {"verdict": "unresolved",
+            "reason": f"unknown live check {check!r}"}
 
 
 def run_case(path: str | Path) -> dict[str, Any]:

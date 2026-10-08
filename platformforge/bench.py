@@ -103,6 +103,29 @@ def run_benchmark(repeat: int = 3) -> dict[str, Any]:
 
     results["context_build"] = _time(_pack, repeat)
 
+    # cycle3 §258 — live drift over synthetic envelopes (measured)
+    def _live_diff() -> int:
+        from platformforge.live.drift import diff_observations
+        from platformforge.live.models import ObservationEnvelope
+        def _env(oid: str, n: int, shift: int) -> ObservationEnvelope:
+            e = ObservationEnvelope.new(
+                collector="bench", version="v", provider="kubernetes",
+                source_type="observed", scope={}, captured_at="t0")
+            e.coverage = {"status": "complete"}
+            e.fresh_until = "2099-01-01T00:00:00Z"
+            for i in range(n):
+                e.objects.append({
+                    "resource_id": f"r-{i}", "resource_type": "k8s:Pod",
+                    "content_hash": f"h{i + shift}",
+                    "attributes": {"i": i}})
+            e.observation_id = oid
+            return e
+        return len(diff_observations(_env("obs-" + "0" * 16, 2000, 0),
+                                     _env("obs-" + "f" * 16, 2000, 50)
+                                     )["drift"])
+
+    results["live_drift_2k"] = _time(_live_diff, repeat)
+
     # §150 storage economy — real on-disk sizes
     store_dir = _REPO / ".platformforge"
     results["storage"] = {

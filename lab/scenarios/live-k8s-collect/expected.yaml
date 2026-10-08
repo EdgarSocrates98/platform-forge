@@ -1,0 +1,4 @@
+tier: standard
+description: fixture-replayed kubectl collector — offline determinism
+analyzers: [live-k8s]
+fact_kinds: [live.observation, live.object]

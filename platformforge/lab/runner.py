@@ -58,6 +58,9 @@ _ANALYZERS = {
     "cloud-aws": "platformforge.cloud.analyze_aws_dump",
     "cloud-azure": "platformforge.cloud.analyze_azure_dump",
     "cloud-gcp": "platformforge.cloud.analyze_gcp_dump",
+    # cycle3 phase M — fixture-replayed live collectors (offline)
+    "live-k8s": "platformforge.live.fixtures.collect_fixture_k8s",
+    "live-aws": "platformforge.live.fixtures.collect_fixture_aws",
 }
 
 

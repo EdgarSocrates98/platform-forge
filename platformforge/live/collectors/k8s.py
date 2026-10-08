@@ -93,7 +93,7 @@ def project_object(obj: dict[str, Any], *, cluster: str = "",
         "labels": meta.get("labels", {}),
         "annotations": {
             k: v for k, v in (meta.get("annotations") or {}).items()
-            if not _SENSITIVE_ANNOTATION.match(k)},
+            if not _SENSITIVE_ANNOTATION.search(k)},
         "owner_refs": [
             {"kind": r.get("kind"), "name": r.get("name"),
              "uid": r.get("uid")}

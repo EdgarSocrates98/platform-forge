@@ -1,0 +1,8 @@
+id: live-drift
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: drift
+  drift_classes:
+    [config-drift, desired-missing-observed, observed-out-of-band]

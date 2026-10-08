@@ -1,0 +1,7 @@
+{
+  "facts": [
+    {"fact_id": "f-api", "kind": "k8s:apps/Deployment",
+     "location": "k8s://lab/prod/Deployment/api",
+     "attrs": {"namespace": "prod", "name": "api", "spec.replicas": 3}}
+  ]
+}

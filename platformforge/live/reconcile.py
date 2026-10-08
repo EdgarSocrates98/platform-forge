@@ -201,13 +201,18 @@ def reconcile(*, desired: CompareInput | None = None,
     des = _grouped(desired)
     pln = _grouped(planned)
     obs = _grouped(observed)
+    # matching needs the full multi-key index (uid/arn/kind:ns:name),
+    # not just the collapsed resource_id map
+    des_idx, pln_idx, obs_idx = (desired.resources, planned.resources,
+                               observed.resources)
 
     # desired ↔ observed
     for rid, d in sorted(des.items()):
         target = {"resource_type": d.get("resource_type", ""),
                   "namespace": d.get("attrs", {}).get("namespace", ""),
                   "name": d.get("name") or d.get("resource_id", "")}
-        match = next((obs[k] for k in _keys_of(d) if k in obs), None)
+        match = next((obs_idx[k] for k in _keys_of(d)
+                      if k in obs_idx), None)
         if match is None:
             if obs_cov in ("permission-limited", "unknown") or \
                     obs_cov == "" and not obs:
@@ -240,22 +245,23 @@ def reconcile(*, desired: CompareInput | None = None,
     for rid, p in sorted(pln.items()):
         if rid in des and _same_resource(des[rid], p):
             continue
-        match = next((obs[k] for k in _keys_of(p) if k in obs), None)
+        match = next((obs_idx[k] for k in _keys_of(p)
+                      if k in obs_idx), None)
         if match is None and obs and obs_cov == "complete" \
                 and not obs_stale:
             _emit(rid, "planned-not-applied", p, {}, p.get("fact_ids"))
 
     # observed-orphan: present in observed, absent from desired+planned
     for rid, o in sorted(obs.items()):
-        if any(k in des for k in _keys_of(o)) or \
-                any(k in pln for k in _keys_of(o)):
+        if any(k in des_idx for k in _keys_of(o)) or \
+                any(k in pln_idx for k in _keys_of(o)):
             continue
         _emit(rid, "observed-orphan", {}, o, o.get("fact_ids"))
 
     # runtime-undeclared: runtime edges with no desired/planned anchor
     for rid, r in sorted(_grouped(runtime).items()):
-        if any(k in des for k in _keys_of(r)) or \
-                any(k in pln for k in _keys_of(r)):
+        if any(k in des_idx for k in _keys_of(r)) or \
+                any(k in pln_idx for k in _keys_of(r)):
             continue
         _emit(rid, "runtime-undeclared", {}, r, r.get("fact_ids"))
 
