@@ -44,7 +44,7 @@ def analyze_dockerfile(path: str | Path) -> dict[str, Any]:
         users = _RE_USER.findall(text)
         last_user = users[-1] if users else ""
         facts.append({
-            "fact_id": stable_id("dockerfile", str(f)),
+            "fact_id": stable_id("PF-DOCKERFILE", str(f)),
             "kind": "cicd.dockerfile",
             "source": str(f),
             "location": str(f),

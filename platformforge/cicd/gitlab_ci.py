@@ -36,7 +36,7 @@ def analyze_gitlab_ci(path: str | Path) -> dict[str, Any]:
     unpinned = [i for i in images + ([default_image] if default_image else [])
                 if ":" not in i or i.endswith(":latest")]
     facts = [{
-        "fact_id": stable_id("gitlab-ci", str(f)),
+        "fact_id": stable_id("PF-GITLABCI", str(f)),
         "kind": "cicd.gitlab_pipeline",
         "source": str(f),
         "location": str(f),

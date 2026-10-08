@@ -40,9 +40,32 @@ def synthetic_graph(n_services: int = 200, fanout: int = 3):
     return g
 
 
+def _environment() -> dict[str, Any]:
+    """§97 — benchmark env: CPU, RAM, Python, OS, commit SHA."""
+    import os
+    import platform
+    import subprocess
+    mem_gib = None
+    try:
+        mem_gib = round(os.sysconf("SC_PAGE_SIZE")
+                        * os.sysconf("SC_PHYS_PAGES") / (1024 ** 3), 1)
+    except (ValueError, OSError, AttributeError):
+        pass
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], check=False,
+                         capture_output=True, text=True).stdout.strip()
+    return {"cpu": platform.processor() or platform.machine(),
+            "cores": os.cpu_count(), "ram_gib": mem_gib,
+            "python": platform.python_version(),
+            "os": f"{platform.system()} {platform.release()}",
+            "commit": sha}
+
+
 def run_scale_benchmarks(sizes: tuple[int, ...] = (50, 200, 800, 2000,
                                                   10_000),
-                         max_mem_gib: float = 4.0) -> dict[str, Any]:
+                         max_mem_gib: float = 4.0,
+                         edge_targets: tuple[int, ...] = (
+                             100_000, 250_000, 500_000),
+                         store_sweep: bool = False) -> dict[str, Any]:
     """Measured timings across graph build/query/serialize/diff and
     the analytics SQLite store. §208 — when a size can't be attempted
     on this host the entry records `unsupported-on-host`, never a hang."""
@@ -52,6 +75,7 @@ def run_scale_benchmarks(sizes: tuple[int, ...] = (50, 200, 800, 2000,
 
     report: dict[str, Any] = {
         "schema": "platformforge/scale-benchmarks/v2",
+        "environment": _environment(),
         "method": "perf_counter ms; tracemalloc KiB; seeded synthetic "
                   "graphs (deterministic shape per n)",
         "sizes": {}}
@@ -75,7 +99,7 @@ def run_scale_benchmarks(sizes: tuple[int, ...] = (50, 200, 800, 2000,
 
     # §207 — edge-count sweep on a fixed small node set (dense graph)
     report["edge_sweep"] = {}
-    for target_edges in (100_000, 250_000, 500_000):
+    for target_edges in edge_targets:
         nodes, fanout = 10_000, (target_edges // 10_000) or 1
         est_gib = (nodes * 10 * 1024 + target_edges * 512) / (1024 ** 3)
         if est_gib > max_mem_gib:
@@ -99,16 +123,52 @@ def run_scale_benchmarks(sizes: tuple[int, ...] = (50, 200, 800, 2000,
             report["edge_sweep"][str(target_edges)] = {
                 "status": "unsupported-on-host",
                 "reason": "MemoryError"}
+
+    # §96 — analytics store event sweep (bulk ingest + windowed query)
+    if store_sweep:
+        report["store_sweep"] = _store_sweep(AnalyticsStore)
     return report
+
+
+def _store_sweep(AnalyticsStore) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for n_events in (10_000, 100_000, 1_000_000):
+        est_gib = n_events * 1024 / (1024 ** 3)  # ~1KiB/event
+        if est_gib > 2.0:
+            out[str(n_events)] = {"status": "unsupported-on-host",
+                                  "reason": f"est {est_gib:.1f}GiB store "
+                                            "budget"}
+            continue
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                st = AnalyticsStore(Path(td) / "s.db")
+                t_ins = _timer(_fill_events, st, n_events)[1]
+                _e, t_q = _timer(st.events)
+                _w, t_win = _timer(st.events, kind="operation")
+                t_forget = _timer(st.forget_subject, "svc:7")[1]
+                size = (Path(td) / "s.db").stat().st_size
+                st.close()
+                out[str(n_events)] = {
+                    "status": "measured",
+                    "bulk_insert_ms": t_ins, "query_ms": t_q,
+                    "windowed_query_ms": t_win,
+                    "forget_ms": t_forget, "db_bytes": size}
+        except MemoryError:
+            out[str(n_events)] = {"status": "unsupported-on-host",
+                                  "reason": "MemoryError"}
+    return out
 
 
 def _bench_size(n: int, AnalyticsStore, graph_diff, blast_radius,
                 dependents) -> dict[str, Any]:
+    from platformforge.graph.query import neighbors, paths
     g, t_build = _timer(synthetic_graph, n)
     g2, _ = _timer(synthetic_graph, n)
     merged, t_merge = _timer(_merge, g, g2)
     deps, t_deps = _timer(dependents, g, "service/svc-0")
     blast, t_blast = _timer(blast_radius, g, "service/svc-0")
+    nb, t_nb = _timer(neighbors, g, "service/svc-0")
+    pth, t_path = _timer(paths, g, "service/svc-0", "service/svc-5")
     blob, t_ser = _timer(json.dumps, g.to_dict(), default=str)
     t_deser = _timer(json.loads, blob)[1]
     _d, t_diff = _timer(graph_diff, g, g2)
@@ -131,9 +191,12 @@ def _bench_size(n: int, AnalyticsStore, graph_diff, blast_radius,
         "nodes": len(g.nodes), "edges": len(g.edges),
         "build_ms": t_build, "merge_ms": t_merge,
         "dependents_ms": t_deps, "dependents_found": len(deps),
+        "neighbors_ms": t_nb, "neighbors_found": len(nb),
+        "path_ms": t_path, "paths_found": len(pth),
         "blast_ms": t_blast,
         "blast_nodes": len(blast.get("nodes", [])),
         "serialize_ms": t_ser, "deserialize_ms": t_deser,
+        "snapshot_bytes": len(blob.encode()),
         "diff_ms": t_diff,
         "peak_build_kib": round(peak / 1024, 1),
         "store_insert_ms": t_ins, "store_query_ms": t_q,

@@ -31,7 +31,7 @@ def analyze_backstage(path: str | Path) -> dict[str, Any]:
             spec = doc.get("spec") or {}
             facts.append({
                 "fact_id": stable_id(
-                    "backstage", str(f), str(meta.get("name", ""))),
+                    "PF-BACKSTAGE", str(f), str(meta.get("name", ""))),
                 "kind": "catalog.entity",
                 "source": str(f),
                 "location": str(meta.get("name", f.name)),

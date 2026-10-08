@@ -9,18 +9,24 @@ from typing import Any
 from platformforge.core.redaction import PATTERNS
 from platformforge.models.base import stable_id
 
+# Dogfood RW-5: tool/test caches (.pytest-tmp holds generated keys,
+# .tokensave/.rtk hold binaries) — scanning them produces pure noise.
 _SKIP_DIRS = {".git", ".venv", "node_modules", ".platformforge",
-              "__pycache__", "dist"}
+              "__pycache__", "dist", ".pytest-tmp", ".pytest_cache",
+              ".mypy_cache", ".ruff_cache", ".rtk", ".tokensave"}
 _SKIP_EXT = {".png", ".jpg", ".jpeg", ".gif", ".zip", ".gz", ".whl",
-             ".so", ".pyc", ".jar"}
+             ".so", ".pyc", ".jar", ".exe", ".dll", ".dylib", ".bin",
+             ".db", ".sqlite", ".sqlite3"}
 
 
 def scan_secrets(path: str | Path, max_files: int = 5000) -> dict[str, Any]:
     root = Path(path)
-    files = [root] if root.is_file() else [
+    eligible = [] if root.is_file() else [
         p for p in sorted(root.rglob("*"))
         if p.is_file() and p.suffix.lower() not in _SKIP_EXT
-        and not any(part in _SKIP_DIRS for part in p.parts)][:max_files]
+        and not any(part in _SKIP_DIRS for part in p.parts)]
+    files = [root] if root.is_file() else eligible[:max_files]
+    truncated = bool(eligible) and len(eligible) > max_files
     facts: list[dict[str, Any]] = []
     hits_total = 0
     for f in files:
@@ -53,4 +59,5 @@ def scan_secrets(path: str | Path, max_files: int = 5000) -> dict[str, Any]:
     return {"facts": facts,
             "counts": {"files_scanned": len(files), "files_with_hits":
                        len(facts), "hits": hits_total},
+            "truncated": truncated,
             "note": "values never emitted — labels and line numbers only"}

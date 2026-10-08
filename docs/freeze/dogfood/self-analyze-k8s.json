@@ -1,0 +1,1847 @@
+{
+  "counts": {
+    "docs": 130,
+    "facts": 130
+  },
+  "facts": [
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "backstage.io/v1alpha1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Component",
+        "labels": {},
+        "name": "orphan-svc",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-187665882519",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/catalog-noowner/fixture/catalog-info.yaml::default/orphan-svc",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/catalog-noowner/fixture/catalog-info.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "argoproj.io/v1alpha1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Application",
+        "labels": {},
+        "name": "unscoped",
+        "namespace": "argocd"
+      },
+      "fact_id": "PF-K8S-211889204918",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml::argocd/unscoped",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "argoproj.io/v1alpha1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "AppProject",
+        "labels": {},
+        "name": "open",
+        "namespace": "argocd"
+      },
+      "fact_id": "PF-K8S-625466372583",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml::argocd/open",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "argoproj.io/v1alpha1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "ApplicationSet",
+        "labels": {},
+        "name": "empty",
+        "namespace": "argocd"
+      },
+      "fact_id": "PF-K8S-319965944841",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml::argocd/empty",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "kustomize.toolkit.fluxcd.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Kustomization",
+        "labels": {},
+        "name": "suspended",
+        "namespace": "flux-system"
+      },
+      "fact_id": "PF-K8S-448674699176",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml::flux-system/suspended",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/gitops-v2/fixture/argo.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/api",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/graph-k8s-blast/fixture/deploy.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/api"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "api",
+        "namespace": "prod",
+        "netpol_count": 2,
+        "pdb_count": 2,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "api:2.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 3
+      },
+      "fact_id": "PF-K8S-306229419149",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/graph-k8s-blast/fixture/deploy.yaml::prod/api",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/graph-k8s-blast/fixture/deploy.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/bad",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/bad"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "bad",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [
+            "DB_PASSWORD"
+          ],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": true,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.0.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 1,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-194977607386",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::prod/bad",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "networking.k8s.io/v1",
+        "backend_services": [],
+        "graph": {
+          "edges": [
+            {
+              "dst": "external",
+              "dst_kind": "api",
+              "kind": "exposes",
+              "src": "prod/bad",
+              "src_kind": "ingress"
+            }
+          ],
+          "nodes": [
+            {
+              "kind": "ingress",
+              "label": "prod/bad"
+            }
+          ]
+        },
+        "hosts": [
+          "bad.example.com"
+        ],
+        "kind": "Ingress",
+        "labels": {},
+        "name": "bad",
+        "namespace": "prod",
+        "tls": false
+      },
+      "fact_id": "PF-K8S-965654182450",
+      "kind": "k8s.ingress",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::prod/bad",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "v1",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "kind": "secret",
+              "label": "prod/creds"
+            }
+          ]
+        },
+        "keys": [
+          "password"
+        ],
+        "kind": "Secret",
+        "labels": {},
+        "name": "creds",
+        "namespace": "prod",
+        "type": "Opaque"
+      },
+      "fact_id": "PF-K8S-359202655418",
+      "kind": "k8s.secret",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::prod/creds",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "binds_cluster_admin": true,
+        "graph": {
+          "edges": [
+            {
+              "dst": "cluster-admin",
+              "dst_kind": "security_policy",
+              "kind": "assumes",
+              "src": "default/admin-bind",
+              "src_kind": "service_account"
+            }
+          ],
+          "nodes": []
+        },
+        "kind": "ClusterRoleBinding",
+        "labels": {},
+        "name": "admin-bind",
+        "namespace": "default",
+        "rules": 0,
+        "subjects": [
+          {
+            "kind": "ServiceAccount",
+            "name": "sa",
+            "namespace": "prod"
+          }
+        ],
+        "wildcard_resources": false,
+        "wildcard_verbs": false
+      },
+      "fact_id": "PF-K8S-126081152810",
+      "kind": "k8s.rbac",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::default/admin-bind",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "binds_cluster_admin": false,
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "ClusterRole",
+        "labels": {},
+        "name": "wild",
+        "namespace": "default",
+        "rules": 1,
+        "subjects": [],
+        "wildcard_resources": true,
+        "wildcard_verbs": true
+      },
+      "fact_id": "PF-K8S-677495018252",
+      "kind": "k8s.rbac",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::default/wild",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "gateway.networking.k8s.io/v1",
+        "gateway_class": "cilium",
+        "graph": {
+          "edges": [
+            {
+              "dst": "cilium",
+              "dst_kind": "gateway",
+              "kind": "contained_by",
+              "src": "prod/gw",
+              "src_kind": "gateway"
+            },
+            {
+              "dst": "external",
+              "dst_kind": "api",
+              "kind": "exposes",
+              "src": "prod/gw",
+              "src_kind": "gateway"
+            }
+          ],
+          "nodes": [
+            {
+              "kind": "gateway",
+              "label": "prod/gw"
+            }
+          ]
+        },
+        "has_plain_http_listener": true,
+        "kind": "Gateway",
+        "labels": {},
+        "listeners": [
+          {
+            "hostname": null,
+            "port": 80,
+            "protocol": "HTTP",
+            "tls": false
+          }
+        ],
+        "name": "gw",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-264452789780",
+      "kind": "k8s.gateway",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::prod/gw",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "argoproj.io/v1alpha1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/canary-noanalysis",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+                "k8s_kind": "Rollout"
+              },
+              "kind": "workload",
+              "label": "prod/canary-noanalysis"
+            }
+          ]
+        },
+        "kind": "Rollout",
+        "labels": {},
+        "name": "canary-noanalysis",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.0.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 1,
+          "no_probes": 1,
+          "no_requests": 1,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 3,
+        "rollout": {
+          "analysis_refs": [],
+          "blue_green": false,
+          "canary": true
+        }
+      },
+      "fact_id": "PF-K8S-701147733952",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::prod/canary-noanalysis",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "access_modes": [
+          "ReadWriteOnce"
+        ],
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "v1",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "kind": "storage",
+              "label": "prod/data"
+            }
+          ]
+        },
+        "kind": "PersistentVolumeClaim",
+        "labels": {},
+        "name": "data",
+        "namespace": "prod",
+        "size": "10Gi",
+        "storage_class": null
+      },
+      "fact_id": "PF-K8S-490184576093",
+      "kind": "k8s.pvc",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml::prod/data",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-bad-actor/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": null,
+        "api_version": "app.example.io/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Widget",
+        "labels": {},
+        "name": "sample",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-018370943579",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-beta-api/fixture/cr.yaml::prod/sample",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-beta-api/fixture/cr.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.22",
+        "api_version": "extensions/v1beta1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/legacy-app",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-boundary/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/legacy-app"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "legacy-app",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.4.2"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-761125957663",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-boundary/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-boundary/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.25",
+        "api_version": "policy/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "PodDisruptionBudget",
+        "labels": {},
+        "max_unavailable": null,
+        "min_available": 1,
+        "name": "legacy-app",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-240815206991",
+      "kind": "k8s.pdb",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-boundary/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-boundary/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/modern-app",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-clean/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/modern-app"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "modern-app",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 2,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:2.0.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-307697305494",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-clean/fixture/app.yaml::prod/modern-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-clean/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "policy/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "PodDisruptionBudget",
+        "labels": {},
+        "max_unavailable": null,
+        "min_available": 1,
+        "name": "modern-app",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-537580887549",
+      "kind": "k8s.pdb",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-clean/fixture/app.yaml::prod/modern-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-clean/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.22",
+        "api_version": "extensions/v1beta1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/legacy-app",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-unknown/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/legacy-app"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "legacy-app",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.4.2"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-971943168085",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-unknown/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-unknown/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.25",
+        "api_version": "policy/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "PodDisruptionBudget",
+        "labels": {},
+        "max_unavailable": null,
+        "min_available": 1,
+        "name": "legacy-app",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-921061495867",
+      "kind": "k8s.pdb",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-unknown/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-unknown/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.22",
+        "api_version": "extensions/v1beta1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/legacy-app",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v120/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/legacy-app"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "legacy-app",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.4.2"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-918724782644",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v120/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v120/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.25",
+        "api_version": "policy/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "PodDisruptionBudget",
+        "labels": {},
+        "max_unavailable": null,
+        "min_available": 1,
+        "name": "legacy-app",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-161492417522",
+      "kind": "k8s.pdb",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v120/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v120/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.22",
+        "api_version": "extensions/v1beta1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/legacy-app",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v129/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/legacy-app"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "legacy-app",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.4.2"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-525873535667",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v129/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v129/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": "1.25",
+        "api_version": "policy/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "PodDisruptionBudget",
+        "labels": {},
+        "max_unavailable": null,
+        "min_available": 1,
+        "name": "legacy-app",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-396090202130",
+      "kind": "k8s.pdb",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v129/fixture/app.yaml::prod/legacy-app",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-dep-api-v129/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/noreq",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-hpa-noreq/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/noreq"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "noreq",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.0.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 1,
+          "no_probes": 1,
+          "no_requests": 1,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-125455533598",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-hpa-noreq/fixture/app.yaml::prod/noreq",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-hpa-noreq/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "autoscaling/v2",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod/noreq",
+              "dst_kind": "workload",
+              "kind": "scales",
+              "src": "prod/noreq",
+              "src_kind": "autoscaler"
+            }
+          ],
+          "nodes": [
+            {
+              "kind": "autoscaler",
+              "label": "prod/noreq"
+            }
+          ]
+        },
+        "kind": "HorizontalPodAutoscaler",
+        "labels": {},
+        "max_replicas": 10,
+        "metrics": [
+          "Resource"
+        ],
+        "min_replicas": 2,
+        "name": "noreq",
+        "namespace": "prod",
+        "target": "Deployment/noreq",
+        "target_has_requests": false,
+        "target_known": true
+      },
+      "fact_id": "PF-K8S-692301981197",
+      "kind": "k8s.hpa",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-hpa-noreq/fixture/app.yaml::prod/noreq",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-hpa-noreq/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/edge",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-boundary/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/edge"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "edge",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:2.0.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 1
+      },
+      "fact_id": "PF-K8S-755628431151",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-boundary/fixture/app.yaml::prod/edge",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-boundary/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/worker",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-negative/fixture/deploy.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/worker"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "worker",
+        "namespace": "prod",
+        "netpol_count": 2,
+        "pdb_count": 2,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "worker:1.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-451414137659",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-negative/fixture/deploy.yaml::prod/worker",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-negative/fixture/deploy.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/worker",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-positive/fixture/deploy.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/worker"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "worker",
+        "namespace": "prod",
+        "netpol_count": 2,
+        "pdb_count": 2,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "worker:1.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 1,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 2
+      },
+      "fact_id": "PF-K8S-656690405803",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-positive/fixture/deploy.yaml::prod/worker",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-limits-positive/fixture/deploy.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/nopdb",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-nopdb/fixture/app.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/nopdb"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "nopdb",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/app:1.0.0"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 0,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": true,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 3
+      },
+      "fact_id": "PF-K8S-160146344782",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-nopdb/fixture/app.yaml::prod/nopdb",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-nopdb/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "autoscaling/v2",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod/ghost",
+              "dst_kind": "workload",
+              "kind": "scales",
+              "src": "prod/orphan",
+              "src_kind": "autoscaler"
+            }
+          ],
+          "nodes": [
+            {
+              "kind": "autoscaler",
+              "label": "prod/orphan"
+            }
+          ]
+        },
+        "kind": "HorizontalPodAutoscaler",
+        "labels": {},
+        "max_replicas": 10,
+        "metrics": [
+          "Resource"
+        ],
+        "min_replicas": 2,
+        "name": "orphan",
+        "namespace": "prod",
+        "target": "Deployment/ghost",
+        "target_has_requests": null,
+        "target_known": false
+      },
+      "fact_id": "PF-K8S-315623612388",
+      "kind": "k8s.hpa",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-nopdb/fixture/app.yaml::prod/orphan",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/k8s-nopdb/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "kyverno.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "ClusterPolicy",
+        "labels": {},
+        "name": "legacy-on-new",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-033300958607",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/kyverno-dep/fixture/pol.yaml::default/legacy-on-new",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/kyverno-dep/fixture/pol.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "kyverno.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "ClusterPolicy",
+        "labels": {},
+        "name": "empty-legacy",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-873090277303",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/kyverno-legacy/fixture/pol.yaml::default/empty-legacy",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/kyverno-legacy/fixture/pol.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": null,
+        "api_version": "database.aws.crossplane.io/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "RDSInstance",
+        "labels": {},
+        "name": "prod-db",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-546806805868",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-delete/fixture/xr.yaml::default/prod-db",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-delete/fixture/xr.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apiextensions.crossplane.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "CompositeResourceDefinition",
+        "labels": {},
+        "name": "xbuckets.platform.example.org",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-687912577034",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml::default/xbuckets.platform.example.org",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apiextensions.crossplane.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Composition",
+        "labels": {},
+        "name": "bucket-aws",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-936962703198",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml::default/bucket-aws",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "pkg.crossplane.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Provider",
+        "labels": {},
+        "name": "provider-aws-s3",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-834198761335",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml::default/provider-aws-s3",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": null,
+        "api_version": "aws.upbound.io/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "ProviderConfig",
+        "labels": {},
+        "name": "aws-prod",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-202207063087",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml::default/aws-prod",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": null,
+        "api_version": "s3.aws.upbound.io/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Bucket",
+        "labels": {},
+        "name": "data-lake-prod",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-344786690234",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml::default/data-lake-prod",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "platform.example.org/v1alpha1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "XBucket",
+        "labels": {},
+        "name": "analytics-bucket",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-908826111546",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml::default/analytics-bucket",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-graph-chain/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "foo.example.com/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Widget",
+        "labels": {},
+        "name": "gadget",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-310673553549",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-negative-crd/fixture/widget.yaml::default/gadget",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-negative-crd/fixture/widget.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": null,
+        "api_version": "spaces.upbound.io/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "ControlPlane",
+        "labels": {},
+        "name": "ctp",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-575063362687",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-negative-crd/fixture/widget.yaml::default/ctp",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-negative-crd/fixture/widget.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": null,
+        "api_version": "s3.aws.upbound.io/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Bucket",
+        "labels": {},
+        "name": "logs-prod",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-031931523977",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-upbound-mr/fixture/bucket.yaml::default/logs-prod",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/xr-upbound-mr/fixture/bucket.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/web",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/k8s-review/fixture/deploy.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/web"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "web",
+        "namespace": "prod",
+        "netpol_count": 0,
+        "pdb_count": 0,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": true,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry/web:latest"
+          ],
+          "latest_tag": true,
+          "no_limits": 1,
+          "no_probes": 1,
+          "no_requests": 1,
+          "priority_class": null,
+          "privileged": true,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": false,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 3
+      },
+      "fact_id": "PF-K8S-993508328603",
+      "kind": "k8s.workload",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/k8s-review/fixture/deploy.yaml::prod/web",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/k8s-review/fixture/deploy.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "argoproj.io/v1alpha1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Application",
+        "labels": {},
+        "name": "shop",
+        "namespace": "argocd"
+      },
+      "fact_id": "PF-K8S-270204080596",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/argo-bad-rollout/fixture/app.yaml::argocd/shop",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/argo-bad-rollout/fixture/app.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "foo.example.com/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Widget",
+        "labels": {},
+        "name": "plain-crd-instance",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-995951722984",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/negative.yaml::default/plain-crd-instance",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/negative.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": true,
+        "api_removed_in": null,
+        "api_version": "spaces.upbound.io/v1beta1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "ControlPlane",
+        "labels": {},
+        "name": "org-ctp",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-931242348668",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/negative.yaml::default/org-ctp",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/negative.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apiextensions.crossplane.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "CompositeResourceDefinition",
+        "labels": {},
+        "name": "xbuckets.platform.example.org",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-320035344072",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/xrd.yaml::default/xbuckets.platform.example.org",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apiextensions.crossplane.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "Composition",
+        "labels": {},
+        "name": "bucket-aws",
+        "namespace": "default"
+      },
+      "fact_id": "PF-K8S-580157917861",
+      "kind": "k8s.generic",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/xrd.yaml::default/bucket-aws",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/crossplane-platform/fixture/xrd.yaml",
+      "tier": 3
+    },
+    {
+      "_truncated": 80
+    }
+  ]
+}

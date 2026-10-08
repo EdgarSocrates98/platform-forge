@@ -392,7 +392,12 @@ def cmd_judge(args: argparse.Namespace) -> int:
     from platformforge.rules import RuleEngine, load_catalog
 
     facts_doc = json.loads(Path(args.facts).read_text())
-    facts = [Fact.from_dict(f) for f in facts_doc.get("facts", facts_doc)]
+    facts, skipped_inputs = [], []
+    for f in facts_doc.get("facts", facts_doc):
+        try:
+            facts.append(Fact.from_dict(f))
+        except (TypeError, ValueError, KeyError):
+            skipped_inputs.append(f)
     versions = facts_doc.get("versions", {}) if isinstance(facts_doc, dict) else {}
     if getattr(args, "versions", ""):
         versions = {**versions, **json.loads(args.versions)}
@@ -406,7 +411,9 @@ def cmd_judge(args: argparse.Namespace) -> int:
             "facts": len(facts),
             "rules": len(rules),
             "violated": sum(1 for f in findings if f.status == "violated"),
+            "skipped_inputs": len(skipped_inputs),
         },
+        "skipped_facts": skipped_inputs,
     }
     unresolved = any(f.status == "unresolved" for f in findings)
     return _emit(out, args, 2 if (args.strict and unresolved) else 0)
@@ -573,7 +580,10 @@ def cmd_bench(args: argparse.Namespace) -> int:
         from platformforge.graph.bench import run_scale_benchmarks
         sizes = tuple(int(s) for s in (args.sizes or "50,200,800")
                       .split(","))
-        return _emit(run_scale_benchmarks(sizes), args)
+        edges = tuple(int(s) for s in (args.edges or "100000,250000,500000")
+                      .split(","))
+        return _emit(run_scale_benchmarks(
+            sizes, edge_targets=edges, store_sweep=args.events), args)
     fn = {"run": bench.run_benchmark, "tokens": bench.token_benchmark}[args.bench_cmd]
     return _emit(fn(repeat=args.repeat), args)
 
@@ -3260,6 +3270,11 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("bench_cmd", choices=["run", "tokens", "scale"], nargs="?", default="run")
     sp.add_argument("--repeat", type=int, default=3)
     sp.add_argument("--sizes", help="comma list for scale bench (default 50,200,800)")
+    sp.add_argument("--edges", help="comma list for edge sweep "
+                    "(default 100000,250000,500000)")
+    sp.add_argument("--events", action="store_true",
+                    help="also run the analytics store event sweep "
+                         "(10k/100k/1M)")
     sp.set_defaults(func=cmd_bench)
 
     sp = sub.add_parser("freeze", help="architecture freeze governance")

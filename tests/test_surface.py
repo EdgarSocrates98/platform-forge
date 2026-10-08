@@ -112,3 +112,59 @@ def test_evals_corpus():
     assert {"golden", "routing", "security", "contract",
             "token_economy", "graph_correctness",
             "property"} <= types
+
+
+def test_collect_yaml_boolean_keys_no_crash(tmp_path):
+    """freeze dogfood RW-1: a YAML doc with `on:` (parsed as True by
+    safe_load) under a data/results key crashed detect_file."""
+    f = tmp_path / "weird.yaml"
+    f.write_text("on: push\ndata:\n  - true\n  - false\n")
+    from platformforge.collect.detect import detect_file
+    assert detect_file(f) is None or isinstance(detect_file(f), str)
+
+
+def test_collect_bool_first_row(tmp_path):
+    """data: [true,false] made first_row a bool — probe fell back to
+    doc whose boolean keys crashed the lineItem probe."""
+    f = tmp_path / "doc.json"
+    f.write_text('{"data": [true, false]}')
+    from platformforge.collect.detect import detect_file
+    detect_file(f)  # must not raise
+
+
+def test_judge_skips_projection_sentinels(tmp_path):
+    """freeze dogfood RW-3: a `normal`-level collect projection appends a
+    {"_truncated": n} sentinel inside facts — judge must skip it, not crash."""
+    doc = tmp_path / "facts.json"
+    doc.write_text(json.dumps({"facts": [
+        {"kind": "k8s.workload", "source": "s", "location": "l",
+         "fact_id": "PF-K8S-1", "tier": 3, "attrs": {}},
+        {"_truncated": 19}]}))
+    import platformforge.cli.main as m
+    ns = m.argparse.Namespace(facts=str(doc), catalog=None, versions=None,
+                              strict=False, json=True, detail_level="full",
+                              output=None)
+    assert m.cmd_judge(ns) == 0
+
+
+def test_scan_secrets_skips_tool_dirs(tmp_path):
+    """freeze dogfood RW-5: tool caches (.tokensave/.pytest-tmp) and binary
+    ext (.db/.exe) must not be scanned."""
+    from platformforge.security.scan import scan_secrets
+    (tmp_path / ".pytest-tmp" / "t").mkdir(parents=True)
+    (tmp_path / ".pytest-tmp" / "t" / "k.pem").write_text(
+        "-----BEGIN RSA PRIVATE KEY-----\nx\n-----END RSA PRIVATE KEY-----")
+    (tmp_path / ".tokensave").mkdir()
+    (tmp_path / ".tokensave" / "t.db").write_text('password: "s3cr3t!"')
+    (tmp_path / "rtk.exe").write_text('password: "s3cr3t!"')
+    out = scan_secrets(tmp_path)
+    assert out["counts"]["files_with_hits"] == 0
+
+
+def test_password_kv_prose_not_secret():
+    """freeze dogfood RW-5: 'pass: refuse and route' is prose, not a kv."""
+    from platformforge.core.redaction import PATTERNS
+    pat = dict(PATTERNS)["password_kv"]
+    assert not pat.search("generation pass: refuse and route")
+    assert pat.search('db_password: "s3cr3t!"')
+    assert pat.search("PASSWORD=hunter2")

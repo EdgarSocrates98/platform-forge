@@ -13,7 +13,8 @@ from typing import Any
 
 import yaml
 
-_IGNORE = {".git", ".platformforge", ".venv", "node_modules", "__pycache__"}
+_IGNORE = {".git", ".platformforge", ".venv", "node_modules",
+           "__pycache__", ".pytest-tmp", ".pytest_cache"}
 
 
 def _looks_k8s(doc: dict) -> bool:
@@ -67,7 +68,8 @@ def _shape_domain(path: Path, doc: Any) -> str | None:
                 break
         probe = first_row if isinstance(first_row, dict) else doc
         if isinstance(probe, dict) and (
-                any(k.startswith("lineItem/") for k in probe)
+                any(isinstance(k, str) and k.startswith("lineItem/")
+                    for k in probe)
                 or "UnblendedCost" in probe or "PreTaxCost" in probe
                 or "CostInBillingCurrency" in probe
                 or "totalCost" in probe

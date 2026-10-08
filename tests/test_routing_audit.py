@@ -1,7 +1,6 @@
 """§69–§84 — routing/context audit over the real-world corpus."""
 from platformforge.cases.context_audit import audit_corpus as ctx_corpus
-from platformforge.cases.routing_audit import (
-    audit_corpus, champion_challenger)
+from platformforge.cases.routing_audit import audit_corpus, champion_challenger
 
 ROOT = ".platformforge/cases"
 

@@ -21,7 +21,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # Delimiter required (:= or quote) — prose like "password policy" must
     # not redact (§88 false-positive guard). Snake-case prefixes allowed:
     # db_password / client_secret / my_api_key must still match.
-    ("password_kv", re.compile(r"(?i)\b(?:[a-z0-9]+_)*(?:pass(?:word)?|passwd|pwd)\s*[:='\"]\s*['\"]?[^\s'\"]{6,}")),
+    # Dogfood RW-5: the value must contain ≥1 non-lowercase char — prose
+    # like "pass: refuse and route" matched as a secret otherwise.
+    ("password_kv", re.compile(r"(?i)\b(?:[a-z0-9]+_)*(?:pass(?:word)?|passwd|pwd)\s*[:='\"]\s*['\"]?(?=[^\s'\"]*[^\sa-z'\"])[^\s'\"]{6,}")),
     ("conn_string", re.compile(
         r"\b(?:postgres|mysql|mongodb|redis|amqp|mssql|sqlserver|kafka|"
         r"ldaps?)://[^\s'\"]+|"
