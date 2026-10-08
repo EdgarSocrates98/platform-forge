@@ -66,13 +66,15 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.bench` | 16 | core | yes | `bench run/tokens` | §148–150 — measured perf/token/storage on eval fixtures; baseline, never a claim |
 | `platform.ownership` | 4 | core | yes | `analyze ownership/contradictions` | §116/§136–137 — CODEOWNERS/Backstage/workspace/k8s-labels/cloud-tags signals; `ownership.conflicted` + `state.contradiction` facts |
 
+| `platform.live` | 12 | live | host-side | `live <verb>` | observation envelopes + store + budgets; kubectl/aws collectors (read-only allowlist, credential-flag refusal); identity resolution; desired↔planned↔observed↔runtime reconcile; runtime topology (OTel/Hubble/EndpointSlice); cluster federation; drift journal; incident V3 (factorized ranking, correlation≠causation); remediation planning (never applies); dynamic `live capability` — see LIVE.md |
+
 ### Known gaps (declared, not hidden)
 
 - Lab tiers L1–L4 (containers/kind/cloud) — L0 static + graph-simulated
   chaos only; higher tiers need a host runtime the offline core doesn't
-  assume.
+  assume (live-kind lab exists, gated by `--profile kubernetes`).
 - `collect` covers the offline dump shapes listed above; live-provider
-  collectors (kubectl/cloud APIs) stay host-side by design.
+  collection uses `live snapshot` (host-side transports, read-only).
 
 `platform.*` is a namespace, not a runtime requirement: every entry is
 implemented locally, offline-capable unless marked otherwise.

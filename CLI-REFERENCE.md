@@ -51,6 +51,32 @@ every change cites `fact_ids`) · `snapshots` · `stats` ·
 
 Provenance on every edge: `observed | planned | declared | inferred`.
 Node `state`: observed > planned > desired > inferred.
+v2 adds multi-layer evidence + `temporal.{first_seen,last_seen,
+expired}`; stale observed edges are *marked expired, never deleted*
+(`graph/temporal.py`).
+
+## Live — `live <verb>`
+
+Host-side read-only collection + live intelligence. The core never does
+network IO; transports (kubectl/aws CLI) are the boundary. Every
+collector call is budgeted (`--max-objects/--max-api-calls/--max-bytes`)
+and ledgered. Absence is never asserted on partial coverage. See
+LIVE.md.
+
+| Verb | What it does |
+|---|---|
+| `live snapshot` | Collect → observation envelope (`--provider kubernetes|aws`, scope flags, `--no-store`). |
+| `live status` | Observation store status. |
+| `live doctor [--deep]` | Provider preflight: binary, auth, per-resource permissions. |
+| `live rbac` | Minimum ClusterRole (`--namespaced-only` → Role). |
+| `live required-permissions` | Minimum AWS IAM actions + k8s RBAC. |
+| `live reconcile` | desired↔planned↔observed↔runtime → drift classes; stale→`stale-observation`, partial coverage→`unresolved`. |
+| `live topology` | `--otel|--hubble|--slices` → runtime edges; `--apply-to-graph` layers evidence. |
+| `live clusters` | Cluster registry (`--register <json>`) + federation view. |
+| `live drift` | Observation↔observation diff → deduplicated drift-event journal. |
+| `live incident` | Canonical timeline + factorized candidate ranking → postmortem V3 (`confirmed` needs causal evidence). |
+| `live plan` | Drift events → safe remediation plan + approval envelope (hash-pinned). Never applies; `--strict` exits 2 on mutating actions. |
+| `live capability` | Dynamic capability availability (host prereqs, budgets, provider access). |
 
 ## Compose verbs
 

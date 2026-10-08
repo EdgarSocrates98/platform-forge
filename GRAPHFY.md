@@ -83,3 +83,20 @@ the change-risk engine.
 Graph proximity is not proven causality. Blast radius reports
 `direct | transitive | runtime | security | reliability | cost |
 compliance | unknown` impact classes separately.
+
+## Temporal & multi-layer edges (v2, Cycle 3)
+
+- `Edge.temporal = {first_seen, last_seen, sample_count, expired?}` —
+  observed edges carry when the platform showed them.
+- `Edge.evidence = [Evidence(source_ref, tier, provenance)]` — one edge
+  accumulates layers from every contributing provenance; `layers()`
+  returns them. Merging same-id edges unions evidence, never drops.
+- `graph/temporal.py` — `edges_between(t0,t1)` window queries;
+  `expire_stale_edges(now, max_age_s)` marks `temporal.expired=true`.
+  **Marked, never deleted** — history stays auditable.
+- v1→v2 migration: `migrate.py` upgrades persisted snapshots
+  (synthesizes evidence layers from v1 provenance); v1 loads stay
+  byte-identical (upgrade is on-write, not on-read — graph_hash stable).
+- Runtime edges land on the `observed` layer via
+  `graph.apply_runtime_edges` — runtime evidence never overwrites
+  declared provenance.

@@ -46,13 +46,17 @@ Declared gaps (not hidden):
 - Redaction markers are a prefix oracle for low-entropy secrets
   (documented in SECURITY.md).
 
-## Cycle 3 — concept only (not implemented)
+## Cycle 3 — implemented
 
-`docs/cycle3/PROPOSAL.md` — runtime & live platform intelligence:
-host-side live discovery, AWS/K8s inventory, continuous reconciliation
-(desired/planned/observed), runtime topology, multi-cluster, live drift,
-incident correlation, controlled remediation planning. Spec only —
-no implementation in this cycle.
+Runtime & live platform intelligence — delivered (see LIVE.md +
+docs/cycle3/FINAL-REPORT.md): observation envelopes + store + cursors,
+host-side kubectl/aws collectors (read-only allowlists), multi-layer
+temporal graph (v2), identity resolution, desired↔planned↔observed↔
+runtime reconciliation, runtime topology (OTel/Hubble/EndpointSlice),
+cluster federation, live drift journal, incident intelligence V3,
+safe remediation planning (never applies), live capability surface +
+MCP. Core stays SDK-free/network-free; transports are the only
+network boundary.
 
 Definition of done per feature: contract, implementation, tests, negative test,
 unresolved behavior, evidence, docs, source provenance, eval, CLI/MCP exposure.

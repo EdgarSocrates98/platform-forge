@@ -72,3 +72,28 @@ receipt purity, index-before-FTS redaction, caveman mode=off, and
 false-positive guards (§86–90). `tests/test_offline.py` blocks sockets
 at the syscall level — a network attempt in the core pipeline is a test
 failure, not a convention (§91).
+
+## Live boundary (Cycle 3)
+
+- **Transports are allowlisted read-only.** kubectl: `get`/
+  `api-resources` only. AWS: describe/list/get + `sts
+  get-caller-identity`. Mutating verbs and credential-material flags
+  (`--token`, `--password`, `--profile` injection, `--kubeconfig` swaps)
+  are refused with `PF-REFUSE` before any subprocess runs.
+- **Secrets never leave the boundary.** k8s `Secret` normalizes to
+  metadata + `data_keys` only (values are never requested). Sensitive
+  annotations (`password|secret|token|key|credential|private`,
+  substring match — `auth.token` class included) are stripped during
+  normalization; property tests
+  (`tests/test_live_security_props.py`) scan serialized envelopes
+  end-to-end for planted payloads.
+- **Minimum access**: `live rbac` emits a ClusterRole scoped to
+  collection needs (`--namespaced-only` for Role); `live
+  required-permissions` emits the minimum IAM action list. Doctor
+  probes map denied calls into `coverage.denied` — permission gaps are
+  evidence, not errors.
+- **No mutation path**: `live plan` emits plans + approval envelopes;
+  there is no `apply` in the core. `--strict` exits 2 if a plan
+  contains mutating actions, so CI can gate on it.
+- Credentials live on the host — the cluster registry stores context/
+  role references, never secrets.

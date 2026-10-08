@@ -61,3 +61,22 @@ quality stays above gates — measured by `evals/` suites comparing
 
 Banned without benchmark: "saves 60%", "30% faster", unquantified promises.
 Required form: `hypothesis + expected direction + benchmark required`.
+
+## Live collection economy (Cycle 3)
+
+Provider calls are real cost — measured and budgeted, never free.
+
+- **Provider-call ledger** (`live/budget.py`): every transport call
+  records `{op, duration_ms, bytes}` in the envelope `ledger`; totals
+  per observation.
+- **Budgets**: `--max-objects`, `--max-api-calls`, `--max-bytes` bound
+  every collection; exhaustion is recorded in `ledger.budget.exhausted`
+  and degrades `coverage` — cost control never hides scope truth.
+- **Cursors** (`live/cursors.py`): incremental collection resumes from
+  `continue`/`resourceVersion` state — second snapshots fetch deltas,
+  not full listings.
+- **Scoped collection**: `--namespace/--resource-type/--region/
+  --service` shrink calls+bytes; observed scope is part of the envelope.
+- **Measured** (`bench`): `live_drift_2k` = 3.9ms median for a
+  2,000-resource envelope→envelope diff. Full-snapshot and incremental
+  call counts are reported in docs/cycle3/FINAL-REPORT.md.
