@@ -47,6 +47,15 @@ CREATE TABLE IF NOT EXISTS meta (
     key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
 
+# §217 — schema versioning: opening a v1 store upgrades it through the
+# declared migration chain. Migrations are additive, deterministic,
+# and recorded — never a silent DDL change.
+SCHEMA_VERSION = 2
+_MIGRATIONS: dict[int, list[str]] = {
+    2: [("CREATE INDEX IF NOT EXISTS ix_events_subj_kind "
+       "ON events(subject, kind)")],
+}
+
 
 def _contains_banned(obj: Any, depth: int = 0) -> bool:
     if depth > 6:
@@ -71,6 +80,27 @@ class AnalyticsStore:
         self.path = str(path)
         self._db = sqlite3.connect(self.path)
         self._db.executescript(_SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """§217 — apply pending migrations in order, record the version."""
+        row = self._db.execute(
+            "SELECT value FROM meta WHERE key='schema_version'"
+        ).fetchone()
+        version = int(row[0]) if row else 1
+        applied = []
+        while version < SCHEMA_VERSION:
+            version += 1
+            for sql in _MIGRATIONS.get(version, []):
+                self._db.execute(sql)
+            applied.append(version)
+        self._db.execute(
+            "INSERT OR REPLACE INTO meta(key, value) VALUES"
+            "('schema_version', ?)", (str(SCHEMA_VERSION),))
+        if applied:
+            self._db.execute(
+                "INSERT OR REPLACE INTO meta(key, value) VALUES"
+                "('migrations_applied', ?)", (",".join(map(str, applied)),))
         self._db.commit()
 
     def close(self) -> None:
@@ -198,6 +228,19 @@ class AnalyticsStore:
         return {"forgotten": subject, "events_deleted": n,
                 "receipt": "right-to-forget executed" if n
                 else "no rows matched — nothing to forget"}
+
+    def vacuum(self) -> dict[str, Any]:
+        """§215 — compaction. Returns measured bytes before/after so the
+        claim is auditable, not asserted."""
+        before = (Path(self.path).stat().st_size
+                  if self.path != ":memory:" else None)
+        self._db.execute("VACUUM")
+        self._db.execute("ANALYZE")
+        self._db.commit()
+        after = (Path(self.path).stat().st_size
+                 if self.path != ":memory:" else None)
+        return {"vacuumed": True, "bytes_before": before,
+                "bytes_after": after}
 
     def stats(self) -> dict[str, Any]:
         """Self-metrics (§322): row counts + storage footprint."""
