@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from platformforge.graph import persist
 from platformforge.graph.events import EventLedger
 from platformforge.graph.model import Edge
-from platformforge.graph import persist
 
 
 def snapshot_at(root, ts: str) -> dict[str, Any] | None:

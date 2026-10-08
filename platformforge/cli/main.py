@@ -1199,6 +1199,75 @@ def cmd_observe(args: argparse.Namespace) -> int:
     return _emit({"error": f"unknown observe verb {sub}"}, args, 1)
 
 
+def cmd_live(args: argparse.Namespace) -> int:
+    """§7 live — read-only provider observation surface (Cycle 3)."""
+    from platformforge.live.collectors import k8s_transport
+    from platformforge.live.collectors.k8s import K8sCollector, required_rbac
+    from platformforge.live.cursors import CursorStore
+    from platformforge.live.models import ObservationScope
+    from platformforge.live.store import ObservationStore
+    sub = args.live_cmd
+    if sub == "rbac":
+        return _emit(required_rbac(
+            namespaced_only=args.namespaced_only), args)
+    if sub == "doctor":
+        out = {"checks": {"kubernetes": k8s_transport.preflight(
+            args.context)}}
+        store = ObservationStore(args.repo)
+        out["checks"]["observation_store"] = {
+            "ok": True, "path": str(store.root)}
+        out["checks"]["cursors"] = {"cursors": len(
+            CursorStore(args.repo).all())}
+        out["ok"] = all(c.get("ok", True) for c in out["checks"].values())
+        return _emit(out, args, 0 if out["ok"] else 1)
+    if sub == "status":
+        store = ObservationStore(args.repo)
+        out = store.status()
+        out["cursors"] = CursorStore(args.repo).all()
+        return _emit(out, args)
+    if sub == "snapshot":
+        scope = ObservationScope(
+            namespaces=args.namespace or [],
+            resource_types=args.resource_type or [])
+        if args.selector:
+            scope.selectors["labels"] = args.selector
+        budget = _live_budget(args)
+        if args.provider == "kubernetes":
+            if not k8s_transport.kubectl_available():
+                return _emit({"refusal": "PF-LIVE-NO-KUBECTL",
+                              "unlock": "install kubectl + configure a "
+                                        "kubeconfig context"}, args, 2)
+            collector = K8sCollector(
+                transport=k8s_transport.make_transport(args.context),
+                context=args.context)
+            env = collector.collect(scope, budget)
+        else:
+            return _emit({"refusal": "PF-LIVE-UNKNOWN-PROVIDER",
+                          "unlock": "platformforge live snapshot "
+                                    "--provider kubernetes|aws"}, args, 2)
+        if args.no_store:
+            return _emit({"envelope": env.to_dict()}, args)
+        res = ObservationStore(args.repo).put(env)
+        if "refusal" in res:
+            return _emit(res, args, 2)
+        return _emit({**res, "provider": env.provider,
+                      "coverage": env.coverage.get("status"),
+                      "fresh_until": env.fresh_until,
+                      "scope": env.scope}, args)
+    if sub == "reconcile":
+        return _emit({"refusal": "PF-LIVE-RECONCILE-PENDING",
+                      "unlock": "cycle3 phase F wires reconciliation"},
+                     args, 2)
+    return _emit({"error": f"unknown live verb {sub}"}, args, 1)
+
+
+def _live_budget(args: argparse.Namespace):
+    from platformforge.live.budget import ObservationBudget
+    return ObservationBudget(max_objects=args.max_objects,
+                             max_api_calls=args.max_api_calls,
+                             max_bytes=args.max_bytes)
+
+
 def cmd_finops(args: argparse.Namespace) -> int:
     from platformforge import finops as F
     sub = args.finops_cmd
@@ -1421,6 +1490,28 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--facts", default="", help="facts JSON for dr")
     sp.add_argument("--window", type=int, default=3600)
     sp.set_defaults(func=cmd_observe)
+
+    sp = sub.add_parser("live", help="live platform observation (cycle3)")
+    _add_common(sp)
+    sp.add_argument("live_cmd",
+                    choices=["snapshot", "status", "doctor", "reconcile",
+                             "rbac"])
+    sp.add_argument("--provider", default="kubernetes",
+                    choices=["kubernetes", "aws"])
+    sp.add_argument("--context", default="", help="kube context")
+    sp.add_argument("--namespace", action="append",
+                    help="restrict to namespace (repeatable)")
+    sp.add_argument("--resource-type", action="append",
+                    help="restrict resource types (repeatable)")
+    sp.add_argument("--selector", default="", help="k8s label selector")
+    sp.add_argument("--namespaced-only", action="store_true",
+                    help="rbac: emit Role instead of ClusterRole")
+    sp.add_argument("--no-store", action="store_true",
+                    help="snapshot: emit envelope without persisting")
+    sp.add_argument("--max-objects", type=int, default=0)
+    sp.add_argument("--max-api-calls", type=int, default=0)
+    sp.add_argument("--max-bytes", type=int, default=0)
+    sp.set_defaults(func=cmd_live)
 
     sp = sub.add_parser("finops", help="FinOps cost analysis")
     _add_common(sp)

@@ -4,18 +4,15 @@ v1↔v2 compatibility/migration, event ledger, temporal queries.
 
 import json
 import time
+from pathlib import Path
 
 import pytest
 
 from platformforge.graph import persist
 from platformforge.graph.events import EventLedger
-from platformforge.graph.migrate import (migrate_doc_v1_to_v2,
-                                         migrate_graph)
-from platformforge.graph.model import (SCHEMA, SCHEMA_V2, Edge, Graph,
-                                       Node)
-from platformforge.graph.temporal import (edge_first_seen,
-                                          expire_stale_edges, graph_at,
-                                          node_last_observed)
+from platformforge.graph.migrate import migrate_doc_v1_to_v2, migrate_graph
+from platformforge.graph.model import SCHEMA, SCHEMA_V2, Edge, Graph, Node
+from platformforge.graph.temporal import edge_first_seen, expire_stale_edges, graph_at, node_last_observed
 
 
 def _g():
@@ -175,5 +172,5 @@ def test_temporal_queries(tmp_path):
 
 def test_v2_contract_doc_round_trip():
     doc = json.loads(
-        open("contracts/graph-v2.schema.json").read())
+        Path("contracts/graph-v2.schema.json").read_text())
     assert doc["$id"] == SCHEMA_V2
