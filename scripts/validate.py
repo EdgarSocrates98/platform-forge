@@ -713,9 +713,9 @@ def gate_economy_receipt() -> dict:
         "canon = set(V._economy_gate_names())\n"
         "extra = set(r.get('gates', {})) - canon\n"
         "if extra: bad.append(('noncanonical-gates', sorted(extra)))\n"
+        "pat = re.compile('tests/' + r'\\S+' + r'\\.py')\n"
         "for g, e in r.get('gates', {}).items():\n"
-        "    for t in re.findall(r'tests/[^\\\\s]+\\\\.py',\n"
-        "                        e.get('reproduce') or ''):\n"
+        "    for t in pat.findall(e.get('reproduce') or ''):\n"
         "        if not Path(t).is_file():\n"
         "            bad.append(('dead-reproduce-path', g, t))\n"
         "if r.get('verdict') not in ('validated', 'failed'):\n"
@@ -993,7 +993,36 @@ def economy_receipt(out_path: str, *, remote_ci: str) -> int:
             failed.append(name)
         gates[name] = entry
         print(f"{'PASS' if ok else 'FAIL'} {name}", file=sys.stderr)
-    # pass 2 — final results overwrite the skeleton
+    # pass 2 — write-then-verify fixpoint for the self-referential
+    # gates: economy-receipt and economy-closure must evaluate a file
+    # that already carries final results — their pass-1 verdict read the
+    # skeleton and is a stale artifact, not a real failure. Mark them
+    # tentatively ok with their real reproduce commands, rewrite, then
+    # re-run just those two against the final file. A still-failing
+    # result is a real failure and is recorded honestly.
+    self_ref = ("economy-receipt", "economy-closure")
+    for name in self_ref:
+        prev = gates.get(name, {})
+        gates[name] = {"ok": True,
+                       "reproduce": prev.get("reproduce") or "n/a",
+                       "seconds": prev.get("seconds")}
+    failed = [n for n in failed if n not in self_ref]
+    Path(out_path).write_text(json.dumps(
+        _economy_receipt_doc(gates, failed, remote_ci),
+        indent=2, sort_keys=True) + "\n")
+    for name in self_ref:
+        res = GATES[name]()
+        ok = res.get("rc", 1) == 0
+        entry = {"ok": ok, "reproduce": res.get("cmd", "n/a"),
+                 "seconds": res.get("seconds")}
+        if not ok:
+            entry["why"] = res.get("tail", [])[-3:]
+            entry["unlock"] = UNLOCK.get(name, "see the gate output")
+            failed.append(name)
+        gates[name] = entry
+        print(f"{'PASS' if ok else 'FAIL'} {name} (fixpoint)",
+              file=sys.stderr)
+    # pass 3 — final results overwrite the tentative file
     Path(out_path).write_text(json.dumps(
         _economy_receipt_doc(gates, failed, remote_ci),
         indent=2, sort_keys=True) + "\n")
