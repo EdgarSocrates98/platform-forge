@@ -208,6 +208,7 @@ def doctor(target: str | Path) -> dict:
     drift, missing = [], []
     if recp.is_file():
         rec = json.loads(recp.read_text())
+        checks["version_match"] = rec.get("platformforge_version") == __version__
         for rel, expected_hash in rec.get("files", {}).items():
             p = _safe_target(root, rel)
             if not p.is_file():
