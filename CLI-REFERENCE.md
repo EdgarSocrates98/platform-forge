@@ -203,6 +203,8 @@ artifacts + hash cascade gates.
 | `integrate --host <h>` | = `mcp integrate`. |
 | `freeze manifest|snapshot|check|exception` | Architecture-freeze governance: generated FREEZE-MANIFEST from live registries; contract snapshots (schemas/CLI/MCP/capabilities/agents) under `docs/freeze/snapshots/`; `check` reports breaking drift (knowledge allowlisted); `exception --spec <file>` validates a §6 FeatureException. |
 | `cases list|validate|replay|template` | Real-world case corpus (`.platformforge/cases/<golden|holdout>/<id>/case.yaml`): structure validation, deterministic offline replay (fixture → facts → rules → canonical hash, run twice), FP/FN accounting vs `expected_known_truth`. Golden and holdout reported separately — never merged. |
+| `cases ledger|ledger-check` | FP/FN ledgers (`.platformforge/ledgers/`): confirmed/refuted/unresolved counts + precision estimate (refused below n=3 records); `ledger-check` validates every record's `regression_test` pointer resolves to a real case dir or `file::test` selector. |
+| `cases route-audit|route-bench|context-audit` | Agent dogfooding over the corpus: Router V2 decisions per case (fanout, mode, over/under-routing flags), champion/challenger comparison via `--out <routing.yaml>`, and measured context cost (`--stamp` writes `context_cost` back into each case.yaml). |
 
 ## Knowledge & store
 

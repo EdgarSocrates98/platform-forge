@@ -75,6 +75,7 @@ classes only (bug/perf/security fix, knowledge-update, new-eval,
 new-real-world-fixture, compatibility, docs); everything else needs a
 FeatureException via [UNFREEZE-RFC.md](freeze/UNFREEZE-RFC.md).
 
+- [README.md](freeze/README.md) — entry point: the rule, lifecycle, artifacts map, corpus commands, case authoring
 - [FREEZE-MANIFEST.md](freeze/FREEZE-MANIFEST.md) — frozen surface inventory
 - [LIFECYCLE.md](freeze/LIFECYCLE.md) — freeze rules, exception classes, gates
 - [FINAL-REPORT.md](freeze/FINAL-REPORT.md) — honest readiness statement (P4 ceiling)
