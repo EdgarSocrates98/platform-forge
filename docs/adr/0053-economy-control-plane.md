@@ -20,4 +20,4 @@ Agents operate the deterministic engines; they never replace them.
 
 Every run can answer cost/reuse/routing questions with receipts.
 Unobserved data is `unresolved`, never zero. The plane itself must not
-cost more than it saves — measured in `docs/economy-parity/BENCHMARKS.md`.
+cost more than it saves — measured in `docs/economy-parity/ECONOMY-BENCHMARKS.md`.

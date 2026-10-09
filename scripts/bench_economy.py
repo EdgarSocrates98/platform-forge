@@ -2,7 +2,7 @@
 
 Measures the economy layer's own cost — lookup/build/route/ledger —
 so the plane cannot cost more than it saves. Writes real numbers to
-docs/economy-parity/BENCHMARKS.md. No extrapolation, no claims.
+docs/economy-parity/ECONOMY-BENCHMARKS.md. No extrapolation, no claims.
 """
 
 from __future__ import annotations

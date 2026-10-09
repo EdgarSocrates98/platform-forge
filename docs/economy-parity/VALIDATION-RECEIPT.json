@@ -1,0 +1,109 @@
+{
+  "kind": "platformforge/validation-receipt/1",
+  "cycle": "economy-parity",
+  "spec": "prompt_evo_economy.md",
+  "exception": "FE-002",
+  "sha": [
+    "1ab6a979dde46c8a1629c89cf13f180b54727e54"
+  ],
+  "verdict": "validated",
+  "gates": {
+    "economy-contracts": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_contracts.py",
+      "what": "EconomyPlan, BudgetEnvelope 11-dim, unified ledger, explainability"
+    },
+    "economy-cache": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_cache.py",
+      "what": "7-layer content-addressed cache, dep-bound invalidation, TTL/GC, receipts"
+    },
+    "economy-gateway": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_context_gateway.py",
+      "what": "ContextCapsule, context:// refs, sufficiency, lazy expand, PF-CONTEXT-ESSENTIAL"
+    },
+    "economy-resume": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_checkpoint.py tests/test_economy_reconcile.py",
+      "what": "spend-preserving resume, PF-CHECKPOINT-DOWNGRADE, per-axis reconciliation"
+    },
+    "economy-pricing-verify": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_pricing.py tests/test_economy_verifyplan.py",
+      "what": "declared rates or PRICING-MISSING; V0-V5 tiers, security floor never skipped"
+    },
+    "economy-agentic": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k 'uniqueness or debate or duplication or fanout or waste or stagnant'",
+      "what": "agent uniqueness audit, debate bounds + stagnation stop, waste detector, RTK receipt"
+    },
+    "economy-routing": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_evals.py -k 'routing or champion or challenger or scorecard'",
+      "what": "profile floors, routing receipts, champion/challenger human-gated promotion"
+    },
+    "economy-fleet-qpt": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_fleet_qpt.py",
+      "what": "snapshot-keyed fleet cache, evidence gate, quality_per_cost all axes"
+    },
+    "economy-evals": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_evals.py",
+      "what": "13 named evals + 8 property invariants + E1-E12 adversarial"
+    },
+    "economy-cli": {
+      "ok": true,
+      "reproduce": "platformforge economy explain --root . && platformforge cache stats --root . && platformforge routing scorecard --root .",
+      "what": "economy/context/cache/routing verbs emit decisions + PF codes"
+    },
+    "economy-mcp": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_mcp_economy.py",
+      "what": "4 read-only MCP tools; refusals preserved; no mutation"
+    },
+    "economy-doctor": {
+      "ok": true,
+      "reproduce": "platformforge economy doctor --root .",
+      "what": "6 health checks over ledgers/cache/context"
+    },
+    "tests": {
+      "ok": true,
+      "reproduce": "pytest -q",
+      "what": "full suite green (exit 0)"
+    },
+    "lint": {
+      "ok": true,
+      "reproduce": "ruff check .",
+      "what": "clean"
+    },
+    "docs": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_docs_drift.py",
+      "what": "doc links + generated CLI surface byte-current"
+    },
+    "lab": {
+      "ok": true,
+      "reproduce": "platformforge lab run-all",
+      "what": "all lab scenarios pass"
+    },
+    "evals": {
+      "ok": true,
+      "reproduce": "platformforge evals run",
+      "what": "93 pass / 0 fail / 0 unresolved"
+    },
+    "validate": {
+      "ok": true,
+      "reproduce": "python scripts/validate.py",
+      "what": "all gates incl. 12 economy-* gates pass"
+    }
+  },
+  "failed": [],
+  "known_gaps": [
+    "no real provider pricing catalog shipped (declared-rates engine only)",
+    "analysis cache layer gated on tests; no model-call corpus for QPT money axis",
+    "microbench overhead measured; no production savings claimed",
+    "maturity ceiling unchanged at P4 — capability added, not production evidence"
+  ]
+}

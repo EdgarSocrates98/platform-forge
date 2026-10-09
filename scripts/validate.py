@@ -623,8 +623,8 @@ def gate_economy_routing() -> dict:
 def gate_economy_agentic() -> dict:
     r = _run(["pytest", "-q", "tests/test_economy_agents_waste.py",
               "tests/test_economy_evals.py",
-              "-k", "uniqueness or debate or duplication or fanout or "
-                    "waste or stagnant"])
+              "-k", ("uniqueness or debate or duplication or fanout or "
+                     "waste or stagnant")])
     r["what"] = ("agent uniqueness audit, debate bounds + stagnation "
                  "stop, waste detector, RTK economy receipt")
     return r
