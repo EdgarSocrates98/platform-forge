@@ -50,9 +50,21 @@ def test_root_cause_taxonomy_is_the_spec_set():
 def test_empty_ledgers_are_valid_and_honest():
     r = ledger_report()
     assert r["verdict"] == "pass"
-    # precision must not be claimed when there's nothing to grade
+    # precision must not be claimed below the meaningful-sample floor
+    # (no records at all, or fewer than 3 records to grade)
     assert r["precision"] in (None,) or r["precision"]["value"] is None
     assert validate_ledgers()["verdict"] == "pass"
+
+
+def test_regression_selector_resolves_to_test_name():
+    """FP-RW5-001 in the real ledger points at a ::test selector —
+    the resolver must verify both file and function."""
+    r = validate_ledgers()
+    assert r["verdict"] == "pass", r["errors"]
+    rep = ledger_report()
+    assert rep["false_positives"] >= 1
+    assert rep["precision"]["records"] == rep["false_positives"] + \
+        rep["false_negatives"]
 
 
 def test_regression_pointer_must_resolve(tmp_path):

@@ -1,0 +1,27 @@
+id: container-unsigned
+classification: fixture-derived
+tier: golden
+truth_class: known-bad
+task: Unsigned container artifacts — supply-chain violations.
+scope: lab/scenarios/container-unsigned/fixture
+analyzers:
+- supply
+fixture_from: lab/scenarios/container-unsigned
+expected_known_truth:
+  violated_rules:
+  - PF-SEC-030
+  - PF-SEC-031
+  absent_rules: []
+  fact_kinds:
+  - security.artifact
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 215
+  relevant_bytes: 215
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

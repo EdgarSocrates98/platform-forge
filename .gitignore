@@ -7,4 +7,8 @@ __pycache__/
 .ruff_cache/
 dist/
 .platformforge/
+!/.platformforge/
+.platformforge/*
+!.platformforge/cases/
+!.platformforge/ledgers/
 graphify-out/

@@ -81,6 +81,10 @@ FALSE_POSITIVE_GUARDS = [
     "redis",                                    # bare scheme name
     "AKIAIOSFODNN7EXAMPL",                      # AKIA + 15 chars (too short)
     "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----",
+    # RW-5 (freeze dogfood): lowercase prose after the key must not match
+    "pass: refuse and route",
+    "db_pass: should rotate quarterly",
+    "pwd: check the runbook",
 ]
 
 

@@ -51,6 +51,25 @@ def test_secret_scan_never_emits_values(tmp_path):
     assert "hunter2" not in json.dumps(doc)
 
 
+def test_secret_scan_prose_is_not_a_leak(tmp_path):
+    """RW-5: prose mentioning passwords must emit zero secret_leak facts;
+    a real-shaped secret in the same tree must still be found."""
+    (tmp_path / "policy-notes.md").write_text(
+        "The password policy: refuse and route on failure.\n"
+        "pass: the token gate requires rotation every quarter.\n"
+        "db_pass: check the runbook before restart.\n")
+    doc = scan_secrets(tmp_path)
+    assert doc["counts"]["hits"] == 0, doc["counts"]
+    assert not [f for f in doc["facts"]
+                if f["kind"] == "security.secret_leak"]
+    (tmp_path / "app.env").write_text('DB_PASSWORD="hunter2!X9real"\n')
+    doc = scan_secrets(tmp_path)
+    leaks = [f for f in doc["facts"]
+             if f["kind"] == "security.secret_leak"]
+    assert len(leaks) == 1
+    assert "hunter2" not in json.dumps(doc)
+
+
 def test_sbom(tmp_path):
     p = tmp_path / "sbom.json"
     p.write_text(json.dumps(CYCLONE))

@@ -113,12 +113,18 @@ def ledger_report(root: str | Path = LEDGER_DIR) -> dict[str, Any]:
     if truth:
         # precision = confirmed findings / (confirmed + refuted findings)
         denom = len(fp) + len(fn) or None
-        precision = ({"value": None, "note": "no FP/FN records — precision "
-                       "unmeasurable without findings to grade"}
+        precision = ({"value": None, "records": 0,
+                      "note": "no FP/FN records — precision "
+                              "unmeasurable without findings to grade"}
                      if denom is None else
-                     {"value": round(1 - (len(fp) / denom), 4),
-                      "note": "records-based estimate; ground truth = "
-                              f"{len(truth)} replay cases"})
+                     {"value": (None if denom < 3
+                                else round(1 - (len(fp) / denom), 4)),
+                      "records": denom,
+                      "note": ("too few records for a meaningful estimate"
+                               if denom < 3 else
+                               "records-based estimate") +
+                              f"; ground truth = {len(truth)} "
+                              "replay cases"})
     return {"schema": "platformforge/fp-fn-ledger/v1",
             "false_positives": len(fp), "false_negatives": len(fn),
             "confirmed": confirmed, "refuted": refuted,
@@ -145,13 +151,24 @@ def validate_ledgers(root: str | Path = LEDGER_DIR) -> dict[str, Any]:
 
 
 def _regression_resolves(ref: str) -> bool:
-    """A regression pointer resolves to a case dir, a test file, or a
+    """A regression pointer resolves to a case dir, a test file (with an
+    optional ``::test_name`` selector that must exist in the file), or a
     scenario dir — never to prose."""
-    p = Path(ref)
-    if p.exists():
-        return True
-    for base in (".platformforge/cases/golden", ".platformforge/cases/holdout",
-                 "lab/scenarios", "tests"):
-        if (Path(base) / ref).exists():
-            return True
-    return False
+    file_part, _, selector = ref.partition("::")
+    p = Path(file_part)
+    found = p.exists() or any(
+        (Path(base) / file_part).exists()
+        for base in (".platformforge/cases/golden",
+                     ".platformforge/cases/holdout",
+                     "lab/scenarios", "tests"))
+    if not found:
+        return False
+    if selector:
+        target = p if p.is_file() else next(
+            (Path(base) / file_part for base in
+             (".platformforge/cases/golden", ".platformforge/cases/holdout",
+              "lab/scenarios", "tests")
+             if (Path(base) / file_part).is_file()), None)
+        if target is None or f"def {selector}(" not in target.read_text():
+            return False
+    return True
