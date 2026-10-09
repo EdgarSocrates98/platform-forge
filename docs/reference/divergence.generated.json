@@ -1,0 +1,57 @@
+{
+  "schema": "forge/DocDivergence/v1",
+  "cli": "platformforge",
+  "documented_missing": [
+    {
+      "file": "platform-forge\\docs\\installation\\troubleshooting.md",
+      "line": "-",
+      "problem": "`platformforge mcp-verify` documented but not a real command",
+      "impact": "user runs a command that fails",
+      "fix": "remove or rename the `mcp-verify` mention"
+    },
+    {
+      "file": "platform-forge\\docs\\installation\\troubleshooting.md; platform-forge\\docs\\installation\\update-and-repair.md",
+      "line": "-",
+      "problem": "`platformforge repair` documented but not a real command",
+      "impact": "user runs a command that fails",
+      "fix": "remove or rename the `repair` mention"
+    },
+    {
+      "file": "platform-forge\\docs\\CLI-SURFACE.md",
+      "line": "-",
+      "problem": "`platformforge state` documented but not a real command",
+      "impact": "user runs a command that fails",
+      "fix": "remove or rename the `state` mention"
+    },
+    {
+      "file": "platform-forge\\docs\\installation\\update-and-repair.md",
+      "line": "-",
+      "problem": "`platformforge update` documented but not a real command",
+      "impact": "user runs a command that fails",
+      "fix": "remove or rename the `update` mention"
+    }
+  ],
+  "undocumented_commands": [
+    "ai",
+    "analytics",
+    "cache",
+    "capability",
+    "caveman",
+    "context",
+    "correlate",
+    "diff",
+    "drift",
+    "explain",
+    "federation",
+    "impact",
+    "integrate",
+    "recommend",
+    "reliability",
+    "risk",
+    "routing",
+    "rtk",
+    "tokens",
+    "upgrade"
+  ],
+  "generated_at": "2026-10-09T22:28:08Z"
+}
