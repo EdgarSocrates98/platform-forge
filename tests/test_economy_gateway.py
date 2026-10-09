@@ -5,11 +5,9 @@ from __future__ import annotations
 
 import pytest
 
-from platformforge.context import (
-    ContextCapsule, ContextGateway, ContextRequest, Sufficiency)
+from platformforge.context import ContextCapsule, ContextGateway, ContextRequest, Sufficiency
 from platformforge.context.refs import ContextRef
-from platformforge.economy.checkpoint import (
-    CheckpointStore, EconomyCheckpoint)
+from platformforge.economy.checkpoint import CheckpointStore, EconomyCheckpoint
 from platformforge.economy.reconcile import reconcile, savings_claim
 
 
@@ -18,10 +16,10 @@ def gw(tmp_path):
     return ContextGateway(tmp_path)
 
 
-REQ = dict(task="review iam", scope="repository",
-           facts=[{"fact_id": "PF-IAM-1", "value": "open sg"}],
-           findings=[{"rule_id": "PF-SEC-001", "status": "fail"}],
-           rules=["PF-SEC-001"], open_questions=["prod account?"])
+REQ = {"task": "review iam", "scope": "repository",
+       "facts": [{"fact_id": "PF-IAM-1", "value": "open sg"}],
+       "findings": [{"rule_id": "PF-SEC-001", "status": "fail"}],
+       "rules": ["PF-SEC-001"], "open_questions": ["prod account?"]}
 
 
 class TestGateway:

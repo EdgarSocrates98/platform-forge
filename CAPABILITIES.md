@@ -39,6 +39,7 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.risk` | — | core | yes | `risk` | §130 decomposition; criticality declared-only (§131) |
 | `platform.sdd.*` | 3 | sdd | yes | `sdd init/artifact/status/gate/override` | lifecycle + hash cascade |
 | `platform.economy.*` | 2 | economy | yes | `economy`, `tokens`, `rtk`, `caveman`, `route` | measured bytes/tokens |
+| `platform.economy-control` | — | economy | yes | `economy checkpoint/resume/reconcile/doctor/explain`, `cache stats/inspect/invalidate/gc`, `context capsule/inspect/expand/delta/gc`, `routing explain/compare/scorecard` | economy control plane: BudgetEnvelope, multilayer cache, ContextGateway capsules/refs, checkpoint-resume (spend preserved, no downgrade), reconciliation, declared pricing, doctor |
 | `platform.security.*` | 10 | security | yes | `analyze secrets/iam/sbom/supply/kyverno/cosign/slsa` | secrets scan, IAM v2 (trust/SCP/boundary/OIDC/role chaining), Kyverno version-aware, SLSA requirement/evidence/gap, Cosign shape (claimed ≠ verified) |
 | `platform.identity.*` | 4 | security | yes | `graph identity-become/access/workloads/blast` | §100–101 identity paths; no-path-found is named, never "no risk" |
 | `platform.reliability.*` | 8 | sre | yes | `observe slo/slo-burn/otel/semconv/incident/timeline/postmortem/capacity/dr/prometheus/grafana` | SLO multi-window burn, incident/postmortem, DR, prom/grafana, OTel semconv |

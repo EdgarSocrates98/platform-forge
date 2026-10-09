@@ -49,6 +49,42 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
     if handler == "cli:economy":
         from platformforge.economy import EconomyEngine
         return EconomyEngine(repo).report()
+    if handler == "cli:economy_explain":
+        from platformforge.economy.checkpoint import CheckpointStore
+        from platformforge.economy.ledger import unified_view
+        st = CheckpointStore(
+            Path(repo) / ".platformforge" / "checkpoints")
+        cp = st.load(inp["run_id"])
+        if cp is None:
+            return {"refusal": "PF-CHECKPOINT-MISSING",
+                    "run_id": inp["run_id"]}
+        return {"run_id": inp["run_id"], "checkpoint": cp.to_dict(),
+                "ledger": unified_view(repo)}
+    if handler == "cli:context_inspect":
+        from platformforge.context.gateway import ContextGateway
+        return ContextGateway(repo).inspect(inp["ref"])
+    if handler == "cli:context_expand":
+        from platformforge.context.gateway import ContextGateway
+        return ContextGateway(repo).expand(inp["ref"],
+                                           inp.get("section", ""))
+    if handler == "cli:routing_explain":
+        from platformforge.routing import TaskSignal, route
+        from platformforge.routing.decision import RoutingDecision, RoutingRequest, receipt
+        req = RoutingRequest(task=inp.get("task", ""),
+                             profile=inp.get("profile", "balanced"),
+                             risk=inp.get("risk", "low"),
+                             signal=inp.get("signal") or {})
+        sig = TaskSignal.from_dict(inp.get("signal") or {})
+        routed = route(sig)
+        dec = RoutingDecision(
+            mode=routed.get("mode", "deterministic"),
+            agents=list(routed.get("specialists", [])),
+            reason="; ".join(routed.get("reasons", [])),
+            risk=req.risk, profile=req.effective_profile())
+        return {"request": {"task": req.task,
+                            "effective_profile": req.effective_profile(),
+                            "risk": req.risk},
+                "receipt": receipt(req, dec, {})}
     if handler == "cli:product_maturity":
         from platformforge.product import maturity
         return maturity(inp["signals"])

@@ -74,6 +74,15 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `bench scale`
 - `bench tokens`
 
+## `cache`
+
+- `cache`  
+  `--repo <v> — workspace/repo root (default '.')` · `--layer <v> (default 'fact')` · `--key <v> (default '')` · `--scope <v> (default '')` · `--deps <v> (default '')` · `--dep <v> (default '')` · `--value <v> (default '')`
+- `cache gc`
+- `cache inspect`
+- `cache invalidate`
+- `cache stats`
+
 ## `capability`
 
 - `capability`  
@@ -121,7 +130,13 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `context`
 
 - `context`  
-  `--repo <v> — workspace/repo root (default '.')` · `--task <v> (default '')` · `--input-budget <v>` · `--changed <v>`
+  `--repo <v> — workspace/repo root (default '.')` · `--task <v> (default '')` · `--input-budget <v>` · `--changed <v>` · `--scope <v> (default 'repository')` · `--budget-bytes <v>` · `--essential-bytes <v>` · `--required <v>` · `--role <v> (default 'specialist')` · `--facts <v> (default '')` · `--findings <v> (default '')` · `--rules <v>` · `--knowledge <v>` · `--graph-refs <v>` · `--questions <v>` · `--ref <v> (default '')` · `--section <v> (default '')`
+- `context capsule`
+- `context delta`
+- `context expand`
+- `context gc`
+- `context inspect`
+- `context pack`
 
 ## `correlate`
 
@@ -151,11 +166,16 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `economy`
 
 - `economy`  
-  `--repo <v> — workspace/repo root (default '.')` · `--signal <v> — JSON TaskSignal (strategy/compare) (default '')` · `--path <v> — facts doc for qpt (default '')` · `--task <v> (default 'analysis')` · `--input-budget <v>` · `--versions <v> — JSON product versions for qpt, e.g. '{"kubernetes": "1.29"}' (default '')`
+  `--repo <v> — workspace/repo root (default '.')` · `--signal <v> — JSON TaskSignal (strategy/compare) (default '')` · `--path <v> — facts doc for qpt (default '')` · `--task <v> (default 'analysis')` · `--input-budget <v>` · `--versions <v> — JSON product versions for qpt, e.g. '{"kubernetes": "1.29"}' (default '')` · `--run-id <v> (default '')` · `--spent <v> — JSON spent budget (checkpoint) (default '')` · `--remaining <v> — JSON remaining budget (default '')` · `--deps <v> — JSON dep hashes (checkpoint) (default '')` · `--profile <v> — routing profile (resume) (default '')` · `--planned <v> — JSON planned usage (reconcile) (default '')` · `--observed <v> — JSON observed usage (reconcile) (default '')`
+- `economy checkpoint`
 - `economy compare`
+- `economy doctor`
+- `economy explain`
 - `economy qpt`
 - `economy qpt-bench`
+- `economy reconcile`
 - `economy report`
+- `economy resume`
 - `economy strategy`
 
 ## `evals`
@@ -416,6 +436,14 @@ Global flags on every verb: `--json` · `--output <file>` ·
 
 - `route` <signal> — JSON TaskSignal  
   `--repo <v> — workspace/repo root (default '.')`
+
+## `routing`
+
+- `routing`  
+  `--repo <v> — workspace/repo root (default '.')` · `--task <v> (default '')` · `--profile <v> (default 'balanced')` · `--risk <v> (default 'low')` · `--signal <v> (default '')` · `--estimated <v> (default '')` · `--champion <v> (default '')` · `--challenger <v> (default '')` · `--approved` · `--run-id <v> (default '')` · `--mode <v> (default 'deterministic')` · `--correctness <v>` · `--tokens <v>` · `--agents <v> (default 0)` · `--provider-calls <v> (default 0)`
+- `routing compare`
+- `routing explain`
+- `routing scorecard`
 
 ## `rtk`
 

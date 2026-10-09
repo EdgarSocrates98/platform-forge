@@ -714,6 +714,51 @@ def cmd_economy(args: argparse.Namespace) -> int:
         out = run_qpt_bench()
         bad = [c["id"] for c in out["cases"] if c["verdict"] == "optimization_not_beneficial"]
         return _emit(out, args, 2 if (args.strict and bad) else 0)
+    if sub == "checkpoint":
+        from platformforge.economy.checkpoint import CheckpointStore, EconomyCheckpoint
+
+        st = CheckpointStore(Path(args.repo) / ".platformforge" / "checkpoints")
+        cp = EconomyCheckpoint(
+            run_id=args.run_id or f"run-{int(time.time())}",
+            spent_budget=json.loads(args.spent or "{}"),
+            remaining_budget=json.loads(args.remaining or "{}"),
+            routing_profile=args.profile,
+            deps=json.loads(args.deps or "{}"))
+        st.save(cp)
+        return _emit({"checkpoint": cp.to_dict()}, args)
+    if sub == "resume":
+        from platformforge.economy.checkpoint import CheckpointStore
+
+        st = CheckpointStore(Path(args.repo) / ".platformforge" / "checkpoints")
+        out = st.resume(args.run_id,
+                        current_deps=json.loads(args.deps or "{}"),
+                        requested_profile=args.profile or "")
+        return _emit(out, args, 2 if "refusal" in out else 0)
+    if sub == "reconcile":
+        from platformforge.economy.reconcile import reconcile
+
+        out = reconcile(planned=json.loads(args.planned or "{}"),
+                        observed=json.loads(args.observed or "{}"),
+                        run_id=args.run_id or "")
+        return _emit(out.to_dict(), args)
+    if sub == "doctor":
+        from platformforge.economy.doctor import doctor
+
+        out = doctor(args.repo)
+        return _emit(out, args, 2 if (args.strict and out["overall"]
+                                      in ("warn", "fail")) else 0)
+    if sub == "explain":
+        st = CheckpointStore(Path(args.repo) / ".platformforge" / "checkpoints")
+        cp = st.load(args.run_id or "")
+        if cp is None:
+            return _emit({"refusal": "PF-CHECKPOINT-MISSING",
+                          "reason": f"no checkpoint for {args.run_id}",
+                          "unlock": "economy checkpoint --run-id "
+                                    f"{args.run_id} ..."},
+                         args, 2)
+        from platformforge.economy.ledger import unified_view
+        return _emit({"run_id": args.run_id, "checkpoint": cp.to_dict(),
+                      "ledger": unified_view(args.repo)}, args)
     return _emit(eng.report(), args)
 
 
@@ -1162,15 +1207,113 @@ def cmd_impact(args: argparse.Namespace) -> int:
 
 
 def cmd_context(args: argparse.Namespace) -> int:
-    """§7 context — context pack for a task (tokens pack)."""
-    from platformforge.tokensave.budget import Budget
-    from platformforge.tokensave.ledger import TokenLedger
-    from platformforge.tokensave.packs import ContextPackBuilder
+    """§7 context — pack for a task + ContextGateway capsule verbs."""
+    sub = getattr(args, "context_cmd", "pack") or "pack"
+    if sub == "pack":
+        from platformforge.tokensave.budget import Budget
+        from platformforge.tokensave.ledger import TokenLedger
+        from platformforge.tokensave.packs import ContextPackBuilder
 
-    pack = ContextPackBuilder(_index(args), TokenLedger(args.repo)).build(
-        task=args.task, budget=Budget(input_budget=args.input_budget), changed_files=args.changed or []
-    )
-    return _emit(pack, args)
+        pack = ContextPackBuilder(_index(args), TokenLedger(args.repo)).build(
+            task=args.task, budget=Budget(input_budget=args.input_budget), changed_files=args.changed or []
+        )
+        return _emit(pack, args)
+
+    from platformforge.context.gateway import ContextGateway, ContextRequest
+
+    gw = ContextGateway(args.repo)
+    if sub == "capsule":
+        res = gw.build(ContextRequest(
+            task=args.task, scope=args.scope,
+            budget_bytes=args.budget_bytes,
+            essential_bytes=args.essential_bytes,
+            required_sections=args.required or [],
+            role=args.role,
+            facts=json.loads(args.facts or "[]"),
+            findings=json.loads(args.findings or "[]"),
+            rules=args.rules or [],
+            knowledge_refs=args.knowledge or [],
+            graph_refs=args.graph_refs or [],
+            open_questions=args.questions or []))
+        return _emit(res, args, 2 if "refusal" in res else 0)
+    if sub == "inspect":
+        return _emit(gw.inspect(args.ref), args,
+                     2 if "refusal" in gw.inspect(args.ref) else 0)
+    if sub == "expand":
+        return _emit(gw.expand(args.ref, args.section or ""), args)
+    if sub == "delta":
+        return _emit(gw.delta(args.ref, None), args)
+    if sub == "gc":
+        return _emit(gw.cache.gc(), args)
+    return _emit({"error": f"unknown context verb {sub}"}, args, 1)
+
+
+def cmd_cache(args: argparse.Namespace) -> int:
+    """cache — multilayer economy cache (stats/inspect/invalidate/gc)."""
+    from platformforge.economy.cache import CacheStore
+
+    store = CacheStore(Path(args.repo) / ".platformforge" / "cache")
+    sub = args.cache_cmd
+    if sub == "stats":
+        return _emit(store.stats(), args)
+    if sub == "inspect":
+        dec, payload = store.get(args.layer, args.scope or args.key,
+                                 json.loads(args.deps or "{}"))
+        return _emit({"decision": dec.to_dict(), "payload": payload},
+                     args)
+    if sub == "invalidate":
+        return _emit(store.invalidate_dep(args.dep, args.value or ""),
+                     args)
+    if sub == "gc":
+        return _emit(store.gc(), args)
+    return _emit({"error": f"unknown cache verb {sub}"}, args, 1)
+
+
+def cmd_routing(args: argparse.Namespace) -> int:
+    """routing — control-plane verbs (explain/compare/scorecard)."""
+    from platformforge.routing.decision import RoutingRequest, promote_verdict, receipt
+
+    sub = args.routing_cmd
+    if sub == "explain":
+        req = RoutingRequest(
+            task=args.task, profile=args.profile, risk=args.risk,
+            signal=json.loads(args.signal or "{}"))
+        from platformforge.routing import TaskSignal, route
+        sig = TaskSignal.from_dict(json.loads(args.signal or "{}"))
+        routed = route(sig)
+        rec = receipt(req, _decision_from_route(routed, req),
+                      json.loads(args.estimated or "{}"))
+        return _emit({"request": {"task": req.task,
+                                  "profile": req.profile,
+                                  "effective_profile": req.effective_profile(),
+                                  "risk": req.risk},
+                      "receipt": rec}, args)
+    if sub == "compare":
+        out = promote_verdict(
+            champion=json.loads(args.champion or "{}"),
+            challenger=json.loads(args.challenger or "{}"),
+            human_approved=args.approved)
+        return _emit(out, args, 2 if out["verdict"] == "rejected" else 0)
+    if sub == "scorecard":
+        from platformforge.routing.decision import RoutingScorecard
+        sc = RoutingScorecard(
+            run_id=args.run_id or "", mode=args.mode,
+            correctness=args.correctness, tokens=args.tokens,
+            agents=args.agents, provider_calls=args.provider_calls)
+        return _emit(sc.to_dict(), args)
+    return _emit({"error": f"unknown routing verb {sub}"}, args, 1)
+
+
+def _decision_from_route(routed: dict[str, Any], req):
+    from platformforge.routing.decision import RoutingDecision
+    return RoutingDecision(
+        mode=routed.get("mode", "deterministic"),
+        agents=list(routed.get("specialists", [])),
+        model_tier=routed.get("model_tier", "none"),
+        verification_tier=routed.get("verification_tier", "V0-static"),
+        reason="; ".join(routed.get("reasons", [])),
+        risk=req.risk, profile=req.effective_profile(),
+        fallback="; ".join(routed.get("fallbacks", [])))
 
 
 def cmd_policy(args: argparse.Namespace) -> int:
@@ -2708,7 +2851,9 @@ def build_parser() -> argparse.ArgumentParser:
         "economy_cmd",
         nargs="?",
         default="report",
-        choices=["report", "strategy", "compare", "qpt", "qpt-bench"],
+        choices=["report", "strategy", "compare", "qpt", "qpt-bench",
+                 "checkpoint", "resume", "reconcile", "doctor",
+                 "explain"],
     )
     sp.add_argument("--signal", default="", help="JSON TaskSignal (strategy/compare)")
     sp.add_argument("--path", default="", help="facts doc for qpt")
@@ -2717,6 +2862,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument(
         "--versions", default="", help='JSON product versions for qpt, e.g. \'{"kubernetes": "1.29"}\''
     )
+    sp.add_argument("--run-id", default="")
+    sp.add_argument("--spent", default="", help="JSON spent budget (checkpoint)")
+    sp.add_argument("--remaining", default="", help="JSON remaining budget")
+    sp.add_argument("--deps", default="", help="JSON dep hashes (checkpoint)")
+    sp.add_argument("--profile", default="", help="routing profile (resume)")
+    sp.add_argument("--planned", default="", help="JSON planned usage (reconcile)")
+    sp.add_argument("--observed", default="", help="JSON observed usage (reconcile)")
     sp.set_defaults(func=cmd_economy)
 
     sp = sub.add_parser("route", help="adaptive routing decision")
@@ -3149,11 +3301,66 @@ def build_parser() -> argparse.ArgumentParser:
     verb(
         "context",
         cmd_context,
-        "context pack for a task",
+        "context pack for a task; capsule/inspect/expand/delta/gc",
         lambda sp: (
+            sp.add_argument("context_cmd", nargs="?", default="pack",
+                            choices=["pack", "capsule", "inspect",
+                                     "expand", "delta", "gc"]),
             sp.add_argument("--task", default=""),
             sp.add_argument("--input-budget", type=int, default=None),
             sp.add_argument("--changed", nargs="*"),
+            sp.add_argument("--scope", default="repository"),
+            sp.add_argument("--budget-bytes", type=int, default=None),
+            sp.add_argument("--essential-bytes", type=int, default=None),
+            sp.add_argument("--required", nargs="*"),
+            sp.add_argument("--role", default="specialist"),
+            sp.add_argument("--facts", default=""),
+            sp.add_argument("--findings", default=""),
+            sp.add_argument("--rules", nargs="*"),
+            sp.add_argument("--knowledge", nargs="*"),
+            sp.add_argument("--graph-refs", nargs="*"),
+            sp.add_argument("--questions", nargs="*"),
+            sp.add_argument("--ref", default=""),
+            sp.add_argument("--section", default=""),
+        ),
+    )
+    verb(
+        "cache",
+        cmd_cache,
+        "multilayer cache stats/inspect/invalidate/gc",
+        lambda sp: (
+            sp.add_argument("cache_cmd",
+                            choices=["stats", "inspect", "invalidate",
+                                     "gc"]),
+            sp.add_argument("--layer", default="fact"),
+            sp.add_argument("--key", default=""),
+            sp.add_argument("--scope", default=""),
+            sp.add_argument("--deps", default=""),
+            sp.add_argument("--dep", default=""),
+            sp.add_argument("--value", default=""),
+        ),
+    )
+    verb(
+        "routing",
+        cmd_routing,
+        "routing explain/compare/scorecard",
+        lambda sp: (
+            sp.add_argument("routing_cmd",
+                            choices=["explain", "compare", "scorecard"]),
+            sp.add_argument("--task", default=""),
+            sp.add_argument("--profile", default="balanced"),
+            sp.add_argument("--risk", default="low"),
+            sp.add_argument("--signal", default=""),
+            sp.add_argument("--estimated", default=""),
+            sp.add_argument("--champion", default=""),
+            sp.add_argument("--challenger", default=""),
+            sp.add_argument("--approved", action="store_true"),
+            sp.add_argument("--run-id", default=""),
+            sp.add_argument("--mode", default="deterministic"),
+            sp.add_argument("--correctness", type=float, default=None),
+            sp.add_argument("--tokens", type=int, default=None),
+            sp.add_argument("--agents", type=int, default=0),
+            sp.add_argument("--provider-calls", type=int, default=0),
         ),
     )
     verb(
