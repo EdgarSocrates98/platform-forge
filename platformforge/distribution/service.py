@@ -92,8 +92,11 @@ def _distribution(profile: str, hosts: list[str], assets: dict[str, bytes],
         offline=True,
     )
 
-def plan_install(target: str | Path, profile: str = "agentic",
-                 hosts: list[str] | None = None) -> tuple[InstallPlan, DistributionManifest, dict[str, bytes]]:
+def plan_install(
+    target: str | Path,
+    profile: str = "agentic",
+    hosts: list[str] | None = None,
+) -> tuple[InstallPlan, DistributionManifest, dict[str, bytes]]:
     root = Path(target).resolve()
     hosts = hosts or ["agents"]
     assets = portable_assets(hosts)
