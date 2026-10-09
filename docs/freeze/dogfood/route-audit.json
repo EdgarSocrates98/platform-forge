@@ -1,10 +1,10 @@
 {
-  "avg_fanout": 3.33,
+  "avg_fanout": 3.38,
   "by_mode": {
     "coordinated": 1,
-    "single-specialist": 14
+    "single-specialist": 15
   },
-  "cases": 15,
+  "cases": 16,
   "decisions": [
     {
       "budget": "small",
@@ -14,7 +14,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 26.2,
+      "ms": 26.7,
       "reasons": [
         "delivery-path question"
       ],
@@ -198,7 +198,7 @@
       "fanout": 4,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.2,
+      "ms": 9.6,
       "reasons": [
         "security-sensitive work always gets a security reviewer",
         "IAM/SBOM/supply-chain question"
@@ -292,7 +292,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 8.9,
+      "ms": 9.6,
       "reasons": [
         "delivery-path question"
       ],
@@ -384,7 +384,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.0,
+      "ms": 9.5,
       "reasons": [
         "manifest/workload question"
       ],
@@ -476,7 +476,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.0,
+      "ms": 10.0,
       "reasons": [
         "manifest/workload question"
       ],
@@ -568,7 +568,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.0,
+      "ms": 9.8,
       "reasons": [
         "manifest/workload question"
       ],
@@ -660,7 +660,7 @@
       "fanout": 4,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.0,
+      "ms": 9.7,
       "reasons": [
         "security-sensitive work always gets a security reviewer",
         "IAM/SBOM/supply-chain question"
@@ -754,7 +754,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 8.8,
+      "ms": 9.5,
       "reasons": [
         "SLO/incident/telemetry question"
       ],
@@ -846,7 +846,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 8.9,
+      "ms": 9.7,
       "reasons": [
         "IaC artifact question"
       ],
@@ -938,7 +938,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 8.9,
+      "ms": 9.6,
       "reasons": [
         "cost decomposition needs the finops graph walk"
       ],
@@ -1030,7 +1030,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.0,
+      "ms": 9.7,
       "reasons": [
         "Crossplane artifact question"
       ],
@@ -1122,7 +1122,7 @@
       "fanout": 5,
       "flags": [],
       "mode": "coordinated",
-      "ms": 9.1,
+      "ms": 9.5,
       "reasons": [
         "manifest/workload question",
         "IaC artifact question"
@@ -1218,7 +1218,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.1,
+      "ms": 9.6,
       "reasons": [
         "manifest/workload question"
       ],
@@ -1304,13 +1304,107 @@
     },
     {
       "budget": "small",
+      "case": "secret-prose-mixed",
+      "coordinator": "",
+      "dag_stages": 5,
+      "fanout": 4,
+      "flags": [],
+      "mode": "single-specialist",
+      "ms": 9.7,
+      "reasons": [
+        "security-sensitive work always gets a security reviewer",
+        "IAM/SBOM/supply-chain question"
+      ],
+      "rejected": [
+        "pf-extractor",
+        "pf-graph-builder",
+        "pf-inventory",
+        "pf-judge",
+        "pf-reconciler",
+        "pf-simulator",
+        "pf-synthesizer",
+        "pf-verifier",
+        "platform-adversarial-critic",
+        "platform-ai-infra-specialist",
+        "platform-architecture-reviewer",
+        "platform-aws-specialist",
+        "platform-capacity-specialist",
+        "platform-change-coordinator",
+        "platform-crossplane-specialist",
+        "platform-debate-referee",
+        "platform-economy-reviewer",
+        "platform-federation-specialist",
+        "platform-finops-specialist",
+        "platform-fleet-coordinator",
+        "platform-fleet-specialist",
+        "platform-gitops-specialist",
+        "platform-graph-specialist",
+        "platform-iac-specialist",
+        "platform-incident-coordinator",
+        "platform-kubernetes-specialist",
+        "platform-operations-safety-reviewer",
+        "platform-optimization-coordinator",
+        "platform-orchestrator",
+        "platform-planner",
+        "platform-policy-specialist",
+        "platform-privacy-reviewer",
+        "platform-product-coordinator",
+        "platform-product-specialist",
+        "platform-release-guardian",
+        "platform-sre-specialist",
+        "platform-task-spec-reviewer"
+      ],
+      "result": "ok",
+      "reviewers": [
+        "platform-evidence-reviewer",
+        "platform-security-reviewer"
+      ],
+      "router_input": {
+        "blast_radius": "local",
+        "comparison": false,
+        "complexity": "low",
+        "conflict": false,
+        "coverage": 1.0,
+        "destructive": false,
+        "domains": [
+          "security"
+        ],
+        "evidence_available": true,
+        "evidence_completeness": 1.0,
+        "expected_cost": "low",
+        "expected_token_cost": "low",
+        "fleet_scope": false,
+        "freshness": "current",
+        "incident_status": "",
+        "mutability": "read",
+        "optimization": false,
+        "production": false,
+        "risk": "low",
+        "security_sensitive": true,
+        "task_type": "analysis"
+      },
+      "schema": "platformforge/route-decision/v1",
+      "selected": [
+        "platform-security-specialist",
+        "platform-evidence-reviewer",
+        "platform-security-reviewer",
+        "platform-verifier"
+      ],
+      "specialists": [
+        "platform-security-specialist"
+      ],
+      "tier": "holdout",
+      "verifier": "platform-verifier"
+    },
+    {
+      "budget": "small",
       "case": "terraform-iam-wildcard",
       "coordinator": "",
       "dag_stages": 5,
       "fanout": 4,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 8.8,
+      "ms": 10.0,
       "reasons": [
         "security-sensitive work always gets a security reviewer",
         "IAM/SBOM/supply-chain question"

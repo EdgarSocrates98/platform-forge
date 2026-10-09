@@ -14,7 +14,10 @@ the existing surface (docs/freeze/, prompt_evo_freezing.md).
 - `platformforge/cases/` — `case.yaml` contract, deterministic replay
   (`result_hash`, golden/holdout separated), FP/FN ledgers,
   `route-audit`/`route-bench`/`context-audit`, `cases` CLI verbs.
-- `.platformforge/cases/` — 15-case corpus (10 golden + 5 holdout).
+- `.platformforge/cases/` — 16-case corpus (10 golden + 6 holdout,
+  tracked in git); `.platformforge/ledgers/` FP/FN records tracked.
+- `docs/freeze/exceptions/FE-001.json` — deferred FeatureException
+  draft for fixture-aware scoping (RW-4/RW-7).
 - `docs/freeze/` — FREEZE-MANIFEST, LIFECYCLE, UNFREEZE-RFC template,
   REAL-WORLD-ISSUES ledger, DOGFOOD receipts, SECURITY-REVIEW,
   KNOWLEDGE-REVIEW, RELEASE-HARDENING, ARCHITECTURE-FREEZE-REVIEW,
@@ -34,6 +37,12 @@ the existing surface (docs/freeze/, prompt_evo_freezing.md).
   silent `max_files` truncation now reported via `truncated`.
 - SEC-1 `Sandbox.write_file` path containment — `../` escapes refuse
   (`platform.sandbox.path_escape`) instead of writing outside `dst`.
+- RW-8 (post-freeze audit) `.gitignore` excluded the whole
+  `.platformforge/` evidence corpus — cases/ledgers untracked.
+- RW-9 (post-freeze audit) `graph diff` ran `gaps()`+Tarjan twice on
+  identical graphs — hash fast-path + structural shortcut.
+- `graph paths` DFS → bounded BFS (first paths fast on dense graphs;
+  100k-node bench unblocked).
 
 ### Changed
 - pytest 8.4.2 → 9.1.1 (PYSEC-2026-1845, dev-only; suite green).

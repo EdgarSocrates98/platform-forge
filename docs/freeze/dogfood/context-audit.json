@@ -407,6 +407,35 @@
       "unused_context_ratio": 0.0
     },
     {
+      "case": "secret-prose-mixed",
+      "duplicate_bytes": 0,
+      "input_bytes": 284,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 284,
+      "retrieval_count": 2,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 284,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 284
+        },
+        "graph_aware": {
+          "bytes": 284,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 284,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "holdout",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
       "case": "terraform-iam-wildcard",
       "duplicate_bytes": 0,
       "input_bytes": 215,
@@ -440,8 +469,8 @@
   "schema": "platformforge/context-audit-corpus/v1",
   "totals": {
     "avg_unused_context_ratio": 0.0,
-    "input_bytes": 9552,
-    "relevant_bytes": 9552,
+    "input_bytes": 9836,
+    "relevant_bytes": 9836,
     "unused_bytes": 0
   }
 }

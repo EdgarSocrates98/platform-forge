@@ -4,11 +4,11 @@
   "route_audit": "dogfood/route-audit.json"
  },
  "context": {
-  "cases": 15,
+  "cases": 16,
   "totals": {
    "avg_unused_context_ratio": 0.0,
-   "input_bytes": 9552,
-   "relevant_bytes": 9552,
+   "input_bytes": 9836,
+   "relevant_bytes": 9836,
    "unused_bytes": 0
   }
  },
@@ -23,7 +23,9 @@
  },
  "fp_fn_ledger": {
   "confirmed": 0,
-  "note": "replay corpus reports per-case false_positives for human review; ledger records are created by `cases ledger` review, none filed",
+  "note": "FP-RW5-001 filed+fixed (prose-as-secret); precision unmeasurable below n=3 by design",
+  "records": 1,
+  "refuted": 1,
   "unresolved": 0
  },
  "mirrors": {
@@ -31,9 +33,9 @@
   "files": 205
  },
  "replay": {
-  "cases": 15,
+  "cases": 16,
   "golden": 10,
-  "holdout": 5,
+  "holdout": 6,
   "verdict": "pass"
  },
  "roster": {
@@ -53,15 +55,15 @@
  },
  "routing": {
   "audit_verdict": "pass",
-  "avg_fanout": 3.33,
+  "avg_fanout": 3.38,
   "by_mode": {
    "coordinated": 1,
-   "single-specialist": 14
+   "single-specialist": 15
   },
-  "cases": 15,
+  "cases": 16,
   "flagged": [],
   "ledger": ".platformforge/ledger/routing-decisions.jsonl"
  },
  "schema": "platformforge/agentic-receipt/v1",
- "sha": "c087503cca697ff1a0d9075b8fcacbce7fc23f8b"
+ "sha": "2cd24f78a53edf0fd4d535d7aa7015a3df54cd28"
 }

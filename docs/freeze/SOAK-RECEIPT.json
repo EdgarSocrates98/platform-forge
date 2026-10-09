@@ -13,21 +13,21 @@
     "to_version": 2
   },
   "schema": "platformforge/soak-receipt/v1",
-  "sha": "d9d1b1b296fbeaff9206852cda91ba8dd9bc48fa",
+  "sha": "2cd24f78a53edf0fd4d535d7aa7015a3df54cd28",
   "soak": {
-    "bulk_insert_ms": 4597.98,
+    "bulk_insert_ms": 4345.04,
     "crash_rollback_ok": true,
     "db_size_bytes": 49152,
     "events": 100000,
-    "forget_ms": 55.84,
+    "forget_ms": 55.32,
     "forgotten": 1031,
     "gc": {
       "events_deleted": 98969,
       "snapshots_deleted": 0
     },
-    "gc_ms": 1018.67,
-    "peak_insert_kib": 5960.3,
-    "query_total_ms": 183.47,
+    "gc_ms": 1050.08,
+    "peak_insert_kib": 5960.2,
+    "query_total_ms": 176.8,
     "reopen_rows_intact": true,
     "rounds": 10,
     "rows_after_gc": 0,
@@ -39,7 +39,7 @@
       "bytes_before": 17248256,
       "vacuumed": true
     },
-    "vacuum_ms": 11.97,
+    "vacuum_ms": 12.99,
     "verdict": "pass"
   },
   "verdict": "pass"
