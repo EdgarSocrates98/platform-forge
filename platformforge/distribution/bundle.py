@@ -50,3 +50,75 @@ def verify_bundle(bundle: str | Path) -> dict:
             bad.append(rel)
     return {"valid": not bad, "bad": bad,
             "refusal": None if not bad else "PF-DIST-HASH-MISMATCH"}
+
+
+def install_bundle(bundle: str | Path, target: str | Path) -> dict:
+    """Install a verified bundle without network access."""
+    from platformforge.distribution.models import DistributionManifest, InstallReceipt, DIST_SCHEMA
+    from platformforge.distribution.service import _safe_target, _sha, PF_DIR, INSTALL_RECEIPT, DIST_MANIFEST
+    from platformforge.workspace.service import ensure_workspace
+    import os
+
+    root = Path(bundle).resolve()
+    target = Path(target).resolve()
+    verified = verify_bundle(root)
+    if not verified["valid"]:
+        return verified
+    manifest = DistributionManifest.from_dict(json.loads((root / "manifest.json").read_text()))
+    if manifest.schema != DIST_SCHEMA:
+        return {"valid": False, "refusal": "PF-DIST-UNSUPPORTED-SCHEMA",
+                "schema": manifest.schema}
+
+    old = {}
+    rp = target / PF_DIR / INSTALL_RECEIPT
+    if rp.is_file():
+        try:
+            old = json.loads(rp.read_text()).get("files", {})
+        except (OSError, ValueError):
+            old = {}
+
+    conflicts, writes = [], []
+    for asset in manifest.assets:
+        src = (root / "assets" / asset.path).resolve()
+        if root not in src.parents or not src.is_file():
+            return {"valid": False, "refusal": "PF-DIST-BUNDLE-INCOMPLETE",
+                    "asset": asset.path}
+        dest = _safe_target(target, asset.path)
+        if dest.exists():
+            cur = _sha(dest.read_bytes())
+            if cur == asset.sha256:
+                continue
+            if old.get(asset.path) != cur:
+                conflicts.append(asset.path)
+                continue
+        writes.append((src, dest))
+    if conflicts:
+        return {"refusal": "PF-DIST-CONFLICT", "conflicts": conflicts}
+
+    staged = []
+    try:
+        for src, dest in writes:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dest.with_name(dest.name + ".platformforge-stage")
+            tmp.write_bytes(src.read_bytes())
+            staged.append((tmp, dest))
+        for tmp, dest in staged:
+            os.replace(tmp, dest)
+        ensure_workspace(target, profile=manifest.profile, hosts=manifest.hosts)
+        pf = target / PF_DIR
+        pf.mkdir(parents=True, exist_ok=True)
+        (pf / DIST_MANIFEST).write_text(json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n")
+        files = {a.path: a.sha256 for a in manifest.assets}
+        receipt = InstallReceipt(
+            manifest.distribution_id, manifest.platformforge_version,
+            manifest.source_sha, str(target), manifest.profile,
+            manifest.hosts, files,
+        )
+        (pf / INSTALL_RECEIPT).write_text(json.dumps(receipt.to_dict(), indent=2, sort_keys=True) + "\n")
+        return {"status": "committed", "offline": True,
+                "distribution_id": manifest.distribution_id,
+                "files": len(files), "target": str(target)}
+    except Exception:
+        for tmp, _ in staged:
+            tmp.unlink(missing_ok=True)
+        raise
