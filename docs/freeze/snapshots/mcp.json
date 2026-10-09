@@ -8,10 +8,13 @@
     "platformforge_change_review": "9a317ce3a3ca7ba9036dff272de4511719ecbda32b66c13cee8f2d22c26126f3",
     "platformforge_change_verify": "76cf9d81ab231af16030e95979217ef6ca21ca02e252901d45a61bb7e9868f13",
     "platformforge_collect": "cb80fbb4adab44ee118cd2e5eba71db64d900aceb38d2f0e2f609c64bf81fca4",
+    "platformforge_context_expand": "f5225a47d2c603a2b849b3f8b92e8f6e625f6998ac90acc950ae002cb21a06da",
+    "platformforge_context_inspect": "c70e9312b9048162fd0857a046ef4613150b718a895a059ef1aab8d401c09cda",
     "platformforge_correlate": "97ede8dbe673e5f0bcfb564c3bd25d77260726c0cd71b339bdefeb613cbc055a",
     "platformforge_diagnose": "f68163f55c974937ff70a8cdea1008a0432e0d84735072c1932c51bb9e9eceba",
     "platformforge_drift": "2e66006d879261cd2f02e7a560871ed3137aaf014186a2eec35cdcefed8495ff",
     "platformforge_economy": "0988c0cf5686283bcdeae64e612f5b4f00e260d7fa3f7519e5ab22bcc79f07b1",
+    "platformforge_economy_explain": "6b4dff63fdcbc1d4bcc9d1cd07a5468f9f7b5c124f19333c9da9b7403d95cbf1",
     "platformforge_evals": "627cc81d2bce73a1c594f6d4f809aaeeff7423d711862f18f331d64ebfc5d984",
     "platformforge_explain": "96a8521835291c4c2b31c17fbd3ab50cac7d1da568677b3291aa59fafcedcdc8",
     "platformforge_federation": "efc741d56d55fa45cf347abc58b795d7149031054663ec0559f5e492bf64a3c2",
@@ -32,10 +35,11 @@
     "platformforge_recommend": "657de19a9f4f3161a7a73e871f1658b52c731ed93843acbcac6a74d6ad237194",
     "platformforge_reliability": "ae8a6a1ed92b1da60766b44b5358fd3edcf950de83495cf393320a49b16f9249",
     "platformforge_risk": "3be1b131d17a425946557674edcb08cee8568ef68e942f173ad99ce7c3d6171f",
+    "platformforge_routing_explain": "625f3be5b65f87a6e533ec886e6998e9545c2a15bbd8037ad152b44b16df2f7b",
     "platformforge_security_scan": "ee2d9792f4fb6b04d51954b911b750d8d4b7fa2675d58869102fdfc8b70ba72e",
     "platformforge_slo": "7aa37609bd6c9c346b4ee0ef8dc3df5b35bd9a0a8ccf4e49b133438bcaef0e0b"
   },
   "family": "mcp",
   "schema": "platformforge/freeze-snapshot/v1",
-  "sha": "778c684c6135ffd58f6da71732eb8ffef8fa5416"
+  "sha": "67cfb75dc137d2aaacd428ada70915267e85a466"
 }

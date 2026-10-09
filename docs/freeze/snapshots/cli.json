@@ -5,6 +5,7 @@
     "analytics": "65f98121a162a56ad8ee919ed9ea394b9eabd8714616acf30636c6092ee350b9",
     "analyze": "09cbad3beca70ddbcc89819d841b26bc8be195122240185d5388f152f88a107c",
     "bench": "1b32c28cb38c05480eccc1bd60ff97029b57a05c96718b96dad7e9d84894f549",
+    "cache": "5e1ecee06a7fc06f305ae5c12acfe7a7f67b8ece7af76932ed3afab00c3c6921",
     "capability": "38a5be91af79d7e5ba9809bf383c699b6864ee50446239fe56a45e32b84638fe",
     "cases": "352b84777d8dd96ac9c0b3c170ecb2c7cca7fc2dbae41a1ec1ed4286fb2c43db",
     "caveman": "b2bafec94691622980343dfcd8c97c3e703b039db4e99528036947aee743d492",
@@ -44,6 +45,7 @@
     "reliability": "819bb986f4199f141bc48a85fee53780516ee28183b3cc883c3411ff7d9e4ada",
     "risk": "2c6ef0f0d0e4cc6e9c15d05e0480151d4e3d0b8baa0423e660330d47f56e1a66",
     "route": "8a84e406c08ac9594f47222406598f7598e15c55f8044b04813e28c9dee70976",
+    "routing": "fc6672ade6fd208a2c9659f88884ecf3a5bf7b8841194261506ad9cc4570e286",
     "rtk": "3dc0deea30053c57bcbb7c1ff189b8cd5668eea42faf9b1aff650d1a4a7eb0de",
     "sdd": "0a4ec9d8dce6bbf33a230c16443a20447bc3a7616d813ab1b1525fb95c1392f7",
     "security": "5d2d3ceb7abe552344276d47d36a8175b7aeb250a9bf0bf00e850cd23ecf2e43",
@@ -53,5 +55,5 @@
   },
   "family": "cli",
   "schema": "platformforge/freeze-snapshot/v1",
-  "sha": "778c684c6135ffd58f6da71732eb8ffef8fa5416"
+  "sha": "67cfb75dc137d2aaacd428ada70915267e85a466"
 }

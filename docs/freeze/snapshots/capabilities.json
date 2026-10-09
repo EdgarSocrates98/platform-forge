@@ -8,10 +8,13 @@
     "platformforge_change_review": "2ae9e7132d6b965c9ca2bfe1abc4ef59df7761a9c3f4389bef0f7bfd3ee78ea6",
     "platformforge_change_verify": "70edc7d3be0013f4ec7b8ccc1227238449a2c35a3d045b8e9d5bf66dbf9d6f29",
     "platformforge_collect": "f5b71377293fa38e4e01e76aa9971257a299644b2ef4b46e2dafe1ac243dfeb5",
+    "platformforge_context_expand": "6154ca8ec7a6777c15e30bb7406dde2c6098ab73d992e56be1b55a8c85f2f4fe",
+    "platformforge_context_inspect": "ac0d189876b5f12b9dc9544c88ee6d8fa37c11e676055328a4a87563bb6dae07",
     "platformforge_correlate": "dab6173ca4b30ed27b3466cbf0c5b60d33bd4e0f9b1acd3da9b6e59792cf6a9d",
     "platformforge_diagnose": "db806e1cd4b2bb88d4ba424af7997fc241d2ab910cbb81a2b408a454f6c32522",
     "platformforge_drift": "e4f25a0e5f206bb8d0ee495f9804193372e6d83adb307c5bd099be996fae5c4e",
     "platformforge_economy": "4dd1213093303bbe2526c9e0a44915b605aaefd7c75e904a560beff8fc017193",
+    "platformforge_economy_explain": "6e5aa32e36f010cea56b6cc95285266cbbf51efe12b5a3b4e06d4fc28ca092e6",
     "platformforge_evals": "65704366b3d7269d5db82189a21aee26f7e986d127ebf055ff55f84289d30417",
     "platformforge_explain": "f294d393e64a77f452ed6deb57b3ea961a76c52ff3c6955374937902444aa2ca",
     "platformforge_federation": "861c541e6212a328a31bb30f0908714ad8a87fc867b36b8ceeeaf7a8179fcfff",
@@ -32,10 +35,11 @@
     "platformforge_recommend": "7c262bc83a4f0aaa4e342f54e69cf1999606e9d72dc54a967f05f56c3580c5ec",
     "platformforge_reliability": "9cc62674a40021bea017000214f910ad298da8040ced7f17b3c54586e721d0f7",
     "platformforge_risk": "3f1853d927c68c99440f5bce520ddff4f45ffe6ebc420672ffabdfb3354ae294",
+    "platformforge_routing_explain": "c2058ab57eadc4eda7bc4c078a34de849ef7c05e1a6249a92d05e05794f90bfe",
     "platformforge_security_scan": "efeab07a41cc0237561ae37b9bbe629f22297255b85cb518e106e8dcc99e6045",
     "platformforge_slo": "0603101f9e7ad7629d61802cb36d298f4dd2e99def30f647282e86bb3c4be66a"
   },
   "family": "capabilities",
   "schema": "platformforge/freeze-snapshot/v1",
-  "sha": "778c684c6135ffd58f6da71732eb8ffef8fa5416"
+  "sha": "67cfb75dc137d2aaacd428ada70915267e85a466"
 }
