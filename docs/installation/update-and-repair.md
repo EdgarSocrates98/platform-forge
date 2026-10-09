@@ -3,7 +3,7 @@
 ## Update
 
 ```bash
-platformforge update --to <versão ou tag pinada>
+platformforge install update --to <versão ou tag pinada>
 ```
 
 `latest` é recusado por contrato — sempre pin a versão. Sem checkout
@@ -13,7 +13,7 @@ registrado o update reporta BLOCKED honestamente.
 
 ```bash
 platformforge doctor   # mostra o drift
-platformforge repair   # reassegura regiões gerenciadas
+platformforge install repair   # reassegura regiões gerenciadas
 ```
 
 Repair restaura arquivos gerenciados removidos e cura blocos

@@ -2,7 +2,7 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "platform-forge",
   "cli": "platformforge",
-  "generated_at": "2026-10-09T22:28:07Z",
+  "generated_at": "2026-10-09T22:45:17Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 57,
   "commands": [

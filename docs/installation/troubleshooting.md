@@ -8,4 +8,4 @@
 | `FORGE-INSTALL-NOT-A-REPO` | escopo project precisa de `.git` ou `--root` |
 | doctor FAIL em mcp-handshake | `platformforge mcp-verify` mostra stderr_tail — geralmente dependência ausente |
 | arquivo seu sumiu? | não deveria — instalação nunca sobrescreve conteúdo do usuário; backups em `<state_dir>/backups/` |
-| drift detectado | `platformforge repair` restaura regiões gerenciadas mantendo o resto |
+| drift detectado | `platformforge install repair` restaura regiões gerenciadas mantendo o resto |
