@@ -55,6 +55,7 @@ def _spec() -> kit.ForgeSpec:
         state_dir=".platformforge",
         mcp_command=("platformforge-mcp",),
         mcp_server_name="platformforge",
+        mcp_verify_tool="platformforge_inspect",
         version_cmd=("--version",),
         render_assets=None,
         marker_files=(),
