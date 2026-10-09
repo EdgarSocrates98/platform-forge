@@ -1,0 +1,6 @@
+id: rollback-terraform-replan
+type: live
+domain: ops-rollback
+fixture: ../../../lab/scenarios/ops-rollback-terraform/fixture
+expect:
+  check: ops-scenario

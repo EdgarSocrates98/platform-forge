@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: legacy-app
+  namespace: prod
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: app
+          image: registry/app:1.4.2
+          resources:
+            requests: {cpu: 100m}
+            limits: {cpu: 500m}
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: legacy-app
+  namespace: prod
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: {app: legacy-app}

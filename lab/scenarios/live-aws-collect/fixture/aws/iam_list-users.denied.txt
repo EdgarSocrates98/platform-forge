@@ -1,0 +1,1 @@
+An error occurred (AccessDenied) when calling the ListUsers operation: User is not authorized to perform iam:ListUsers

@@ -1,0 +1,13 @@
+id: agent-fleet-optimization
+type: agent
+check: route
+signal:
+  task_type: analysis
+  domains: [fleet, finops]
+  optimization: true
+  fleet_scope: true
+expect:
+  mode: critical-review
+  reviewers_include: [platform-operations-safety-reviewer,
+                      platform-security-reviewer]
+  verifier_required: true

@@ -1,0 +1,11 @@
+id: fleet-op-hotspot
+name: Operation hotspot — rollout_restart toil + remediation recurrence
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - operations:
+      min_count: 3
+      min_hotspots: 1
+      min_recurrence: 1
+      no_auto_remediate: true

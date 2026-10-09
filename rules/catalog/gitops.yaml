@@ -1,0 +1,161 @@
+# GitOps & CI/CD rules — PF-GITOPS-* / PF-CICD-*.
+rules:
+  - rule_id: PF-GITOPS-001
+    domain: gitops
+    title: "ArgoCD app without automated sync"
+    severity: low
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.automated_sync, op: equals, value: false}
+    message: "manual sync lets cluster drift from git silently"
+    sources: ['argocd-docs']
+    source_refs:
+      argocd-docs: "en/stable/user-guide/auto_sync"
+
+  - rule_id: PF-GITOPS-002
+    domain: gitops
+    title: "ArgoCD sync without self-heal"
+    severity: medium
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.automated_sync, op: equals, value: true}
+        - {path: attrs.self_heal, op: equals, value: false}
+    message: "out-of-band changes persist until the next sync"
+    sources: ['argocd-docs']
+    source_refs:
+      argocd-docs: "en/stable/user-guide/auto_sync#automatic-self-healing"
+
+  - rule_id: PF-GITOPS-003
+    domain: gitops
+    title: "ArgoCD sync without prune"
+    severity: medium
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.automated_sync, op: equals, value: true}
+        - {path: attrs.prune, op: equals, value: false}
+    message: "deleted manifests linger in the cluster"
+    sources: ['argocd-docs']
+    source_refs:
+      argocd-docs: "en/stable/user-guide/auto_sync#automatic-pruning"
+
+  - rule_id: PF-GITOPS-010
+    domain: gitops
+    title: "Flux resource suspended"
+    severity: info
+    applies_to: {fact_kind: gitops.flux_resource}
+    conditions:
+      all:
+        - {path: attrs.suspend, op: equals, value: true}
+    message: "suspended resources stop reconciling — confirm intent"
+    sources: ['flux-docs']
+    source_refs:
+      flux-docs: "flux/components/kustomize/kustomizations#suspension"
+
+  - rule_id: PF-CICD-001
+    domain: cicd
+    title: "Third-party action not pinned to SHA"
+    severity: high
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.unpinned_third_party, op: not_empty}
+    message: "tag/branch refs are mutable — supply-chain hijack surface"
+    sources: ['github-actions-docs']
+    source_refs:
+      github-actions-docs: "en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions"
+
+  - rule_id: PF-CICD-002
+    domain: cicd
+    title: "Dangerous trigger on privileged context"
+    severity: critical
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.dangerous_triggers, op: not_empty}
+    message: "pull_request_target/workflow_run expose secrets to forks"
+    sources: ['github-securitylab']
+    source_refs:
+      github-securitylab: "resources/github-actions-preventing-pwn-requests"
+
+  - rule_id: PF-CICD-003
+    domain: cicd
+    title: "Script injection via untrusted context"
+    severity: critical
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.script_injection_risk, op: not_empty}
+    message: "${{ }} inside run: interpolates attacker-controlled text"
+    sources: ['github-actions-docs']
+    source_refs:
+      github-actions-docs: "en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections"
+
+  - rule_id: PF-CICD-004
+    domain: cicd
+    title: "Broad write permissions at workflow level"
+    severity: medium
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      any:
+        - {path: attrs.write_perms, op: contains, value: "*"}
+        - {path: attrs.write_perms, op: contains, value: "id-token"}
+    message: "default broad GITHUB_TOKEN permissions widen compromise impact"
+    sources: ['github-actions-docs']
+    source_refs:
+      github-actions-docs: "en/actions/writing-workflows/workflow-syntax-for-github-actions#permissions"
+
+  - rule_id: PF-CICD-005
+    domain: cicd
+    title: "Self-hosted runner on untrusted path"
+    severity: medium
+    applies_to: {fact_kind: cicd.github_workflow}
+    conditions:
+      all:
+        - {path: attrs.self_hosted_jobs, op: not_empty}
+        - {path: attrs.dangerous_triggers, op: not_empty}
+    message: "self-hosted + fork-reachable triggers = host compromise"
+    sources: ['github-actions-docs']
+    source_refs:
+      github-actions-docs: "en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#hardening-for-self-hosted-runners"
+
+  - rule_id: PF-GITOPS-020
+    domain: gitops
+    title: "ArgoCD app not scoped to an AppProject"
+    severity: medium
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.app_project_scope, op: equals, value: false}
+    message: "unscoped apps can deploy any source to any destination"
+    sources: ['argocd-docs']
+    source_refs:
+      argocd-docs: "en/stable/user-guide/projects/"
+
+  - rule_id: PF-GITOPS-021
+    domain: gitops
+    title: "AppProject without source restrictions"
+    severity: high
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.source_restrictions, op: equals, value: 0}
+    message: "project admits any repository — supply-chain surface"
+    sources: ['argocd-docs']
+    source_refs:
+      argocd-docs: "en/stable/user-guide/projects/"
+
+  - rule_id: PF-GITOPS-022
+    domain: gitops
+    title: "ApplicationSet without generators"
+    severity: info
+    applies_to: {fact_kind: gitops.argocd_app}
+    conditions:
+      all:
+        - {path: attrs.generators, op: empty}
+    message: "ApplicationSet produces no applications"
+    sources: ['argocd-docs']
+    source_refs:
+      argocd-docs: "en/stable/operator-manual/applicationset/Generators/"

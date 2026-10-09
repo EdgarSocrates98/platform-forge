@@ -1,0 +1,4 @@
+tier: standard
+description: fixture-replayed aws CLI collector — offline determinism
+analyzers: [live-aws]
+fact_kinds: [live.observation, live.object]

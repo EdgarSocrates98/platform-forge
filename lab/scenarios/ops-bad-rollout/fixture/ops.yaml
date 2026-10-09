@@ -1,0 +1,33 @@
+intent:
+  intent_id: lab-i3
+  owner: team-a
+  requested_by: bob
+  reason: {type: incident}
+  target_resources: ["k8s:lab/apps/Deployment/web"]
+  desired_change: {restart: true}
+steps:
+  - step_id: restart
+    action: kubernetes.rollout_restart
+    params: {kind: Deployment, name: web, namespace: apps}
+expected_delta:
+  changes: {resources: [{id: "dep/web", restarted: true}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+pre_state:
+  restart: {revision: "7"}
+post_rollback:
+  restart: {revision: "7"}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
+environment: lab
+auto_rollback: true
+transports: {kubernetes: {rc: 0, stdout: "restarted"}}
+verify:
+  observations:
+    immediate: {changes: {resources: [{id: "dep/web", restarted: true}]}}
+    stabilization: {changes: {resources: [{id: "dep/web", restarted: true}]}}
+    extended: {changes: {resources: [{id: "dep/web", restarted: true}]}}
+  slo: {error_rate_max: 0.01}
+  metrics: {error_rate: 0.4}
+expect: {ok: true, state: rolled-back, convergence: regressed}

@@ -1,0 +1,7 @@
+id: capacity-hot
+type: golden
+variant: positive
+domain: capacity
+fixture: fixture
+expect:
+  rules_fired: [PF-SRE-001, PF-SRE-002]

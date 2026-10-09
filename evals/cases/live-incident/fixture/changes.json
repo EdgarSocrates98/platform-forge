@@ -1,0 +1,8 @@
+[
+  {"kind": "deployment", "timestamp": "2025-06-10T11:40:00Z",
+   "action": "deploy", "resources": ["svc/payments-api"],
+   "tier": 1, "freshness": "fresh", "blast_radius": 0.5,
+   "runtime_correlated": true},
+  {"kind": "cloudtrail", "timestamp": "2025-06-10T12:30:00Z",
+   "action": "DescribeInstances", "resources": ["svc/other"]}
+]

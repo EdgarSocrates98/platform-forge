@@ -1,0 +1,7 @@
+{
+  "incident_id": "INC-42",
+  "title": "payments 5xx spike",
+  "timestamp": "2025-06-10T12:00:00Z",
+  "resources": ["svc/payments-api"],
+  "impact": {"error_rate": 0.4}
+}

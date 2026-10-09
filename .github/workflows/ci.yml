@@ -1,0 +1,137 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core:
+    # Runner is configurable: set repository variable PF_RUNNER to a JSON
+    # label (e.g. "\"self-hosted\"" or "[\"self-hosted\",\"linux\"]") to run
+    # on self-hosted infrastructure; defaults to GitHub-hosted ubuntu-latest.
+    # Gates live in scripts/validate.py — CI orchestrates, never duplicates
+    # (cycle 2.1 §144-145): `python scripts/validate.py --gate <name>` runs
+    # the identical check locally.
+    runs-on: ${{ fromJSON(vars.PF_RUNNER || '"ubuntu-latest"') }}
+    strategy:
+      matrix:
+        # Supported interpreters — all verified locally.
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: python scripts/validate.py --gate lint
+      - name: Tests
+        run: python scripts/validate.py --gate tests
+      - name: Rule provenance gate
+        run: python scripts/validate.py --gate provenance
+      - name: Rule→source exact linkage
+        run: python scripts/validate.py --gate linkage
+      - name: Knowledge sources gate
+        run: python scripts/validate.py --gate knowledge
+      - name: Knowledge packs contract
+        run: python scripts/validate.py --gate packs
+      - name: Security — redaction + offline
+        run: python scripts/validate.py --gate security
+      - name: Lab scenarios
+        run: python scripts/validate.py --gate lab
+      - name: Eval corpus
+        run: python scripts/validate.py --gate evals
+      - name: Rule coverage
+        run: python scripts/validate.py --gate coverage
+      - name: MCP parity smoke
+        run: python scripts/validate.py --gate mcp-parity
+      - name: Docs drift
+        run: python scripts/validate.py --gate docs
+      # --- Cycle 4.1 — governed operations gates -------------------
+      - name: Ops — typed-action contracts
+        run: python scripts/validate.py --gate ops-contracts
+      - name: Ops — approval integrity
+        run: python scripts/validate.py --gate ops-approval
+      - name: Ops — execution
+        run: python scripts/validate.py --gate ops-execution
+      - name: Ops — rollback integrity
+        run: python scripts/validate.py --gate ops-rollback
+      - name: Ops — verification
+        run: python scripts/validate.py --gate ops-verification
+      - name: Ops — policy + autonomy
+        run: python scripts/validate.py --gate ops-policy
+      - name: Ops — eval cases
+        run: python scripts/validate.py --gate ops-evals
+      - name: Ops — lab scenarios
+        run: python scripts/validate.py --gate ops-lab
+      - name: Fleet — contracts
+        run: python scripts/validate.py --gate fleet-contracts
+      - name: Fleet — org graph
+        run: python scripts/validate.py --gate fleet-graph
+      - name: Analytics — engines
+        run: python scripts/validate.py --gate analytics
+      - name: History — windows/patterns
+        run: python scripts/validate.py --gate history
+      - name: Optimization — boundary
+        run: python scripts/validate.py --gate optimization
+      - name: Federation — boundary
+        run: python scripts/validate.py --gate federation
+      - name: Privacy — no person metrics
+        run: python scripts/validate.py --gate privacy
+      - name: AI platform — denominators
+        run: python scripts/validate.py --gate ai-platform
+      - name: Fleet — evals
+        run: python scripts/validate.py --gate fleet-evals
+      - name: Fleet — lab
+        run: python scripts/validate.py --gate fleet-lab
+      - name: Adversarial — E1–E12
+        run: python scripts/validate.py --gate adversarial
+      - name: Agents — contract
+        run: python scripts/validate.py --gate agents-contract
+      - name: Agents — routing
+        run: python scripts/validate.py --gate agents-routing
+      - name: Agents — mirrors
+        run: python scripts/validate.py --gate agents-mirrors
+      - name: Agents — economy
+        run: python scripts/validate.py --gate agents-economy
+      - name: Agents — debate
+        run: python scripts/validate.py --gate agents-debate
+      - name: Agents — independence (A1–A12)
+        run: python scripts/validate.py --gate agents-independence
+      - name: Agents — evals
+        run: python scripts/validate.py --gate agents-evals
+      - name: Self — dogfooding gate
+        run: python scripts/validate.py --gate self
+
+  package:
+    # Build wheel → gate contents → install in a clean venv → run from
+    # OUTSIDE the checkout so the test cannot silently pass because repo
+    # files are on sys.path.
+    runs-on: ${{ fromJSON(vars.PF_RUNNER || '"ubuntu-latest"') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build wheel
+        run: pip install build && python -m build --wheel
+      - name: Wheel contents gate
+        run: python scripts/validate.py --gate package
+      - name: Install in clean env
+        run: |
+          python -m venv /tmp/pfenv
+          /tmp/pfenv/bin/pip install dist/*.whl
+      - name: Smoke — outside the checkout
+        run: |
+          cd "$RUNNER_TEMP" || cd /tmp
+          /tmp/pfenv/bin/platformforge --help
+          /tmp/pfenv/bin/platformforge doctor
+          /tmp/pfenv/bin/platformforge lab run-all
+          /tmp/pfenv/bin/python -c \
+            "from platformforge.resources import data_path; \
+          from platformforge.rules import load_catalog; \
+          rules = load_catalog(data_path('rules','catalog')); \
+          assert len(rules) >= 60, len(rules); \
+          print(len(rules), 'rules from installed wheel')"

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/observation/v1",
+  "title": "PlatformForge Observation Envelope",
+  "type": "object",
+  "required": ["schema", "observation_id", "collector", "collector_version",
+               "provider", "source_type", "captured_at", "scope",
+               "coverage", "objects"],
+  "properties": {
+    "schema": {"const": "platformforge/observation/v1"},
+    "observation_id": {"type": "string", "pattern": "^obs-[0-9a-f]{16}$"},
+    "collector": {"type": "string", "minLength": 1},
+    "collector_version": {"type": "string", "minLength": 1},
+    "provider": {"type": "string", "minLength": 1},
+    "source_type": {"enum": ["observed", "runtime"]},
+    "captured_at": {"type": "string", "minLength": 1},
+    "completed_at": {"type": "string"},
+    "fresh_until": {"type": "string"},
+    "scope": {
+      "type": "object",
+      "properties": {
+        "provider": {"type": "string"},
+        "accounts": {"type": "array", "items": {"type": "string"}},
+        "regions": {"type": "array", "items": {"type": "string"}},
+        "services": {"type": "array", "items": {"type": "string"}},
+        "resource_types": {"type": "array", "items": {"type": "string"}},
+        "namespaces": {"type": "array", "items": {"type": "string"}},
+        "clusters": {"type": "array", "items": {"type": "string"}},
+        "selectors": {"type": "object"},
+        "exclusions": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["complete", "partial", "sampled", "truncated",
+                            "permission-limited", "unsupported", "unknown"]},
+        "per_resource_type": {"type": "object"},
+        "reasons": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "properties": {
+        "pages": {"type": "integer"},
+        "cursors": {"type": "array"},
+        "resource_versions": {"type": "array"},
+        "truncated": {"type": "boolean"},
+        "remaining_item_count": {"type": ["integer", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "denied": {"type": "array"}
+      },
+      "additionalProperties": true
+    },
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["resource_id", "resource_type"],
+        "properties": {
+          "resource_id": {"type": "string", "minLength": 1},
+          "resource_type": {"type": "string", "minLength": 1},
+          "provider": {"type": "string"},
+          "account": {"type": "string"},
+          "region": {"type": "string"},
+          "cluster": {"type": "string"},
+          "namespace": {"type": "string"},
+          "name": {"type": "string"},
+          "uid": {"type": "string"},
+          "lifecycle": {"enum": ["present", "deleting", "deleted", "unknown"]},
+          "deletion_evidence": {"type": "string"},
+          "attributes": {"type": "object"},
+          "content_hash": {"type": "string"},
+          "observed_at": {"type": "string"},
+          "artifact": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "bytes": {"type": "integer"},
+    "hashes": {"type": "object"},
+    "receipt": {"type": "object"}
+  },
+  "additionalProperties": true
+}

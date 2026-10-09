@@ -1,0 +1,4 @@
+{"Reservations": [{"Instances": [{"InstanceId": "i-1", "InstanceType": "t3.large",
+    "State": {"Name": "running"}, "PublicIpAddress": "54.1.2.3", "SubnetId": "sn-1"}]}],
+ "Clusters": [{"clusterName": "prod", "arn": "arn:aws:eks:us-east-1:111:cluster/prod",
+               "version": "1.29", "status": "ACTIVE"}]}

@@ -1,0 +1,5 @@
+id: change-review
+task: "change review — terraform plan with replace + delete"
+domain: plan
+fixture: fixture/plan.json
+budget: 50000

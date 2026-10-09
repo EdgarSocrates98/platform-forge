@@ -1,0 +1,12 @@
+id: fleet-ai
+name: AI platform — GPU workloads detected; cost/token needs denominator
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - ai:
+      min_detected: 2
+      unit_economics:
+        cost: 9800
+        tokens: null
+        expect: null

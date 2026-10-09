@@ -1,0 +1,99 @@
+# Canonical orchestration loops — data, not buried policy (cycle5.1
+# §147–152). Each stage names a canonical agent; `fanout: domains` is
+# the only dynamic stage — the orchestrator substitutes routed
+# specialists. `if: conflicts` stages only run when a referee is needed.
+# Verification is always the last stage and is never the producer.
+schema: platformforge/orchestration/v1
+loops:
+  platform-audit:
+    description: "§150 — 'analyze my platform': full governed pipeline"
+    coordinator: platform-orchestrator
+    stages:
+      - {id: plan, agent: platform-planner}
+      - {id: spec-review, agent: platform-task-spec-reviewer,
+         after: [plan]}
+      - {id: inventory, agent: pf-inventory, after: [spec-review]}
+      - {id: extract, agent: pf-extractor, after: [inventory]}
+      - {id: specialists, fanout: domains, after: [extract]}
+      - {id: graph, agent: pf-graph-builder, after: [specialists]}
+      - {id: evidence-review, agent: platform-evidence-reviewer,
+         after: [graph]}
+      - {id: critic, agent: platform-adversarial-critic,
+         after: [evidence-review]}
+      - {id: referee, agent: platform-debate-referee, after: [critic],
+         if: conflicts}
+      - {id: synthesize, agent: pf-synthesizer,
+         after: [critic, referee]}
+      - {id: verify, agent: platform-verifier, after: [synthesize]}
+
+  incident:
+    description: "§148 — runtime evidence first; never 'last deploy = cause'"
+    coordinator: platform-incident-coordinator
+    stages:
+      - {id: inventory, agent: pf-inventory}
+      - {id: extract, agent: pf-extractor, after: [inventory]}
+      - {id: sre, agent: platform-sre-specialist, after: [extract]}
+      - {id: specialists, fanout: domains, after: [sre]}
+      - {id: graph, agent: platform-graph-specialist,
+         after: [specialists]}
+      - {id: correlate, agent: pf-reconciler, after: [graph]}
+      - {id: critic, agent: platform-adversarial-critic,
+         after: [correlate]}
+      - {id: referee, agent: platform-debate-referee, after: [critic],
+         if: conflicts}
+      - {id: synthesize, agent: pf-synthesizer,
+         after: [critic, referee]}
+      - {id: verify, agent: platform-verifier, after: [synthesize]}
+
+  change:
+    description: "§151 — finding → governed pipeline; agents never execute"
+    coordinator: platform-change-coordinator
+    stages:
+      - {id: source-of-truth, agent: pf-inventory}
+      - {id: specialists, fanout: domains, after: [source-of-truth]}
+      - {id: simulate, agent: pf-simulator, after: [specialists]}
+      - {id: safety-review,
+         agent: platform-operations-safety-reviewer, after: [simulate]}
+      - {id: policy, agent: platform-policy-specialist,
+         after: [safety-review]}
+      - {id: approval-gate, agent: human-gate, after: [policy],
+         external: true}
+      - {id: verify, agent: platform-verifier, after: [approval-gate]}
+
+  fleet:
+    description: "§149 — fleet-wide analysis with coverage evidence"
+    coordinator: platform-fleet-coordinator
+    stages:
+      - {id: fleet-scan, agent: platform-fleet-specialist}
+      - {id: specialists, fanout: domains, after: [fleet-scan]}
+      - {id: optimize, agent: platform-optimization-coordinator,
+         after: [specialists]}
+      - {id: evidence-review, agent: platform-evidence-reviewer,
+         after: [optimize]}
+      - {id: synthesize, agent: pf-synthesizer, after: [evidence-review]}
+      - {id: verify, agent: platform-verifier, after: [synthesize]}
+
+  optimization:
+    description: "§152 — recommendation only; ChangeIntent if accepted"
+    coordinator: platform-optimization-coordinator
+    stages:
+      - {id: signals, fanout: domains}
+      - {id: recommend, agent: platform-optimization-coordinator,
+         after: [signals]}
+      - {id: evidence-review, agent: platform-evidence-reviewer,
+         after: [recommend]}
+      - {id: critic, agent: platform-adversarial-critic,
+         after: [evidence-review]}
+      - {id: verify, agent: platform-verifier, after: [critic]}
+      - {id: change-intent, agent: platform-change-coordinator,
+         after: [verify], if: accepted}
+
+  single:
+    description: "§85/§284 — one domain, one specialist, still verified"
+    coordinator: null
+    stages:
+      - {id: extract, agent: pf-extractor}
+      - {id: specialist, fanout: primary-domain, after: [extract]}
+      - {id: evidence-review, agent: platform-evidence-reviewer,
+         after: [specialist]}
+      - {id: verify, agent: platform-verifier, after: [evidence-review]}

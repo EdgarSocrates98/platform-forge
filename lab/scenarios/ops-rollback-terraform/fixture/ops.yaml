@@ -1,0 +1,38 @@
+# §135 — terraform saved-plan apply fails → replan-required, never
+# reuse the forward plan as a reverse plan; manual trigger refuses
+intent:
+  intent_id: lab-rb-tf
+  owner: team-a
+  requested_by: bob
+  reason: {type: infrastructure}
+  target_resources: ["tf:lab/vpc"]
+  desired_change: {apply: "tfplan.bin"}
+steps:
+  - step_id: apply
+    action: terraform.apply_saved_plan
+    params: {workdir: "lab/scenarios/ops-rollback-terraform/fixture/tf", plan_file: "tfplan.bin",
+             plan_hash: "sha256:99ded080636eb70e63061ecbc8b563bb23fed1e0201c1b590d7d910b21cec6d4"}
+expected_delta:
+  changes: {resources: [{id: "aws_vpc.main", applied: true}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+pre_state:
+  apply: {source_ref: "main@abc", workspace: "prod",
+          state_serial: "17",
+          resource_addresses: ["aws_vpc.main"]}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
+environment: lab
+trigger_rollback: true
+transports: {terraform: {rc: 0, stdout: "applied"}}
+verify:
+  observations:
+    immediate: {changes: {resources: [{id: "aws_vpc.main", applied: true}]}}
+  slo: {error_rate_max: 0.01}
+  metrics: {error_rate: 0.7}
+expect:
+  ok: true
+  convergence: regressed
+  rollback_status: requires-replan
+  rollback_refusal: PF-OPS-ROLLBACK-NOT-EXECUTABLE

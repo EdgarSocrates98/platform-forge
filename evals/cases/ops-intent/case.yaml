@@ -1,0 +1,6 @@
+id: ops-intent
+type: live
+domain: ops-intent
+fixture: ../../../lab/scenarios/ops-replica-drift/fixture
+expect:
+  check: ops-scenario

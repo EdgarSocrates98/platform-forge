@@ -1,0 +1,7 @@
+id: catalog-noowner
+type: golden
+variant: positive
+domain: catalog
+fixture: fixture
+expect:
+  rules_fired: [PF-CAT-001, PF-CAT-002]

@@ -1,0 +1,8 @@
+id: xr-negative-crd
+type: golden
+variant: negative
+case_of: PF-XR-001
+domain: crossplane
+fixture: fixture
+expect:
+  rules_not_fired: [PF-XR-001]

@@ -1,0 +1,25 @@
+{
+  "gates": {
+    "cmd": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 scripts/validate.py",
+    "ms": 74613.0,
+    "rc": 0,
+    "tail": [
+      "}"
+    ]
+  },
+  "gates_ok": true,
+  "note": "sha is the HEAD the suite ran against; the commit that lands this receipt is docs-only",
+  "receipts_present": {
+    "AGENTIC-RECEIPT.json": true,
+    "ARCHITECTURE-FREEZE-REVIEW.md": true,
+    "FINAL-MATRIX.md": true,
+    "FINAL-REPORT.md": true,
+    "FREEZE-MANIFEST.md": true,
+    "PERFORMANCE-RECEIPT.json": true,
+    "REAL-WORLD-ISSUES.md": true,
+    "SOAK-RECEIPT.json": true
+  },
+  "schema": "platformforge/validation-receipt/v1",
+  "sha": "2cd24f78a53edf0fd4d535d7aa7015a3df54cd28",
+  "verdict": "pass"
+}

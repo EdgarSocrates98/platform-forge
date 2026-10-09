@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/graph/v2",
+  "title": "PlatformForge Graph v2 — multi-layer edge evidence + temporal",
+  "type": "object",
+  "required": ["schema", "nodes", "edges"],
+  "properties": {
+    "schema": {"const": "platformforge/graph/v2"},
+    "migrated_from": {"type": "string"},
+    "migrated_at": {"type": "string"},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["node_id", "kind", "label"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "kind": {"type": "string"},
+          "label": {"type": "string"},
+          "attrs": {"type": "object"},
+          "source_fact_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind", "provenance", "confidence"],
+        "properties": {
+          "from": {"type": "string"},
+          "to": {"type": "string"},
+          "kind": {"type": "string"},
+          "provenance": {"type": "string", "enum": ["observed", "planned", "declared", "inferred"]},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "source_fact_ids": {"type": "array", "items": {"type": "string"}},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["provenance"],
+              "properties": {
+                "provenance": {"type": "string", "enum": ["observed", "planned", "declared", "inferred"]},
+                "source_type": {"type": "string"},
+                "fact_ids": {"type": "array", "items": {"type": "string"}},
+                "observed_at": {"type": "string"}
+              }
+            }
+          },
+          "temporal": {
+            "type": "object",
+            "properties": {
+              "first_seen": {"type": "string"},
+              "last_seen": {"type": "string"},
+              "window_start": {"type": "string"},
+              "window_end": {"type": "string"},
+              "sample_count": {"type": "integer", "minimum": 0},
+              "expired": {"type": "boolean"}
+            }
+          },
+          "attrs": {"type": "object"}
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

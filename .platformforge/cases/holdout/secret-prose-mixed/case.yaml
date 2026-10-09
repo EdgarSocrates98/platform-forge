@@ -1,0 +1,32 @@
+id: secret-prose-mixed
+classification: real-anonymized
+tier: holdout
+truth_class: partial
+task: Scan a tree that mixes prose about passwords with one real-shaped secret; the
+  prose must not flag and the real secret must.
+scope: evals/cases/secret-prose-mixed/fixture
+analyzers:
+- secrets
+fixture_from: evals/cases/secret-prose-mixed
+expected_known_truth:
+  violated_rules:
+  - PF-SEC-010
+  absent_rules: []
+  fact_kinds:
+  - security.secret_leak
+observations:
+- 'RW-5 freeze-dogfood finding: password_kv used to match lowercase prose ("pass:
+  refuse and route") as a secret. Regression locked in tests/test_security.py::test_secret_scan_prose_is_not_a_leak
+  — this case guards the end-to-end analyzer->rule path.'
+- 'truth_class partial: grading asserts the rule fires, not the exact fact count —
+  count-exactness lives in the unit test.'
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 284
+  relevant_bytes: 284
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

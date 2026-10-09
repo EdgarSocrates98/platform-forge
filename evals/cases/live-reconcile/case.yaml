@@ -1,0 +1,7 @@
+id: live-reconcile
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: reconcile
+  drift_classes: [config-drift]

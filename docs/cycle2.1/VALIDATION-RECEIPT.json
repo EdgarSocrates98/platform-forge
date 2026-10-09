@@ -1,0 +1,141 @@
+{
+  "ci": {
+    "gates": {
+      "coverage": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, subprocess;out = subprocess.run(['platformforge','evals','coverage'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);unc = d['counts'].get('uncovered', []);assert not unc, f'uncovered rules: {unc}';print(d['counts']['rules'], 'rules, 0 uncovered')",
+        "seconds": 0.2
+      },
+      "docs": {
+        "ok": true,
+        "reproduce": "pytest -q tests/test_docs_drift.py",
+        "seconds": 0.25
+      },
+      "evals": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, subprocess;out = subprocess.run(['platformforge','evals','run'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);c = d['counts'];assert c.get('fail', 0) == 0 and c.get('unresolved', 0) == 0, c;print(c)",
+        "seconds": 2.2
+      },
+      "knowledge": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.registry import (SourceRegistry, SOURCE_AUTHORITIES);reg = SourceRegistry.default();c = reg.contract_check(); assert c['ok'], c;bad = [e.id for e in reg.entries.values()      if e.source_authority not in SOURCE_AUTHORITIES];assert not bad, f'unknown authority: {bad}';print(len(reg.entries), 'sources valid')",
+        "seconds": 0.1
+      },
+      "lab": {
+        "ok": true,
+        "reproduce": "platformforge lab run-all",
+        "seconds": 1.12
+      },
+      "linkage": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.registry import SourceRegistry;from platformforge.resources import data_path;r = SourceRegistry.default().link_rules(data_path('rules','catalog'));assert not r['unlinked'], r['unlinked'];assert not r['bad_refs'], r['bad_refs'];print(r['coverage'], 'exact-id linked')",
+        "seconds": 0.16
+      },
+      "lint": {
+        "ok": true,
+        "reproduce": "ruff check .",
+        "seconds": 0.01
+      },
+      "mcp-parity": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.mcp.registry import tool_descriptors;t = tool_descriptors(); assert len(t) >= 20, len(t);print(len(t), 'mcp tools')",
+        "seconds": 0.04
+      },
+      "package": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import zipfile, glob;w = zipfile.ZipFile(glob.glob('dist/*.whl')[0]);names = w.namelist();need = ('platformforge/data/rules/catalog/',        'platformforge/data/knowledge/sources.yaml',        'platformforge/data/contracts/fact.schema.json',        'platformforge/data/lab/scenarios/',        'platformforge/data/evals/cases/');miss = [n for n in need         if not any(x.startswith(n) for x in names)];assert not miss, miss;print(sum(1 for x in names if '/data/' in x), 'data files')",
+        "seconds": 0.03
+      },
+      "packs": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.packs import PackRegistry;c = PackRegistry.default().contract_check();assert c['ok'], c;print(c['packs'], 'packs,', c['consumed'], 'consumed')",
+        "seconds": 0.17
+      },
+      "provenance": {
+        "ok": true,
+        "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.rules.engine import catalog_provenance_report;from platformforge.resources import data_path;r = catalog_provenance_report(data_path('rules','catalog'));assert r['coverage'] == 1.0, r; print(r)",
+        "seconds": 0.14
+      },
+      "security": {
+        "ok": true,
+        "reproduce": "pytest -q tests/test_redaction.py tests/test_offline.py",
+        "seconds": 0.53
+      },
+      "tests": {
+        "ok": true,
+        "reproduce": "pytest -q",
+        "seconds": 10.05
+      }
+    },
+    "note": "local validation of the same gate script CI runs; remote runs-on resolved via RUNNER_LABELS var",
+    "workflow": ".github/workflows/ci.yml"
+  },
+  "evals": {
+    "counts": {
+      "fail": 0,
+      "pass": 39,
+      "unresolved": 0
+    },
+    "gate": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, subprocess;out = subprocess.run(['platformforge','evals','run'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);c = d['counts'];assert c.get('fail', 0) == 0 and c.get('unresolved', 0) == 0, c;print(c)",
+      "seconds": 2.2
+    }
+  },
+  "kind": "platformforge/cycle2.1-receipt/1",
+  "knowledge": {
+    "gate": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.registry import (SourceRegistry, SOURCE_AUTHORITIES);reg = SourceRegistry.default();c = reg.contract_check(); assert c['ok'], c;bad = [e.id for e in reg.entries.values()      if e.source_authority not in SOURCE_AUTHORITIES];assert not bad, f'unknown authority: {bad}';print(len(reg.entries), 'sources valid')",
+      "seconds": 0.1
+    },
+    "linkage": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.registry import SourceRegistry;from platformforge.resources import data_path;r = SourceRegistry.default().link_rules(data_path('rules','catalog'));assert not r['unlinked'], r['unlinked'];assert not r['bad_refs'], r['bad_refs'];print(r['coverage'], 'exact-id linked')",
+      "seconds": 0.16
+    },
+    "packs": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c from platformforge.knowledge.packs import PackRegistry;c = PackRegistry.default().contract_check();assert c['ok'], c;print(c['packs'], 'packs,', c['consumed'], 'consumed')",
+      "seconds": 0.17
+    }
+  },
+  "lab": {
+    "scenarios": "15/15"
+  },
+  "package": {
+    "gate": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import zipfile, glob;w = zipfile.ZipFile(glob.glob('dist/*.whl')[0]);names = w.namelist();need = ('platformforge/data/rules/catalog/',        'platformforge/data/knowledge/sources.yaml',        'platformforge/data/contracts/fact.schema.json',        'platformforge/data/lab/scenarios/',        'platformforge/data/evals/cases/');miss = [n for n in need         if not any(x.startswith(n) for x in names)];assert not miss, miss;print(sum(1 for x in names if '/data/' in x), 'data files')",
+      "seconds": 0.03
+    }
+  },
+  "rules": {
+    "gate": {
+      "ok": true,
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, subprocess;out = subprocess.run(['platformforge','evals','coverage'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);unc = d['counts'].get('uncovered', []);assert not unc, f'uncovered rules: {unc}';print(d['counts']['rules'], 'rules, 0 uncovered')",
+      "seconds": 0.2
+    },
+    "total": 63,
+    "uncovered": []
+  },
+  "security": {
+    "gate": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_redaction.py tests/test_offline.py",
+      "seconds": 0.53
+    }
+  },
+  "sha": "ceff0eab50026f2d5837f33288bd0efdc74db376",
+  "tests": {
+    "count": 260,
+    "gate": {
+      "ok": true,
+      "reproduce": "pytest -q",
+      "seconds": 10.05
+    },
+    "status": "pass",
+    "suite": "pytest"
+  },
+  "verdict": "validated"
+}

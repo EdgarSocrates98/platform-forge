@@ -1,0 +1,16 @@
+tier: standard
+description: "Small platform repo: a public S3 bucket, a privileged
+  deployment without probes, and a dangerous GitHub Actions workflow."
+analyzers: [iac, k8s, gha]
+violated_rules:
+  - PF-IAC-001
+  - PF-K8S-001
+  - PF-K8S-002
+  - PF-K8S-004
+  - PF-CICD-002
+fact_kinds:
+  - iac.resource
+  - k8s.workload
+  - cicd.github_workflow
+absent_rules:
+  - PF-IAC-010   # no plan in fixture — destroy never claimed

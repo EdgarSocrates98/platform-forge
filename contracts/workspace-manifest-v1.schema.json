@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/workspace-manifest/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "root",
+    "profile",
+    "hosts",
+    "repos",
+    "state_mode",
+    "installed_version"
+  ],
+  "properties": {
+    "schema": {
+      "const": "platformforge/workspace-manifest/v1"
+    },
+    "root": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "hosts": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "agents",
+          "claude",
+          "codex",
+          "devin"
+        ]
+      }
+    },
+    "state_mode": {
+      "const": "workspace-local"
+    },
+    "installed_version": {
+      "type": "string"
+    },
+    "repos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "path"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

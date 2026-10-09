@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "platformforge"
+version = "0.1.0"
+description = "Agentic Platform Engineering intelligence platform — deterministic, offline-first, evidence-first"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Edgar Socrates Caria" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "PyYAML>=6.0",
+    "jsonschema>=4.0",
+    "python-hcl2>=4.3,<8",
+]
+
+[project.optional-dependencies]
+aws = ["boto3>=1.34,<2"]
+mcp = ["mcp>=2.2,<3"]
+dev = [
+    "pytest>=9,<10",
+    "ruff>=0.7,<1",
+]
+
+[project.scripts]
+platformforge = "platformforge.cli.main:main"
+platformforge-mcp = "platformforge.mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/EdgarSocrates98/platform-forge"
+Repository = "https://github.com/EdgarSocrates98/platform-forge"
+Documentation = "https://github.com/EdgarSocrates98/platform-forge/blob/main/docs/README.md"
+Changelog = "https://github.com/EdgarSocrates98/platform-forge/blob/main/CHANGELOG.md"
+Issues = "https://github.com/EdgarSocrates98/platform-forge/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["platformforge"]
+
+# Ship runtime data inside the wheel under platformforge/data/ so an
+# installed package is self-contained (platformforge/resources.py resolves it).
+[tool.hatch.build.targets.wheel.force-include]
+"rules" = "platformforge/data/rules"
+"knowledge" = "platformforge/data/knowledge"
+"contracts" = "platformforge/data/contracts"
+"evals" = "platformforge/data/evals"
+"lab" = "platformforge/data/lab"
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+# eval fixtures are data (deliberately malformed/secret-bearing), not code
+exclude = ["evals/cases/*/fixture/**", "lab/scenarios/*/fixture/**"]

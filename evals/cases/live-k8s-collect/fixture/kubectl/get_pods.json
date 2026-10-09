@@ -1,0 +1,17 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "metadata": {"resourceVersion": "4821"},
+  "items": [
+    {
+      "apiVersion": "v1", "kind": "Pod",
+      "metadata": {
+        "namespace": "prod", "name": "api-abc12",
+        "uid": "uid-pod-1",
+        "ownerReferences": [
+          {"kind": "ReplicaSet", "name": "api-6f9", "uid": "uid-rs-1"}]},
+      "spec": {"serviceAccountName": "api-sa"},
+      "status": {"phase": "Running"}
+    }
+  ]
+}

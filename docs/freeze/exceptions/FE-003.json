@@ -1,0 +1,25 @@
+{
+  "schema": "platformforge/feature-exception/v1",
+  "id": "FE-003",
+  "requested_capability": "Portable Distribution & Workspace Integration — plan-first install/upgrade/uninstall, versioned DistributionManifest/WorkspaceManifest/InstallReceipt, Codex/Claude/Devin/generic host mirrors plus domain skills, checksum-verified offline bundle, workspace-local MCP bootstrap, multi-repo workspace lifecycle and portable doctor.",
+  "reason": "Owner directive during dogfooding: Platform Forge had strong host-agent mirror portability but could not be safely installed into an arbitrary target workspace or carried offline with governed ownership/integrity. API Forge and Spark Forge AWS already expose explicit distribution/workspace foundations.",
+  "real_world_blocker": "A target repository could consume generated mirrors only by manual copying or by working from the Platform Forge source checkout. There was no install receipt, safe upgrade/uninstall, bundle integrity contract, portable doctor, offline bundle install, or versioned workspace manifest.",
+  "existing_capability_insufficient": "`platformforge agents sync` generates mirrors in the Platform Forge repository and `core/workspace.py` models analysis members, but neither provides a distribution lifecycle for an unrelated consumer repository. MCP/package installation also did not own or verify host assets in the target workspace.",
+  "alternatives_considered": [
+    "Remain frozen and document manual copy steps: rejected because it leaves ownership, upgrade, uninstall and integrity undefined.",
+    "Copy API Forge implementation verbatim: rejected; Platform Forge must reuse its canonical agent roster, generated host mirrors, workspace-local governance and frozen core semantics.",
+    "Add a bounded additive distribution/workspace layer under FE-003 and rebaseline only the affected CLI/schema snapshots: chosen."
+  ],
+  "architectural_impact": "medium/additive — new distribution and portable-workspace packages plus CLI adapters; evidence, Graphfy, economy and operations semantics are unchanged.",
+  "schema_impact": "three additive v1 public schemas: distribution-manifest-v1, workspace-manifest-v1 and install-receipt-v1; schema snapshot rebaselined under this exception.",
+  "agent_impact": "none to canonical roster/budgets — portable host agents are generated from the existing roster; canonical skills are packaged once and projected per host.",
+  "operations_impact": "workspace file lifecycle only — staged writes, ownership hashes, conflict refusal, safe uninstall; no cloud/provider mutation or autonomy increase.",
+  "decision": "approved",
+  "decided_by": "owner (explicit request to implement portable distribution and merge)",
+  "evidence": [
+    "docs/portable/ARCHITECTURE.md",
+    "docs/portable/FINAL-MATRIX.md",
+    "tests/test_portable_distribution.py",
+    "tests/test_portable_workspace.py"
+  ]
+}

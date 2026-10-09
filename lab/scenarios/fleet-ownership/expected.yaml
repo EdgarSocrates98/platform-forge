@@ -1,0 +1,17 @@
+id: fleet-ownership
+name: Fleet ownership — orphan API and unowned resources surface
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - fleet_query:
+      question: unowned
+      min_count: 5
+      node_ids:
+        - "service/service-orphan-api"
+        - "service/service-batch-etl"
+        - "service/service-ml-inference"
+  - fleet_query:
+      question: no-slo
+      min_count: 2
+      node_ids: ["service/service-payments", "service/service-ml-inference"]

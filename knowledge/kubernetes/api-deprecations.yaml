@@ -1,0 +1,33 @@
+schema: platformforge/knowledge/v1
+id: kubernetes-api-deprecations
+domain: kubernetes
+applies_to:
+  versions: [kubernetes]
+sources: [kubernetes-docs]
+claims:
+  - id: k8s-dep-v122
+    statement: "extensions/v1beta1 and apps/v1beta1/v1beta2 Ingress,
+      networkpolicy/v1beta1 PodSecurityPolicy and policy/v1beta1
+      PodDisruptionBudget were removed in Kubernetes 1.22+; manifests must
+      use networking.k8s.io/v1, policy/v1 and stable workload APIs."
+    versions: {kubernetes: ">=1.22"}
+  - id: k8s-dep-v125
+    statement: "policy/v1beta1 PodDisruptionBudget and PodSecurityPolicy were
+      removed in 1.25; batch/v1beta1 CronJob in 1.25. Use policy/v1 and
+      batch/v1."
+    versions: {kubernetes: ">=1.25"}
+  - id: k8s-dep-v126-v129
+    statement: "FlowSchema/PriorityLevelConfiguration moved to
+      flowcontrol.apiserver.k8s.io/v1beta3 in 1.26; CSIStorageCapacity
+      storage.k8s.io/v1beta1 removed in 1.27; HorizontalPodAutoscaler
+      autoscaling/v2beta2 removed in 1.26 (use autoscaling/v2)."
+    versions: {kubernetes: ">=1.26"}
+  - id: k8s-beta-track
+    statement: "Beta APIs follow a deprecation track: introduced in beta,
+      removed ~9 months after the GA replacement ships. Serving a beta
+      apiVersion is a version-dependent risk, decidable only when the
+      cluster version is known."
+    versions: {}
+used_by:
+  rules: [PF-K8S-030, PF-K8S-031, PF-K8S-032]
+  analyzers: [k8s]

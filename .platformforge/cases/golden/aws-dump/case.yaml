@@ -1,0 +1,36 @@
+id: aws-dump
+classification: fixture-derived
+tier: golden
+truth_class: known-good
+task: AWS organization dump — facts extracted, no violations expected.
+scope: lab/scenarios/aws-dump/fixture
+analyzers:
+- cloud-aws
+fixture_from: lab/scenarios/aws-dump
+expected_known_truth:
+  violated_rules: []
+  absent_rules: []
+  fact_kinds:
+  - cloud.aws.organization
+  - cloud.aws.account
+  - cloud.aws.role
+  - cloud.aws.policy
+  - cloud.aws.principal
+  - cloud.aws.vpc
+  - cloud.aws.subnet
+  - cloud.aws.internet_gateway
+  - cloud.aws.instance
+  - cloud.aws.cluster
+  - cloud.aws.bucket
+  - cloud.aws.database
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 2019
+  relevant_bytes: 2019
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

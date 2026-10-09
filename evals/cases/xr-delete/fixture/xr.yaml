@@ -1,0 +1,10 @@
+apiVersion: database.aws.crossplane.io/v1beta1
+kind: RDSInstance
+metadata:
+  name: prod-db
+spec:
+  deletionPolicy: Delete
+  forProvider:
+    region: us-east-1
+    dbInstanceClass: db.t3.medium
+    engine: postgres

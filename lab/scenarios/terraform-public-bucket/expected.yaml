@@ -1,0 +1,6 @@
+tier: smoke
+description: "S3 bucket with public-read ACL."
+analyzers: [iac]
+violated_rules: [PF-IAC-001]
+absent_rules: [PF-IAC-003]
+fact_kinds: [iac.resource]

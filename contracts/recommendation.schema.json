@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/recommendation/v1",
+  "title": "PlatformForge Recommendation",
+  "type": "object",
+  "required": ["title", "severity", "confidence", "evidence", "proposed_change", "risks", "validation", "rollback", "basis"],
+  "properties": {
+    "title": {"type": "string", "minLength": 1},
+    "severity": {"type": "string", "enum": ["info", "low", "medium", "high", "critical"]},
+    "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+    "evidence": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "root_cause": {"type": ["string", "null"]},
+    "proposed_change": {"type": "array", "items": {"type": "string"}},
+    "expected_effect": {"type": ["string", "null"], "description": "No quantified gain without benchmark_ref."},
+    "benchmark_ref": {"type": ["string", "null"]},
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "tradeoffs": {"type": "array", "items": {"type": "string"}},
+    "validation": {"type": "array", "items": {"type": "string"}},
+    "rollback": {"type": "array", "items": {"type": "string"}},
+    "basis": {
+      "type": "object",
+      "required": ["observed", "declared", "inferred", "unknown"],
+      "properties": {
+        "observed": {"type": "array", "items": {"type": "string"}},
+        "declared": {"type": "array", "items": {"type": "string"}},
+        "inferred": {"type": "array", "items": {"type": "string"}},
+        "unknown": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "additionalProperties": false
+}

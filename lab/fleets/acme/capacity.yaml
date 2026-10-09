@@ -1,0 +1,35 @@
+members:
+  - member_id: "cluster:prod-1"
+    dimensions:
+      - {name: cpu, used: 8.6, capacity: 10.0, source: observed}
+      - {name: memory, used: 9.1, capacity: 10.0, source: observed}
+      - {name: pods, used: 42, capacity: 110, source: observed}
+  - member_id: "cluster:prod-2"
+    dimensions:
+      - {name: cpu, used: 4.2, capacity: 10.0, source: observed}
+      - {name: memory, used: 5.0, capacity: 10.0, source: observed}
+  - member_id: "cluster:gpu-1"
+    dimensions:
+      - {name: gpu, used: 7, capacity: 8, source: observed}
+      - {name: cpu, used: 6.0, capacity: 16.0, source: observed}
+  - member_id: "cluster:legacy-1"
+    dimensions:
+      - {name: cpu, used: null, capacity: null, source: unavailable}
+      - {name: memory, used: 7.0, capacity: 8.0, source: observed}
+k8s_resources:
+  - {id: "workload:ml-inference", resources: {limits: {cpu: 8, memory: 32Gi, "nvidia.com/gpu": 2}}, labels: {"nvidia.com/gpu.product": "A100"}}
+  - {id: "workload:ml-batch", resources: {limits: {"nvidia.com/gpu": 1}}}
+  - {id: "workload:checkout-web", resources: {limits: {cpu: 2}}}
+gpu_pools:
+  - {pool_id: "gpu-1:a100", model: "A100", count: 8, allocated: 7, utilization: 88, memory_gb: 320}
+ai_costs:
+  ml-inference: 9800
+endpoints:
+  - {id: "ep:ml-inference-v2", traffic_rps: 0.04, cost_monthly: 9800, latency_p95_ms: 180}
+observations:
+  - {member_id: "cluster:prod-1", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:prod-2", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:staging-1", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:dev-1", status: observed, coverage: 0.9, freshness: fresh}
+  - {member_id: "cluster:gpu-1", status: observed, coverage: 1.0, freshness: fresh}
+  - {member_id: "cluster:legacy-1", status: permission-limited, coverage: 0.3, freshness: stale}

@@ -1,0 +1,11 @@
+id: agent-conflicting-specialists
+type: agent
+check: route
+signal:
+  task_type: analysis
+  domains: [k8s, sre]
+  conflict: true
+expect:
+  mode: debate
+  reviewers_include: [platform-debate-referee]
+  verifier_required: true

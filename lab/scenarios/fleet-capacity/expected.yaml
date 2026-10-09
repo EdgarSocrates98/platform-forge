@@ -1,0 +1,12 @@
+id: fleet-capacity
+name: Fleet capacity — prod-1 and gpu-1 saturated; unknown never zero
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - capacity:
+      min_hot: 2
+  - capacity:
+      member: "cluster:gpu-1"
+      criticality: high
+      expect_risk: high

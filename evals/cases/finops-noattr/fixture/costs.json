@@ -1,0 +1,7 @@
+{"rows": [
+  {"resource": "i-0123abc", "amount": 42.50, "currency": "USD",
+   "period": "2025-01", "tags": {"cost_center": "eng"}},
+  {"resource": "i-0456def", "amount": 10.00, "currency": "USD",
+   "period": "2025-01", "service": "payments",
+   "tags": {"cost_center": "eng"}}
+]}

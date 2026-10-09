@@ -1,0 +1,69 @@
+{
+ "artifacts": {
+  "context_audit": "dogfood/context-audit.json",
+  "route_audit": "dogfood/route-audit.json"
+ },
+ "context": {
+  "cases": 16,
+  "totals": {
+   "avg_unused_context_ratio": 0.0,
+   "input_bytes": 9836,
+   "relevant_bytes": 9836,
+   "unused_bytes": 0
+  }
+ },
+ "economy": {
+  "bench_verdict": "projection-only until run ledger has observed rows \u2014 no quality claim made",
+  "context_audit_avg_unused_ratio": 0.0
+ },
+ "evals": {
+  "count": 93,
+  "unresolved": 0,
+  "verdict": "pass"
+ },
+ "fp_fn_ledger": {
+  "confirmed": 0,
+  "note": "FP-RW5-001 filed+fixed (prose-as-secret); precision unmeasurable below n=3 by design",
+  "records": 1,
+  "refuted": 1,
+  "unresolved": 0
+ },
+ "mirrors": {
+  "check": "pass",
+  "files": 205
+ },
+ "replay": {
+  "cases": 16,
+  "golden": 10,
+  "holdout": 6,
+  "verdict": "pass"
+ },
+ "roster": {
+  "agents": 41,
+  "roles": {
+   "coordinator": 5,
+   "critic": 1,
+   "executor": 8,
+   "guardian": 1,
+   "orchestrator": 1,
+   "planner": 1,
+   "referee": 1,
+   "reviewer": 7,
+   "specialist": 15,
+   "verifier": 1
+  }
+ },
+ "routing": {
+  "audit_verdict": "pass",
+  "avg_fanout": 3.38,
+  "by_mode": {
+   "coordinated": 1,
+   "single-specialist": 15
+  },
+  "cases": 16,
+  "flagged": [],
+  "ledger": ".platformforge/ledger/routing-decisions.jsonl"
+ },
+ "schema": "platformforge/agentic-receipt/v1",
+ "sha": "2cd24f78a53edf0fd4d535d7aa7015a3df54cd28"
+}

@@ -1,0 +1,7 @@
+id: fleet-inv-absent-allocation-unknown
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: absent-allocation-unknown

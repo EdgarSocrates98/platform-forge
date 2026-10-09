@@ -1,0 +1,8 @@
+id: xr-upbound-mr
+type: golden
+variant: positive
+case_of: PF-XR-001
+domain: crossplane
+fixture: fixture
+expect:
+  rules_fired: [PF-XR-001]

@@ -1,0 +1,9 @@
+id: sbom-vuln
+type: golden
+variant: positive
+case_of: PF-SEC-021
+domain: sbom
+fixture: fixture
+expect:
+  rules_fired: [PF-SEC-021]
+  rules_not_fired: [PF-SEC-020]

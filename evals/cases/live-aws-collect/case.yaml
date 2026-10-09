@@ -1,0 +1,11 @@
+id: live-aws-collect
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: collect-aws
+  services: [ec2, iam]
+  resource_types: ["aws:ec2/vpc", "aws:iam/user"]
+  objects_min: 1
+  coverage: partial
+  denied_types: ["aws:iam/user"]

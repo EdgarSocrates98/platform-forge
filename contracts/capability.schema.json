@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/capability/v1",
+  "title": "PlatformForge capability manifest entry",
+  "type": "object",
+  "required": ["id", "version", "inputs", "outputs", "risk", "required_evidence", "offline", "mutable", "cost_class"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^platform\\.[a-z0-9_.-]+$"},
+    "version": {"type": "string"},
+    "description": {"type": "string"},
+    "inputs": {"type": "array", "items": {"type": "string"}},
+    "outputs": {"type": "array", "items": {"type": "string"}},
+    "risk": {"type": "string", "enum": ["read-only", "propose", "mutating"]},
+    "required_evidence": {"type": "array", "items": {"type": "string"}},
+    "offline": {"type": "boolean"},
+    "mutable": {"type": "boolean"},
+    "cost_class": {"type": "string", "enum": ["deterministic", "indexed", "local-model", "provider-model"]},
+    "agent_requirements": {"type": "array", "items": {"type": "string"}},
+    "cli": {"type": ["string", "null"]},
+    "mcp_tool": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

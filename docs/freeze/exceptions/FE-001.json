@@ -1,0 +1,25 @@
+{
+  "schema": "platformforge/feature-exception/v1",
+  "id": "FE-001",
+  "requested_capability": "Fixture-aware analysis scoping — distinguish intentionally-bad fixtures (lab/scenarios/*/fixture, evals/cases/*/fixture) and test inputs from real repo artifacts, via either a fixture tier on facts or an explicit --exclude/--scope flag on collect/judge.",
+  "reason": "RW-4 + RW-7 (docs/freeze/REAL-WORLD-ISSUES.md): self-repo judge reports ~40 violations dominated by intentionally-bad fixtures, and Spark Forge secrets findings are fixture test inputs. Detection is correct; the findings read as repo posture, which makes self-dogfood posture reports misleading to a reader who does not know the fixtures are deliberate.",
+  "real_world_blocker": "Not a hard blocker — judge output is correct per the artifact contract (a file with a bad manifest IS a bad manifest). The gap is presentational/scoping: no way to ask 'what is the posture of the real platform, excluding known-fixture inputs?' Real-world harm so far is limited to noisy self-scan reports; no wrong verdict shipped to a consumer.",
+  "existing_capability_insufficient": "collect/analyze/judge have no scope filter or fixture tier. Facts carry tier (evidence strength), not artifact-role (fixture vs real). grep-level exclusion outside the tool is possible but loses the evidence trail and is exactly the kind of out-of-band filtering the architecture forbids.",
+  "alternatives_considered": [
+    "Document the noise as known-gap (chosen for freeze): honest but leaves self-dogfood posture reports permanently noisy.",
+    "Post-filter findings by path at the call site: rejected — hides evidence, violates 'findings carry evidence' contract.",
+    "Fixture tier on Fact (tier + artifact_role): smallest real schema change; needs a new field on a frozen schema -> this exception.",
+    "--exclude glob on collect: no schema change; but exclusion before analysis loses the 'undetected is reported' audit trail unless excluded paths are still enumerated."
+  ],
+  "architectural_impact": "small — one optional attr (artifact_role: real|fixture|generated) on Fact, populated by collect/analyze; RuleEngine unchanged; judges may group findings by role.",
+  "schema_impact": "Fact gains optional artifact_role (default 'real') — additive, backward compatible; requires contract-snapshot update.",
+  "agent_impact": "none — agents read findings; grouping is presentation.",
+  "operations_impact": "none — no mutation path touched.",
+  "decision": "deferred",
+  "decided_by": "pending human review",
+  "evidence": [
+    "docs/freeze/REAL-WORLD-ISSUES.md#RW-4",
+    "docs/freeze/REAL-WORLD-ISSUES.md#RW-7",
+    "docs/freeze/DOGFOOD.md"
+  ]
+}

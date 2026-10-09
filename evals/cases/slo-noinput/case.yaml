@@ -1,0 +1,8 @@
+id: slo-noinput
+type: golden
+variant: unresolved
+case_of: PF-SLO-003
+domain: slo
+fixture: fixture
+expect:
+  rules_fired: [PF-SLO-003]

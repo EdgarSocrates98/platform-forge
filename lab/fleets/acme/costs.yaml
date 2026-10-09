@@ -1,0 +1,25 @@
+allocations:
+  - {team: payments, service: checkout, environment: prod, amount: 4200, allocation_confidence: direct}
+  - {team: payments, service: payments, environment: prod, amount: 3800, allocation_confidence: direct}
+  - {team: discovery, service: search, environment: prod, amount: 2600, allocation_confidence: tag-based}
+  - {team: ai-platform, service: ml-inference, environment: prod, amount: 9800, allocation_confidence: usage-based}
+  - {team: data, service: batch-etl, environment: prod, amount: 1400, allocation_confidence: estimated}
+  - {amount: 1750, unallocated: true}
+workloads:
+  - {id: "workload:checkout-web", cpu_util: 55, memory_util: 61, requests: {cpu: 2, memory: 4Gi}}
+  - {id: "workload:ml-inference", cpu_util: 8, memory_util: 12, slo_headroom: 0.9, requests: {cpu: 8, memory: 32Gi, gpu: 2}, cost_monthly: 9800}
+  - {id: "workload:legacy-batch", cpu_util: 91, memory_util: 94, slo_headroom: -0.1, requests: {cpu: 2, memory: 4Gi}}
+  - {id: "workload:thin-api", cpu_util: 4}
+resources:
+  - {id: "vm:jump-01", requests_30d: 0, cpu_util: 1, attached: true, cost_monthly: 180}
+  - {id: "vol:orphan-77", orphaned: true, attached: false, cpu_util: 0, cost_monthly: 90}
+  - {id: "db:reporting-ro", requests_30d: 4, cpu_util: 45, attached: true, cost_monthly: 1200}
+points:
+  - {ts: "2025-11-01", amount: 18000}
+  - {ts: "2025-11-02", amount: 18200}
+  - {ts: "2025-11-03", amount: 18400}
+  - {ts: "2025-11-04", amount: 18500}
+  - {ts: "2025-11-05", amount: 18700}
+  - {ts: "2025-11-06", amount: 18800}
+  - {ts: "2025-11-07", amount: 19000}
+  - {ts: "2025-11-08", amount: 28000}

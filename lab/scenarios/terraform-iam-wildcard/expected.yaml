@@ -1,0 +1,5 @@
+tier: smoke
+description: "IAM policy granting * on * to a public principal."
+analyzers: [iam]
+violated_rules: [PF-SEC-001, PF-SEC-002, PF-SEC-003]
+fact_kinds: [security.iam_policy]

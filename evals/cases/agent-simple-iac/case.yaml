@@ -1,0 +1,14 @@
+id: agent-simple-iac-single-specialist
+type: agent
+check: route
+signal:
+  task_type: analysis
+  domains: [iac]
+  complexity: low
+  risk: low
+expect:
+  mode: single-specialist
+  not_mode: [coordinated, debate]
+  includes: [platform-iac-specialist]
+  max_agents: 4
+  verifier_required: true

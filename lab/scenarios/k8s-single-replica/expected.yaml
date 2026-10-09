@@ -1,0 +1,5 @@
+tier: smoke
+description: "Single-replica workload — no redundancy across failure domains."
+analyzers: [k8s]
+violated_rules: [PF-K8S-011]
+fact_kinds: [k8s.workload]

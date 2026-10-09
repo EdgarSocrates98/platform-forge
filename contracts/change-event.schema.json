@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/change-event/v1",
+  "title": "PlatformForge ChangeEvent",
+  "type": "object",
+  "required": ["schema", "event_id", "timestamp", "source", "action"],
+  "properties": {
+    "schema": {"const": "platformforge/change-event/v1"},
+    "event_id": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1},
+    "actor": {"type": "string"},
+    "action": {"type": "string", "minLength": 1},
+    "resource_ids": {"type": "array", "items": {"type": "string"}},
+    "account": {"type": "string"},
+    "region": {"type": "string"},
+    "request": {"type": "object"},
+    "result": {"type": "string"},
+    "evidence": {"type": "object"}
+  },
+  "additionalProperties": true
+}

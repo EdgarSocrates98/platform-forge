@@ -1,0 +1,10 @@
+id: k8s-limits-boundary
+type: golden
+variant: boundary
+case_of: PF-K8S-002
+domain: k8s
+fixture: fixture
+# boundary: limits set (002 silent) but single-replica (011 fires)
+expect:
+  rules_fired: [PF-K8S-011]
+  rules_not_fired: [PF-K8S-002]

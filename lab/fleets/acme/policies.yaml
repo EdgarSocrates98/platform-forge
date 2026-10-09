@@ -1,0 +1,28 @@
+decisions:
+  - {policy: require-owner, decision: deny, subject: orphan-api}
+  - {policy: require-owner, decision: deny, subject: legacy-batch}
+  - {policy: require-owner, decision: deny, subject: unknown-svc}
+  - {policy: require-owner, decision: deny, subject: tmp-svc}
+  - {policy: require-owner, decision: allow, subject: checkout}
+  - {policy: require-owner, decision: allow, subject: payments}
+  - {policy: require-owner, decision: allow, subject: search}
+  - {policy: require-owner, decision: allow, subject: ml-inference}
+  - {policy: no-public-s3, decision: shadow-deny, subject: bucket-x, team: data}
+  - {policy: no-public-s3, decision: shadow-deny, subject: bucket-y, team: data}
+  - {policy: no-public-s3, decision: shadow-deny, subject: bucket-z, team: data}
+  - {policy: prod-dual-approval, decision: require-approval, subject: checkout}
+  - {policy: prod-dual-approval, decision: allow, subject: staging}
+  - {policy: unused-kyverno, decision: allow, subject: never-fired}
+exceptions:
+  - {policy: require-owner}
+  - {policy: require-owner}
+  - {policy: require-owner}
+  - {policy: require-owner}
+  - {policy: require-owner, expired: true}
+overrides:
+  - {policy: require-owner}
+  - {policy: require-owner}
+  - {policy: require-owner}
+outcomes:
+  require-owner: 4
+configured: [require-owner, no-public-s3, prod-dual-approval, unused-kyverno]

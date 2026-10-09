@@ -1,0 +1,5 @@
+{"items": [
+  {"resource": "node-pool/cpu", "used": 96.5, "limit": 100, "unit": "%"},
+  {"resource": "node-pool/mem", "used": 88.0, "limit": 100, "unit": "%"},
+  {"resource": "db/connections", "used": 40, "limit": 100, "unit": "%"}
+]}

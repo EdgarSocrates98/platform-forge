@@ -1,0 +1,8 @@
+id: slo-fastburn
+type: golden
+variant: positive
+case_of: PF-SLO-002
+domain: slo
+fixture: fixture
+expect:
+  rules_fired: [PF-SLO-002]

@@ -1,0 +1,31 @@
+{
+  "entries": {
+    "agent-handoff.schema.json": "ed2a17dc3b8b4fdd435fc6ad1ce17c7f9365d9537831269f3e0272a1404ec1e2",
+    "agent-run.schema.json": "3f4af5689ccb235e32798856e9cace90dfddea43bb67c659c94f00d0b7848e17",
+    "agent-spec.schema.json": "12cc9ad4c87f4f7a70eb45a2e5bd8d86a4ab2407d7ace03fa3cd822e4704b5de",
+    "capability.schema.json": "2c982a6431688b81cda5250f8873e70b628e4f580f6a7dd0a375bce23fe1345c",
+    "change-event.schema.json": "75c9a2c89f51d5c054c210cf5261d24a1009cde6818e1f9b3c34ec3c87c5af25",
+    "change-intent.schema.json": "8a891087144a0c71cfbf4e362b71af904801fe106ad03e465edee9d61ff58a47",
+    "change-plan.schema.json": "f8fc67c7cf7e53bf62e2138d46690ffc7938770813f0e017870c9e2634dc83b5",
+    "collector-receipt.schema.json": "68c9221991e682f682831ce68a438959ccbb0aad6767cb52aa676e0382b21d62",
+    "context-pack.schema.json": "34037bdcf5d4a65d40ada26c1dcefd263bc03a2806252cd1073a044b5f2f93b1",
+    "debate.schema.json": "d7d99d54e395338f4722699b2adfdb97c8783fba639da3b5271e532f503bd8eb",
+    "drift-event.schema.json": "2bd81a865b963ba44fa4e7d9d876d221ea57c400ea565ab102a0bbb34ab60ac6",
+    "fact.schema.json": "0920cb971fb5164b77af987a99057407d2822da9c66c1690dc9015f88d882b43",
+    "finding.schema.json": "7597f883235196bacd210ef7fa35497c736b950ce4307dde4d242cd584ee3e55",
+    "graph-v2.schema.json": "54acda1846e0d8192b8eb553507e46634c97392d6c8ee6f6a1cfa0bb81e50ce8",
+    "graph.schema.json": "1449bf833a20d07640f7aee36c71d57b5f24b715431f2160c1aaa1d69fda7f8b",
+    "observation.schema.json": "8746ef500d4749435a938f5f7eb3e58bb5f0de084c7dfdd9b894d3115b8a26c3",
+    "receipt.schema.json": "0d3c7522e66e9256116a78a211f16e3dbfd57d229cd0d6161a2c8b2bff6f6a51",
+    "recommendation.schema.json": "7b8f2cf956f621da595eda281775dc2c37ad049937d15c9ac6922c22d14c824d",
+    "refusal.schema.json": "3ae01152e64a07635077c220ff458e41df0de78e9c33cdb99fc6a9893198b520",
+    "slo-contract.schema.json": "2f3526583d4cbb676933ae52914d18c4997f80d6fabe733381a1255cf2aa6f0d",
+    "task-spec.schema.json": "bfee506db6406b48969e63cb3cb933c86789c8f27d03970cf0ca4a03ed545bf5",
+    "distribution-manifest-v1.schema.json": "dd1d564d3e81da45545f481088d821f201f6e85c85fd638be24b16fa2cd62034",
+    "workspace-manifest-v1.schema.json": "6c6f4094b119e682274ab3e2a73c80dc3cf2b252acfb93973bdb43c84337c271",
+    "install-receipt-v1.schema.json": "4f9934e25d35a1cbc8e487e353dd902cc7b3534e737409e3e8a6bd4f05fb303e"
+  },
+  "family": "schemas",
+  "schema": "platformforge/freeze-snapshot/v1",
+  "sha": "c2d9caf9dc9da8cdff324fce0d94e434feef0f78"
+}

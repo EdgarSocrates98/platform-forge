@@ -1,0 +1,6 @@
+id: rollback-unknown
+type: live
+domain: ops-rollback
+expect:
+  check: ops-invariant
+  probe: rollback-unknown

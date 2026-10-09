@@ -1,0 +1,7 @@
+id: fleet-inv-report-all-cited
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: fleet-report-all-cited

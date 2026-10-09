@@ -1,0 +1,6 @@
+id: approval-integrity-seal
+type: live
+domain: ops-rollback
+expect:
+  check: ops-invariant
+  probe: approval-seal-tamper

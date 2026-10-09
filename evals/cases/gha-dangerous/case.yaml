@@ -1,0 +1,12 @@
+id: gha-dangerous
+type: golden
+variant: positive
+domain: gha
+fixture: fixture
+expect:
+  rules_fired:
+    - PF-CICD-001   # third-party action not SHA-pinned
+    - PF-CICD-002   # pull_request_target privileged trigger
+    - PF-CICD-003   # untrusted context in run
+    - PF-CICD-004   # write-all permissions
+    - PF-CICD-005   # self-hosted + dangerous trigger

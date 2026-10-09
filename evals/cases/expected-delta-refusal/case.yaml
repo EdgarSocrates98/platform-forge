@@ -1,0 +1,6 @@
+id: expected-delta-refusal
+type: live
+domain: ops-rollback
+expect:
+  check: ops-invariant
+  probe: no-delta

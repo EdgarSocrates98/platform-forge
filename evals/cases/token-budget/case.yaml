@@ -1,0 +1,6 @@
+id: token-budget
+type: token_economy
+fixture: fixture
+query: "k8s deployment limits"
+expect:
+  budget: 200
