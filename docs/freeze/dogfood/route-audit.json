@@ -14,7 +14,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 26.1,
+      "ms": 26.2,
       "reasons": [
         "delivery-path question"
       ],
@@ -106,7 +106,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 10.6,
+      "ms": 10.3,
       "reasons": [
         "cloud inventory/IAM question"
       ],
@@ -198,7 +198,7 @@
       "fanout": 4,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 10.6,
+      "ms": 9.2,
       "reasons": [
         "security-sensitive work always gets a security reviewer",
         "IAM/SBOM/supply-chain question"
@@ -292,7 +292,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 10.8,
+      "ms": 8.9,
       "reasons": [
         "delivery-path question"
       ],
@@ -384,7 +384,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.8,
+      "ms": 9.0,
       "reasons": [
         "manifest/workload question"
       ],
@@ -476,7 +476,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.6,
+      "ms": 9.0,
       "reasons": [
         "manifest/workload question"
       ],
@@ -568,7 +568,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.6,
+      "ms": 9.0,
       "reasons": [
         "manifest/workload question"
       ],
@@ -660,7 +660,7 @@
       "fanout": 4,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.6,
+      "ms": 9.0,
       "reasons": [
         "security-sensitive work always gets a security reviewer",
         "IAM/SBOM/supply-chain question"
@@ -754,7 +754,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.7,
+      "ms": 8.8,
       "reasons": [
         "SLO/incident/telemetry question"
       ],
@@ -846,7 +846,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.6,
+      "ms": 8.9,
       "reasons": [
         "IaC artifact question"
       ],
@@ -938,7 +938,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.6,
+      "ms": 8.9,
       "reasons": [
         "cost decomposition needs the finops graph walk"
       ],
@@ -1030,7 +1030,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 10.1,
+      "ms": 9.0,
       "reasons": [
         "Crossplane artifact question"
       ],
@@ -1122,7 +1122,7 @@
       "fanout": 5,
       "flags": [],
       "mode": "coordinated",
-      "ms": 10.9,
+      "ms": 9.1,
       "reasons": [
         "manifest/workload question",
         "IaC artifact question"
@@ -1218,7 +1218,7 @@
       "fanout": 3,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.8,
+      "ms": 9.1,
       "reasons": [
         "manifest/workload question"
       ],
@@ -1310,7 +1310,7 @@
       "fanout": 4,
       "flags": [],
       "mode": "single-specialist",
-      "ms": 9.7,
+      "ms": 8.8,
       "reasons": [
         "security-sensitive work always gets a security reviewer",
         "IAM/SBOM/supply-chain question"

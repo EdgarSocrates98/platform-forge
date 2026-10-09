@@ -63,5 +63,5 @@
   "ledger": ".platformforge/ledger/routing-decisions.jsonl"
  },
  "schema": "platformforge/agentic-receipt/v1",
- "sha": "b641624b8877c21fa051aabbe4053c5d6e26e4e5"
+ "sha": "c087503cca697ff1a0d9075b8fcacbce7fc23f8b"
 }
