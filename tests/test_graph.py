@@ -109,3 +109,16 @@ def test_persist_and_diff(tmp_path):
     assert "workload/payments->api/public:exposes" in d["edges_added"]
     assert d["security_changed"] is True
     assert d["hash_before"] != d["hash_after"]
+
+
+def test_paths_bounded_on_dense_unreachable(tmp_path):
+    """freeze dogfood: DFS wandered minutes on dense graphs when dst was
+    deep/unreachable — BFS + expansion cap must terminate fast."""
+    import time
+
+    from platformforge.graph.bench import synthetic_graph
+    g = synthetic_graph(5_000)
+    t0 = time.time()
+    out = paths(g, "service/svc-0", "service/svc-5")
+    assert time.time() - t0 < 30
+    assert isinstance(out, list)

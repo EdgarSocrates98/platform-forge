@@ -64,12 +64,16 @@ def _reach(g: Graph, nid: str, reverse: bool, max_depth: int,
 
 def paths(g: Graph, src: str, dst: str, max_paths: int = 16,
           max_depth: int = 32) -> list[list[str]]:
-    """All simple src→dst paths (bounded)."""
+    """Up to `max_paths` simple src→dst paths, shortest-first (BFS).
+    A work cap keeps dense graphs bounded — the freeze dogfood bench
+    showed DFS wandering for minutes before reaching a near dst."""
     out: list[list[str]] = []
     adj = _adj(g)
-    stack = [(src, [src])]
-    while stack and len(out) < max_paths:
-        cur, path = stack.pop()
+    q = deque([(src, [src])])
+    expansions = 0
+    while q and len(out) < max_paths and expansions < 200_000:
+        cur, path = q.popleft()
+        expansions += 1
         if cur == dst:
             out.append(path)
             continue
@@ -77,7 +81,7 @@ def paths(g: Graph, src: str, dst: str, max_paths: int = 16,
             continue
         for e in adj.get(cur, []):
             if e.dst not in path:
-                stack.append((e.dst, path + [e.dst]))
+                q.append((e.dst, path + [e.dst]))
     return out
 
 

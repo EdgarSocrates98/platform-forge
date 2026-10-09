@@ -113,11 +113,12 @@ def _cone_map(g: Graph, rev: dict[str, list]) -> dict[str, int]:
             if indeg[c] == 0:
                 q.append(c)
     size_of = {i: len(m) for i, m in enumerate(members)}
-    out: dict[str, int] = {}
-    for nid, s in scc_of.items():
-        total = sum(size_of[i] for i in _bits(anc[s]))
-        out[nid] = total - 1
-    return out
+    # one ancestor-scan per SCC, not per node — nodes in a shared SCC
+    # share the ancestor set (freeze dogfood: per-node scans made dense
+    # 100k-node diffs quadratic in wall-clock terms)
+    total_of_scc = {s: sum(size_of[i] for i in _bits(anc[s]))
+                    for s in scc_of.values()}
+    return {nid: total_of_scc[s] - 1 for nid, s in scc_of.items()}
 
 
 def _bits(x: int):
