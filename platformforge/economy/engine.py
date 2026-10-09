@@ -33,6 +33,12 @@ STRATEGIES = ("deterministic-only", "deterministic-plus-compose",
               "single-specialist", "multi-specialist", "coordinated",
               "review-required", "refuse")
 
+# polish §22–26 — EconomyEngine output is an economic *recommendation*
+# (EconomyAdvice), never a routing decision. The canonical authority is
+# routing/decision.py::decide(); orchestration refuses anything without
+# the platformforge/routing-decision/v1 schema.
+SCHEMA_ADVICE = "platformforge/economy-advice/v1"
+
 # §35 — capability requirements, provider-agnostic. The host maps these to
 # models; the core never names a provider.
 CAPABILITY_REQS = ("fast", "cheap", "coding", "reasoning", "long-context",
@@ -44,12 +50,17 @@ class EconomyEngine:
         self.root = Path(root)
         self.ledger = TokenLedger(root)
 
-    def strategy(self, signal: dict[str, Any]) -> dict[str, Any]:
-        """§33 — strategy = f(task, deterministic reach, evidence, risk,
-        criticality, complexity, budgets, history).
+    def advice(self, signal: dict[str, Any]) -> dict[str, Any]:
+        """§33 — economic recommendation = f(task, deterministic reach,
+        evidence, risk, criticality, complexity, budgets, history).
 
         Deterministic reach is checked FIRST: a task the engines can answer
         never escalates to a model. Evidence gaps refuse rather than spend.
+
+        The output is an `economy-advice/v1` advisory — it informs a
+        RoutingRequest's signal but is NEVER a routing decision. The
+        canonical authority is `routing/decision.py::decide()`
+        (polish §22–26).
         """
         risk = signal.get("risk", "low")
         complexity = signal.get("complexity", "low")
@@ -61,10 +72,12 @@ class EconomyEngine:
         base = self.cheapest_sufficient(
             signal.get("question_kind", task_type), evidence_ready)
         if base["cost_class"] == "unresolved":
-            return {"strategy": "refuse", "reason": base["reason"],
+            return {"schema": SCHEMA_ADVICE, "advisory": True,
+                    "strategy": "refuse", "reason": base["reason"],
                     "capability_requirements": []}
         if base["deterministic"]:
-            return {"strategy": "deterministic-only",
+            return {"schema": SCHEMA_ADVICE, "advisory": True,
+                    "strategy": "deterministic-only",
                     "cost_class": base["cost_class"], "reason": base["reason"],
                     "capability_requirements": ["fast", "cheap"]}
         caps = ["structured-output"]
@@ -84,7 +97,8 @@ class EconomyEngine:
             strat, reason = "single-specialist", "single-domain depth"
         else:
             strat, reason = "deterministic-plus-compose", "compose over facts"
-        return {"strategy": strat, "reason": reason,
+        return {"schema": SCHEMA_ADVICE, "advisory": True,
+                "strategy": strat, "reason": reason,
                 "capability_requirements": caps,
                 "cost_class": {"coordinated": "multi-agent",
                                "multi-specialist": "multi-agent",
@@ -92,6 +106,11 @@ class EconomyEngine:
                                "single-specialist": "cheap-model",
                                "deterministic-plus-compose": "local-composition",
                                }[strat]}
+
+    def strategy(self, signal: dict[str, Any]) -> dict[str, Any]:
+        """Deprecated alias for `advice()` (polish §26 — kept for
+        compat; the semantic name is EconomyAdvice)."""
+        return self.advice(signal)
 
     def compare(self, signal: dict[str, Any],
                 strategies: list[str] | None = None) -> dict[str, Any]:

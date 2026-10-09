@@ -684,6 +684,94 @@ def gate_economy_surface() -> dict:
     return r
 
 
+def gate_economy_receipt() -> dict:
+    """polish §8 — the committed closure receipt is structurally valid,
+    bound to HEAD or HEAD~1 (receipt-only commit on top), uses canonical
+    gate names only, and every reproduce test path exists."""
+    expr = (
+        "import json, re, subprocess, sys\n"
+        "from pathlib import Path\n"
+        "sys.path.insert(0, 'scripts')\n"
+        "import validate as V\n"
+        "p = Path(V.ECONOMY_RECEIPT_PATH)\n"
+        "if not p.is_file():\n"
+        "    print('missing receipt:', p); sys.exit(1)\n"
+        "r = json.loads(p.read_text())\n"
+        "bad = []\n"
+        "if r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n"
+        "    bad.append(('schema', r.get('schema')))\n"
+        "vs = r.get('validated_sha') or ''\n"
+        "ok_sha = subprocess.run(['git','cat-file','-e',\n"
+        "    vs + '^{commit}'], capture_output=True).returncode == 0\n"
+        "if not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\n"
+        "head = subprocess.run(['git','rev-parse','HEAD'],\n"
+        "    capture_output=True, text=True).stdout.strip()\n"
+        "head1 = subprocess.run(['git','rev-parse','HEAD~1'],\n"
+        "    capture_output=True, text=True).stdout.strip()\n"
+        "if vs not in (head, head1):\n"
+        "    bad.append(('validated_sha-stale', vs, head))\n"
+        "canon = set(V._economy_gate_names())\n"
+        "extra = set(r.get('gates', {})) - canon\n"
+        "if extra: bad.append(('noncanonical-gates', sorted(extra)))\n"
+        "for g, e in r.get('gates', {}).items():\n"
+        "    for t in re.findall(r'tests/[^\\\\s]+\\\\.py',\n"
+        "                        e.get('reproduce') or ''):\n"
+        "        if not Path(t).is_file():\n"
+        "            bad.append(('dead-reproduce-path', g, t))\n"
+        "if r.get('verdict') not in ('validated', 'failed'):\n"
+        "    bad.append(('verdict', r.get('verdict')))\n"
+        "if bad: print(bad); sys.exit(1)\n"
+        "print('receipt coherent:', len(r['gates']), 'gates,',\n"
+        "      'sha bound')\n"
+    )
+    r = _py(expr)
+    r["what"] = ("committed VALIDATION-RECEIPT.json: v1 schema, "
+                 "validated_sha bound to HEAD/HEAD~1, canonical gate "
+                 "names only, no dead reproduce paths")
+    return r
+
+
+def gate_economy_closure() -> dict:
+    """polish §44–45 — closure artifacts exist, status vocabulary is
+    honest, routing authority documented, polish tests pass."""
+    expr = (
+        "import sys\n"
+        "from pathlib import Path\n"
+        "req = {'docs/economy-parity/FINAL-REPORT.md':\n"
+        "         ['validated_sha', 'remote_ci', 'known gap'],\n"
+        "       'docs/economy-parity/FINAL-MATRIX.md':\n"
+        "         ['validated', 'externally-unverified'],\n"
+        "       'docs/economy-parity/ECONOMY-BENCHMARKS.md':\n"
+        "         ['Control Plane Overhead', 'End-to-End'],\n"
+        "       'docs/economy/ROUTING.md':\n"
+        "         ['decide', 'advisory'],\n"
+        "       'docs/economy-parity/POLISH-BASELINE.md': ['drift']}\n"
+        "bad = []\n"
+        "for f, needles in req.items():\n"
+        "    p = Path(f)\n"
+        "    if not p.is_file(): bad.append(('missing', f)); continue\n"
+        "    txt = p.read_text()\n"
+        "    for n in needles:\n"
+        "        if n not in txt: bad.append((f, n))\n"
+        "m = Path('docs/economy-parity/FINAL-MATRIX.md').read_text()\n"
+        "if '\\n' + '|' in m and ' fully-production' in m:\n"
+        "    bad.append(('matrix', 'overclaimed status'))\n"
+        "if bad: print(bad); sys.exit(1)\n"
+        "print('closure docs coherent')\n"
+    )
+    r1 = _py(expr)
+    r2 = _run(["pytest", "-q", "tests/test_economy_closure.py"])
+    r1["what"] = ("closure artifacts exist + honest statuses + routing "
+                  "authority documented + polish test suite "
+                  "(receipt/parity/reproduce/authority/doctor/P1-P10)")
+    if r1["rc"] == 0:
+        r1["rc"] = r2["rc"]
+        r1["tail"] += r2["tail"]
+        r1["seconds"] = round(r1["seconds"] + r2["seconds"], 2)
+        r1["cmd"] += " && " + r2["cmd"]
+    return r1
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
@@ -736,6 +824,9 @@ GATES = {
     "economy-qpt": gate_economy_qpt,
     "economy-evals": gate_economy_evals,
     "economy-surface": gate_economy_surface,
+    # polish (prompt_evo_polish §8, §44–45)
+    "economy-receipt": gate_economy_receipt,
+    "economy-closure": gate_economy_closure,
 }
 
 UNLOCK = {
@@ -805,19 +896,129 @@ UNLOCK = {
     "economy-evals": "pytest tests/test_economy_evals.py",
     "economy-surface": "run each economy/cache/context/routing verb "
         "manually — exit 0 or 2 expected",
+    "economy-receipt": ("regenerate via python scripts/validate.py "
+                        "--economy-receipt "
+                        "docs/economy-parity/VALIDATION-RECEIPT.json"),
+    "economy-closure": ("fix closure docs/statuses or the failing "
+                        "tests/test_economy_closure.py case"),
 }
+
+
+def _head_sha() -> str:
+    r = _run(["git", "rev-parse", "HEAD"])
+    return r["tail"][-1].strip() if r["tail"] else ""
+
+
+def _economy_gate_names() -> list[str]:
+    """§91 — the canonical economy taxonomy is derived from GATES,
+    never hand-listed. Receipt gates == validator gates by construction."""
+    return sorted(n for n in GATES if n.startswith("economy-"))
+
+
+ECONOMY_RECEIPT_SCHEMA = "platformforge/economy-validation-receipt/v1"
+ECONOMY_RECEIPT_PATH = "docs/economy-parity/VALIDATION-RECEIPT.json"
+
+
+def _economy_receipt_doc(gates: dict[str, dict], failed: list[str],
+                         remote_ci: str) -> dict:
+    return {
+        "schema": ECONOMY_RECEIPT_SCHEMA,
+        "kind": "platformforge/economy-validation-receipt/1",
+        "cycle": "economy-parity",
+        "spec": "prompt_evo_economy.md",
+        "exception": "FE-002",
+        "validated_sha": _head_sha(),
+        "closure_sha": None,
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "validator": "scripts/validate.py",
+        "validator_version": "economy-validation-receipt/v1",
+        "gates": gates,
+        "quality": {"note": "QPT/QPC floors enforced inside "
+                            "economy-qpt / economy-evals gates; quality "
+                            "floors gate every economy claim"},
+        "benchmarks": {"control_plane_overhead":
+                       "docs/economy-parity/ECONOMY-BENCHMARKS.md",
+                       "end_to_end": "insufficient evidence — no "
+                                     "production corpus claimed"},
+        "known_gaps": [
+            ("real provider pricing catalog not bundled (declared-rates "
+             "engine only, by design)"),
+            ("money axis lacks a real model-call corpus — QPC money is "
+             "unresolved without declared pricing + measured usage"),
+            ("production savings unproven; microbench overhead only"),
+            ("analysis cache reuse requires identical evidence/policy/"
+             "risk tuple — conservative by construction"),
+        ],
+        "remote_ci": remote_ci,
+        "verdict": "validated" if not failed else "failed",
+        "failed": failed,
+    }
+
+
+def economy_receipt(out_path: str, *, remote_ci: str) -> int:
+    """§12, §62–65 — generate the economy closure receipt.
+
+    Schema `platformforge/economy-validation-receipt/v1`:
+    - `validated_sha` binds the FUNCTIONAL commit the gates ran against.
+    - `closure_sha` stays null in the committed file: the receipt-only
+      closure commit cannot contain its own hash (§65 — no paradox).
+      The `economy-receipt` gate accepts validated_sha == HEAD or
+      HEAD~1 (receipt-only commit on top).
+    - `gates` keys are exactly the canonical `economy-*` names — no
+      aliases, no parallel taxonomy (§10–11). `reproduce` is the actual
+      command the gate ran, not a handwritten string (§15).
+    - `remote_ci` is caller-supplied observation, never claimed here.
+
+    Two passes: a skeleton receipt (gate names present, results pending)
+    is written first so the self-referential gates (economy-receipt,
+    economy-closure) validate the real artifact, then the file is
+    overwritten with final results.
+    """
+    names = _economy_gate_names()
+    gates: dict[str, dict] = {}
+    failed = []
+    # pass 1 — skeleton so self-referential gates read this artifact
+    Path(out_path).write_text(json.dumps(_economy_receipt_doc(
+        {n: {"ok": None, "reproduce": "pending", "seconds": None}
+         for n in names}, [], remote_ci), indent=2, sort_keys=True)
+        + "\n")
+    for name in names:
+        res = GATES[name]()
+        ok = res.get("rc", 1) == 0
+        entry = {"ok": ok, "reproduce": res.get("cmd", "n/a"),
+                 "seconds": res.get("seconds")}
+        if not ok:
+            entry["why"] = res.get("tail", [])[-3:]
+            entry["unlock"] = UNLOCK.get(name, "see the gate output")
+            failed.append(name)
+        gates[name] = entry
+        print(f"{'PASS' if ok else 'FAIL'} {name}", file=sys.stderr)
+    # pass 2 — final results overwrite the skeleton
+    Path(out_path).write_text(json.dumps(
+        _economy_receipt_doc(gates, failed, remote_ci),
+        indent=2, sort_keys=True) + "\n")
+    return 0 if not failed else 2
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--gate", choices=sorted(GATES))
     ap.add_argument("--receipt", help="write machine-readable receipt JSON")
+    ap.add_argument("--economy-receipt", metavar="PATH",
+                    help="run canonical economy-* gates and write the "
+                         "v1 closure receipt (validated_sha = HEAD)")
+    ap.add_argument("--remote-ci", default="not independently verified",
+                    help="observed remote CI status string recorded "
+                         "verbatim in the economy receipt")
     args = ap.parse_args()
+
+    if args.economy_receipt:
+        return economy_receipt(args.economy_receipt,
+                               remote_ci=args.remote_ci)
 
     names = [args.gate] if args.gate else list(GATES)
     receipt = {"kind": "platformforge/validation-receipt/1",
-               "sha": _run(["git", "rev-parse", "HEAD"])["tail"][-1:]
-                      if not args.gate else None,
+               "sha": [_head_sha()] if not args.gate else None,
                "gates": {}}
     failed = []
     for name in names:

@@ -188,6 +188,25 @@ def prepare(spec: PlatformTaskSpec, *, loop_name: str = "platform-audit",
     structurally invalid DAG. `loops` overrides the catalog —
     used by tests and embedders; the CLI always uses the catalog."""
     complex_ = spec.complexity != "low" or spec.risk in _GOVERN_NONE
+    # polish §24/§28 — a supplied router_decision must be the canonical
+    # platformforge/routing-decision/v1 emitted by routing.decide().
+    # EconomyEngine advice (economy-advice/v1) is refused here — it may
+    # inform the signal, never activate a route.
+    if router_decision:
+        from platformforge.routing.decision import SCHEMA_DEC
+        if router_decision.get("schema") != SCHEMA_DEC:
+            run = _record(spec, dict(router_decision),
+                          verdict="unresolved")
+            return OrchestrationPlan(
+                dag=[], envelope=envelope_for(spec.budget),
+                coordinator="", run=run,
+                refusal_doc=refusal(
+                    AgentRefusal.ROUTE_UNRESOLVED,
+                    "router_decision is not a canonical "
+                    "platformforge/routing-decision/v1 — advice, raw "
+                    "dicts and foreign schemas cannot activate a route",
+                    "produce the decision via "
+                    "platformforge.routing.decision.decide()"))
     unsealed = require_sealed(spec, complex_=complex_)
     if unsealed:
         run = _record(spec, router_decision or {}, verdict="unresolved")

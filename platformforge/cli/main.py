@@ -1277,13 +1277,11 @@ def cmd_routing(args: argparse.Namespace) -> int:
 
     sub = args.routing_cmd
     if sub == "explain":
+        from platformforge.routing.decision import decide
         req = RoutingRequest(
             task=args.task, profile=args.profile, risk=args.risk,
             signal=json.loads(args.signal or "{}"))
-        from platformforge.routing import TaskSignal, route
-        sig = TaskSignal.from_dict(json.loads(args.signal or "{}"))
-        routed = route(sig)
-        rec = receipt(req, _decision_from_route(routed, req),
+        rec = receipt(req, decide(req),
                       json.loads(args.estimated or "{}"))
         return _emit({"request": {"task": req.task,
                                   "profile": req.profile,
@@ -1304,18 +1302,6 @@ def cmd_routing(args: argparse.Namespace) -> int:
             agents=args.agents, provider_calls=args.provider_calls)
         return _emit(sc.to_dict(), args)
     return _emit({"error": f"unknown routing verb {sub}"}, args, 1)
-
-
-def _decision_from_route(routed: dict[str, Any], req):
-    from platformforge.routing.decision import RoutingDecision
-    return RoutingDecision(
-        mode=routed.get("mode", "deterministic"),
-        agents=list(routed.get("specialists", [])),
-        model_tier=routed.get("model_tier", "none"),
-        verification_tier=routed.get("verification_tier", "V0-static"),
-        reason="; ".join(routed.get("reasons", [])),
-        risk=req.risk, profile=req.effective_profile(),
-        fallback="; ".join(routed.get("fallbacks", [])))
 
 
 def cmd_policy(args: argparse.Namespace) -> int:

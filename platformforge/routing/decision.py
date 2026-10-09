@@ -13,11 +13,13 @@ import hashlib
 import json
 import time
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any
 
 SCHEMA_REQ = "platformforge/routing-request/v1"
 SCHEMA_DEC = "platformforge/routing-decision/v1"
 SCHEMA_SCORE = "platformforge/routing-scorecard/v1"
+ROUTING_POLICY_VERSION = "platformforge/routing/v2"
 
 PROFILES = ("economy", "balanced", "deep", "strict", "offline")
 PROFILE_ORDER = {p: i for i, p in enumerate(
@@ -105,6 +107,35 @@ class RoutingScorecard:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def decide(request: RoutingRequest, *,
+           routes_path: str | Path | None = None) -> RoutingDecision:
+    """§139–141 — the ONLY producer of the canonical RoutingDecision.
+
+    Wraps the deterministic router (`routing/router.py::route`) and
+    applies the effective profile (risk raises the floor, never lowers).
+    EconomyEngine output is *advice* that may inform `request.signal` —
+    it is never a decision and never reaches orchestration. Hosts embed
+    `decision.to_dict()`; the orchestrator enforces the schema.
+    """
+    from platformforge.routing.router import TaskSignal, route
+    sig = TaskSignal.from_dict(request.signal or {})
+    routed = route(sig, routes_path)
+    profile = request.effective_profile()
+    defaults = PROFILE_DEFAULTS.get(profile, PROFILE_DEFAULTS["balanced"])
+    return RoutingDecision(
+        mode=routed.get("mode", "deterministic"),
+        agents=list(routed.get("agents")
+                    or routed.get("specialists") or []),
+        model_tier=routed.get("model_tier", "none"),
+        context_budget=defaults.get("context_bytes_soft"),
+        provider_budget=defaults.get("provider_calls_hard"),
+        verification_tier=defaults.get("verification_floor", "V0-static"),
+        reason="; ".join(routed.get("reasons", [])),
+        risk=request.risk, profile=profile,
+        fallback="; ".join(routed.get("fallbacks", [])),
+        policy_version=ROUTING_POLICY_VERSION)
 
 
 def receipt(request: RoutingRequest, decision: RoutingDecision,

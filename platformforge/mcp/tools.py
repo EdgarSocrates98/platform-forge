@@ -68,19 +68,12 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
         return ContextGateway(repo).expand(inp["ref"],
                                            inp.get("section", ""))
     if handler == "cli:routing_explain":
-        from platformforge.routing import TaskSignal, route
-        from platformforge.routing.decision import RoutingDecision, RoutingRequest, receipt
+        from platformforge.routing.decision import RoutingRequest, decide, receipt
         req = RoutingRequest(task=inp.get("task", ""),
                              profile=inp.get("profile", "balanced"),
                              risk=inp.get("risk", "low"),
                              signal=inp.get("signal") or {})
-        sig = TaskSignal.from_dict(inp.get("signal") or {})
-        routed = route(sig)
-        dec = RoutingDecision(
-            mode=routed.get("mode", "deterministic"),
-            agents=list(routed.get("specialists", [])),
-            reason="; ".join(routed.get("reasons", [])),
-            risk=req.risk, profile=req.effective_profile())
+        dec = decide(req)
         return {"request": {"task": req.task,
                             "effective_profile": req.effective_profile(),
                             "risk": req.risk},
