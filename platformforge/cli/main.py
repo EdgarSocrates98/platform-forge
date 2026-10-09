@@ -722,7 +722,7 @@ def cmd_economy(args: argparse.Namespace) -> int:
             run_id=args.run_id or f"run-{int(time.time())}",
             spent_budget=json.loads(args.spent or "{}"),
             remaining_budget=json.loads(args.remaining or "{}"),
-            routing_profile=args.profile,
+            routing_profile=args.profile or "balanced",
             deps=json.loads(args.deps or "{}"))
         st.save(cp)
         return _emit({"checkpoint": cp.to_dict()}, args)
@@ -748,6 +748,8 @@ def cmd_economy(args: argparse.Namespace) -> int:
         return _emit(out, args, 2 if (args.strict and out["overall"]
                                       in ("warn", "fail")) else 0)
     if sub == "explain":
+        from platformforge.economy.checkpoint import CheckpointStore
+
         st = CheckpointStore(Path(args.repo) / ".platformforge" / "checkpoints")
         cp = st.load(args.run_id or "")
         if cp is None:

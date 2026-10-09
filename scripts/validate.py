@@ -561,6 +561,129 @@ def gate_freeze_exceptions() -> dict:
     return r
 
 
+# --- economy control plane gates (prompt_evo_economy §T) -----------------
+
+def gate_economy_contracts() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_contracts.py",
+              "tests/test_economy_v2.py"])
+    r["what"] = ("EconomyPlan pipeline + explainability; BudgetEnvelope "
+                 "dims/hard-soft/phases/roles/protected; unified ledger "
+                 "basis separation")
+    return r
+
+
+def gate_economy_cache() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_cache.py"])
+    r["what"] = ("multilayer cache: content addressing, dep-graph "
+                 "selective invalidation, TTL/GC, decision cache, "
+                 "receipts, no secret caching")
+    return r
+
+
+def gate_economy_context() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_gateway.py",
+              "-k", "TestGateway or TestLazy or TestRole or Suff"])
+    r["what"] = ("ContextGateway capsule/refs/sufficiency/role "
+                 "contexts; essential-evidence refusal")
+    return r
+
+
+def gate_economy_budget() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_contracts.py",
+              "-k", "budget or limit or protected or dimension"])
+    r["what"] = "BudgetEnvelope: hard never silent, protected items"
+    return r
+
+
+def gate_economy_resume() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_gateway.py",
+              "-k", "resume or checkpoint"])
+    r["what"] = ("checkpoint/resume: spend preserved, deps revalidated, "
+                 "profile never downgraded")
+    return r
+
+
+def gate_economy_reconcile() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_gateway.py",
+              "tests/test_economy_evals.py",
+              "-k", "reconcil or mismatch or unobserved"])
+    r["what"] = ("planned vs observed per axis; unmeasured = unresolved, "
+                 "never zero; savings claims gated on measured data")
+    return r
+
+
+def gate_economy_routing() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_evals.py",
+              "-k", "routing or profile or champion or simple_task"])
+    r["what"] = ("routing profiles + risk floors; challenger promotion "
+                 "requires human; receipts bind inputs/policy")
+    return r
+
+
+def gate_economy_agentic() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_agents_waste.py",
+              "tests/test_economy_evals.py",
+              "-k", "uniqueness or debate or duplication or fanout or "
+                    "waste or stagnant"])
+    r["what"] = ("agent uniqueness audit, debate bounds + stagnation "
+                 "stop, waste detector, RTK economy receipt")
+    return r
+
+
+def gate_economy_verification() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_pricing_verify.py"])
+    r["what"] = ("selective verification tiers + risk floors + security "
+                 "check always-in; declared pricing or unresolved")
+    return r
+
+
+def gate_economy_qpt() -> dict:
+    r = _run(["pytest", "-q", "tests/test_qpt_v2.py",
+              "tests/test_economy_fleet_qpt.py"])
+    r["what"] = ("QPT v2 no regression + v3 quality-per-cost dims "
+                 "(unresolved never zeroed; floors gate savings)")
+    return r
+
+
+def gate_economy_evals() -> dict:
+    r = _run(["pytest", "-q", "tests/test_economy_evals.py"])
+    r["what"] = "13 named evals + 8 properties + E1-E12 adversarial"
+    return r
+
+
+def gate_economy_surface() -> dict:
+    expr = (
+        "import subprocess, sys\n"
+        "cmds = [\n"
+        " ['platformforge','economy','doctor'],\n"
+        " ['platformforge','economy','checkpoint','--run-id','gate',\n"
+        "  '--spent','{\"tokens\":1}'],\n"
+        " ['platformforge','economy','resume','--run-id','gate'],\n"
+        " ['platformforge','economy','reconcile',\n"
+        "  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n"
+        " ['platformforge','economy','explain','--run-id','gate'],\n"
+        " ['platformforge','cache','stats'],\n"
+        " ['platformforge','cache','gc'],\n"
+        " ['platformforge','context','capsule','--task','t',\n"
+        "  '--facts','[{\"fact_id\":\"f\"}]'],\n"
+        " ['platformforge','context','gc'],\n"
+        " ['platformforge','routing','explain','--signal','{}'],\n"
+        " ['platformforge','routing','compare',\n"
+        "  '--champion','{}','--challenger','{}'],\n"
+        "]\n"
+        "for c in cmds:\n"
+        "    r = subprocess.run(c, capture_output=True)\n"
+        "    if r.returncode not in (0, 2):\n"
+        "        print('FAIL', c, r.returncode, r.stderr[-300:])\n"
+        "        sys.exit(1)\n"
+        "print('all economy verbs respond')\n"
+    )
+    r = _py(expr)
+    r["what"] = ("every economy/context/cache/routing CLI verb "
+                 "responds (0=ok, 2=refusal — refusals are valid)")
+    return r
+
+
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
     "linkage": gate_linkage, "knowledge": gate_knowledge,
@@ -600,6 +723,19 @@ GATES = {
     "freeze-docs": gate_freeze_docs,
     "freeze-replay": gate_freeze_replay,
     "freeze-exceptions": gate_freeze_exceptions,
+    # economy control plane (prompt_evo_economy §T)
+    "economy-contracts": gate_economy_contracts,
+    "economy-cache": gate_economy_cache,
+    "economy-context": gate_economy_context,
+    "economy-budget": gate_economy_budget,
+    "economy-resume": gate_economy_resume,
+    "economy-reconcile": gate_economy_reconcile,
+    "economy-routing": gate_economy_routing,
+    "economy-agentic": gate_economy_agentic,
+    "economy-verification": gate_economy_verification,
+    "economy-qpt": gate_economy_qpt,
+    "economy-evals": gate_economy_evals,
+    "economy-surface": gate_economy_surface,
 }
 
 UNLOCK = {
@@ -655,6 +791,20 @@ UNLOCK = {
         "satisfy the §6 FeatureException contract",
     "freeze-replay": "platformforge cases replay — fix the case, the "
         "analyzer, or record a documented FP/FN entry",
+    "economy-contracts": "pytest tests/test_economy_contracts.py "
+        "tests/test_economy_v2.py",
+    "economy-cache": "pytest tests/test_economy_cache.py",
+    "economy-context": "pytest tests/test_economy_gateway.py",
+    "economy-budget": "pytest tests/test_economy_contracts.py -k budget",
+    "economy-resume": "pytest tests/test_economy_gateway.py -k resume",
+    "economy-reconcile": "pytest -k reconcil",
+    "economy-routing": "pytest tests/test_economy_evals.py -k routing",
+    "economy-agentic": "pytest tests/test_economy_agents_waste.py",
+    "economy-verification": "pytest tests/test_economy_pricing_verify.py",
+    "economy-qpt": "pytest tests/test_qpt_v2.py",
+    "economy-evals": "pytest tests/test_economy_evals.py",
+    "economy-surface": "run each economy/cache/context/routing verb "
+        "manually — exit 0 or 2 expected",
 }
 
 
