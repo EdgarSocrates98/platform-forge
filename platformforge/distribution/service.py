@@ -12,6 +12,7 @@ from platformforge.distribution.models import (
     DistributionManifest, InstallPlan, InstallReceipt, ManagedAsset,
 )
 from platformforge.workspace.service import ensure_workspace
+from platformforge.resources import data_path
 
 PF_DIR = ".platformforge"
 INSTALL_RECEIPT = "install-receipt.json"
@@ -45,6 +46,23 @@ def portable_assets(hosts: Iterable[str]) -> dict[str, bytes]:
     for rel, text in rendered.items():
         if rel.startswith(prefixes):
             out[rel] = text.encode()
+    # Portable domain skills are package data. Codex consumes the generic
+    # .agents skill surface alongside .codex/agents; Claude/Devin receive
+    # their native skill directories. One canonical skill body is copied.
+    skill_root = data_path("portable_skills")
+    if skill_root.is_dir():
+        for skill_dir in sorted(skill_root.iterdir()):
+            skill_file = skill_dir / "SKILL.md"
+            if not skill_file.is_file():
+                continue
+            body = skill_file.read_bytes()
+            if "agents" in hosts or "codex" in hosts:
+                out[f".agents/skills/{skill_dir.name}/SKILL.md"] = body
+            if "claude" in hosts:
+                out[f".claude/skills/{skill_dir.name}/SKILL.md"] = body
+            if "devin" in hosts:
+                out[f".devin/skills/{skill_dir.name}/SKILL.md"] = body
+
     # Workspace-local MCP hint: never edits global host config.
     out[f"{PF_DIR}/mcp.json"] = json.dumps({
         "schema": "platformforge/mcp-bootstrap/v1",

@@ -10,6 +10,8 @@ def test_install_dry_run_then_install_and_uninstall(tmp_path):
     assert (tmp_path / ".platformforge/install-receipt.json").is_file()
     assert any((tmp_path / ".codex/agents").glob("*.toml"))
     assert any((tmp_path / ".claude/agents").glob("*.md"))
+    assert any((tmp_path / ".claude/skills").glob("*/SKILL.md"))
+    assert any((tmp_path / ".agents/skills").glob("*/SKILL.md"))
     assert doctor(tmp_path)["state"] == "healthy"
     rm = uninstall(tmp_path)
     assert rm["status"] == "uninstalled"
