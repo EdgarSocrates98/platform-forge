@@ -287,6 +287,11 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `inspect`  
   `--repo <v> — workspace/repo root (default '.')`
 
+## `install`
+
+- `install`  
+  `--repo <v> — workspace/repo root (default '.')` · `--profile <v> (default 'agentic')` · `--host {agents|claude|codex|devin}` · `--dry-run`
+
 ## `integrate`
 
 - `integrate`  
@@ -405,6 +410,15 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `policy check`
 - `policy list`
 
+## `portable`
+
+- `portable` <path> (default 'dist/platformforge-portable')  
+  `--repo <v> — workspace/repo root (default '.')` · `--profile <v> (default 'agentic')` · `--host {agents|claude|codex|devin}` · `--offline-bundle`
+- `portable build`
+- `portable doctor`
+- `portable install`
+- `portable verify`
+
 ## `product`
 
 - `product`  
@@ -498,4 +512,26 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `tokens pack`
 - `tokens search`
 - `tokens stats`
+
+
+## `uninstall`
+
+- `uninstall`  
+  `--repo <v> — workspace/repo root (default '.')` · `--purge`
+
+## `upgrade`
+
+- `upgrade`  
+  `--repo <v> — workspace/repo root (default '.')` · `--profile <v> (default '')` · `--host {agents|claude|codex|devin}` · `--dry-run`
+
+## `workspace`
+
+- `workspace` <path> (default '.')  
+  `--repo <v> — workspace/repo root (default '.')` · `--name <v> (default '')` · `--profile <v> (default 'agentic')` · `--host {agents|claude|codex|devin}`
+- `workspace add`
+- `workspace doctor`
+- `workspace init`
+- `workspace list`
+- `workspace remove`
+- `workspace status`
 
