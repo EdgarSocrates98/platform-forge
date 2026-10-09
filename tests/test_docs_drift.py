@@ -42,6 +42,6 @@ def test_cli_surface_is_current():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     expected = mod.generate()
-    actual = (ROOT / "docs" / "CLI-SURFACE.md").read_text()
+    actual = (ROOT / "docs" / "CLI-SURFACE.md").read_text(encoding="utf-8")
     assert actual == expected, \
         "docs/CLI-SURFACE.md stale — run gen_cli_surface.py --write"

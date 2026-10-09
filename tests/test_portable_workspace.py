@@ -1,4 +1,5 @@
-from platformforge.workspace import ensure_workspace, add_repo, remove_repo, doctor
+from platformforge.workspace import add_repo, doctor, ensure_workspace, remove_repo
+
 
 def test_workspace_multi_repo_lifecycle(tmp_path):
     a = tmp_path / "app"; a.mkdir()

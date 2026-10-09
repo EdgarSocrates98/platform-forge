@@ -1,11 +1,13 @@
 """Self-contained, relocatable portable bundles."""
 from __future__ import annotations
+
 import hashlib
 import json
 import shutil
 from pathlib import Path
 
 from platformforge.distribution.service import _distribution, portable_assets
+
 
 def _sha(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
@@ -54,10 +56,11 @@ def verify_bundle(bundle: str | Path) -> dict:
 
 def install_bundle(bundle: str | Path, target: str | Path) -> dict:
     """Install a verified bundle without network access."""
-    from platformforge.distribution.models import DistributionManifest, InstallReceipt, DIST_SCHEMA
-    from platformforge.distribution.service import _safe_target, _sha, PF_DIR, INSTALL_RECEIPT, DIST_MANIFEST
-    from platformforge.workspace.service import ensure_workspace
     import os
+
+    from platformforge.distribution.models import DIST_SCHEMA, DistributionManifest, InstallReceipt
+    from platformforge.distribution.service import DIST_MANIFEST, INSTALL_RECEIPT, PF_DIR, _safe_target, _sha
+    from platformforge.workspace.service import ensure_workspace
 
     root = Path(bundle).resolve()
     target = Path(target).resolve()

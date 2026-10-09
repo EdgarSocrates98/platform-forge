@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import json
 from pathlib import Path
+
 from platformforge import __version__
 from platformforge.workspace.models import WorkspaceManifest, WorkspaceMember
+
 
 def _path(root: Path) -> Path:
     return root / ".platformforge" / "workspace.json"

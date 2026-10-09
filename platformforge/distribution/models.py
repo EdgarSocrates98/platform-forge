@@ -1,5 +1,6 @@
 """Versioned contracts for portable distribution."""
 from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -32,7 +33,7 @@ class DistributionManifest:
         return d
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "DistributionManifest":
+    def from_dict(cls, d: dict[str, Any]) -> DistributionManifest:
         return cls(
             distribution_id=d["distribution_id"],
             platformforge_version=d["platformforge_version"],

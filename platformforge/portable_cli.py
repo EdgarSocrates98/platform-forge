@@ -4,9 +4,43 @@ from __future__ import annotations
 
 def register(sub, add_common, emit):
     def install(a):
-        from platformforge.distribution import apply_install
+        # forge/* contract surface: `install <op>` routes the shared
+        # lifecycle verbs; `apply` (default) keeps the legacy flags too —
+        # `--profile agentic` and `--host agents` pass straight through.
+        from platformforge.install import service
 
-        return emit(apply_install(a.repo, a.profile, a.host, a.dry_run), a)
+        op = getattr(a, "op", "apply") or "apply"
+        hosts = a.host or ["all"]
+        try:
+            if op != "apply":
+                fn = {
+                    "status": lambda: service.status(scope=a.scope, root=a.repo),
+                    "doctor": lambda: service.doctor(scope=a.scope, root=a.repo),
+                    "repair": lambda: service.repair(scope=a.scope, root=a.repo,
+                                                   dry_run=a.dry_run),
+                    "uninstall": lambda: service.uninstall(scope=a.scope,
+                                                         root=a.repo,
+                                                         purge=a.purge,
+                                                         dry_run=a.dry_run),
+                    "update": lambda: service.update(to=a.to, repo=None,
+                                                   dry_run=a.dry_run),
+                    "mcp-verify": service.mcp_verify,
+                }[op]
+                out = fn()
+            else:
+                out = service.install(
+                    scope=a.scope, root=a.repo,
+                    host="all" if hosts == ["all"] else hosts[0]
+                    if len(hosts) == 1 else "all",
+                    profile=a.profile if a.profile in service.PROFILES
+                    else "recommended",
+                    yes=a.yes, dry_run=a.dry_run)
+        except service.InstallRefusal as exc:
+            return emit({"status": "refused",
+                         "error": {"kind": exc.kind, "detail": exc.detail}}, a, 2)
+        rc = 0 if out.get("status") in (
+            "ok", "completed", "planned", "healthy", "unverified") else 1
+        return emit(out, a, rc)
 
     def uninstall(a):
         from platformforge.distribution import uninstall as fn
@@ -53,8 +87,22 @@ def register(sub, add_common, emit):
 
     sp = sub.add_parser("install", help="install Platform Forge assets into a workspace")
     add_common(sp)
-    sp.add_argument("--profile", default="agentic")
-    sp.add_argument("--host", action="append", choices=["agents", "claude", "codex", "devin"])
+    sp.add_argument("op", nargs="?", default="apply",
+                    choices=["apply", "status", "doctor", "repair",
+                             "uninstall", "update", "mcp-verify"],
+                    help="forge/* lifecycle verb (default: apply)")
+    sp.add_argument("--profile", default="recommended",
+                    help="minimal|recommended|full (contract) or native profile name")
+    sp.add_argument("--host", action="append",
+                    choices=["agents", "claude", "codex", "devin", "copilot", "all"])
+    sp.add_argument("--scope", default="project",
+                    choices=["project", "workspace", "user"])
+    sp.add_argument("--yes", "-y", action="store_true",
+                    help="explicit approval — required for writes")
+    sp.add_argument("--purge", action="store_true",
+                    help="uninstall: also remove .platformforge state")
+    sp.add_argument("--to", default=None,
+                    help="update: pinned version — never 'latest'")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=install)
 

@@ -290,7 +290,14 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `install`
 
 - `install`  
-  `--repo <v> — workspace/repo root (default '.')` · `--profile <v> (default 'agentic')` · `--host {agents|claude|codex|devin}` · `--dry-run`
+  `--repo <v> — workspace/repo root (default '.')` · `--profile <v> — minimal|recommended|full (contract) or native profile name (default 'recommended')` · `--host {agents|claude|codex|devin|copilot|all}` · `--scope {project|workspace|user} (default 'project')` · `--yes, -y — explicit approval — required for writes` · `--purge — uninstall: also remove .platformforge state` · `--to <v> — update: pinned version — never 'latest'` · `--dry-run`
+- `install apply`
+- `install doctor`
+- `install mcp-verify`
+- `install repair`
+- `install status`
+- `install uninstall`
+- `install update`
 
 ## `integrate`
 
@@ -512,7 +519,6 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `tokens pack`
 - `tokens search`
 - `tokens stats`
-
 
 ## `uninstall`
 

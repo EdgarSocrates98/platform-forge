@@ -119,7 +119,7 @@ def main() -> int:
         print("ok — CLI-SURFACE.md is current")
         return 0
     if args.write:
-        OUT.write_text(text)
+        OUT.write_text(text, encoding="utf-8")
         print(f"written {OUT} ({len(text.splitlines())} lines)")
         return 0
     sys.stdout.write(text)

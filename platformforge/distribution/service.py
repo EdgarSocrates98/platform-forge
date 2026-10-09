@@ -1,18 +1,22 @@
 """Plan-first, ownership-aware portable install lifecycle."""
 from __future__ import annotations
+
 import hashlib
 import json
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from platformforge import __version__
 from platformforge.agents.mirrors import expected as expected_agent_mirrors
 from platformforge.distribution.models import (
-    DistributionManifest, InstallPlan, InstallReceipt, ManagedAsset,
+    DistributionManifest,
+    InstallPlan,
+    InstallReceipt,
+    ManagedAsset,
 )
-from platformforge.workspace.service import ensure_workspace
 from platformforge.resources import data_path
+from platformforge.workspace.service import ensure_workspace
 
 PF_DIR = ".platformforge"
 INSTALL_RECEIPT = "install-receipt.json"

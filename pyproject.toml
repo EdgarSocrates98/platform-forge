@@ -67,3 +67,10 @@ line-length = 110
 target-version = "py310"
 # eval fixtures are data (deliberately malformed/secret-bearing), not code
 exclude = ["evals/cases/*/fixture/**", "lab/scenarios/*/fixture/**"]
+
+[tool.ruff.lint.per-file-ignores]
+# Vendored shared engine (canonical: the-forge/scripts/installkit) — kept
+# byte-identical to the shared source; linted in the canonical repo.
+"platformforge/_installkit.py" = ["ALL"]
+"scripts/forge_bootstrap.py" = ["ALL"]
+"scripts/forge_installkit.py" = ["ALL"]
