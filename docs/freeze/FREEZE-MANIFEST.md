@@ -9,9 +9,9 @@ Generated from live registries — `platformforge freeze manifest`.
 ## Surfaces
 
 - public schemas: 21 (contracts/*.schema.json)
-- CLI verbs: 49 — agents, ai, analytics, analyze, bench, capability, caveman, change, collect, context, correlate, diagnose, diff, doctor, drift, economy, evals, explain, federation, finops, fleet, forge, freeze, graph, impact, init, inspect, integrate, judge, knowledge, lab, live, mcp, observe, ops, optimize, plan, policy, product, recommend, reliability, risk, route, rtk, sdd, security, status, store, tokens
-- MCP tools: 34
-- capabilities: 34
+- CLI verbs: 52 — agents, ai, analytics, analyze, bench, cache, capability, cases, caveman, change, collect, context, correlate, diagnose, diff, doctor, drift, economy, evals, explain, federation, finops, fleet, forge, freeze, graph, impact, init, inspect, integrate, judge, knowledge, lab, live, mcp, observe, ops, optimize, plan, policy, product, recommend, reliability, risk, route, routing, rtk, sdd, security, status, store, tokens
+- MCP tools: 38
+- capabilities: 38
 - agents: 41 (coordinator:5, critic:1, executor:8, guardian:1, orchestrator:1, planner:1, referee:1, reviewer:7, specialist:15, verifier:1)
 - knowledge packs: aws, crossplane, kubernetes, terraform (2 registered sources)
 

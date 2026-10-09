@@ -90,6 +90,13 @@ def build_manifest() -> dict[str, Any]:
     import subprocess
     sha = subprocess.run(["git", "rev-parse", "HEAD"], check=False,
                          capture_output=True, text=True).stdout.strip()
+    existing = Path("docs/freeze/FREEZE-MANIFEST.md")
+    if existing.is_file():
+        import re
+        prev = re.search(r"freeze_start_sha: `([0-9a-f]{40})`",
+                         existing.read_text())
+        if prev:
+            sha = prev.group(1)
     return {
         "schema": SCHEMA,
         "freeze_start_sha": sha,

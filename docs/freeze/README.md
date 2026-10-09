@@ -38,7 +38,21 @@ named `real_world_blocker` — "because it's cool" is a non-reason.
 | `KNOWLEDGE-REVIEW.md` | 59-source freshness sweep |
 | `RELEASE-HARDENING.md` | wheel/sdist hashes, CycloneDX SBOM, license inventory, dep audit |
 | `exceptions/FE-001.json` | deferred FeatureException — fixture-aware scoping (RW-4/RW-7) |
+| `exceptions/FE-002.json` | **landed + closed** — Economy Control Plane (`prompt_evo_economy.md`); snapshots/manifest re-baselined at `275da9c`; closure evidence in `docs/economy-parity/` |
 | `*-RECEIPT.json` | machine receipts bound to the measured commit: `PERFORMANCE`, `PERFORMANCE-BASELINE`, `SOAK`, `AGENTIC`, `VALIDATION` |
+
+## Landed exceptions (return-to-freeze state)
+
+`FE-002` (Economy Control Plane) is **closed** — contract snapshots and
+the manifest were re-baselined to the post-economy surface, so
+`freeze check` is green again and the economy surface is now canonical.
+Post-closure work allowed: bug fixes, QPT corpus growth, real-usage
+calibration, routing tuning, cache-hit improvements, provider-usage
+adapters, knowledge freshness. New economy architecture, budget-model
+families, decision planes, routing subsystems or agent-economy control
+planes require a **new** FeatureException — FE-002 does not cover them.
+Evidence: `docs/economy-parity/VALIDATION-RECEIPT.json` +
+`FINAL-REPORT.md`.
 
 ## Evidence corpus (tracked in git)
 
