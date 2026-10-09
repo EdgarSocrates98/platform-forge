@@ -61,6 +61,30 @@ Browse: [adr/](adr/) — filenames carry the title.
 | 5 | [cycle5/](cycle5/) | fleet + analytics + federation; 10 closure docs + receipt |
 | 5.1 | [cycle5.1/](cycle5.1/) | agentic runtime: baseline, agent matrix/benchmarks, scale + soak reports, freeze review, final matrix/report, validation receipt |
 
+## freeze/ — architecture freeze (current state)
+
+The repo is under **Architecture Freeze** — no Cycle 6. Maintenance
+classes only (bug/perf/security fix, knowledge-update, new-eval,
+new-real-world-fixture, compatibility, docs); everything else needs a
+FeatureException via [UNFREEZE-RFC.md](freeze/UNFREEZE-RFC.md).
+
+- [FREEZE-MANIFEST.md](freeze/FREEZE-MANIFEST.md) — frozen surface inventory
+- [LIFECYCLE.md](freeze/LIFECYCLE.md) — freeze rules, exception classes, gates
+- [FINAL-REPORT.md](freeze/FINAL-REPORT.md) — honest readiness statement (P4 ceiling)
+- [FINAL-MATRIX.md](freeze/FINAL-MATRIX.md) — per-dimension P0–P5 evidence matrix
+- [ARCHITECTURE-FREEZE-REVIEW.md](freeze/ARCHITECTURE-FREEZE-REVIEW.md) — 14-dimension review
+- [DOGFOOD.md](freeze/DOGFOOD.md) — self + cross-Forge dogfooding evidence
+- [REAL-WORLD-ISSUES.md](freeze/REAL-WORLD-ISSUES.md) — RW-1…RW-9 ledger (fixes + regressions)
+- [SECURITY-REVIEW.md](freeze/SECURITY-REVIEW.md) — threat model + SEC-1 fix
+- [KNOWLEDGE-REVIEW.md](freeze/KNOWLEDGE-REVIEW.md) — 59-source freshness sweep
+- [RELEASE-HARDENING.md](freeze/RELEASE-HARDENING.md) — wheel/SBOM/license/dep health
+- receipts: `AGENTIC-RECEIPT.json`, `PERFORMANCE-RECEIPT.json`,
+  `PERFORMANCE-BASELINE.json`, `SOAK-RECEIPT.json`, `VALIDATION-RECEIPT.json`
+
+Evidence corpus (tracked): `.platformforge/cases/` (10 golden + 6
+holdout), `.platformforge/ledgers/` (FP/FN records) — replay via
+`platformforge cases replay|ledger|ledger-check|route-audit|context-audit`.
+
 ## discovery/ — baseline audits
 
 - [forge-audit.md](discovery/forge-audit.md) — sibling-forge audit (§0 baseline)
