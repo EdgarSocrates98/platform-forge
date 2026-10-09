@@ -771,6 +771,60 @@ def gate_economy_closure() -> dict:
         r1["cmd"] += " && " + r2["cmd"]
     return r1
 
+def gate_portable_contracts() -> dict:
+    r = _run(["pytest", "-q", "tests/test_portable_distribution.py",
+              "tests/test_portable_workspace.py"])
+    r["what"] = "portable contracts, ownership lifecycle and workspace manifest"
+    return r
+
+
+def gate_portable_surface() -> dict:
+    r = _py(
+        "import subprocess,sys;"
+        "cmds=["
+        "['platformforge','install','--help'],"
+        "['platformforge','uninstall','--help'],"
+        "['platformforge','upgrade','--help'],"
+        "['platformforge','portable','--help'],"
+        "['platformforge','workspace','--help']"
+        "];"
+        "bad=[];"
+        "[(bad.append(c) if subprocess.run(c,capture_output=True).returncode else None) for c in cmds];"
+        "assert not bad,bad;print('portable CLI surface ok')"
+    )
+    r["what"] = "install/uninstall/upgrade/portable/workspace CLI surfaces resolve"
+    return r
+
+
+def gate_portable_security() -> dict:
+    r = _py(
+        "import tempfile;"
+        "from pathlib import Path;"
+        "from platformforge.distribution.service import _safe_target;"
+        "root=Path(tempfile.mkdtemp());"
+        "ok=False;"
+        "\ntry:_safe_target(root,'../escape')"
+        "\nexcept ValueError:ok=True"
+        "\nassert ok;print('path containment ok')"
+    )
+    r["what"] = "portable path containment fails closed"
+    return r
+
+
+def gate_portable_offline() -> dict:
+    r = _py(
+        "import tempfile;"
+        "from pathlib import Path;"
+        "from platformforge.distribution.bundle import build_bundle,verify_bundle;"
+        "p=Path(tempfile.mkdtemp())/'bundle';"
+        "build_bundle(p,hosts=['codex'],offline=True);"
+        "assert verify_bundle(p)['valid'];"
+        "print('offline bundle verifies')"
+    )
+    r["what"] = "offline bundle builds and verifies without provider/network calls"
+    return r
+
+
 
 GATES = {
     "lint": gate_lint, "tests": gate_tests, "provenance": gate_provenance,
@@ -827,6 +881,11 @@ GATES = {
     # polish (prompt_evo_polish §8, §44–45)
     "economy-receipt": gate_economy_receipt,
     "economy-closure": gate_economy_closure,
+    # FE-003 portable distribution/workspace
+    "portable-contracts": gate_portable_contracts,
+    "portable-surface": gate_portable_surface,
+    "portable-security": gate_portable_security,
+    "portable-offline": gate_portable_offline,
 }
 
 UNLOCK = {
@@ -901,6 +960,10 @@ UNLOCK = {
                         "docs/economy-parity/VALIDATION-RECEIPT.json"),
     "economy-closure": ("fix closure docs/statuses or the failing "
                         "tests/test_economy_closure.py case"),
+    "portable-contracts": "pytest -q tests/test_portable_distribution.py tests/test_portable_workspace.py",
+    "portable-surface": "platformforge install --help && platformforge portable --help",
+    "portable-security": "fix containment/ownership safeguards in platformforge/distribution",
+    "portable-offline": "build and verify an offline portable bundle locally",
 }
 
 
