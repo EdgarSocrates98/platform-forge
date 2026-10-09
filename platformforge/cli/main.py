@@ -2759,6 +2759,11 @@ def build_parser() -> argparse.ArgumentParser:
             extra(sp)
         sp.set_defaults(func=fn)
 
+    # FE-003 — additive portable distribution/workspace surface.
+    # Business logic stays in platformforge.distribution/workspace.
+    from platformforge.portable_cli import register as register_portable_cli
+    register_portable_cli(sub, _add_common, _emit)
+
     verb("init", cmd_init, "scaffold .platformforge/", lambda sp: sp.add_argument("--name", default=""))
     verb(
         "doctor",
