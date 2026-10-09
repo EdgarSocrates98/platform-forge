@@ -191,12 +191,44 @@ def _semantic_diff(before: Graph, after: Graph,
 
 
 def diff(before: Graph, after: Graph) -> dict[str, Any]:
+    # graph_hash covers full to_dict() — equal hashes mean identical
+    # serializations, so every diff field is empty by construction.
+    # The hashes are output fields anyway, so the fast path is free.
+    hb, ha = before.graph_hash, after.graph_hash
+    if hb == ha:
+        sem = {c: {"changed": False, "nodes": [], "fact_ids": [],
+                   "edge_changes": []} for c in SEMANTIC_CATEGORIES}
+        return {
+            "nodes_added": [], "nodes_removed": [], "nodes_changed": [],
+            "edges_added": [], "edges_removed": [],
+            "security_changed": False, "ownership_changed": False,
+            "cost_changed": False, "observability_changed": False,
+            "semantic": sem,
+            "gap_deltas": {k + "_changed": False for k in
+                           ("external_exposure", "ownership_gaps",
+                            "unmonitored", "unprotected",
+                            "unallocated_cost")} | {
+                k + "_delta": {"added": [], "removed": []} for k in
+                ("external_exposure", "ownership_gaps", "unmonitored",
+                 "unprotected", "unallocated_cost")},
+            "blast_radius_delta": {},
+            "hash_before": hb, "hash_after": ha,
+        }
     bn, an = set(before.nodes), set(after.nodes)
     be, ae = set(before.edges), set(after.edges)
     changed_nodes = sorted(
         n for n in bn & an
         if before.nodes[n].to_dict() != after.nodes[n].to_dict())
-    g_before, g_after = gaps(before), gaps(after)
+    if bn == an and be == ae and not changed_nodes:
+        # identical node/edge/attr structure — gap sets are equal by
+        # construction; skip two full sweeps + Tarjan (freeze dogfood:
+        # gaps() dominated no-op diffs at 100k nodes)
+        empty = {k: [] for k in ("external_exposure", "ownership_gaps",
+                                 "unmonitored", "unprotected",
+                                 "unallocated_cost")}
+        g_before = g_after = empty
+    else:
+        g_before, g_after = gaps(before), gaps(after)
     flags: dict[str, Any] = {}
     for key in ("external_exposure", "ownership_gaps", "unmonitored",
                 "unprotected", "unallocated_cost"):
@@ -237,7 +269,10 @@ def diff(before: Graph, after: Graph) -> dict[str, Any]:
         b, a = sizes_b[n], sizes_a[n]
         if b != a:
             br_delta[n] = {"before": b, "after": a}
-    sem = _semantic_diff(before, after, changed_nodes)
+    sem = ({c: {"changed": False, "nodes": [], "fact_ids": [],
+                "edge_changes": []} for c in SEMANTIC_CATEGORIES}
+           if bn == an and be == ae and not changed_nodes
+           else _semantic_diff(before, after, changed_nodes))
     return {
         "nodes_added": sorted(an - bn), "nodes_removed": sorted(bn - an),
         "nodes_changed": changed_nodes,

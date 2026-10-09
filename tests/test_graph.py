@@ -122,3 +122,25 @@ def test_paths_bounded_on_dense_unreachable(tmp_path):
     out = paths(g, "service/svc-0", "service/svc-5")
     assert time.time() - t0 < 30
     assert isinstance(out, list)
+
+
+def test_diff_identical_structure_skips_gap_sweeps(monkeypatch):
+    """freeze dogfood: gaps() ran Tarjan + sweeps even on no-op diffs.
+    Identical structure must report all flags false with empty deltas
+    without calling gaps() at all."""
+    import importlib
+    dmod = importlib.import_module("platformforge.graph.diff")
+
+    g = _graph()
+    called = []
+    monkeypatch.setattr(dmod, "gaps",
+                        lambda gr: called.append(gr) or gaps(gr))
+    d = diff(g, g)
+    assert called == []
+    for key in ("external_exposure", "ownership_gaps", "unmonitored",
+                "unprotected", "unallocated_cost"):
+        assert d["gap_deltas"][key + "_changed"] is False
+        assert d["gap_deltas"][key + "_delta"] == {"added": [],
+                                                 "removed": []}
+    assert d["security_changed"] is False
+    assert d["hash_before"] == d["hash_after"]
