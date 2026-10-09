@@ -1,6 +1,6 @@
 ---
 name: platformforge-core
-description: "Ponto de entrada do Platform Forge para 'analise minha plataforma' e qualquer pergunta cross-domain — inventário de artefatos, fatos com tiers de evidência, findings por catálogo de regras, grafo com proveniência, recusas nomeadas e recibos. Use para auditoria de plataforma, onboarding a um workspace desconhecido, ou quando ainda não está claro qual especialista assume. Roteia para as skills de domínio (graph, change, sre, finops, security, sdd, lab, economy, fleet, agents) assim que a área ficar clara. Não substitui as especializadas."
+description: "Ponto de entrada do Platform Forge para 'analise minha plataforma' e qualquer pergunta cross-domain — inventário de artefatos, fatos com tiers de evidência, findings por catálogo de regras, grafo com proveniência, recusas nomeadas e recibos. Use para auditoria de plataforma, onboarding a um workspace desconhecido, ou quando ainda não está claro qual especialista assume. Roteia para as skills de domínio (graph, change, sre, finops, security, sdd, lab, economy, fleet, agents, governance) assim que a área ficar clara. Não substitui as especializadas."
 ---
 
 # Platform Forge — core
@@ -23,6 +23,9 @@ platformforge judge facts.json             # regras → findings
 platformforge graph build facts.json       # grafo com proveniência
 platformforge graph blast --node <id>      # raio de explosão por classe
 platformforge risk --node <id>             # risco decomposto (§130)
+platformforge diagnose <node> --facts f.json --findings f.json  # fatos+findings+blast de um nó
+platformforge impact --node <id>           # blast radius direto
+platformforge plan findings.json           # findings → plano de remediação ordenado
 platformforge explain <findings.json> --name <rule_id>
 platformforge recommend <findings.json>
 platformforge forge manifest               # capacidades publicáveis
@@ -55,3 +58,5 @@ platformforge capability check --domain <d> --version <v>
   **platformforge-fleet**
 - dispatch de agentes, rota Router V2, mirrors, debate, verificação →
   **platformforge-agents**
+- freeze, cases/evals, policy check, maturity/golden paths →
+  **platformforge-governance**

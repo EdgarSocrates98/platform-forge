@@ -51,4 +51,9 @@ def test_mirror_banner_present():
     for host in TARGETS:
         ext = ".toml" if host.endswith("codex/agents") else ".md"
         p = ROOT / host / f"platform-orchestrator{ext}"
-        assert p.read_text().startswith("# GENERATED")
+        text = p.read_text()
+        if ext == ".md":
+            # hosts only load agents whose frontmatter opens on line 1
+            assert text.startswith("---\n# GENERATED")
+        else:
+            assert text.startswith("# GENERATED")
