@@ -13,11 +13,14 @@ def register(sub, add_common, emit):
         from platformforge.distribution import upgrade as fn
         return emit(fn(a.repo, a.profile or None, a.host or None, a.dry_run), a)
     def portable(a):
-        from platformforge.distribution import build_bundle, verify_bundle, doctor
+        from platformforge.distribution import build_bundle, verify_bundle, install_bundle, doctor
         if a.portable_cmd == "build":
             return emit(build_bundle(a.path, a.profile, a.host, a.offline_bundle), a)
         if a.portable_cmd == "verify":
             out = verify_bundle(a.path); return emit(out, a, 0 if out["valid"] else 2)
+        if a.portable_cmd == "install":
+            out = install_bundle(a.path, a.repo)
+            return emit(out, a, 2 if out.get("refusal") else 0)
         if a.portable_cmd == "doctor":
             return emit(doctor(a.repo), a)
         return emit({"refusal": "PF-DIST-UNKNOWN-COMMAND"}, a, 2)
@@ -45,7 +48,7 @@ def register(sub, add_common, emit):
     sp.add_argument("--dry-run", action="store_true"); sp.set_defaults(func=upgrade)
 
     sp = sub.add_parser("portable", help="build/verify/doctor portable distributions")
-    add_common(sp); sp.add_argument("portable_cmd", choices=["build","verify","doctor"])
+    add_common(sp); sp.add_argument("portable_cmd", choices=["build","verify","install","doctor"])
     sp.add_argument("path", nargs="?", default="dist/platformforge-portable")
     sp.add_argument("--profile", default="agentic")
     sp.add_argument("--host", action="append", choices=["agents","claude","codex","devin"])
