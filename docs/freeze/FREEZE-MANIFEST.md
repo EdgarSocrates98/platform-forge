@@ -8,8 +8,8 @@ Generated from live registries — `platformforge freeze manifest`.
 
 ## Surfaces
 
-- public schemas: 21 (contracts/*.schema.json)
-- CLI verbs: 52 — agents, ai, analytics, analyze, bench, cache, capability, cases, caveman, change, collect, context, correlate, diagnose, diff, doctor, drift, economy, evals, explain, federation, finops, fleet, forge, freeze, graph, impact, init, inspect, integrate, judge, knowledge, lab, live, mcp, observe, ops, optimize, plan, policy, product, recommend, reliability, risk, route, routing, rtk, sdd, security, status, store, tokens
+- public schemas: 24 (contracts/*.schema.json)
+- CLI verbs: 57 — agents, ai, analytics, analyze, bench, cache, capability, cases, caveman, change, collect, context, correlate, diagnose, diff, doctor, drift, economy, evals, explain, federation, finops, fleet, forge, freeze, graph, impact, init, inspect, install, integrate, judge, knowledge, lab, live, mcp, observe, ops, optimize, plan, policy, portable, product, recommend, reliability, risk, route, routing, rtk, sdd, security, status, store, tokens, uninstall, upgrade, workspace
 - MCP tools: 38
 - capabilities: 38
 - agents: 41 (coordinator:5, critic:1, executor:8, guardian:1, orchestrator:1, planner:1, referee:1, reviewer:7, specialist:15, verifier:1)
@@ -29,6 +29,7 @@ Generated from live registries — `platformforge freeze manifest`.
 
 **experimental**
 
+- portable distribution/workspace (FE-003; field dogfooding pending)
 - agentic runtime (router v2, coordinators, debate)
 - fleet analytics + optimization engine
 - federation export
