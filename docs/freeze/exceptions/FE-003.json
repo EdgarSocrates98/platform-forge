@@ -1,0 +1,12 @@
+{
+  "id": "FE-003",
+  "title": "Portable Distribution & Workspace Integration",
+  "status": "open",
+  "reason": "Real-world usability blocker: host mirrors exist but Platform Forge cannot yet be safely installed, upgraded, removed or carried offline as a governed workspace distribution.",
+  "existing_capability_insufficient": true,
+  "architecture_impact": "bounded/additive",
+  "core_intelligence_impact": "none",
+  "autonomy_impact": "none",
+  "allowed_scope": ["distribution", "workspace", "portable CLI", "contracts", "tests", "docs"],
+  "return_to_freeze_required": true
+}
