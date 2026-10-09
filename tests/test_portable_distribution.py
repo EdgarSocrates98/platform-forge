@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from platformforge.distribution import apply_install, uninstall, doctor, build_bundle, verify_bundle
+from platformforge.distribution import apply_install, uninstall, doctor, build_bundle, verify_bundle, install_bundle
 
 def test_install_dry_run_then_install_and_uninstall(tmp_path):
     dry = apply_install(tmp_path, hosts=["codex","claude"], dry_run=True)
@@ -32,3 +32,13 @@ def test_bundle_integrity(tmp_path):
     p.write_text(p.read_text() + "\ntamper\n")
     out = verify_bundle(b)
     assert not out["valid"] and out["refusal"] == "PF-DIST-HASH-MISMATCH"
+
+def test_bundle_installs_offline(tmp_path):
+    bundle = tmp_path / "bundle"
+    target = tmp_path / "target"; target.mkdir()
+    build_bundle(bundle, hosts=["codex","claude"], offline=True)
+    out = install_bundle(bundle, target)
+    assert out["status"] == "committed" and out["offline"] is True
+    assert any((target / ".codex/agents").glob("*.toml"))
+    assert any((target / ".claude/skills").glob("*/SKILL.md"))
+    assert doctor(target)["state"] == "healthy"
