@@ -20,9 +20,12 @@
     "recommendation.schema.json": "7b8f2cf956f621da595eda281775dc2c37ad049937d15c9ac6922c22d14c824d",
     "refusal.schema.json": "3ae01152e64a07635077c220ff458e41df0de78e9c33cdb99fc6a9893198b520",
     "slo-contract.schema.json": "2f3526583d4cbb676933ae52914d18c4997f80d6fabe733381a1255cf2aa6f0d",
-    "task-spec.schema.json": "bfee506db6406b48969e63cb3cb933c86789c8f27d03970cf0ca4a03ed545bf5"
+    "task-spec.schema.json": "bfee506db6406b48969e63cb3cb933c86789c8f27d03970cf0ca4a03ed545bf5",
+    "distribution-manifest-v1.schema.json": "dd1d564d3e81da45545f481088d821f201f6e85c85fd638be24b16fa2cd62034",
+    "workspace-manifest-v1.schema.json": "6c6f4094b119e682274ab3e2a73c80dc3cf2b252acfb93973bdb43c84337c271",
+    "install-receipt-v1.schema.json": "4f9934e25d35a1cbc8e487e353dd902cc7b3534e737409e3e8a6bd4f05fb303e"
   },
   "family": "schemas",
   "schema": "platformforge/freeze-snapshot/v1",
-  "sha": "67cfb75dc137d2aaacd428ada70915267e85a466"
+  "sha": "c2d9caf9dc9da8cdff324fce0d94e434feef0f78"
 }
