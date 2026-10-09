@@ -223,6 +223,33 @@ artifacts + hash cascade gates.
 | `cases ledger|ledger-check` | FP/FN ledgers (`.platformforge/ledgers/`): confirmed/refuted/unresolved counts + precision estimate (refused below n=3 records); `ledger-check` validates every record's `regression_test` pointer resolves to a real case dir or `file::test` selector. |
 | `cases route-audit|route-bench|context-audit` | Agent dogfooding over the corpus: Router V2 decisions per case (fanout, mode, over/under-routing flags), champion/challenger comparison via `--out <routing.yaml>`, and measured context cost (`--stamp` writes `context_cost` back into each case.yaml). |
 
+## Portable install — `install [op]` (forge/* contract)
+
+Shared lifecycle surface, same verbs as every sibling Forge
+(`theforge install auto` delegates here). Adapter over the native
+distribution engine — receipts `forge/InstallReceipt/v1`, health
+`forge/InstallationHealth/v1`.
+
+| Verb | What it does |
+|---|---|
+| `install` (apply) | Write managed assets: host-mirror agents + `platformforge-*` skill mirrors + `.platformforge/mcp.json`. Requires `--yes` (the plan is the contract) or `--dry-run`. |
+| `install status` | Health doc — `healthy`/`degraded`/`unverified` with `repair_hint`. |
+| `install doctor` | Receipt/manifest/version checks + managed-file drift + `mcp-handshake` (PASS/FAIL/BLOCKED). |
+| `install repair` | Restore missing managed files; user-modified files stay preserved by ownership contract. `--dry-run` reports. |
+| `install uninstall` | Remove receipt-owned files only; modified files preserved; empty dirs pruned; `--purge` also removes `.platformforge` state. |
+| `install update` | `pip install --upgrade` of the registered checkout (`~/.forge/installations`); `--to` pins, `latest` refused. |
+| `install mcp-verify` | Real JSON-RPC stdio handshake against `platformforge-mcp`. |
+
+Flags: `--scope project|workspace|user`, `--repo <dir>` (target root),
+`--host claude|devin|codex|copilot|agents|all` (copilot → generic
+`.agents/` mirror), `--profile minimal|recommended|full` (contract
+profile recorded on the receipt), `--dry-run`. Refusals carry the
+closed `FORGE-INSTALL-*` kind vocabulary.
+
+Legacy siblings stay: `uninstall`, `upgrade`, `portable
+build|verify|install|doctor`, `workspace init|add|remove|list|doctor|
+status`.
+
 ## Knowledge & store
 
 | Verb | What it does |

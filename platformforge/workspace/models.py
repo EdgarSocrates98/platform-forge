@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -25,7 +26,7 @@ class WorkspaceManifest:
         return d
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "WorkspaceManifest":
+    def from_dict(cls, d: dict[str, Any]) -> WorkspaceManifest:
         return cls(root=d["root"], profile=d.get("profile", "agentic"),
                    hosts=list(d.get("hosts", [])),
                    repos=[WorkspaceMember(**x) for x in d.get("repos", [])],

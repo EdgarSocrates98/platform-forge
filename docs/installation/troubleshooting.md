@@ -1,0 +1,11 @@
+# Troubleshooting — platform-forge
+
+| Sintoma | Ação |
+|---|---|
+| `command not found: platformforge` | rode `./setup.sh` de novo; abra terminal novo (launcher no PATH) |
+| `FORGE-INSTALL-LOCKED` | outra instalação em curso; se foi interrompida, o lock expira/recupera sozinho |
+| `FORGE-INSTALL-PLAN-NOT-APPROVED` | mutações exigem `--yes` (após o `--dry-run`) |
+| `FORGE-INSTALL-NOT-A-REPO` | escopo project precisa de `.git` ou `--root` |
+| doctor FAIL em mcp-handshake | `platformforge mcp-verify` mostra stderr_tail — geralmente dependência ausente |
+| arquivo seu sumiu? | não deveria — instalação nunca sobrescreve conteúdo do usuário; backups em `<state_dir>/backups/` |
+| drift detectado | `platformforge install repair` restaura regiões gerenciadas mantendo o resto |

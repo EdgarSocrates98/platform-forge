@@ -1,0 +1,14 @@
+{
+  "forge_id": "platform-forge",
+  "package": "platformforge",
+  "distribution": "platformforge",
+  "cli": "platformforge",
+  "python": ">=3.10",
+  "mcp_server_name": "platformforge",
+  "mcp_command": [
+    "platformforge-mcp"
+  ],
+  "extras": [
+    "mcp"
+  ]
+}
