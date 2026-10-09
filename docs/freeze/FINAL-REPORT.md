@@ -13,7 +13,7 @@ generated against; the final commit is receipts-only.
 | A/B | freeze manifest + lifecycle + contract snapshots | `FREEZE-MANIFEST.md`, `LIFECYCLE.md`, `snapshots/`, `freeze check` gate |
 | C | case format + deterministic replay + corpus | `.platformforge/cases/` (10 golden + 5 holdout), `cases replay` → 15/15 pass, deterministic `result_hash` per case |
 | D | FP/FN ledgers + root-cause taxonomy | `cases ledger`, `cases ledger-check`, `REAL-WORLD-ISSUES.md` FP table |
-| E | routing + context audits | `cases route-audit` (15 cases, avg fanout 3.33, zero flags), `cases context-audit` (0% unused context), `AGENTIC-RECEIPT.json` |
+| E | routing + context audits | `cases route-audit` (16 cases, avg fanout 3.38, zero flags), `cases context-audit` (0% unused context), `AGENTIC-RECEIPT.json` |
 | F | measured scale + environment metadata | `PERFORMANCE-RECEIPT.json` + `PERFORMANCE-BASELINE.json` |
 | G | soak + determinism + migration replay | `SOAK-RECEIPT.json` (100k events: GC, vacuum, reopen, crash-rollback, identical hashes) |
 | H | self + cross-Forge dogfooding | `DOGFOOD.md`, `dogfood/` artifacts; **3 crashes and 2 precision defects found and fixed** (RW-1..5) |
@@ -35,7 +35,7 @@ generated against; the final commit is receipts-only.
   collector reports thousands of `undetected` files rather than
   pretending coverage (api-forge 4159, spark-forge-aws 5688). Platform
   artifacts ≠ source code; the bound is now documented.
-- **Routing is evidence-tested**: 15-case route-audit with zero
+- **Routing is evidence-tested**: 16-case route-audit with zero
   over/under-routing flags; champion/challenger comparisons honest —
   the bench refuses quality claims until observed run-ledger rows exist.
 - **Determinism holds**: replay corpus produces identical

@@ -23,7 +23,7 @@ Maturity ladder (P-scale, evidence-decided — never assigned by fiat):
 | TokenSave/economy + context packs | P3 | economy evals + context-audit (0% unused) | context bytes measured per case | — | bench verdict: projection-only until observed ledger rows | frozen/stable |
 | lab + eval harness | P4 | lab run-all + evals run green | — | replay corpus built on it | fleet scenarios grade differently than analyzer cases | frozen/stable |
 | MCP surface | P3 | CLI≡MCP semantic tests, mirror parity 205 | — | — | versioned rules → `unresolved` over MCP (documented) | frozen/stable |
-| agentic runtime (41 agents, Router V2) | P3 | agents gates + route/context audits + evals | routing audit 15 cases, fanout 3.33 | — | no observed production run-ledger yet → P4 pending dogfooding | frozen/experimental |
+| agentic runtime (41 agents, Router V2) | P3 | agents gates + route/context audits + evals | routing audit 16 cases, fanout 3.38 | — | no observed production run-ledger yet → P4 pending dogfooding | frozen/experimental |
 | fleet analytics + optimization | P3 | fleet scenarios + adversarial E1–E12 | — | — | no real-fleet pilot evidence | frozen/experimental |
 | federation export | P2 | fail-closed export tests | — | — | never exercised against a second live node | frozen/experimental |
 | AI platform awareness | P2 | unit tests + evals | — | — | denominator-required economics untested at fleet scale | frozen/experimental |

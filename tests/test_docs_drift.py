@@ -31,3 +31,17 @@ def test_all_verbs_documented():
         (ROOT / "README.md").read_text()
     missing = {v for v in _parser_verbs() if v not in text}
     assert missing == set(), f"verbs missing from docs: {missing}"
+
+
+def test_cli_surface_is_current():
+    """docs/CLI-SURFACE.md is generated — regenerate with
+    `python scripts/gen_cli_surface.py --write` after any parser change."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "gen_cli_surface", ROOT / "scripts" / "gen_cli_surface.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    expected = mod.generate()
+    actual = (ROOT / "docs" / "CLI-SURFACE.md").read_text()
+    assert actual == expected, \
+        "docs/CLI-SURFACE.md stale — run gen_cli_surface.py --write"

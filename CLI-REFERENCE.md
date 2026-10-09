@@ -8,6 +8,11 @@ Global flags on every verb: `--json` · `--output <file>` ·
 `--detail-level summary|normal|full` (real bounding) · `--offline` ·
 `--strict` (warnings become failures where supported).
 
+This file is the **curated guide** — the exhaustive, machine-generated
+index of every subcommand and flag is
+[docs/CLI-SURFACE.md](docs/CLI-SURFACE.md) (drift-gated; regenerate with
+`python scripts/gen_cli_surface.py --write` after parser changes).
+
 ## Discovery & inventory
 
 | Verb | What it does |

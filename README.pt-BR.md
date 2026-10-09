@@ -109,20 +109,43 @@ o que destrava a resposta.
 Índice: [docs/README.md](docs/README.md) — ADRs, docs de agentes,
 relatórios de ciclo.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) · [GRAPHFY.md](GRAPHFY.md) ·
-[ECONOMY.md](ECONOMY.md) · [SDD.md](SDD.md) · [AGENTIC-OS.md](AGENTIC-OS.md) ·
-[FLEET.md](FLEET.md) · [PLATFORM-ANALYTICS.md](PLATFORM-ANALYTICS.md) ·
+Arquitetura & modelo: [ARCHITECTURE.md](ARCHITECTURE.md) ·
+[GRAPHFY.md](GRAPHFY.md) · [DOMAIN-MAP.md](DOMAIN-MAP.md) ·
+[RUNTIME-TOPOLOGY.md](RUNTIME-TOPOLOGY.md) ·
+[RECONCILIATION.md](RECONCILIATION.md) · [CLOUD.md](CLOUD.md) ·
+[OBSERVATION-MODEL.md](OBSERVATION-MODEL.md) ·
+[COMPATIBILITY.md](COMPATIBILITY.md) · [DEPRECATION.md](DEPRECATION.md)
+
+Escala & ops: [FLEET.md](FLEET.md) · [MULTI-CLUSTER.md](MULTI-CLUSTER.md) ·
+[PLATFORM-ANALYTICS.md](PLATFORM-ANALYTICS.md) ·
 [OPTIMIZATION.md](OPTIMIZATION.md) · [FEDERATION.md](FEDERATION.md) ·
-[OPS.md](OPS.md) · [DOMAIN-MAP.md](DOMAIN-MAP.md) ·
+[OPS.md](OPS.md) · [APPROVALS.md](APPROVALS.md) · [ROLLBACK.md](ROLLBACK.md) ·
+[LIVE.md](LIVE.md) · [COLLECTORS.md](COLLECTORS.md) ·
+[CAPACITY.md](CAPACITY.md) · [AI-PLATFORM.md](AI-PLATFORM.md) ·
+[ENTERPRISE.md](ENTERPRISE.md) · [GOLDEN-PATHS.md](GOLDEN-PATHS.md) ·
+[GOLDEN-PATH-ANALYTICS.md](GOLDEN-PATH-ANALYTICS.md) ·
+[POLICY-INTELLIGENCE.md](POLICY-INTELLIGENCE.md) ·
+[PLATFORM-MEASUREMENT.md](PLATFORM-MEASUREMENT.md) ·
+[INCIDENTS.md](INCIDENTS.md) · [RUNBOOKS.md](RUNBOOKS.md) ·
+[EXECUTION.md](EXECUTION.md)
+
+Agentico & economia: [AGENTIC-OS.md](AGENTIC-OS.md) ·
+[docs/agents/](docs/agents/) (runtime agentico) ·
+[ECONOMY.md](ECONOMY.md) · [QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md) ·
+[KNOWLEDGE.md](KNOWLEDGE.md) · [SDD.md](SDD.md) ·
+[VERIFICATION.md](VERIFICATION.md)
+
+Regras & evidência: [RULES.md](RULES.md) · [EVALS.md](EVALS.md) ·
+[SECURITY.md](SECURITY.md) · [SOURCES.md](SOURCES.md) ·
 [CAPABILITIES.md](CAPABILITIES.md) · [RESEARCH.md](RESEARCH.md) ·
-[ROADMAP.md](ROADMAP.md) · [KNOWLEDGE.md](KNOWLEDGE.md) ·
-[RULES.md](RULES.md) · [SECURITY.md](SECURITY.md) · [EVALS.md](EVALS.md) ·
-[CLOUD.md](CLOUD.md) · [GOLDEN-PATHS.md](GOLDEN-PATHS.md) ·
-[QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md) ·
-[CLI-REFERENCE.md](CLI-REFERENCE.md) · [GLOSSARY.md](GLOSSARY.md) ·
-[MCP.md](MCP.md) · [docs/agents/](docs/agents/) (runtime agentico) ·
+[docs/freeze/](docs/freeze/) (architecture freeze)
+
+Referência: [CLI-REFERENCE.md](CLI-REFERENCE.md) (curadoria) ·
+[docs/CLI-SURFACE.md](docs/CLI-SURFACE.md) (índice gerado) ·
+[GLOSSARY.md](GLOSSARY.md) · [MCP.md](MCP.md) ·
+[ROADMAP.md](ROADMAP.md) · [CHANGELOG.md](CHANGELOG.md) ·
 [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) ·
-[CHANGELOG.md](CHANGELOG.md)
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 ## Licença
 

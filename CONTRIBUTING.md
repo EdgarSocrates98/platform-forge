@@ -10,10 +10,10 @@ platformforge doctor --deep # env + workspace + manifest + index health
 ## Gates (run what your change touches)
 
 ```bash
-uv run pytest -q                     # unit/integration (787 tests)
+uv run pytest -q                     # unit/integration (820 tests)
 uv run ruff check .                  # lint — the enforced gate
-uv run pytest tests/test_docs_drift.py   # CLI ↔ docs parity
-uv run platformforge lab run-all     # Forge Lab scenarios (44)
+uv run pytest tests/test_docs_drift.py   # CLI ↔ docs parity (incl. generated surface)
+uv run platformforge lab run-all     # Forge Lab scenarios (45)
 uv run platformforge evals run       # eval corpus (93 cases)
 uv run platformforge evals coverage  # rule ↔ case coverage
 uv run platformforge evals precision # measured FP rate
@@ -60,6 +60,12 @@ as steps. Match it before pushing.
    `mcp/tools.py` (`_analyze` map) for parity.
 3. Add lab scenario + eval case; document in CAPABILITIES.md + the
    domain doc.
+
+## Changed a parser/verb?
+
+`docs/CLI-SURFACE.md` is generated — run
+`uv run python scripts/gen_cli_surface.py --write` and commit it with
+the change; `test_docs_drift` fails on stale bytes.
 
 ## Add an eval case
 

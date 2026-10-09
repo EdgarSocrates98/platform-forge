@@ -9,7 +9,7 @@ production readiness beyond the receipts it cites.
 | 1 | Core (facts/findings/provenance/refusals) | READY | 855-test suite green; tier enforcement (`T6/T7` rejected by construction); `PF-*` refusal codes preserved via `_pf_code` alias sweep; dogfood bugs RW-1..3 fixed with regressions |
 | 2 | Graphfy (graph + diff + identity + temporal) | READY | correctness + determinism evals in corpus; diff measured ~154× at 5k nodes (SCC condensation); scale evidence in `PERFORMANCE-RECEIPT.json`; unsupported sizes report `unsupported-on-host` |
 | 3 | Agents (41-agent roster + mirrors) | READY | `agents check` → 205 mirrors in parity; `AGENTIC-RECEIPT.json`; independence gate (`PF-AGENT-INDEPENDENCE`) |
-| 4 | Routing (Router V2 + debate + referee) | READY WITH LIMITATIONS | `cases route-audit` 15/15, avg fanout 3.33, zero flags; champion/challenger bench is projection-only until real run-ledger rows exist — verdict honestly names this |
+| 4 | Routing (Router V2 + debate + referee) | READY WITH LIMITATIONS | `cases route-audit` 16/16, avg fanout 3.38, zero flags; champion/challenger bench is projection-only until real run-ledger rows exist — verdict honestly names this |
 | 5 | Operations (intent→plan→rollback) | READY | Cycle 4.1 closure gates; rollback material/verification tests; `git.apply_patch` is host-side only |
 | 6 | Fleet (multi-member intelligence) | READY WITH LIMITATIONS | lab `fleets/acme` scenarios green; federation export is fail-closed; real-fleet evidence doesn't exist yet — pilot required |
 | 7 | Analytics (store, GC, forget, soak) | READY | `SOAK-RECEIPT.json` — 100k events, crash-rollback correct, reopen intact, vacuum verified, deterministic hashes identical |
@@ -36,7 +36,7 @@ production readiness beyond the receipts it cites.
 |---|---|
 | critical contracts stable | snapshots in `snapshots/`; `freeze check` gates drift |
 | agentic runtime stable | READY — mirrors parity, routing audited, no flags |
-| routing evidence-tested | 15-case route-audit + context-audit, zero over-routing |
+| routing evidence-tested | 16-case route-audit + context-audit, zero over-routing |
 | no F0/F1 open | met (this table) |
 | scale limits measured | `PERFORMANCE-RECEIPT.json` (+ explicit `unsupported-on-host`) |
 | soak passes | `SOAK-RECEIPT.json` — verdict pass, deterministic |

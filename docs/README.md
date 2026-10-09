@@ -1,5 +1,12 @@
 # docs/ — design records, agent docs & cycle reports
 
+## Root references
+
+- [CLI-SURFACE.md](CLI-SURFACE.md) — generated exhaustive verb/subcommand/flag index (drift-gated)
+- [../CLI-REFERENCE.md](../CLI-REFERENCE.md) — curated guide with examples
+- [../CAPABILITIES.md](../CAPABILITIES.md) — capability matrix
+- [../AGENTS.md](../AGENTS.md) — working contract for agents in this repo
+
 ## agents/ — agentic runtime (Cycle 5.1)
 
 Contracts and matrices for the bounded agent layer (canonical roster:
