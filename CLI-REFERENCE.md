@@ -183,7 +183,11 @@ All read-only; consume a **fleet dir** (same shape as
 `economy checkpoint|resume|reconcile|doctor|explain` — spend-preserving
 checkpoints (`--run-id --spent --remaining --deps --profile`), resume
 with dep revalidation + no profile downgrade, planned-vs-observed
-reconciliation, ledger health checks, per-run explain.
+reconciliation, ledger + closure health checks (receipt freshness,
+gate taxonomy, reproduce paths, routing authority, pricing, QPT),
+per-run explain. `economy strategy` returns *advisory* output
+(`economy-advice/v1`) — it informs a `RoutingRequest` but never
+activates a route; canonical decisions come from `routing explain`.
 `context capsule|inspect|expand|delta|gc` — ContextGateway capsules
 under `context://sha256/` refs (pack stays the default verb).
 `cache stats|inspect|invalidate|gc` — multilayer cache operations.

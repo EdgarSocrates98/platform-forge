@@ -1,9 +1,15 @@
 # Economy Control Plane — Benchmarks
 
-Measured overhead of the economy layer itself (the plane must not cost
-more than it saves). Source: `scripts/bench_economy.py`; raw data:
+Two sections (polish §39): **Control Plane Overhead** — measured cost of
+the economy layer itself — and **End-to-End Economy Evidence** — what
+the plane saves on real workloads. They are different claims and are
+never conflated (§38: microbench ≠ savings bench).
+
+Source: `scripts/bench_economy.py`; raw data:
 `docs/economy-parity/BENCHMARKS.json`. Synthetic payloads, local
 filesystem, python 3.12.3 — reproduce before quoting.
+
+## Control Plane Overhead
 
 ## Overhead per operation (median / p95, microseconds)
 
@@ -43,3 +49,15 @@ filesystem, python 3.12.3 — reproduce before quoting.
 axes are recorded by `quality_per_cost` (tokens, bytes, tool_calls,
 model_calls, agents, provider_calls, wall_time, money) with unmeasured
 axes reported `unresolved`.
+
+## End-to-End Economy Evidence
+
+**insufficient evidence** (§40). No production workload corpus exists
+yet, so no end-to-end savings number is claimed — not "X% cheaper",
+not projected savings. What exists is verified machinery:
+`quality_per_cost` computes per-dimension reductions only when quality
+floors pass, and reports `unresolved` for unmeasured axes (money is
+unresolved without declared pricing + observed usage). When a real
+corpus lands, this section gets a measured table — until then the
+honest answer is that the control plane's *cost* is measured and its
+*savings* are evidence-dependent.

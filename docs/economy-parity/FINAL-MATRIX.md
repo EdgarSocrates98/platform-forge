@@ -1,28 +1,36 @@
 # Economy Parity — Final Matrix
 
-Columns: capability · before (pre-cycle) · after · Platform impl ·
-Spark Forge equivalent · API Forge equivalent · tests · evals · bench ·
-status · known gap.
+Post-polish statuses (prompt_evo_polish §33, §94). Vocabulary:
+`validated` (gates + tests + evals pass on the functional SHA),
+`validated-with-limitations` (validated but a declared gap bounds the
+claim), `experimental` (exists, not fully validated),
+`externally-unverified` (cannot be proven from this repo).
 
-| Capability | Before | After | Platform impl | SF equiv | AF equiv | Tests | Evals | Bench | Status | Known gap |
-|---|---|---|---|---|---|---|---|---|---|---|
-| EconomyPlan + explain | none | full | `economy/plan.py` | decision_plane | contracts/economy | contracts | — | — | done | — |
-| BudgetEnvelope | per-subsystem ints | 11-dim soft/hard | `economy/budget.py` | — | contracts | contracts | E5/E12 | bench | done | — |
-| Unified ledger | tokens only | tokens+tools+provider+agents | `economy/ledger.py` | token_ledger | token_ledger | contracts | eval | — | done | — |
-| Multilayer cache | TokenSave reuse only | 7 dep-bound layers | `economy/cache.py` | economy/cache | contracts/cache | cache | E1/E2 | bench | done | analysis layer gated on tests |
-| Context Gateway | context packs | capsule+refs+sufficiency | `context/` | context/gateway | context/gateway | gateway | E3/E11 | bench | done | — |
-| Checkpoint/resume | none | spend-preserving + no-downgrade | `economy/checkpoint.py` | — | economy_resume | gateway | E4 | — | done | — |
-| Reconciliation | none | per-axis calibration | `economy/reconcile.py` | — | reconciliation | gateway | eval | — | done | — |
-| Provider pricing | none | declared catalog | `economy/pricing.py` | provider_cost | economy/pricing | pricing | eval | — | done | no real catalog shipped |
-| Selective verification | all-or-nothing | V0–V5 impact tiers | `economy/verifyplan.py` | — | — | pricing_verify | E6 | — | done | — |
-| Agent uniqueness | none | per-run audit | `agents/uniqueness.py` | — | — | agents_waste | eval | — | done | — |
-| Debate economy | bounded | +stagnation +RefereePacket | `agents/debate.py` | — | — | agents_waste | E7 | — | done | — |
-| Waste detector | none | 10 types over ledgers | `economy/waste.py` | waste_detector | — | agents_waste | eval | — | done | — |
-| Routing control plane | routes.yaml | profiles+receipts+champion/challenger | `routing/decision.py` | decision_plane | — | evals | E10 | bench | done | — |
-| Fleet funnel | fleet pack | snapshot-keyed cache+delta+gate | `economy/collection.py` | — | — | fleet_qpt | E9 | — | done | — |
-| QPT v3 | tokens only | quality-per-cost all axes | `economy/qpt.py` | token_efficient | token_economics | fleet_qpt | — | bench | done | no model-call corpus yet |
-| Doctor | none | 6 checks over ledgers | `economy/doctor.py` | — | — | evals | eval | — | done | — |
-| CLI verbs | 5 economy verbs | +checkpoint/resume/reconcile/doctor/explain, cache, context sub, routing | `cli/main.py` | CLI | cli_economy | surface gate | — | — | done | — |
-| MCP | economy report only | +explain/context/routing (read-only) | `mcp/` | — | — | — | — | — | done | no routing.activate by design |
+| Capability | Implementation | Status | Boundaries / known gap |
+|---|---|---|---|
+| EconomyPlan + explainability | `economy/plan.py` | validated | — |
+| BudgetEnvelope (11 dims) | `economy/budget.py` | validated | — |
+| Unified ledger | `economy/ledger.py` | validated | observed/estimated/never summed |
+| Multilayer cache | `economy/cache.py` | validated | analysis layer reuses only under identical rule_catalog+knowledge+engine+policy tuple — conservative by construction |
+| Context Gateway | `context/` | validated | essential-evidence refusal preserved |
+| Checkpoint/resume | `economy/checkpoint.py` | validated | spend preserved; downgrade refused |
+| Reconciliation | `economy/reconcile.py` | validated | unmeasured = unresolved |
+| Pricing engine | `economy/pricing.py` | validated-with-limitations | declared-rates engine only; no bundled catalog (by design); missing rate → `unresolved`, never zero |
+| Selective verification | `economy/verifyplan.py` | validated | risk floors unlowerrable |
+| Agent fanout economy | `agents/uniqueness.py` | validated | — |
+| Debate economy | `agents/debate.py` | validated | stagnation stop + RefereePacket |
+| Waste detector | `economy/waste.py` | validated | — |
+| Routing control plane | `routing/decision.py::decide()` | validated | single authority; EconomyEngine advisory only |
+| Fleet economy | `economy/collection.py` | validated | snapshot-keyed; coverage-first |
+| QPT/QPC v3 | `economy/qpt.py` | validated | money axis unresolved without declared pricing + observed usage |
+| CLI surface | `cli/main.py` | validated | 10 economy verbs + context/cache/routing |
+| MCP surface | `mcp/` | validated | read-only; no `routing.activate` |
+| Closure receipt | `VALIDATION-RECEIPT.json` | validated | `economy-validation-receipt/v1`, `validated_sha` binds functional HEAD, `closure_sha` null by design |
+| Production savings | — | experimental | microbench overhead measured; no production corpus |
+| Remote CI | `.github/workflows/ci.yml` | externally-unverified | jobs blocked on GitHub billing (account payments) — external block, not code failure |
 
-All rows done. Known gaps are listed per row — none hidden.
+Parity claim (§96): same **maturity class** as the strongest Forge
+implementations (API Forge, Spark Forge) — not same implementation.
+Platform-specific differentiators preserved: fleet-scale context
+economy, graph-aware context, provider-call economy, live-observation
+budgeting, operations-aware verification, agentic fanout economy.

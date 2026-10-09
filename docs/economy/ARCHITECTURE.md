@@ -11,8 +11,9 @@ evidence, security and verification from ever being economized away.
 TASK
  │
  ▼
-DETERMINISTIC REACH      EconomyEngine.strategy — cache/parser/index/
- │                       rule/graph first, model last
+DETERMINISTIC REACH      EconomyEngine.advice — advisory only; never
+ │                       activates a route (routing authority is
+ │                       routing/decision.py::decide)
  ▼
 CACHE                    CacheStore — 7 layers, dep-bound invalidation
  │
@@ -67,7 +68,7 @@ ECONOMY REPORT           unified_view + doctor() + waste findings
 | `economy/verifyplan.py` | `VerificationPlanner` | impact-scoped V0–V5 tiers, risk floors |
 | `economy/collection.py` | `CollectionEconomyPlan`, `evidence_gate` | live-call gate, ROI, fleet delta/cache |
 | `economy/waste.py` | `EconomyWasteDetector` | 10 waste types over ledgers |
-| `economy/doctor.py` | `doctor` | health checks; unresolved ≠ healthy |
+| `economy/doctor.py` | `doctor` | health checks incl. closure: `receipt-fresh` (`PF-ECONOMY-RECEIPT-STALE`), `gate-taxonomy`, `reproduce-paths`, `routing-authority`, `qpt`; unresolved ≠ healthy |
 | `economy/qpt.py` | `quality_per_token`, `quality_per_cost` | measured QPT v2 + v3 multi-axis |
 | `routing/decision.py` | `RoutingRequest/Decision/Scorecard` | profiles, receipts, champion/challenger |
 | `agents/uniqueness.py` | `AgentUniqueness` | per-run fanout audit |
@@ -80,6 +81,7 @@ ECONOMY REPORT           unified_view + doctor() + waste findings
 - Essential evidence either fits or the capsule refuses (`PF-CONTEXT-ESSENTIAL`).
 - Stale cache/observation never counts as fresh.
 - Challengers never auto-promote; routing changes need human review.
+- `decide()` is the only `RoutingDecision` producer; `EconomyEngine.advice` is advisory and cannot activate a route.
 - Safety, evidence and verification floors are outside the budget.
 
 ## Surfaces
@@ -93,4 +95,8 @@ MCP (read-only): `platformforge_economy`, `platformforge_economy_explain`,
 `platformforge_routing_explain`. There is deliberately no
 `routing.activate` — policy changes stay human.
 
-Validation: `scripts/validate.py --gate economy-*` (12 gates).
+Validation: `scripts/validate.py --gate economy-*` (14 gates, incl.
+`economy-receipt` + `economy-closure`). Final receipt:
+`python scripts/validate.py --economy-receipt docs/economy-parity/VALIDATION-RECEIPT.json`
+— schema `economy-validation-receipt/v1`, `validated_sha` binds the
+functional HEAD, `closure_sha` stays null inside the committed file.
