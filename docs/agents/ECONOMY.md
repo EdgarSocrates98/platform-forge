@@ -39,3 +39,17 @@ extrapolation from projections).
 `agents bench` compares deterministic / single-specialist /
 multi-specialist / coordinated / debate over the fixed task set —
 multi-agent is never assumed better; it must be proven.
+
+
+## Economy control plane integration
+
+Agent context now flows through `context/gateway.py` (capsules +
+`context://` refs, measured sufficiency, essential-evidence refusal);
+fanout is audited per run by `agents/uniqueness.py` (unique/duplicated/
+refuted/discarded contribution; zero-contribution → `unused_agent`
+recommendation); debates stop when a round adds no new evidence and the
+referee consumes a structured `RefereePacket`, not a transcript.
+Routing decisions emit receipts and promote only through human-approved
+champion/challenger gates (`routing/decision.py`). Budget ceilings
+above compose with the unified `BudgetEnvelope` — protected phases
+(VERIFY/SECURITY/CONTRACT) are outside economy.

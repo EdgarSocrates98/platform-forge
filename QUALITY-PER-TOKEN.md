@@ -96,3 +96,17 @@ on small/medium/large subsets. Results are baselines labeled
 - Compression that drops `unresolved`, `fact_id` or `rule_id` markers is
   a bug the property tests catch.
 - Token savings are never reported when a quality floor fails.
+
+
+## QPT v3 — quality per *cost* (economy cycle)
+
+`economy/qpt.py::quality_per_cost` generalizes the same floor-gated
+methodology to every cost axis: tokens, bytes, tool_calls, model_calls,
+agents, provider_calls, wall_time_s, money.
+
+- Each dimension is reported individually; the composite is a
+  decomposable mean over **measured** dims only.
+- Unmeasured dims are `unresolved` — excluded, never zeroed.
+- `money` is a `ProviderCost` from declared pricing or
+  `PF-ECONOMY-PRICING-MISSING`.
+- A savings claim is emitted only when every quality floor passed.

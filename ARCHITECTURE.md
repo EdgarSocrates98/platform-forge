@@ -59,6 +59,22 @@ Kubernetes, Helm/Kustomize, GitOps, cloud resources, CI/CD, policies, SLOs, cost
 controls and security posture. It understands, it does not mutate: mutation paths
 are `inspect → propose → sandbox → verify → approve → apply`, all gated.
 
+## Economy control plane (economy cycle, FE-002)
+
+Cost is a governed resource alongside evidence. The economy layer adds
+a control plane — `BudgetEnvelope` (11 dims, soft/hard, protected
+items/phases), a 7-layer dep-bound `CacheStore`, the `ContextGateway`
+(the only entry point for model/agent context — capsules + `context://`
+refs, measured sufficiency, essential-evidence refusal), spend-preserving
+`CheckpointStore`, per-axis `reconcile`, declared `ProviderPricing`,
+impact-scoped `VerificationPlanner`, agent uniqueness/fanout audits,
+bounded debates with stagnation stop, a routing control plane with
+receipts and human-gated champion/challenger promotion, fleet funnel +
+evidence gate for live calls, waste detection, and a `doctor` over the
+ledgers. Ledger accounting keeps `observed`/`estimated`/`unknown` bases
+separate forever. Full contracts: `docs/economy/`; parity evidence:
+`docs/economy-parity/`; ADRs: 0053–0063.
+
 ## Packaging
 
 ```bash

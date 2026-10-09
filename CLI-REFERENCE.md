@@ -178,6 +178,19 @@ All read-only; consume a **fleet dir** (same shape as
 `economy report|strategy|compare|qpt` (quality-per-token measured) ·
 `route` · `context --task --input-budget` (= `tokens pack`).
 
+### Economy control plane (economy cycle, FE-002)
+
+`economy checkpoint|resume|reconcile|doctor|explain` — spend-preserving
+checkpoints (`--run-id --spent --remaining --deps --profile`), resume
+with dep revalidation + no profile downgrade, planned-vs-observed
+reconciliation, ledger health checks, per-run explain.
+`context capsule|inspect|expand|delta|gc` — ContextGateway capsules
+under `context://sha256/` refs (pack stays the default verb).
+`cache stats|inspect|invalidate|gc` — multilayer cache operations.
+`routing explain|compare|scorecard` — decision receipts and
+champion/challenger promotion gate (never auto-promotes).
+See `docs/economy/` for the full contract set.
+
 ## SDD — `sdd <verb>`
 
 `discover · define · contract · design · plan · build · verify · review ·

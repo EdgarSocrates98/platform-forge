@@ -65,6 +65,11 @@ Cycle 5 surfaces are exposed read-only via five tools —
 `platformforge_analytics`, `platformforge_optimize` (`plan` emits the
 ChangeIntent document but can never write it — `out` is forced off on
 this surface), `platformforge_ai`, `platformforge_federation`
+
+Economy control plane tools (read-only — no `routing.activate`):
+`platformforge_economy_explain` (per-run checkpoint + ledger),
+`platformforge_context_inspect`, `platformforge_context_expand` (lazy
+capsule sections), `platformforge_routing_explain` (decision receipt).
 (classified summaries only; secrets always denied; no authority
 crosses). Boundaries unchanged: all `read` risk, `mutable: false`,
 bounded output, same `cmd_*` functions the CLI calls — there is no

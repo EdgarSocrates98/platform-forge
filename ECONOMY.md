@@ -80,3 +80,37 @@ Provider calls are real cost — measured and budgeted, never free.
 - **Measured** (`bench`): `live_drift_2k` = 3.9ms median for a
   2,000-resource envelope→envelope diff. Full-snapshot and incremental
   call counts are reported in docs/cycle3/FINAL-REPORT.md.
+
+
+## Economy Control Plane (economy cycle, FE-002)
+
+The economy contracts above are now unified under one control plane —
+see `docs/economy/ARCHITECTURE.md` for the full pipeline. New surfaces:
+
+- **`BudgetEnvelope`** (`economy/budget.py`) — 11 dimensions with
+  soft+hard limits, phase/role narrowing, protected items/phases.
+- **Multilayer cache** (`economy/cache.py`) — 7 dep-bound layers,
+  content-addressed, selective invalidation, TTL/GC, receipts.
+- **ContextGateway** (`context/`) — the only entry point for model
+  context; `ContextCapsule` + `context://sha256/` refs, lazy expansion,
+  measured sufficiency, `PF-CONTEXT-ESSENTIAL` refusal.
+- **Checkpoint/resume** (`economy/checkpoint.py`) — spend survives
+  restarts; deps revalidated; no profile downgrade.
+- **Reconciliation** (`economy/reconcile.py`) — planned vs observed per
+  axis; unmeasured is `unresolved`, never zero.
+- **Declared pricing** (`economy/pricing.py`) — `PF-ECONOMY-PRICING-MISSING`
+  instead of guessed dollars.
+- **Selective verification** (`economy/verifyplan.py`) — V0–V5 tiers,
+  risk floors that budget pressure cannot lower.
+- **Agentic economy** (`agents/uniqueness.py`, debate stagnation,
+  `economy/waste.py`, RTK receipts).
+- **Routing control plane** (`routing/decision.py`) — profiles, receipts,
+  champion/challenger with human-only promotion.
+- **Fleet/live economy** (`economy/collection.py`) — evidence gate,
+  provider-call ROI, snapshot-keyed fleet cache, delta-first reads.
+- **Doctor** (`economy/doctor.py`) — health checks over the ledgers.
+
+Docs: `docs/economy/{BUDGETS,CACHE,CONTEXT-GATEWAY,ROUTING,
+CHECKPOINT-RESUME,RECONCILIATION,PRICING,VERIFICATION-ECONOMY,
+AGENTIC-ECONOMY}.md`. ADRs: 0053–0063. Parity evidence:
+`docs/economy-parity/`.

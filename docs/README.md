@@ -24,6 +24,10 @@ Contracts and matrices for the bounded agent layer (canonical roster:
 - [ECONOMY.md](agents/ECONOMY.md) — context packs, budget classes, run ledger
 - [VERIFICATION.md](agents/VERIFICATION.md) — independent verifier, producer ≠ verifier
 
+## economy/ — economy control plane
+
+Architecture, budgets, multilayer cache, context gateway, routing, checkpoint/resume, reconciliation, declared pricing, verification and agentic economy: [economy/](economy/) — plus parity evidence in [economy-parity/](economy-parity/).
+
 ## adr/ — Architecture Decision Records
 
 Numbered records of load-bearing decisions:
