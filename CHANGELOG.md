@@ -2,6 +2,45 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
+## [Unreleased] — Architecture Freeze (stability & real-world validation)
+
+No new product capability — the freeze hardens, measures, and dogfoods
+the existing surface (docs/freeze/, prompt_evo_freezing.md).
+
+### Added
+- `platformforge/freeze/` — manifest generated from live registries,
+  contract snapshots (`snapshots/`), FeatureException validation,
+  `freeze manifest|snapshot|check|exception` verbs; `freeze-*` gates.
+- `platformforge/cases/` — `case.yaml` contract, deterministic replay
+  (`result_hash`, golden/holdout separated), FP/FN ledgers,
+  `route-audit`/`route-bench`/`context-audit`, `cases` CLI verbs.
+- `.platformforge/cases/` — 15-case corpus (10 golden + 5 holdout).
+- `docs/freeze/` — FREEZE-MANIFEST, LIFECYCLE, UNFREEZE-RFC template,
+  REAL-WORLD-ISSUES ledger, DOGFOOD receipts, SECURITY-REVIEW,
+  KNOWLEDGE-REVIEW, RELEASE-HARDENING, ARCHITECTURE-FREEZE-REVIEW,
+  FINAL-MATRIX, FINAL-REPORT, and machine receipts (PERFORMANCE, SOAK,
+  AGENTIC, VALIDATION) bound to HEAD.
+- Scale bench — environment metadata, `tracemalloc` peaks, edge and
+  store sweeps, `unsupported-on-host` instead of hangs.
+
+### Fixed (dogfooding — REAL-WORLD-ISSUES)
+- RW-1 `collect` crash on YAML boolean keys (`on:` → `True`).
+- RW-2 `judge` crash: backstage/dockerfile/gitlab_ci analyzers emitted
+  non-`PF-*` fact_ids.
+- RW-3 `judge` crash on detail-projection `_truncated` sentinels —
+  malformed entries now counted via `counts.skipped_inputs`.
+- RW-5 `password_kv` prose false positives; `scan_secrets` walked
+  `.pytest-tmp`/`.tokensave`/`.rtk` tool dirs and binary formats;
+  silent `max_files` truncation now reported via `truncated`.
+- SEC-1 `Sandbox.write_file` path containment — `../` escapes refuse
+  (`platform.sandbox.path_escape`) instead of writing outside `dst`.
+
+### Changed
+- pytest 8.4.2 → 9.1.1 (PYSEC-2026-1845, dev-only; suite green).
+- ROADMAP: stability/dogfooding/real-world/knowledge/community phases;
+  no Cycle 6 — unfreeze requires an RFC.
+- README: support matrix + frozen architecture state.
+
 ## [Unreleased] — Cycle 5.1 (Bounded Agentic Runtime)
 
 Agents become operators of the deterministic engines — bounded,
