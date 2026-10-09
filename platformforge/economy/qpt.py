@@ -199,3 +199,88 @@ def quality_per_token(*, facts_full: list[dict[str, Any]],
         "floors": floors,
         "quality_gate": "pass" if verdict == "beneficial" else "fail",
     }
+
+
+# --- QPT v3: generalized quality-per-cost (economy spec §161–165) --------
+
+COST_DIMENSIONS = ("tokens", "bytes", "tool_calls", "model_calls",
+                   "agents", "provider_calls", "wall_time_s", "money")
+
+
+def quality_per_cost(qpt_result: dict[str, Any], *,
+                     optimized_usage: dict[str, Any] | None = None,
+                     baseline_usage: dict[str, Any] | None = None,
+                     money: dict[str, Any] | None = None) -> dict[str, Any]:
+    """QPT v3 — the same quality floors measured against every cost axis.
+
+    `qpt_result` is the output of `quality_per_token` (floors + verdict).
+    `baseline_usage`/`optimized_usage` carry the measured per-mode costs:
+    tokens, tool_calls, model_calls, agents, provider_calls, wall_time_s.
+    `money` is a ProviderCost dict from economy.pricing — optional, and
+    `unresolved` when pricing is missing (never a guessed dollar).
+
+    Every dimension is reported individually; the composite score is a
+    decomposable mean of per-dimension reduction ratios — it summarizes,
+    it never hides a dimension (§164). Quality floors still gate: no
+    cost win counts when a floor failed.
+    """
+    opt = optimized_usage or {}
+    base = baseline_usage or {}
+    dims: dict[str, Any] = {}
+
+    # tokens/bytes come from the measured envelopes inside qpt_result
+    bt = base.get("estimated_tokens",
+                  qpt_result.get("baseline", {}).get("estimated_tokens"))
+    ot = opt.get("estimated_tokens",
+                 qpt_result.get("optimized", {}).get("estimated_tokens"))
+    bb = base.get("bytes",
+                  qpt_result.get("baseline", {}).get("model_context_bytes"))
+    ob = opt.get("bytes",
+                 qpt_result.get("optimized", {}).get("model_context_bytes"))
+    for name, b, o in (("tokens", bt, ot), ("bytes", bb, ob)):
+        if b is not None and o is not None:
+            dims[name] = {"baseline": b, "optimized": o,
+                          "reduction": round(1 - o / b, 4) if b else 0.0}
+
+    for name in ("tool_calls", "model_calls", "agents",
+                 "provider_calls", "wall_time_s"):
+        b, o = base.get(name), opt.get(name)
+        if b is None and o is None:
+            dims[name] = {"state": "unresolved",
+                          "reason": "not measured"}
+        elif b is None or o is None:
+            dims[name] = {"state": "partial",
+                          "baseline": b, "optimized": o}
+        else:
+            dims[name] = {"baseline": b, "optimized": o,
+                          "reduction": round(1 - o / b, 4) if b else 0.0}
+
+    dims["money"] = money if money is not None else {
+        "state": "unresolved",
+        "reason": "PF-ECONOMY-PRICING-MISSING — no declared rate, "
+                  "no dollar claim"}
+
+    measured = [d["reduction"] for d in dims.values()
+                if isinstance(d, dict) and "reduction" in d]
+    quality = qpt_result.get("quality", {})
+    floors_ok = all(quality.get("floors_ok", {}).values()) \
+        if quality.get("floors_ok") else qpt_result.get("verdict") == "beneficial"
+
+    return {
+        "task": qpt_result.get("task"),
+        "verdict": qpt_result.get("verdict"),
+        "quality_floors_ok": floors_ok,
+        "dimensions": dims,
+        "composite": {
+            "cost_reduction_mean": (round(sum(measured) / len(measured), 4)
+                                    if measured else 0.0),
+            "decomposable": True,
+            "note": "mean over measured dims only; unresolved dims are "
+                    "excluded, not zeroed",
+        },
+        "honest_claim": ("no savings claim — quality floor failed"
+                         if not floors_ok else
+                         ("measured reduction across "
+                          f"{len(measured)} dimensions"
+                          if measured else "nothing measured")),
+    }
