@@ -1,109 +1,100 @@
 {
-  "kind": "platformforge/validation-receipt/1",
+  "benchmarks": {
+    "control_plane_overhead": "docs/economy-parity/ECONOMY-BENCHMARKS.md",
+    "end_to_end": "insufficient evidence \u2014 no production corpus claimed"
+  },
+  "closure_sha": null,
   "cycle": "economy-parity",
-  "spec": "prompt_evo_economy.md",
   "exception": "FE-002",
-  "sha": [
-    "1ab6a979dde46c8a1629c89cf13f180b54727e54"
-  ],
-  "verdict": "validated",
+  "failed": [],
   "gates": {
-    "economy-contracts": {
+    "economy-agentic": {
       "ok": true,
-      "reproduce": "pytest -q tests/test_economy_contracts.py",
-      "what": "EconomyPlan, BudgetEnvelope 11-dim, unified ledger, explainability"
+      "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k uniqueness or debate or duplication or fanout or waste or stagnant",
+      "seconds": 0.71
+    },
+    "economy-budget": {
+      "ok": true,
+      "reproduce": "pytest -q tests/test_economy_contracts.py -k budget or limit or protected or dimension",
+      "seconds": 0.49
     },
     "economy-cache": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_cache.py",
-      "what": "7-layer content-addressed cache, dep-bound invalidation, TTL/GC, receipts"
+      "seconds": 0.47
     },
-    "economy-gateway": {
+    "economy-closure": {
       "ok": true,
-      "reproduce": "pytest -q tests/test_context_gateway.py",
-      "what": "ContextCapsule, context:// refs, sufficiency, lazy expand, PF-CONTEXT-ESSENTIAL"
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import sys\nfrom pathlib import Path\nreq = {'docs/economy-parity/FINAL-REPORT.md':\n         ['validated_sha', 'remote_ci', 'known gap'],\n       'docs/economy-parity/FINAL-MATRIX.md':\n         ['validated', 'externally-unverified'],\n       'docs/economy-parity/ECONOMY-BENCHMARKS.md':\n         ['Control Plane Overhead', 'End-to-End'],\n       'docs/economy/ROUTING.md':\n         ['decide', 'advisory'],\n       'docs/economy-parity/POLISH-BASELINE.md': ['drift']}\nbad = []\nfor f, needles in req.items():\n    p = Path(f)\n    if not p.is_file(): bad.append(('missing', f)); continue\n    txt = p.read_text()\n    for n in needles:\n        if n not in txt: bad.append((f, n))\nm = Path('docs/economy-parity/FINAL-MATRIX.md').read_text()\nif '\\n' + '|' in m and ' fully-production' in m:\n    bad.append(('matrix', 'overclaimed status'))\nif bad: print(bad); sys.exit(1)\nprint('closure docs coherent')\n && pytest -q tests/test_economy_closure.py",
+      "seconds": 0.39
     },
-    "economy-resume": {
+    "economy-context": {
       "ok": true,
-      "reproduce": "pytest -q tests/test_economy_checkpoint.py tests/test_economy_reconcile.py",
-      "what": "spend-preserving resume, PF-CHECKPOINT-DOWNGRADE, per-axis reconciliation"
+      "reproduce": "pytest -q tests/test_economy_gateway.py -k TestGateway or TestLazy or TestRole or Suff",
+      "seconds": 0.45
     },
-    "economy-pricing-verify": {
+    "economy-contracts": {
       "ok": true,
-      "reproduce": "pytest -q tests/test_economy_pricing.py tests/test_economy_verifyplan.py",
-      "what": "declared rates or PRICING-MISSING; V0-V5 tiers, security floor never skipped"
-    },
-    "economy-agentic": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k 'uniqueness or debate or duplication or fanout or waste or stagnant'",
-      "what": "agent uniqueness audit, debate bounds + stagnation stop, waste detector, RTK receipt"
-    },
-    "economy-routing": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_economy_evals.py -k 'routing or champion or challenger or scorecard'",
-      "what": "profile floors, routing receipts, champion/challenger human-gated promotion"
-    },
-    "economy-fleet-qpt": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_economy_fleet_qpt.py",
-      "what": "snapshot-keyed fleet cache, evidence gate, quality_per_cost all axes"
+      "reproduce": "pytest -q tests/test_economy_contracts.py tests/test_economy_v2.py",
+      "seconds": 0.76
     },
     "economy-evals": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py",
-      "what": "13 named evals + 8 property invariants + E1-E12 adversarial"
+      "seconds": 0.58
     },
-    "economy-cli": {
+    "economy-qpt": {
       "ok": true,
-      "reproduce": "platformforge economy explain --root . && platformforge cache stats --root . && platformforge routing scorecard --root .",
-      "what": "economy/context/cache/routing verbs emit decisions + PF codes"
+      "reproduce": "pytest -q tests/test_qpt_v2.py tests/test_economy_fleet_qpt.py",
+      "seconds": 1.76
     },
-    "economy-mcp": {
+    "economy-receipt": {
       "ok": true,
-      "reproduce": "pytest -q tests/test_mcp_economy.py",
-      "what": "4 read-only MCP tools; refusals preserved; no mutation"
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\nhead1 = subprocess.run(['git','rev-parse','HEAD~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (head, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
+      "seconds": 0.04
     },
-    "economy-doctor": {
+    "economy-reconcile": {
       "ok": true,
-      "reproduce": "platformforge economy doctor --root .",
-      "what": "6 health checks over ledgers/cache/context"
+      "reproduce": "pytest -q tests/test_economy_gateway.py tests/test_economy_evals.py -k reconcil or mismatch or unobserved",
+      "seconds": 0.51
     },
-    "tests": {
+    "economy-resume": {
       "ok": true,
-      "reproduce": "pytest -q",
-      "what": "full suite green (exit 0)"
+      "reproduce": "pytest -q tests/test_economy_gateway.py -k resume or checkpoint",
+      "seconds": 0.43
     },
-    "lint": {
+    "economy-routing": {
       "ok": true,
-      "reproduce": "ruff check .",
-      "what": "clean"
+      "reproduce": "pytest -q tests/test_economy_evals.py -k routing or profile or champion or simple_task",
+      "seconds": 0.49
     },
-    "docs": {
+    "economy-surface": {
       "ok": true,
-      "reproduce": "pytest -q tests/test_docs_drift.py",
-      "what": "doc links + generated CLI surface byte-current"
+      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import subprocess, sys\ncmds = [\n ['platformforge','economy','doctor'],\n ['platformforge','economy','checkpoint','--run-id','gate',\n  '--spent','{\"tokens\":1}'],\n ['platformforge','economy','resume','--run-id','gate'],\n ['platformforge','economy','reconcile',\n  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n ['platformforge','economy','explain','--run-id','gate'],\n ['platformforge','cache','stats'],\n ['platformforge','cache','gc'],\n ['platformforge','context','capsule','--task','t',\n  '--facts','[{\"fact_id\":\"f\"}]'],\n ['platformforge','context','gc'],\n ['platformforge','routing','explain','--signal','{}'],\n ['platformforge','routing','compare',\n  '--champion','{}','--challenger','{}'],\n]\nfor c in cmds:\n    r = subprocess.run(c, capture_output=True)\n    if r.returncode not in (0, 2):\n        print('FAIL', c, r.returncode, r.stderr[-300:])\n        sys.exit(1)\nprint('all economy verbs respond')\n",
+      "seconds": 2.66
     },
-    "lab": {
+    "economy-verification": {
       "ok": true,
-      "reproduce": "platformforge lab run-all",
-      "what": "all lab scenarios pass"
-    },
-    "evals": {
-      "ok": true,
-      "reproduce": "platformforge evals run",
-      "what": "93 pass / 0 fail / 0 unresolved"
-    },
-    "validate": {
-      "ok": true,
-      "reproduce": "python scripts/validate.py",
-      "what": "all gates incl. 12 economy-* gates pass"
+      "reproduce": "pytest -q tests/test_economy_pricing_verify.py",
+      "seconds": 0.27
     }
   },
-  "failed": [],
+  "generated_at": "2026-10-09T03:18:00Z",
+  "kind": "platformforge/economy-validation-receipt/1",
   "known_gaps": [
-    "no real provider pricing catalog shipped (declared-rates engine only)",
-    "analysis cache layer gated on tests; no model-call corpus for QPT money axis",
-    "microbench overhead measured; no production savings claimed",
-    "maturity ceiling unchanged at P4 — capability added, not production evidence"
-  ]
+    "real provider pricing catalog not bundled (declared-rates engine only, by design)",
+    "money axis lacks a real model-call corpus \u2014 QPC money is unresolved without declared pricing + measured usage",
+    "production savings unproven; microbench overhead only",
+    "analysis cache reuse requires identical evidence/policy/risk tuple \u2014 conservative by construction"
+  ],
+  "quality": {
+    "note": "QPT/QPC floors enforced inside economy-qpt / economy-evals gates; quality floors gate every economy claim"
+  },
+  "remote_ci": "not independently verified",
+  "schema": "platformforge/economy-validation-receipt/v1",
+  "spec": "prompt_evo_economy.md",
+  "validated_sha": "d0e2ee0d4f40b020b1311c4e92e9142a45cc2abd",
+  "validator": "scripts/validate.py",
+  "validator_version": "economy-validation-receipt/v1",
+  "verdict": "validated"
 }

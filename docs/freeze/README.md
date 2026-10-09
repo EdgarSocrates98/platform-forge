@@ -38,7 +38,7 @@ named `real_world_blocker` — "because it's cool" is a non-reason.
 | `KNOWLEDGE-REVIEW.md` | 59-source freshness sweep |
 | `RELEASE-HARDENING.md` | wheel/sdist hashes, CycloneDX SBOM, license inventory, dep audit |
 | `exceptions/FE-001.json` | deferred FeatureException — fixture-aware scoping (RW-4/RW-7) |
-| `exceptions/FE-002.json` | **landed + closed** — Economy Control Plane (`prompt_evo_economy.md`); snapshots/manifest re-baselined at `275da9c`; closure evidence in `docs/economy-parity/` |
+| `exceptions/FE-002.json` | **landed + closed** — Economy Control Plane (`prompt_evo_economy.md`); snapshots+manifest re-baselined (validated_sha in the receipt); closure evidence in `docs/economy-parity/` |
 | `*-RECEIPT.json` | machine receipts bound to the measured commit: `PERFORMANCE`, `PERFORMANCE-BASELINE`, `SOAK`, `AGENTIC`, `VALIDATION` |
 
 ## Landed exceptions (return-to-freeze state)
