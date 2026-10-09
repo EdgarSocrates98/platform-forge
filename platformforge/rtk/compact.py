@@ -84,6 +84,22 @@ def compact_output(command: str, output: str, exit_code: int = 0,
     return res
 
 
+def tool_economy_receipt(command: str, res: CompactResult,
+                         raw_bytes: int | None = None,
+                         expanded_bytes: int = 0) -> dict[str, Any]:
+    """§110 — measured tool economy: what the raw was, what the model
+    consumed, what expand-on-demand pulled."""
+    return {"schema": "platformforge/tool-economy-receipt/v1",
+            "command": command,
+            "raw_bytes": raw_bytes,
+            "compact_bytes": len(compact_json(res).encode()),
+            "expanded_bytes": expanded_bytes,
+            "raw_artifact": res.raw_artifact or None,
+            "truncated": res.truncated,
+            "note": "compact is the default surface; raw preserved as "
+                    "artifact; expand on demand (§107–109)"}
+
+
 def expand(store: ArtifactStore, raw_artifact: str,
            start: int | None = None, end: int | None = None,
            pattern: str | None = None) -> dict[str, Any]:
