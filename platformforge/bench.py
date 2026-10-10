@@ -94,8 +94,7 @@ def run_benchmark(repeat: int = 3) -> dict[str, Any]:
 
     def _pack() -> dict[str, Any]:
         from platformforge.tokensave.packs import ContextPackBuilder
-        with tempfile.TemporaryDirectory() as td:
-            idx = SearchIndex(Path(td) / "i.db")
+        with tempfile.TemporaryDirectory() as td, SearchIndex(Path(td) / "i.db") as idx:
             idx.index_workspace(_REPO / "rules" / "catalog")
             b = ContextPackBuilder(idx)
             return b.build("review kubernetes security posture",

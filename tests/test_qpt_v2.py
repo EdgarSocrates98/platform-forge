@@ -1,7 +1,9 @@
 """Cycle 2.1 §34–50 — QPT methodology: envelopes, receipts, gates."""
 
+import contextlib
 import json
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 
 from platformforge.economy.envelope import ContextEnvelope
@@ -10,10 +12,11 @@ from platformforge.tokensave.budget import Budget
 from platformforge.tokensave.index import SearchIndex
 
 
-def _idx(root: Path) -> SearchIndex:
-    idx = SearchIndex(root / "i.db")
-    idx.index_workspace(root / "ws")
-    return idx
+@contextlib.contextmanager
+def _idx(root: Path) -> Iterator[SearchIndex]:
+    with SearchIndex(root / "i.db") as idx:
+        idx.index_workspace(root / "ws")
+        yield idx
 
 
 def _workspace(root: Path) -> None:
@@ -56,10 +59,11 @@ def test_qpt_measured_equals_evaluated():
             return [{"rule_id": "R1", "status": "violated",
                      "fact": f["fact_id"]} for f in env.facts]
 
-        rep = quality_per_token(facts_full=_facts(), findings_full=[],
-                                index=_idx(root), task="deploy review",
-                                budget=Budget(input_budget=50_000),
-                                judge=spy)
+        with _idx(root) as idx:
+            rep = quality_per_token(facts_full=_facts(), findings_full=[],
+                                    index=idx, task="deploy review",
+                                    budget=Budget(input_budget=50_000),
+                                    judge=spy)
         assert len(seen) == 2                      # full + packed judged
         # baseline bytes == serialized envelope the judge saw
         assert rep["baseline"]["model_context_bytes"] == \
@@ -89,10 +93,11 @@ def test_qpt_optimization_not_beneficial_when_files_dropped():
                     out.append({"rule_id": "R1", "status": "violated",
                                 "fact": f["path"]})
             return out
-        rep = quality_per_token(facts_full=[], findings_full=[],
-                                index=_idx(root), task="zzz qqq unrelated",
-                                budget=Budget(input_budget=50_000),
-                                judge=file_judge)
+        with _idx(root) as idx:
+            rep = quality_per_token(facts_full=[], findings_full=[],
+                                    index=idx, task="zzz qqq unrelated",
+                                    budget=Budget(input_budget=50_000),
+                                    judge=file_judge)
         assert rep["quality"]["finding_recall"] == 0.0
         assert rep["verdict"] == "optimization_not_beneficial"
         assert rep["quality_gate"] == "fail"
@@ -109,10 +114,11 @@ def test_qpt_unresolved_must_not_go_silent():
                 return [{"rule_id": "R1", "status": "unresolved",
                          "fact": "f1"}]
             return []
-        rep = quality_per_token(facts_full=_facts() + _facts(),
-                                findings_full=[], index=_idx(root),
-                                task="deploy", judge=judge,
-                                budget=Budget(input_budget=50_000))
+        with _idx(root) as idx:
+            rep = quality_per_token(facts_full=_facts() + _facts(),
+                                    findings_full=[], index=idx,
+                                    task="deploy", judge=judge,
+                                    budget=Budget(input_budget=50_000))
         # pack carries all facts → both sides unresolved → recall 1.0
         assert rep["quality"]["unresolved_recall"] == 1.0
 

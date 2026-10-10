@@ -1,7 +1,9 @@
 """Cycle 2 Phase B — TokenSave v2, budget decisions, strategy, QPT."""
 from __future__ import annotations
 
+import contextlib
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 
 from platformforge.economy import EconomyEngine
@@ -11,21 +13,21 @@ from platformforge.tokensave.ledger import LedgerEntry
 from platformforge.tokensave.packs import ContextPackBuilder
 
 
-def _ws(tmp: Path) -> SearchIndex:
+@contextlib.contextmanager
+def _ws(tmp: Path) -> Iterator[SearchIndex]:
     root = tmp / "ws"
     root.mkdir()
     (root / "main.tf").write_text('resource "aws_s3_bucket" "b" {}\n')
     (root / "deploy.yaml").write_text("kind: Deployment\nreplicas: 1\n")
     (root / "iam.json").write_text('{"Statement": []}\n')
-    idx = SearchIndex(tmp / "idx.db")
-    idx.index_workspace(root)
-    return idx
+    with SearchIndex(tmp / "idx.db") as idx:
+        idx.index_workspace(root)
+        yield idx
 
 
 def test_pack_items_have_reasons():
     """§25 — every included file explains why."""
-    with tempfile.TemporaryDirectory() as td:
-        idx = _ws(Path(td))
+    with tempfile.TemporaryDirectory() as td, _ws(Path(td)) as idx:
         pack = ContextPackBuilder(idx).build(
             "deploy review", changed_files=["deploy.yaml"])
         assert pack["relevant_files"]
@@ -36,8 +38,7 @@ def test_pack_items_have_reasons():
 
 def test_essential_over_budget_refuses():
     """§27–28 — essential evidence over budget → refuse, never silent drop."""
-    with tempfile.TemporaryDirectory() as td:
-        idx = _ws(Path(td))
+    with tempfile.TemporaryDirectory() as td, _ws(Path(td)) as idx:
         facts = [{"fact_id": f"PF-X-{i}", "kind": "k", "tier": 3,
                   "attrs": {"big": "x" * 5000}} for i in range(3)]
         pack = ContextPackBuilder(idx).build(
@@ -49,8 +50,7 @@ def test_essential_over_budget_refuses():
 
 def test_graph_aware_ranking():
     """§22/§24 — graph neighborhood boosts matching paths."""
-    with tempfile.TemporaryDirectory() as td:
-        idx = _ws(Path(td))
+    with tempfile.TemporaryDirectory() as td, _ws(Path(td)) as idx:
         pack = ContextPackBuilder(idx).build(
             "audit", graph_neighborhood=[{"node": "workload/deploy", "depth": 1}])
         paths = {f["path"]: f for f in pack["relevant_files"]}
@@ -93,8 +93,7 @@ def test_champion_challenger_shadow():
 def test_qpt_measures_recall():
     """§30–32 — QPT reports recall/precision/reduction + gate verdict."""
     from platformforge.economy.qpt import quality_per_token
-    with tempfile.TemporaryDirectory() as td:
-        idx = _ws(Path(td))
+    with tempfile.TemporaryDirectory() as td, _ws(Path(td)) as idx:
         facts = [{"fact_id": "PF-K8S-901", "kind": "k8s.workload", "tier": 3,
                   "source": "deploy.yaml", "location": "deploy.yaml",
                   "attrs": {"pod_spec": {"latest_tag": True}}},

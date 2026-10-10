@@ -11,75 +11,75 @@
     "economy-agentic": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k uniqueness or debate or duplication or fanout or waste or stagnant",
-      "seconds": 0.71
+      "seconds": 0.92
     },
     "economy-budget": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py -k budget or limit or protected or dimension",
-      "seconds": 0.49
+      "seconds": 0.78
     },
     "economy-cache": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_cache.py",
-      "seconds": 0.47
+      "seconds": 0.92
     },
     "economy-closure": {
       "ok": true,
-      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import sys\nfrom pathlib import Path\nreq = {'docs/economy-parity/FINAL-REPORT.md':\n         ['validated_sha', 'remote_ci', 'known gap'],\n       'docs/economy-parity/FINAL-MATRIX.md':\n         ['validated', 'externally-unverified'],\n       'docs/economy-parity/ECONOMY-BENCHMARKS.md':\n         ['Control Plane Overhead', 'End-to-End'],\n       'docs/economy/ROUTING.md':\n         ['decide', 'advisory'],\n       'docs/economy-parity/POLISH-BASELINE.md': ['drift']}\nbad = []\nfor f, needles in req.items():\n    p = Path(f)\n    if not p.is_file(): bad.append(('missing', f)); continue\n    txt = p.read_text()\n    for n in needles:\n        if n not in txt: bad.append((f, n))\nm = Path('docs/economy-parity/FINAL-MATRIX.md').read_text()\nif '\\n' + '|' in m and ' fully-production' in m:\n    bad.append(('matrix', 'overclaimed status'))\nif bad: print(bad); sys.exit(1)\nprint('closure docs coherent')\n && pytest -q tests/test_economy_closure.py",
-      "seconds": 0.39
+      "reproduce": "python -c import sys\nfrom pathlib import Path\nreq = {'docs/economy-parity/FINAL-REPORT.md':\n         ['validated_sha', 'remote_ci', 'known gap'],\n       'docs/economy-parity/FINAL-MATRIX.md':\n         ['validated', 'externally-unverified'],\n       'docs/economy-parity/ECONOMY-BENCHMARKS.md':\n         ['Control Plane Overhead', 'End-to-End'],\n       'docs/economy/ROUTING.md':\n         ['decide', 'advisory'],\n       'docs/economy-parity/POLISH-BASELINE.md': ['drift']}\nbad = []\nfor f, needles in req.items():\n    p = Path(f)\n    if not p.is_file(): bad.append(('missing', f)); continue\n    txt = p.read_text()\n    for n in needles:\n        if n not in txt: bad.append((f, n))\nm = Path('docs/economy-parity/FINAL-MATRIX.md').read_text()\nif '\\n' + '|' in m and ' fully-production' in m:\n    bad.append(('matrix', 'overclaimed status'))\nif bad: print(bad); sys.exit(1)\nprint('closure docs coherent')\n && pytest -q tests/test_economy_closure.py",
+      "seconds": 1.18
     },
     "economy-context": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k TestGateway or TestLazy or TestRole or Suff",
-      "seconds": 0.45
+      "seconds": 0.82
     },
     "economy-contracts": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py tests/test_economy_v2.py",
-      "seconds": 0.76
+      "seconds": 1.15
     },
     "economy-evals": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py",
-      "seconds": 0.58
+      "seconds": 1.08
     },
     "economy-qpt": {
       "ok": true,
       "reproduce": "pytest -q tests/test_qpt_v2.py tests/test_economy_fleet_qpt.py",
-      "seconds": 1.76
+      "seconds": 1.75
     },
     "economy-receipt": {
       "ok": true,
-      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\nhead1 = subprocess.run(['git','rev-parse','HEAD~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (head, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
-      "seconds": 0.04
+      "reproduce": "python -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\nhead1 = subprocess.run(['git','rev-parse','HEAD~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (head, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
+      "seconds": 0.15
     },
     "economy-reconcile": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py tests/test_economy_evals.py -k reconcil or mismatch or unobserved",
-      "seconds": 0.51
+      "seconds": 0.85
     },
     "economy-resume": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k resume or checkpoint",
-      "seconds": 0.43
+      "seconds": 0.78
     },
     "economy-routing": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py -k routing or profile or champion or simple_task",
-      "seconds": 0.49
+      "seconds": 0.82
     },
     "economy-surface": {
       "ok": true,
-      "reproduce": "/home/edgar/Documentos/projetos/forjas/platform-forge/.venv/bin/python3 -c import subprocess, sys\ncmds = [\n ['platformforge','economy','doctor'],\n ['platformforge','economy','checkpoint','--run-id','gate',\n  '--spent','{\"tokens\":1}'],\n ['platformforge','economy','resume','--run-id','gate'],\n ['platformforge','economy','reconcile',\n  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n ['platformforge','economy','explain','--run-id','gate'],\n ['platformforge','cache','stats'],\n ['platformforge','cache','gc'],\n ['platformforge','context','capsule','--task','t',\n  '--facts','[{\"fact_id\":\"f\"}]'],\n ['platformforge','context','gc'],\n ['platformforge','routing','explain','--signal','{}'],\n ['platformforge','routing','compare',\n  '--champion','{}','--challenger','{}'],\n]\nfor c in cmds:\n    r = subprocess.run(c, capture_output=True)\n    if r.returncode not in (0, 2):\n        print('FAIL', c, r.returncode, r.stderr[-300:])\n        sys.exit(1)\nprint('all economy verbs respond')\n",
-      "seconds": 2.66
+      "reproduce": "python -c import subprocess, sys\ncmds = [\n ['platformforge','economy','doctor'],\n ['platformforge','economy','checkpoint','--run-id','gate',\n  '--spent','{\"tokens\":1}'],\n ['platformforge','economy','resume','--run-id','gate'],\n ['platformforge','economy','reconcile',\n  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n ['platformforge','economy','explain','--run-id','gate'],\n ['platformforge','cache','stats'],\n ['platformforge','cache','gc'],\n ['platformforge','context','capsule','--task','t',\n  '--facts','[{\"fact_id\":\"f\"}]'],\n ['platformforge','context','gc'],\n ['platformforge','routing','explain','--signal','{}'],\n ['platformforge','routing','compare',\n  '--champion','{}','--challenger','{}'],\n]\nfor c in cmds:\n    r = subprocess.run(c, capture_output=True)\n    if r.returncode not in (0, 2):\n        print('FAIL', c, r.returncode, r.stderr[-300:])\n        sys.exit(1)\nprint('all economy verbs respond')\n",
+      "seconds": 3.8
     },
     "economy-verification": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_pricing_verify.py",
-      "seconds": 0.27
+      "seconds": 0.86
     }
   },
-  "generated_at": "2026-10-09T03:18:00Z",
+  "generated_at": "2026-10-10T03:09:11Z",
   "kind": "platformforge/economy-validation-receipt/1",
   "known_gaps": [
     "real provider pricing catalog not bundled (declared-rates engine only, by design)",
@@ -93,7 +93,7 @@
   "remote_ci": "not independently verified",
   "schema": "platformforge/economy-validation-receipt/v1",
   "spec": "prompt_evo_economy.md",
-  "validated_sha": "d0e2ee0d4f40b020b1311c4e92e9142a45cc2abd",
+  "validated_sha": "7f95f82e0a17d3bf37a116e7a3f8f877668a1162",
   "validator": "scripts/validate.py",
   "validator_version": "economy-validation-receipt/v1",
   "verdict": "validated"

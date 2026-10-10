@@ -132,8 +132,7 @@ def _grade(case: dict, case_dir: Path) -> dict[str, Any]:
         from platformforge.tokensave.budget import Budget
         from platformforge.tokensave.index import SearchIndex
         from platformforge.tokensave.packs import ContextPackBuilder
-        with tempfile.TemporaryDirectory() as td:
-            idx = SearchIndex(Path(td) / "i.db")
+        with tempfile.TemporaryDirectory() as td, SearchIndex(Path(td) / "i.db") as idx:
             idx.index_workspace(case_dir / case.get("fixture", "fixture"))
             pack = ContextPackBuilder(idx, None).build(
                 task=case.get("query", ""),

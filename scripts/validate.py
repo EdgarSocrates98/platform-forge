@@ -33,7 +33,10 @@ def _run(cmd: list[str], cwd: Path = REPO) -> dict:
 
 
 def _py(expr: str) -> dict:
-    return _run([sys.executable, "-c", expr])
+    import shutil
+    py = "python" if shutil.which("python") else (
+        "python3" if shutil.which("python3") else sys.executable)
+    return _run([py, "-c", expr])
 
 
 def gate_lint() -> dict:

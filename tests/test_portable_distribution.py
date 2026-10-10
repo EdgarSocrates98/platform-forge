@@ -28,7 +28,7 @@ def test_user_modified_managed_file_is_preserved(tmp_path):
     p = next((tmp_path / ".agents/agents").glob("*.md"))
     p.write_text("user changed\n")
     out = uninstall(tmp_path)
-    assert str(p.relative_to(tmp_path)) in out["preserved_modified"]
+    assert p.relative_to(tmp_path).as_posix() in out["preserved_modified"]
     assert p.is_file()
 
 

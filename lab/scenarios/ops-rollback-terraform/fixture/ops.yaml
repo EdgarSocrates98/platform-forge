@@ -10,7 +10,7 @@ intent:
 steps:
   - step_id: apply
     action: terraform.apply_saved_plan
-    params: {workdir: "lab/scenarios/ops-rollback-terraform/fixture/tf", plan_file: "tfplan.bin",
+    params: {workdir: "tf", plan_file: "tfplan.bin",
              plan_hash: "sha256:99ded080636eb70e63061ecbc8b563bb23fed1e0201c1b590d7d910b21cec6d4"}
 expected_delta:
   changes: {resources: [{id: "aws_vpc.main", applied: true}]}

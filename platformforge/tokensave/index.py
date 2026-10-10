@@ -54,6 +54,15 @@ class SearchIndex:
         self.db.executescript(SCHEMA)
         self.db.commit()
 
+    def close(self) -> None:
+        self.db.close()
+
+    def __enter__(self) -> SearchIndex:  # noqa: PYI034 - typing.Self is 3.11+; no typing_extensions dep
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
     # ── indexing ──────────────────────────────────────────────
     def _iter_files(self, root: Path) -> Iterable[Path]:
         for p in sorted(root.rglob("*")):
