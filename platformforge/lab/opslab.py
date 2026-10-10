@@ -50,6 +50,12 @@ def run_ops_scenario(fixture_dir) -> dict[str, Any]:
         target_resources=list(i.get("target_resources", [])),
         desired_change=dict(i.get("desired_change", {})))
 
+    for s in doc.get("steps", []):
+        prm = s.get("params") or {}
+        wd = prm.get("workdir")
+        if isinstance(wd, str) and wd and not Path(wd).is_absolute():
+            prm["workdir"] = str((fx / wd).resolve())
+
     steps = [PlanStep(step_id=s["step_id"], action=s["action"],
                       params=dict(s.get("params", {})))
              for s in doc.get("steps", [])]
