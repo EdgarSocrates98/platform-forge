@@ -3,14 +3,14 @@
 | Campo | Valor |
 |---|---|
 | repository | `platform-forge` |
-| branch | `feat/knowledge-experience` |
-| commit | `550589c` |
-| docs inventoried | 435 (excl. GENERATED mirrors: 255; vendored upstream: 0) |
+| branch | `feat/docs-evolution` |
+| commit | `3501bed` |
+| docs inventoried | 436 (excl. GENERATED mirrors: 256; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 435
+- `AUTOMATICALLY_CHECKED`: 436
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -20,7 +20,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Category counts
 
 - `GENERATED`: 180
-- `UNKNOWN`: 85
+- `UNKNOWN`: 86
 - `USER_GUIDE`: 64
 - `ADR`: 63
 - `RELEASE_REPORT`: 12
