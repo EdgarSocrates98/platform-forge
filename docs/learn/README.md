@@ -16,4 +16,6 @@
 | "O que as regras dizem dos facts?" | [judge-policy](recipes/judge-policy.md) |
 | "O que depende de quê?" | [graph-deps](recipes/graph-deps.md) |
 
+Hub do ecossistema (descoberta cross-forge): `the-forge/docs/hub/` — install, which-forge, hosts, MCP, troubleshooting.
+
 Índice gerado: [../INDEX.md](../INDEX.md).
