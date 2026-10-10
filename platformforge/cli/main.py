@@ -904,6 +904,41 @@ def cmd_graph(args: argparse.Namespace) -> int:
                 {"refusal": "PF-GRAPH-NO-TARGET",
                  "unlock": "pass --edge-id and/or --node"}, args, 2)
         return _emit(out, args)
+    if sub == "view":
+        # Graph Studio contract: ForgeGraphView/v1 of the latest graph.
+        from platformforge import graphview
+
+        view = graphview.build_view(args.repo)
+        if view is None:
+            return _emit(
+                {"refusal": "PF-GRAPH-NOGRAPH",
+                 "unlock": "platformforge graph build <facts.json>"}, args, 2)
+        return _emit(view.to_dict(), args)
+    if sub == "ui":
+        from platformforge import graphview
+        from platformforge._graphstudio import graph_studio_enabled, open_studio
+
+        if not graph_studio_enabled(
+            args.repo,
+            state_rel=".platformforge",
+            user_state_rel="~/.platformforge",
+        ):
+            return _emit(
+                {"refusal": "PF-GRAPH-STUDIO-DISABLED",
+                 "detail": "Graph Studio declined at install "
+                 "(components.json: graph_studio=false)",
+                 "unlock": "reinstall with the graph-studio component"},
+                args, 2)
+        view = graphview.build_view(args.repo)
+        if view is None:
+            return _emit(
+                {"refusal": "PF-GRAPH-NOGRAPH",
+                 "unlock": "platformforge graph build <facts.json>"}, args, 2)
+        return open_studio(
+            [view],
+            open_browser=not getattr(args, "no_browser", False),
+            port=getattr(args, "port", 0),
+        )
     return _emit({"error": f"unknown graph verb {sub}"}, args, 1)
 
 
@@ -2976,6 +3011,8 @@ def build_parser() -> argparse.ArgumentParser:
             "identity-blast",
             "at",
             "timeline",
+            "view",
+            "ui",
         ],
     )
     sp.add_argument("facts", nargs="?", default="")
@@ -2991,6 +3028,14 @@ def build_parser() -> argparse.ArgumentParser:
         default="desired",
         choices=["desired", "planned", "observed", "runtime"],
         help="§6 snapshot type for `graph build`",
+    )
+    sp.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="graph ui: serve without opening a browser (SSH/remote)",
+    )
+    sp.add_argument(
+        "--port", type=int, default=0, help="graph ui: port (default ephemeral)"
     )
     sp.set_defaults(func=cmd_graph)
 
