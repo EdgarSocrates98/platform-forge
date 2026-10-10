@@ -2,7 +2,7 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "platform-forge",
   "cli": "platformforge",
-  "generated_at": "2026-10-10T01:11:09Z",
+  "generated_at": "2026-10-10T02:20:30Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 57,
   "commands": [
@@ -2618,6 +2618,17 @@
           "choices": null,
           "positional": false,
           "help": "graph ui: port (default ephemeral)"
+        },
+        {
+          "name": "snapshot",
+          "flags": [
+            "--snapshot"
+          ],
+          "required": false,
+          "default": "",
+          "choices": null,
+          "positional": false,
+          "help": "graph view: emit the view of a saved snapshot hash"
         }
       ]
     },

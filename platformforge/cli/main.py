@@ -905,14 +905,17 @@ def cmd_graph(args: argparse.Namespace) -> int:
                  "unlock": "pass --edge-id and/or --node"}, args, 2)
         return _emit(out, args)
     if sub == "view":
-        # Graph Studio contract: ForgeGraphView/v1 of the latest graph.
+        # Graph Studio contract: ForgeGraphView/v1 of the latest graph,
+        # or of a named snapshot (declared `snapshots` capability).
         from platformforge import graphview
 
-        view = graphview.build_view(args.repo)
+        view = graphview.build_view(args.repo, snapshot=args.snapshot or None)
         if view is None:
-            return _emit(
-                {"refusal": "PF-GRAPH-NOGRAPH",
-                 "unlock": "platformforge graph build <facts.json>"}, args, 2)
+            code = "PF-GRAPH-NO-SNAPSHOT" if args.snapshot else "PF-GRAPH-NOGRAPH"
+            unlock = ("platformforge graph snapshots — pick a saved hash"
+                      if args.snapshot
+                      else "platformforge graph build <facts.json>")
+            return _emit({"refusal": code, "unlock": unlock}, args, 2)
         return _emit(view.to_dict(), args)
     if sub == "ui":
         from platformforge import graphview
@@ -3036,6 +3039,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sp.add_argument(
         "--port", type=int, default=0, help="graph ui: port (default ephemeral)"
+    )
+    sp.add_argument(
+        "--snapshot", default="",
+        help="graph view: emit the view of a saved snapshot hash",
     )
     sp.set_defaults(func=cmd_graph)
 
