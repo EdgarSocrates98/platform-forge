@@ -128,11 +128,13 @@ def _receipt(operation: str, scope: str, target: Path, *,
 
 def install(*, scope: str = "project", root: Path | None = None,
             host: str = "all", profile: str = "recommended",
-            yes: bool = False, dry_run: bool = False) -> dict[str, Any]:
+            yes: bool = False, dry_run: bool = False,
+            components: tuple[str, ...] | None = None) -> dict[str, Any]:
     """``platformforge install`` — governed apply over ``apply_install``."""
     from platformforge.distribution.service import apply_install, plan_install
 
     _profile(profile)  # validates; native profile is always "agentic"
+    opts = kit.component_options("recommended", components)
     native_hosts = _hosts(host)
     target = _resolve(scope, root)
     state = target / ".platformforge"
@@ -144,6 +146,7 @@ def install(*, scope: str = "project", root: Path | None = None,
             checks=[{"id": "plan", "status": "UNVERIFIED",
                      "detail": "dry-run — nothing written"}],
             extra={"dry_run": True,
+                   "components": opts or None,
                    "planned_files": sorted(plan.creates + plan.managed_updates),
                    "conflicts": plan.conflicts})
     if not yes:
@@ -152,6 +155,10 @@ def install(*, scope: str = "project", root: Path | None = None,
             "install requires --yes or --dry-run; the plan is the contract")
     with kit.acquire_lock(state):
         out = apply_install(target, "agentic", native_hosts)
+    if opts:
+        state.mkdir(parents=True, exist_ok=True)
+        (kit.components_path(state)).write_text(
+            json.dumps(opts, indent=2), encoding="utf-8")
     if "refusal" in out:
         return _receipt(
             "install", scope, target, status="failed",
@@ -163,7 +170,8 @@ def install(*, scope: str = "project", root: Path | None = None,
         checks=[{"id": "apply", "status": "PASS",
                  "detail": f"{len(receipt.get('files', {}))} managed files"}],
         managed_files=sorted(receipt.get("files", {})),
-        extra={"plan": out.get("plan"), "profile": profile})
+        extra={"plan": out.get("plan"), "profile": profile,
+               "components": opts or None})
 
 
 def _read_receipt(target: Path) -> dict[str, Any]:

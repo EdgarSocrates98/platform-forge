@@ -28,13 +28,17 @@ def register(sub, add_common, emit):
                 }[op]
                 out = fn()
             else:
+                comps = (
+                    tuple(c.strip() for c in a.components.split(",") if c.strip())
+                    if getattr(a, "components", None) else None
+                )
                 out = service.install(
                     scope=a.scope, root=a.repo,
                     host="all" if hosts == ["all"] else hosts[0]
                     if len(hosts) == 1 else "all",
                     profile=a.profile if a.profile in service.PROFILES
                     else "recommended",
-                    yes=a.yes, dry_run=a.dry_run)
+                    yes=a.yes, dry_run=a.dry_run, components=comps)
         except service.InstallRefusal as exc:
             return emit({"status": "refused",
                          "error": {"kind": exc.kind, "detail": exc.detail}}, a, 2)
@@ -103,6 +107,8 @@ def register(sub, add_common, emit):
                     help="uninstall: also remove .platformforge state")
     sp.add_argument("--to", default=None,
                     help="update: pinned version — never 'latest'")
+    sp.add_argument("--components", default=None,
+                    help="optional components csv: skills,agents,mcp,tui,graph-studio")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=install)
 
