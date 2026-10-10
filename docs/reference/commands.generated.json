@@ -2,7 +2,7 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "platform-forge",
   "cli": "platformforge",
-  "generated_at": "2026-10-09T22:45:17Z",
+  "generated_at": "2026-10-10T01:11:09Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 57,
   "commands": [
@@ -186,6 +186,17 @@
           "choices": null,
           "positional": false,
           "help": "update: pinned version — never 'latest'"
+        },
+        {
+          "name": "components",
+          "flags": [
+            "--components"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "optional components csv: skills,agents,mcp,tui,graph-studio"
         },
         {
           "name": "dry_run",
@@ -2477,7 +2488,9 @@
             "identity-workloads",
             "identity-blast",
             "at",
-            "timeline"
+            "timeline",
+            "view",
+            "ui"
           ],
           "positional": true,
           "help": null
@@ -2583,6 +2596,28 @@
           ],
           "positional": false,
           "help": "§6 snapshot type for `graph build`"
+        },
+        {
+          "name": "no_browser",
+          "flags": [
+            "--no-browser"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "graph ui: serve without opening a browser (SSH/remote)"
+        },
+        {
+          "name": "port",
+          "flags": [
+            "--port"
+          ],
+          "required": false,
+          "default": "0",
+          "choices": null,
+          "positional": false,
+          "help": "graph ui: port (default ephemeral)"
         }
       ]
     },

@@ -789,7 +789,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-platformforge graph [help] [json] [FILE] [detail_level] [offline] [strict] [repo] <graph_cmd> [facts] [node] [src] [dst] [before] [after] [at] [edge_id] [source_type]
+platformforge graph [help] [json] [FILE] [detail_level] [offline] [strict] [repo] <graph_cmd> [facts] [node] [src] [dst] [before] [after] [at] [edge_id] [source_type] [no_browser] [port]
 ```
 
 | argument/flag | required | default | description |
@@ -811,6 +811,8 @@ platformforge graph [help] [json] [FILE] [detail_level] [offline] [strict] [repo
 | `at` | no | — | at: ISO timestamp |
 | `edge_id` | no | — | timeline: edge id |
 | `source_type` | no | — | §6 snapshot type for `graph build` |
+| `no_browser` | no | — | graph ui: serve without opening a browser (SSH/remote) |
+| `port` | no | — | graph ui: port (default ephemeral) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -897,7 +899,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-platformforge install [help] [json] [FILE] [detail_level] [offline] [strict] [repo] [op] [profile] [host] [scope] [yes] [purge] [to] [dry_run]
+platformforge install [help] [json] [FILE] [detail_level] [offline] [strict] [repo] [op] [profile] [host] [scope] [yes] [purge] [to] [components] [dry_run]
 ```
 
 | argument/flag | required | default | description |
@@ -916,6 +918,7 @@ platformforge install [help] [json] [FILE] [detail_level] [offline] [strict] [re
 | `yes` | no | — | explicit approval — required for writes |
 | `purge` | no | — | uninstall: also remove .platformforge state |
 | `to` | no | — | update: pinned version — never 'latest' |
+| `components` | no | — | optional components csv: skills,agents,mcp,tui,graph-studio |
 | `dry_run` | no | — | — |
 
 <!-- keep:start -->
