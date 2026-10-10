@@ -88,15 +88,24 @@ def _resolve(scope: str, root: Path | None) -> Path:
 
 
 def _hosts(host: str) -> list[str]:
+    """``all`` → todos; ``none``/vazio → opt-out explícito (nunca todos);
+    nome único ou csv → subconjunto validado (GAP-003)."""
     if host == "all":
         return sorted(set(_HOST_MAP.values()))
-    # Native host names pass through (legacy CLI compat); contract names map.
-    if host in _HOST_MAP.values():
-        return [host]
-    if host not in _HOST_MAP:
-        raise InstallRefusal(
-            kit.E_HOST, f"host {host!r}; expected {CONTRACT_HOSTS} + all")
-    return [_HOST_MAP[host]]
+    if not host or host == "none":
+        return []
+    nomes = [h.strip() for h in host.split(",") if h.strip()]
+    out: list[str] = []
+    for nome in nomes:
+        # Native host names pass through (legacy CLI compat); contract names map.
+        if nome in _HOST_MAP.values():
+            out.append(nome)
+        elif nome in _HOST_MAP:
+            out.append(_HOST_MAP[nome])
+        else:
+            raise InstallRefusal(
+                kit.E_HOST, f"host {nome!r}; expected {CONTRACT_HOSTS} + all,none")
+    return list(dict.fromkeys(out))
 
 
 def _profile(profile: str) -> str:
