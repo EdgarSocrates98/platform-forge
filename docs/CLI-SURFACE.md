@@ -254,7 +254,7 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `graph`
 
 - `graph` <facts> (default '')  
-  `--repo <v> — workspace/repo root (default '.')` · `--node <v> (default '')` · `--src <v> (default '')` · `--dst <v> (default '')` · `--before <v> (default '')` · `--after <v> (default '')` · `--at <v> — at: ISO timestamp (default '')` · `--edge-id <v> — timeline: edge id (default '')` · `--source-type {desired|planned|observed|runtime} — §6 snapshot type for `graph build` (default 'desired')`
+  `--repo <v> — workspace/repo root (default '.')` · `--node <v> (default '')` · `--src <v> (default '')` · `--dst <v> (default '')` · `--before <v> (default '')` · `--after <v> (default '')` · `--at <v> — at: ISO timestamp (default '')` · `--edge-id <v> — timeline: edge id (default '')` · `--source-type {desired|planned|observed|runtime} — §6 snapshot type for `graph build` (default 'desired')` · `--no-browser — graph ui: serve without opening a browser (SSH/remote)` · `--port <v> — graph ui: port (default ephemeral) (default 0)` · `--snapshot <v> — graph view: emit the view of a saved snapshot hash (default '')`
 - `graph at`
 - `graph blast`
 - `graph build`
@@ -271,6 +271,8 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `graph snapshots`
 - `graph stats`
 - `graph timeline`
+- `graph ui`
+- `graph view`
 
 ## `impact`
 
@@ -290,7 +292,7 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `install`
 
 - `install`  
-  `--repo <v> — workspace/repo root (default '.')` · `--profile <v> — minimal|recommended|full (contract) or native profile name (default 'recommended')` · `--host {agents|claude|codex|devin|copilot|all}` · `--scope {project|workspace|user} (default 'project')` · `--yes, -y — explicit approval — required for writes` · `--purge — uninstall: also remove .platformforge state` · `--to <v> — update: pinned version — never 'latest'` · `--dry-run`
+  `--repo <v> — workspace/repo root (default '.')` · `--profile <v> — minimal|recommended|full (contract) or native profile name (default 'recommended')` · `--host {agents|claude|codex|devin|copilot|all}` · `--scope {project|workspace|user} (default 'project')` · `--yes, -y — explicit approval — required for writes` · `--purge — uninstall: also remove .platformforge state` · `--to <v> — update: pinned version — never 'latest'` · `--components <v> — optional components csv: skills,agents,mcp,tui,graph-studio` · `--dry-run`
 - `install apply`
 - `install doctor`
 - `install mcp-verify`

@@ -111,6 +111,22 @@ def test_persist_and_diff(tmp_path):
     assert d["hash_before"] != d["hash_after"]
 
 
+def test_build_view_snapshot(tmp_path):
+    """`graph view --snapshot` emits the named snapshot, stamped."""
+    from platformforge import graphview
+
+    g = _graph()
+    save(g, tmp_path)
+    view = graphview.build_view(tmp_path, snapshot=g.graph_hash)
+    assert view is not None
+    assert view.descriptor.snapshot_id == g.graph_hash
+    assert view.descriptor.node_count == len(g.nodes)
+    # latest view carries no snapshot stamp
+    assert graphview.build_view(tmp_path).descriptor.snapshot_id == ""
+    # missing snapshot fails closed
+    assert graphview.build_view(tmp_path, snapshot="deadbeef") is None
+
+
 def test_paths_bounded_on_dense_unreachable(tmp_path):
     """freeze dogfood: DFS wandered minutes on dense graphs when dst was
     deep/unreachable — BFS + expansion cap must terminate fast."""

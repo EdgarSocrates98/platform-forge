@@ -19,12 +19,18 @@ from platformforge._graphview import (
 PROVIDER = "platform-forge"
 
 
-def build_view(root: str | Path = ".") -> ForgeGraphView | None:
-    """The latest persisted graph → view. None when no graph exists."""
+def build_view(
+    root: str | Path = ".", *, snapshot: str | None = None
+) -> ForgeGraphView | None:
+    """Persisted graph → view. None when the graph/snapshot is absent.
+
+    ``snapshot`` names a hash under ``.forge/graph/snapshots/`` — the
+    view then carries that snapshot's stamp on the descriptor.
+    """
     from platformforge import graph as G
 
     try:
-        g = G.load(root)
+        g = G.load_snapshot(root, snapshot) if snapshot else G.load(root)
     except (OSError, ValueError, KeyError, TypeError):
         return None
     desc = new_descriptor(
@@ -48,6 +54,8 @@ def build_view(root: str | Path = ".") -> ForgeGraphView | None:
     )
     object.__setattr__(desc, "node_count", len(g.nodes))
     object.__setattr__(desc, "edge_count", len(g.edges))
+    if snapshot:
+        object.__setattr__(desc, "snapshot_id", snapshot)
     object.__setattr__(
         desc, "available_layers", tuple(sorted({n.kind for n in g.nodes.values()}))
     )

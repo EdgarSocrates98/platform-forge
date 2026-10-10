@@ -56,7 +56,9 @@ every change cites `fact_ids`) · `snapshots` · `stats` ·
 (temporal provenance) ·
 `identity-become|identity-access|identity-workloads|identity-blast`
 (§100–101: no-path-found is a named result, never "no risk") ·
-`view` (ForgeGraphView/v1 JSON projection) · `ui` (embedded Graph
+`view` (ForgeGraphView/v1 JSON projection; `--snapshot <graph_hash>`
+emits a saved snapshot, stamped `descriptor.snapshot_id` — unknown hash
+→ `PF-GRAPH-NO-SNAPSHOT`) · `ui` (embedded Graph
 Studio on 127.0.0.1; declined at install → `PF-GRAPH-STUDIO-DISABLED`).
 
 Provenance on every edge: `observed | planned | declared | inferred`.
