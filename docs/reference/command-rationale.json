@@ -179,6 +179,10 @@
     "why": "instala skills/agents/MCP nos hosts do usuário",
     "when": "ativar a forja no Claude/Codex/Devin"
   },
+  "hosts": {
+    "why": "observa o estado real dos hosts de IA (binário, versão, auth, integração) e abre o host no repo",
+    "when": "antes de abrir o host: `hosts` mede, `hosts <h> --launch` abre com TTY"
+  },
   "evals": {
     "why": "matriz de avaliação declarativa, goldens e holdout",
     "when": "validar qualidade determinística antes de release"

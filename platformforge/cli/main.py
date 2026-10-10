@@ -601,7 +601,7 @@ def cmd_freeze(args: argparse.Namespace) -> int:
         if args.out == "-" or (not args.out and args.path == "-"):
             return _emit(m, args)
         pathlib.Path(out).parent.mkdir(parents=True, exist_ok=True)
-        pathlib.Path(out).write_text(render_markdown(m))
+        pathlib.Path(out).write_text(render_markdown(m), encoding="utf-8")
         return _emit({"written": out, "sha": m["freeze_start_sha"],
                       "agents": m["agent_contracts"]["count"]}, args)
     if args.freeze_cmd == "snapshot":
@@ -1356,6 +1356,11 @@ def cmd_policy(args: argparse.Namespace) -> int:
     from platformforge.models import Fact
     from platformforge.rules import RuleEngine
 
+    if not Path(args.path).is_file():
+        return _emit(
+            {"refusal": "PF-POLICY-NO-FACTS",
+             "unlock": "platformforge policy check <facts.json>"},
+            args, 2)
     facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]
     findings, skipped = RuleEngine(rules).evaluate(facts)
     out = {
@@ -1429,6 +1434,15 @@ def cmd_integrate(args: argparse.Namespace) -> int:
 
     fn = detach if args.detach else integrate
     return _emit(fn(args.host, args.repo), args)
+
+
+def cmd_hosts(args: argparse.Namespace) -> int:
+    """Hosts observe/launch — see ``distribution.hostflow`` for the contract."""
+    from platformforge.distribution import hostflow
+
+    receipt = hostflow.hosts_flow(
+        args.host, repo=Path(args.repo), launch=args.launch)
+    return _emit(receipt, args, 2 if receipt["hosts"][0].get("state") == "refused" else 0)
 
 
 def cmd_evals(args: argparse.Namespace) -> int:
@@ -2727,6 +2741,12 @@ def cmd_finops(args: argparse.Namespace) -> int:
     from platformforge import finops as F
 
     sub = args.finops_cmd
+    if sub in {"costs", "allocate", "focus", "focus-validate", "unit",
+               "ingest", "report"} and not Path(args.path).is_file():
+        return _emit(
+            {"refusal": "PF-FINOPS-NO-INPUT",
+             "unlock": "platformforge finops <verb> <billing.json|csv>"},
+            args, 2)
     if sub == "costs":
         doc = F.cost_facts(args.path)
         return _emit({**doc, "summary": F.cost_summary(doc["facts"])}, args)
@@ -3494,6 +3514,19 @@ def build_parser() -> argparse.ArgumentParser:
                 "--host", required=True, choices=["claude", "codex", "devin", "copilot", "generic"]
             ),
             sp.add_argument("--detach", action="store_true"),
+        ),
+    )
+    verb(
+        "hosts",
+        cmd_hosts,
+        "AI host observe + optional launch (integrate is the setup path)",
+        lambda sp: (
+            sp.add_argument(
+                "host", nargs="?", default="all",
+                choices=["all", "claude", "codex", "devin", "copilot"],
+            ),
+            sp.add_argument("--launch", action="store_true",
+                            help="launch the host REPL in the repo (TTY only)"),
         ),
     )
     verb(

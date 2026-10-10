@@ -59,6 +59,7 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.security` | 10 | security | yes | `security <root>` | secrets+iam+sbom+supply bundle → security-domain judge |
 | `platform.reliability` | 8 | sre | yes | `reliability <facts.json>` | sre+k8s rules only |
 | `platform.integrate` | 13 | adapters | yes | `integrate --host` | = `mcp integrate/detach` |
+| `platform.hosts` | 13 | adapters | yes | `hosts [all|host] [--launch]` | observe AI hosts (binary/version/auth/integration) and launch on TTY; observation also via `platformforge_hosts` |
 | `platform.evals` | 14 | lab | yes | `evals run/list/coverage/precision` | §94 types + §95 variants; 63/63 rule coverage (evals + lab); §127 measured precision |
 | `platform.lab.chaos` | 14 | lab | yes | `lab chaos <dir>` | §93 fault injection on the graph (simulation); prod targets refused unless `--allow-prod` |
 | `platform.knowledge` | 2 | economy | yes | `knowledge` | source registry freshness check — stale/unresolved/conflicted flagged |

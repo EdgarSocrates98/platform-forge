@@ -83,6 +83,7 @@ _V2: dict[str, dict[str, Any]] = {
     "platformforge_policy": {"domain": "rules"},
     "platformforge_integrate": {"domain": "adapters", "risk": "guarded",
                                 "mutable": True},
+    "platformforge_hosts": {"domain": "adapters"},
     "platformforge_capability": {"domain": "core"},
     "platformforge_live": {"domain": "live", "cost_class": "moderate",
                            "offline": False},
@@ -301,6 +302,14 @@ CAPABILITIES: dict[str, Capability] = _apply_v2([
                 "properties": {"host": {"type": "string"},
                                "detach": {"type": "boolean"}}},
                "cli:integrate"),
+    Capability("platformforge_hosts",
+               "AI host observation (hosts): binary, version, auth state, "
+               "repo integration, launch command. Read-only — launching a "
+               "host stays a CLI+TTY human boundary.",
+               {"type": "object",
+                "properties": {"host": {"type": "string"},
+                               "repo": {"type": "string"}}},
+               "cli:hosts"),
     Capability("platformforge_capability",
                "Capability list/describe/manifest",
                {"type": "object",

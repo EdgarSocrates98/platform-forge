@@ -20,8 +20,9 @@ CLI_NAME = 'platformforge'
 CLI_ENTRY = 'platformforge.cli.main:main'
 
 _MENU: list[tuple[str, list[str] | None]] = [
-    ('Analyze this project', ['analyze']),
-    ('Explore agents', ['agents']),
+    ('Analyze this project', ['analyze', 'iac']),
+    ('Explore agents', ['agents', 'list']),
+    ('AI hosts (observe + launch)', ['hosts']),
     ('Check installation health', ['doctor']),
     ('MCP verify (real handshake)', ['install', 'mcp-verify']),
     ('Graph Studio (browser)', ['graph','ui']),

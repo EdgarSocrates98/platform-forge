@@ -39,6 +39,8 @@ named `real_world_blocker` — "because it's cool" is a non-reason.
 | `RELEASE-HARDENING.md` | wheel/sdist hashes, CycloneDX SBOM, license inventory, dep audit |
 | `exceptions/FE-001.json` | deferred FeatureException — fixture-aware scoping (RW-4/RW-7) |
 | `exceptions/FE-002.json` | **landed + closed** — Economy Control Plane (`prompt_evo_economy.md`); snapshots+manifest re-baselined (validated_sha in the receipt); closure evidence in `docs/economy-parity/` |
+| `exceptions/FE-003.json` | **landed** — Portable Distribution & Workspace Integration (`install/uninstall/upgrade/portable/workspace`); snapshots+manifest re-baselined |
+| `exceptions/FE-004.json` | **landed** — AI host observe+launch surface (`hosts` verb, `platformforge_hosts` MCP tool); CLI/MCP/capabilities snapshots re-baselined (FASE 4, `prompt_evo_foco1.md`) |
 | `*-RECEIPT.json` | machine receipts bound to the measured commit: `PERFORMANCE`, `PERFORMANCE-BASELINE`, `SOAK`, `AGENTIC`, `VALIDATION` |
 
 ## Landed exceptions (return-to-freeze state)

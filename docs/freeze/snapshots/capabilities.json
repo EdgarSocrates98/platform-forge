@@ -21,6 +21,7 @@
     "platformforge_finops": "c94370c68e740967032bee8876907dc54818641b466e1205b9c2b68c2f89fbe4",
     "platformforge_fleet": "e45f4730550326312396fe05405083dd6d0d98bfa2aa2daa76f2a34d1a7963d9",
     "platformforge_graph_query": "68bc0a6b90b2ecf6098fc108a30423a5d6d6615c0da304807b13521c207bfd09",
+    "platformforge_hosts": "a335789425ec715cc5a4650929192605413f1f495cebbd8658e79d5b151f56ef",
     "platformforge_inspect": "6cfb60556d03f9b9a3f0eedc6ef4132ee67d2ccc994bb292ac8df48947888fdc",
     "platformforge_integrate": "e2bef959dc2ab8d484f5ff892ea959ead17b4b8be5ea986fccc9c1df9f9921d0",
     "platformforge_judge": "9904206eb869e025dcc0603cf83c5942d0507e8d89534a482a6a0040eff298d2",
@@ -41,5 +42,5 @@
   },
   "family": "capabilities",
   "schema": "platformforge/freeze-snapshot/v1",
-  "sha": "67cfb75dc137d2aaacd428ada70915267e85a466"
+  "sha": "14226cab2622dd74b532b544e5b82031d79e543d"
 }

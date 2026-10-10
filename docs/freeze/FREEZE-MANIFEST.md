@@ -2,16 +2,16 @@
 
 Generated from live registries — `platformforge freeze manifest`.
 
-- freeze_start_sha: `2d874d9f7686c50dba3e8b4588eca4a2c6c39c97`
+- freeze_start_sha: `14226cab2622dd74b532b544e5b82031d79e543d`
 - lifecycle state: **dogfooding** (open-development → freeze-candidate → architecture-frozen → dogfooding → release-candidate → stable)
-- python: 3.12.3 (supported: python 3.10, python 3.11, python 3.12, python 3.13)
+- python: 3.12.13 (supported: python 3.10, python 3.11, python 3.12, python 3.13)
 
 ## Surfaces
 
 - public schemas: 24 (contracts/*.schema.json)
-- CLI verbs: 57 — agents, ai, analytics, analyze, bench, cache, capability, cases, caveman, change, collect, context, correlate, diagnose, diff, doctor, drift, economy, evals, explain, federation, finops, fleet, forge, freeze, graph, impact, init, inspect, install, integrate, judge, knowledge, lab, live, mcp, observe, ops, optimize, plan, policy, portable, product, recommend, reliability, risk, route, routing, rtk, sdd, security, status, store, tokens, uninstall, upgrade, workspace
-- MCP tools: 38
-- capabilities: 38
+- CLI verbs: 58 — agents, ai, analytics, analyze, bench, cache, capability, cases, caveman, change, collect, context, correlate, diagnose, diff, doctor, drift, economy, evals, explain, federation, finops, fleet, forge, freeze, graph, hosts, impact, init, inspect, install, integrate, judge, knowledge, lab, live, mcp, observe, ops, optimize, plan, policy, portable, product, recommend, reliability, risk, route, routing, rtk, sdd, security, status, store, tokens, uninstall, upgrade, workspace
+- MCP tools: 39
+- capabilities: 39
 - agents: 41 (coordinator:5, critic:1, executor:8, guardian:1, orchestrator:1, planner:1, referee:1, reviewer:7, specialist:15, verifier:1)
 - knowledge packs: aws, crossplane, kubernetes, terraform (2 registered sources)
 
@@ -29,7 +29,6 @@ Generated from live registries — `platformforge freeze manifest`.
 
 **experimental**
 
-- portable distribution/workspace (FE-003; field dogfooding pending)
 - agentic runtime (router v2, coordinators, debate)
 - fleet analytics + optimization engine
 - federation export

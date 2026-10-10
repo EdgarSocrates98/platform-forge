@@ -3,8 +3,8 @@
 | Campo | Valor |
 |---|---|
 | repository | `platform-forge` |
-| branch | `main` |
-| commit | `feaab20` |
+| branch | `feat/ultimate-completion` |
+| commit | `14226ca` |
 | docs inventoried | 436 (excl. GENERATED mirrors: 256; vendored upstream: 0) |
 
 ## Review levels (honest)

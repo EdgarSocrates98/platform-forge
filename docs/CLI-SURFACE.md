@@ -274,6 +274,16 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `graph ui`
 - `graph view`
 
+## `hosts`
+
+- `hosts`  
+  `--repo <v> — workspace/repo root (default '.')` · `--launch — launch the host REPL in the repo (TTY only)`
+- `hosts all`
+- `hosts claude`
+- `hosts codex`
+- `hosts copilot`
+- `hosts devin`
+
 ## `impact`
 
 - `impact`  

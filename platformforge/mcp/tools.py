@@ -259,6 +259,10 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
         from platformforge.mcp.parity import detach, integrate
         return detach(inp["host"], repo) if inp.get("detach") \
             else integrate(inp["host"], repo)
+    if handler == "cli:hosts":
+        from platformforge.distribution import hostflow
+        return hostflow.hosts_flow(
+            inp.get("host") or "all", repo=Path(repo), launch=False)
     if handler == "cli:capability":
         op = inp.get("op", "manifest")
         if op == "list":
