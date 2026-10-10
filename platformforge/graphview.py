@@ -25,7 +25,7 @@ def build_view(root: str | Path = ".") -> ForgeGraphView | None:
 
     try:
         g = G.load(root)
-    except Exception:
+    except (OSError, ValueError, KeyError, TypeError):
         return None
     desc = new_descriptor(
         provider_id=PROVIDER,
