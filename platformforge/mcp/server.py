@@ -77,4 +77,8 @@ def serve(repo: str = ".", stdin: TextIO | None = None,
 
 def main() -> None:
     """Console-script entry point (``platformforge-mcp``)."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
     sys.exit(serve())
