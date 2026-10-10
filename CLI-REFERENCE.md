@@ -55,7 +55,9 @@ every change cites `fact_ids`) · `snapshots` · `stats` ·
 `at --at <ts>` (graph as-of timestamp) · `timeline --edge-id|--node`
 (temporal provenance) ·
 `identity-become|identity-access|identity-workloads|identity-blast`
-(§100–101: no-path-found is a named result, never "no risk").
+(§100–101: no-path-found is a named result, never "no risk") ·
+`view` (ForgeGraphView/v1 JSON projection) · `ui` (embedded Graph
+Studio on 127.0.0.1; declined at install → `PF-GRAPH-STUDIO-DISABLED`).
 
 Provenance on every edge: `observed | planned | declared | inferred`.
 Node `state`: observed > planned > desired > inferred.
