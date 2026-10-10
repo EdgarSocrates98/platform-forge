@@ -3614,7 +3614,15 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _stdio_utf8() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    _stdio_utf8()
     global _RUN_STARTED
     _RUN_STARTED = time.time()
     parser = build_parser()
