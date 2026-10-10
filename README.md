@@ -151,3 +151,9 @@ Reference: [CLI-REFERENCE.md](CLI-REFERENCE.md) (curated) ·
 ## License
 
 MIT — see [LICENSE](LICENSE), [SOURCES.md](SOURCES.md), [CREDITS.md](CREDITS.md).
+
+## Graph Studio
+
+`platformforge graph view|ui` projects the built graph through
+`forge/ForgeGraphView/v1` and serves the embedded local explorer (declinable at
+install via `--components`). Full docs: `the-forge/docs/graph-studio/`.
