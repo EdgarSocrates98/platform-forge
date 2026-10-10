@@ -20,9 +20,13 @@ CLI_NAME = 'platformforge'
 CLI_ENTRY = 'platformforge.cli.main:main'
 
 _MENU: list[tuple[str, list[str] | None]] = [
-    ('Analyze this project', ['analyze', 'iac']),
+    ('Analyze this project (infrastructure facts)', ['analyze', 'iac']),
+    ('Evidence inventory (artifacts in scope)', ['inspect']),
+    ('Impact explorer (graph stats / blast unlock)', ['graph', 'stats']),
+    ('Risk explorer (change decomposition)', ['risk']),
     ('Explore agents', ['agents', 'list']),
     ('AI hosts (observe + launch)', ['hosts']),
+    ('MCP explorer (tool registry)', ['mcp', 'tools']),
     ('Check installation health', ['doctor']),
     ('MCP verify (real handshake)', ['install', 'mcp-verify']),
     ('Graph Studio (browser)', ['graph','ui']),
