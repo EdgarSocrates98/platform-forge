@@ -1,0 +1,16 @@
+{
+  "forge_id": "platform-forge",
+  "cli": "platformforge",
+  "parser": "argparse:platformforge.cli.main:build_parser",
+  "docs": [
+    "docs",
+    "README.md"
+  ],
+  "steps": {
+    "inventory": true,
+    "manifest": true,
+    "index": true,
+    "hub": false,
+    "final_report": true
+  }
+}
