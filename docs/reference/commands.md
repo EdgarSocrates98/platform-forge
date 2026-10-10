@@ -1,6 +1,8 @@
 # `platformforge` command reference
 
-Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. Status vocabulary: `available` unless marked otherwise.
+Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
+
+Rationale coverage: **57/57** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -66,6 +68,11 @@ Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. D
 
 ### `agents`
 
+**para que:** agent roster, mirrors, referee
+
+- **por que:** roster de agentes, mirrors e referee
+- **quando usar:** inspecionar quem pode executar antes de delegar
+
 **Syntax**
 
 ```text
@@ -93,6 +100,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## ai
 
 ### `ai`
+
+**para que:** AI platform awareness (bounded)
+
+- **por que:** consciência de plataforma de IA (bounded)
+- **quando usar:** perguntas sobre capabilities de IA declaradas
 
 **Syntax**
 
@@ -122,6 +134,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `analytics`
 
+**para que:** analytics summary/metric/maturity
+
+- **por que:** summary/metric/maturity analíticos
+- **quando usar:** visão agregada de métricas e maturidade
+
 **Syntax**
 
 ```text
@@ -148,6 +165,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## analyze
 
 ### `analyze`
+
+**para que:** domain analyzers → facts
+
+- **por que:** extrai facts determinísticos por domínio (secrets/iam/sbom/supply/drift...)
+- **quando usar:** inventário factual antes de judge/explain
 
 **Syntax**
 
@@ -180,6 +202,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `bench`
 
+**para que:** §148–150 measured benchmarks
+
+- **por que:** benchmark medido entre runs
+- **quando usar:** comparar performance com dados observados
+
 **Syntax**
 
 ```text
@@ -208,6 +235,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## cache
 
 ### `cache`
+
+**para que:** multilayer cache stats/inspect/invalidate/gc
+
+- **por que:** cache de evidência incremental — reusa só o que é fresco
+- **quando usar:** inspecionar/limpar o que está cacheado
 
 **Syntax**
 
@@ -240,6 +272,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `capability`
 
+**para que:** capability registry
+
+- **por que:** superfície de capabilities: list/describe/check
+- **quando usar:** perguntar o que a forja declara atender
+
 **Syntax**
 
 ```text
@@ -267,6 +304,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## cases
 
 ### `cases`
+
+**para que:** real-world case corpus + replay
+
+- **por que:** gerencia cases que ancoram findings e evidência
+- **quando usar:** iniciar/inspecionar o caso sob análise
 
 **Syntax**
 
@@ -297,6 +339,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `caveman`
 
+**para que:** compress text (caveman)
+
+- **por que:** workflows caveman — protocolo de coordenação host-neutral
+- **quando usar:** executar decomposição de coordenador em passos
+
 **Syntax**
 
 ```text
@@ -323,6 +370,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## change
 
 ### `change`
+
+**para que:** §85–86 change lifecycle (sandboxed)
+
+- **por que:** review de mudança proposta; approve/apply ficam host-side
+- **quando usar:** revisar uma mudança — mutação só via gate de política
 
 **Syntax**
 
@@ -352,6 +404,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `collect`
 
+**para que:** ingest artifact dumps → facts
+
+- **por que:** coleta de evidência em dumps offline
+- **quando usar:** trazer artefatos do ambiente para análise local
+
 **Syntax**
 
 ```text
@@ -376,6 +433,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## context
 
 ### `context`
+
+**para que:** context pack for a task; capsule/inspect/expand/delta/gc
+
+- **por que:** resolução de contexto por workspace
+- **quando usar:** montar o contexto certo sob escopo declarado
 
 **Syntax**
 
@@ -418,6 +480,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `correlate`
 
+**para que:** OTel correlation (observe otel)
+
+- **por que:** correlação de sinais de incidente/telemetria
+- **quando usar:** ligar sintomas a causas com dependência declarada
+
 **Syntax**
 
 ```text
@@ -442,6 +509,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## diagnose
 
 ### `diagnose`
+
+**para que:** node diagnosis: facts+findings+blast
+
+- **por que:** diagnóstico offline sobre bundle de evidência
+- **quando usar:** falha sem causa clara — correlaciona evidência já coletada
 
 **Syntax**
 
@@ -470,6 +542,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `diff`
 
+**para que:** graph diff between two facts docs
+
+- **por que:** o que mudou entre dois estados/snapshots
+- **quando usar:** comparar estado antes/depois de uma mudança
+
 **Syntax**
 
 ```text
@@ -496,6 +573,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `doctor`
 
+**para que:** environment health-check
+
+- **por que:** self-check de ambiente, instalação e capabilities
+- **quando usar:** primeira linha de troubleshooting local — nunca toca rede
+
 **Syntax**
 
 ```text
@@ -520,6 +602,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## drift
 
 ### `drift`
+
+**para que:** IaC drift: --config dir vs --state file
+
+- **por que:** detecta drift entre estado declarado e observado
+- **quando usar:** verificar se o ambiente divergiu da declaração
 
 **Syntax**
 
@@ -546,6 +633,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## economy
 
 ### `economy`
+
+**para que:** economy engine report/strategy/qpt
+
+- **por que:** economia medida da execução
+- **quando usar:** entender o custo real de contexto/descoberta
 
 **Syntax**
 
@@ -584,6 +676,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `evals`
 
+**para que:** eval framework (§94–95)
+
+- **por que:** matriz de avaliação declarativa, goldens e holdout
+- **quando usar:** validar qualidade determinística antes de release
+
 **Syntax**
 
 ```text
@@ -611,6 +708,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `explain`
 
+**para que:** evidence chain for a finding
+
+- **por que:** explica um finding: regra, evidência, raciocínio
+- **quando usar:** entender por que um rule_id disparou
+
 **Syntax**
 
 ```text
@@ -637,6 +739,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## federation
 
 ### `federation`
+
+**para que:** intelligence exchange — no credentials
+
+- **por que:** federação de forjas/workspaces
+- **quando usar:** coordenar escopo multi-forja declarado
 
 **Syntax**
 
@@ -672,6 +779,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `finops`
 
+**para que:** FinOps cost analysis
+
+- **por que:** custo: costs/ingest/unit/report sobre dados medidos
+- **quando usar:** decidir por custo com baseline real, nunca estimativa
+
 **Syntax**
 
 ```text
@@ -699,6 +811,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## fleet
 
 ### `fleet`
+
+**para que:** fleet intelligence (dir input)
+
+- **por que:** inteligência de frota/estate sobre manifesto multi-repo
+- **quando usar:** perguntas agregadas sobre muitos repos
 
 **Syntax**
 
@@ -729,6 +846,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `forge`
 
+**para que:** Forge interop
+
+- **por que:** Forge Protocol: capabilities, task, handoff, health
+- **quando usar:** interoperar com o control plane The Forge
+
 **Syntax**
 
 ```text
@@ -758,6 +880,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `freeze`
 
+**para que:** architecture freeze governance
+
+- **por que:** congela estado/snapshot para comparação
+- **quando usar:** fixar baseline antes de avaliar drift
+
 **Syntax**
 
 ```text
@@ -786,10 +913,15 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `graph`
 
+**para que:** Graphfy platform graph
+
+- **por que:** grafo da plataforma: deps/blast/paths e identidade
+- **quando usar:** perguntas de dependência, impacto ou identidade
+
 **Syntax**
 
 ```text
-platformforge graph [help] [json] [FILE] [detail_level] [offline] [strict] [repo] <graph_cmd> [facts] [node] [src] [dst] [before] [after] [at] [edge_id] [source_type] [no_browser] [port]
+platformforge graph [help] [json] [FILE] [detail_level] [offline] [strict] [repo] <graph_cmd> [facts] [node] [src] [dst] [before] [after] [at] [edge_id] [source_type] [no_browser] [port] [snapshot]
 ```
 
 | argument/flag | required | default | description |
@@ -813,6 +945,7 @@ platformforge graph [help] [json] [FILE] [detail_level] [offline] [strict] [repo
 | `source_type` | no | — | §6 snapshot type for `graph build` |
 | `no_browser` | no | — | graph ui: serve without opening a browser (SSH/remote) |
 | `port` | no | — | graph ui: port (default ephemeral) |
+| `snapshot` | no | — | graph view: emit the view of a saved snapshot hash |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -821,6 +954,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## impact
 
 ### `impact`
+
+**para que:** blast radius for a graph node
+
+- **por que:** impacto de uma mudança sobre o grafo de dependências
+- **quando usar:** antes de aplicar: quem quebra se eu mudar isto
 
 **Syntax**
 
@@ -847,6 +985,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `init`
 
+**para que:** scaffold .platformforge/
+
+- **por que:** inicializa o estado mínimo local da forja
+- **quando usar:** primeiro passo num diretório ainda não configurado
+
 **Syntax**
 
 ```text
@@ -872,6 +1015,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `inspect`
 
+**para que:** inventory analyzable artifacts
+
+- **por que:** inspeção de artefatos do repo e postura declarada
+- **quando usar:** perguntar sobre artefatos — rode o verbo antes de ler o arquivo
+
 **Syntax**
 
 ```text
@@ -895,6 +1043,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## install
 
 ### `install`
+
+**para que:** install Platform Forge assets into a workspace
+
+- **por que:** instala Platform Forge num projeto, workspace ou home do usuário
+- **quando usar:** ativar a forja num escopo governado pela primeira vez
 
 **Syntax**
 
@@ -929,6 +1082,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `integrate`
 
+**para que:** host integration (mcp parity)
+
+- **por que:** instala skills/agents/MCP nos hosts do usuário
+- **quando usar:** ativar a forja no Claude/Codex/Devin
+
 **Syntax**
 
 ```text
@@ -954,6 +1112,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## judge
 
 ### `judge`
+
+**para que:** apply rule catalog to facts
+
+- **por que:** aplica o catálogo de regras sobre facts extraídos
+- **quando usar:** depois do analyze/collect: facts viram findings com rule_id
 
 **Syntax**
 
@@ -982,6 +1145,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `knowledge`
 
+**para que:** knowledge freshness/drift check
+
+- **por que:** knowledge packs versionados e proveniência
+- **quando usar:** consultar a fonte canônica de regras e matrizes
+
 **Syntax**
 
 ```text
@@ -1006,6 +1174,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## lab
 
 ### `lab`
+
+**para que:** Forge Lab scenarios
+
+- **por que:** Forge Lab: cenários reproduzíveis offline
+- **quando usar:** experimentar sem tocar o ambiente real
 
 **Syntax**
 
@@ -1035,6 +1208,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## live
 
 ### `live`
+
+**para que:** live platform observation (cycle3)
+
+- **por que:** superfície live/opt-in de observação
+- **quando usar:** observação de runtime quando o modo live está habilitado
 
 **Syntax**
 
@@ -1096,6 +1274,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `mcp`
 
+**para que:** MCP server + host parity
+
+- **por que:** servidor MCP e inspeção de catálogo
+- **quando usar:** servir a forja via MCP ou conferir a superfície exposta
+
 **Syntax**
 
 ```text
@@ -1124,6 +1307,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## observe
 
 ### `observe`
+
+**para que:** SRE/observability verbs
+
+- **por que:** observabilidade: slo/incident/otel sobre evidência
+- **quando usar:** perguntas de SLO, incidente ou telemetria
 
 **Syntax**
 
@@ -1157,6 +1345,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## ops
 
 ### `ops`
+
+**para que:** governed operations (cycle4)
+
+- **por que:** operações de plataforma
+- **quando usar:** tarefas operacionais declaradas no escopo da forja
 
 **Syntax**
 
@@ -1209,6 +1402,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `optimize`
 
+**para que:** optimization scan → ChangeIntent only
+
+- **por que:** candidatos de otimização com evidência
+- **quando usar:** depois do analyze: priorizar o que otimizar
+
 **Syntax**
 
 ```text
@@ -1238,6 +1436,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `plan`
 
+**para que:** findings → ordered remediation plan
+
+- **por que:** planejamento composto sobre facts já extraídos
+- **quando usar:** revisar passos antes de executar trabalho multi-passo
+
 **Syntax**
 
 ```text
@@ -1264,6 +1467,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `policy`
 
+**para que:** policy-as-code catalog check
+
+- **por que:** avalia ações contra o catálogo de políticas
+- **quando usar:** checar permissão/veredito antes de uma ação
+
 **Syntax**
 
 ```text
@@ -1289,6 +1497,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## portable
 
 ### `portable`
+
+**para que:** build/verify/doctor portable distributions
+
+- **por que:** distribuição portátil offline
+- **quando usar:** operar a forja em ambiente sem rede
 
 **Syntax**
 
@@ -1319,6 +1532,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `product`
 
+**para que:** platform product verbs
+
+- **por que:** superfície de produto declarada
+- **quando usar:** consultar capabilities de produto da plataforma
+
 **Syntax**
 
 ```text
@@ -1348,6 +1566,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `recommend`
 
+**para que:** findings → recommendations
+
+- **por que:** recomendações derivadas de findings
+- **quando usar:** priorizar ações a partir dos findings julgados
+
 **Syntax**
 
 ```text
@@ -1373,6 +1596,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `reliability`
 
+**para que:** SRE+K8S rules over facts
+
+- **por que:** SLO e caminho crítico de confiabilidade
+- **quando usar:** avaliar resiliência end-to-end com evidência
+
 **Syntax**
 
 ```text
@@ -1397,6 +1625,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## risk
 
 ### `risk`
+
+**para que:** §130 change-risk assessment
+
+- **por que:** avaliação de risco de mudança proposta
+- **quando usar:** classificar risco antes de aplicar
 
 **Syntax**
 
@@ -1424,6 +1657,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `route`
 
+**para que:** adaptive routing decision
+
+- **por que:** roteamento determinístico para o especialista certo
+- **quando usar:** decidir qual agente/domínio atende a pergunta
+
 **Syntax**
 
 ```text
@@ -1448,6 +1686,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## routing
 
 ### `routing`
+
+**para que:** routing explain/compare/scorecard
+
+- **por que:** tabela de roteamento declarada
+- **quando usar:** inspecionar como requests são roteados
 
 **Syntax**
 
@@ -1488,6 +1731,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `rtk`
 
+**para que:** compact command output (rtk)
+
+- **por que:** protocolo RTK de redução de contexto
+- **quando usar:** compactar saída antes de alimentar um host/agente
+
 **Syntax**
 
 ```text
@@ -1519,6 +1767,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## sdd
 
 ### `sdd`
+
+**para que:** native SDD lifecycle
+
+- **por que:** spec-driven development: cadeia de artefatos e gates
+- **quando usar:** trabalho não-trivial: discover→define→contract→design→plan→build→verify→review→ship
 
 **Syntax**
 
@@ -1552,6 +1805,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `security`
 
+**para que:** security bundle (secrets+iam+sbom+supply)
+
+- **por que:** superfície de segurança: secrets, iam, supply
+- **quando usar:** perguntas de postura e exposição
+
 **Syntax**
 
 ```text
@@ -1577,6 +1835,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `status`
 
+**para que:** workspace + store status
+
+- **por que:** resumo do estado do projeto/workspace
+- **quando usar:** visão rápida antes de qualquer verbo de análise
+
 **Syntax**
 
 ```text
@@ -1600,6 +1863,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## store
 
 ### `store`
+
+**para que:** §151 artifact store stats/gc
+
+- **por que:** store local de fatos/snapshots
+- **quando usar:** persistir e recuperar evidência entre sessões
 
 **Syntax**
 
@@ -1627,6 +1895,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## tokens
 
 ### `tokens`
+
+**para que:** tokensave: index/search/pack/delta/stats/ledger
+
+- **por que:** contabilidade de contexto em bytes, não tokens estimados
+- **quando usar:** medir custo de contexto de forma honesta
 
 **Syntax**
 
@@ -1663,6 +1936,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `uninstall`
 
+**para que:** remove owned Platform Forge assets safely
+
+- **por que:** remove só o que o manifesto declara como gerenciado
+- **quando usar:** desinstalar sem deixar órfãos nos hosts
+
 **Syntax**
 
 ```text
@@ -1687,6 +1965,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## upgrade
 
 ### `upgrade`
+
+**para que:** upgrade managed portable assets
+
+- **por que:** atualiza a distribuição instalada
+- **quando usar:** manter o runtime instalado em dia
 
 **Syntax**
 
@@ -1714,6 +1997,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## workspace
 
 ### `workspace`
+
+**para que:** workspace lifecycle and multi-repo manifest
+
+- **por que:** workspace virtual: registra repos independentes sob workspace.yaml
+- **quando usar:** orquestrar vários repos num escopo declarado
 
 **Syntax**
 

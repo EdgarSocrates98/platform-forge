@@ -2,13 +2,13 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "platform-forge",
   "cli": "platformforge",
-  "generated_at": "2026-10-10T10:22:33Z",
+  "generated_at": "2026-10-10T10:34:14Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 57,
   "commands": [
     {
       "path": "install",
-      "help": null,
+      "help": "install Platform Forge assets into a workspace",
       "arguments": [
         {
           "name": "help",
@@ -213,7 +213,7 @@
     },
     {
       "path": "uninstall",
-      "help": null,
+      "help": "remove owned Platform Forge assets safely",
       "arguments": [
         {
           "name": "help",
@@ -312,7 +312,7 @@
     },
     {
       "path": "upgrade",
-      "help": null,
+      "help": "upgrade managed portable assets",
       "arguments": [
         {
           "name": "help",
@@ -438,7 +438,7 @@
     },
     {
       "path": "portable",
-      "help": null,
+      "help": "build/verify/doctor portable distributions",
       "arguments": [
         {
           "name": "help",
@@ -587,7 +587,7 @@
     },
     {
       "path": "workspace",
-      "help": null,
+      "help": "workspace lifecycle and multi-repo manifest",
       "arguments": [
         {
           "name": "help",
@@ -738,7 +738,7 @@
     },
     {
       "path": "init",
-      "help": null,
+      "help": "scaffold .platformforge/",
       "arguments": [
         {
           "name": "help",
@@ -837,7 +837,7 @@
     },
     {
       "path": "doctor",
-      "help": null,
+      "help": "environment health-check",
       "arguments": [
         {
           "name": "help",
@@ -936,7 +936,7 @@
     },
     {
       "path": "status",
-      "help": null,
+      "help": "workspace + store status",
       "arguments": [
         {
           "name": "help",
@@ -1024,7 +1024,7 @@
     },
     {
       "path": "inspect",
-      "help": null,
+      "help": "inventory analyzable artifacts",
       "arguments": [
         {
           "name": "help",
@@ -1112,7 +1112,7 @@
     },
     {
       "path": "judge",
-      "help": null,
+      "help": "apply rule catalog to facts",
       "arguments": [
         {
           "name": "help",
@@ -1231,7 +1231,7 @@
     },
     {
       "path": "knowledge",
-      "help": null,
+      "help": "knowledge freshness/drift check",
       "arguments": [
         {
           "name": "help",
@@ -1333,7 +1333,7 @@
     },
     {
       "path": "tokens",
-      "help": null,
+      "help": "tokensave: index/search/pack/delta/stats/ledger",
       "arguments": [
         {
           "name": "help",
@@ -1558,7 +1558,7 @@
     },
     {
       "path": "rtk",
-      "help": null,
+      "help": "compact command output (rtk)",
       "arguments": [
         {
           "name": "help",
@@ -1733,7 +1733,7 @@
     },
     {
       "path": "caveman",
-      "help": null,
+      "help": "compress text (caveman)",
       "arguments": [
         {
           "name": "help",
@@ -1857,7 +1857,7 @@
     },
     {
       "path": "economy",
-      "help": null,
+      "help": "economy engine report/strategy/qpt",
       "arguments": [
         {
           "name": "help",
@@ -2097,7 +2097,7 @@
     },
     {
       "path": "route",
-      "help": null,
+      "help": "adaptive routing decision",
       "arguments": [
         {
           "name": "help",
@@ -2194,7 +2194,7 @@
     },
     {
       "path": "sdd",
-      "help": null,
+      "help": "native SDD lifecycle",
       "arguments": [
         {
           "name": "help",
@@ -2383,7 +2383,7 @@
     },
     {
       "path": "graph",
-      "help": null,
+      "help": "Graphfy platform graph",
       "arguments": [
         {
           "name": "help",
@@ -2634,7 +2634,7 @@
     },
     {
       "path": "analyze",
-      "help": null,
+      "help": "domain analyzers → facts",
       "arguments": [
         {
           "name": "help",
@@ -2820,7 +2820,7 @@
     },
     {
       "path": "observe",
-      "help": null,
+      "help": "SRE/observability verbs",
       "arguments": [
         {
           "name": "help",
@@ -3015,7 +3015,7 @@
     },
     {
       "path": "live",
-      "help": null,
+      "help": "live platform observation (cycle3)",
       "arguments": [
         {
           "name": "help",
@@ -3514,7 +3514,7 @@
     },
     {
       "path": "ops",
-      "help": null,
+      "help": "governed operations (cycle4)",
       "arguments": [
         {
           "name": "help",
@@ -3934,7 +3934,7 @@
     },
     {
       "path": "finops",
-      "help": null,
+      "help": "FinOps cost analysis",
       "arguments": [
         {
           "name": "help",
@@ -4071,7 +4071,7 @@
     },
     {
       "path": "fleet",
-      "help": null,
+      "help": "fleet intelligence (dir input)",
       "arguments": [
         {
           "name": "help",
@@ -4225,7 +4225,7 @@
     },
     {
       "path": "analytics",
-      "help": null,
+      "help": "analytics summary/metric/maturity",
       "arguments": [
         {
           "name": "help",
@@ -4346,7 +4346,7 @@
     },
     {
       "path": "optimize",
-      "help": null,
+      "help": "optimization scan → ChangeIntent only",
       "arguments": [
         {
           "name": "help",
@@ -4491,7 +4491,7 @@
     },
     {
       "path": "ai",
-      "help": null,
+      "help": "AI platform awareness (bounded)",
       "arguments": [
         {
           "name": "help",
@@ -4623,7 +4623,7 @@
     },
     {
       "path": "federation",
-      "help": null,
+      "help": "intelligence exchange — no credentials",
       "arguments": [
         {
           "name": "help",
@@ -4819,7 +4819,7 @@
     },
     {
       "path": "product",
-      "help": null,
+      "help": "platform product verbs",
       "arguments": [
         {
           "name": "help",
@@ -4968,7 +4968,7 @@
     },
     {
       "path": "agents",
-      "help": null,
+      "help": "agent roster, mirrors, referee",
       "arguments": [
         {
           "name": "help",
@@ -5104,7 +5104,7 @@
     },
     {
       "path": "mcp",
-      "help": null,
+      "help": "MCP server + host parity",
       "arguments": [
         {
           "name": "help",
@@ -5255,7 +5255,7 @@
     },
     {
       "path": "collect",
-      "help": null,
+      "help": "ingest artifact dumps → facts",
       "arguments": [
         {
           "name": "help",
@@ -5352,7 +5352,7 @@
     },
     {
       "path": "diagnose",
-      "help": null,
+      "help": "node diagnosis: facts+findings+blast",
       "arguments": [
         {
           "name": "help",
@@ -5471,7 +5471,7 @@
     },
     {
       "path": "plan",
-      "help": null,
+      "help": "findings → ordered remediation plan",
       "arguments": [
         {
           "name": "help",
@@ -5579,7 +5579,7 @@
     },
     {
       "path": "correlate",
-      "help": null,
+      "help": "OTel correlation (observe otel)",
       "arguments": [
         {
           "name": "help",
@@ -5676,7 +5676,7 @@
     },
     {
       "path": "diff",
-      "help": null,
+      "help": "graph diff between two facts docs",
       "arguments": [
         {
           "name": "help",
@@ -5786,7 +5786,7 @@
     },
     {
       "path": "drift",
-      "help": null,
+      "help": "IaC drift: --config dir vs --state file",
       "arguments": [
         {
           "name": "help",
@@ -5896,7 +5896,7 @@
     },
     {
       "path": "impact",
-      "help": null,
+      "help": "blast radius for a graph node",
       "arguments": [
         {
           "name": "help",
@@ -5995,7 +5995,7 @@
     },
     {
       "path": "context",
-      "help": null,
+      "help": "context pack for a task; capsule/inspect/expand/delta/gc",
       "arguments": [
         {
           "name": "help",
@@ -6275,7 +6275,7 @@
     },
     {
       "path": "cache",
-      "help": null,
+      "help": "multilayer cache stats/inspect/invalidate/gc",
       "arguments": [
         {
           "name": "help",
@@ -6443,7 +6443,7 @@
     },
     {
       "path": "routing",
-      "help": null,
+      "help": "routing explain/compare/scorecard",
       "arguments": [
         {
           "name": "help",
@@ -6698,7 +6698,7 @@
     },
     {
       "path": "policy",
-      "help": null,
+      "help": "policy-as-code catalog check",
       "arguments": [
         {
           "name": "help",
@@ -6807,7 +6807,7 @@
     },
     {
       "path": "security",
-      "help": null,
+      "help": "security bundle (secrets+iam+sbom+supply)",
       "arguments": [
         {
           "name": "help",
@@ -6904,7 +6904,7 @@
     },
     {
       "path": "reliability",
-      "help": null,
+      "help": "SRE+K8S rules over facts",
       "arguments": [
         {
           "name": "help",
@@ -7001,7 +7001,7 @@
     },
     {
       "path": "integrate",
-      "help": null,
+      "help": "host integration (mcp parity)",
       "arguments": [
         {
           "name": "help",
@@ -7117,7 +7117,7 @@
     },
     {
       "path": "evals",
-      "help": null,
+      "help": "eval framework (§94–95)",
       "arguments": [
         {
           "name": "help",
@@ -7241,7 +7241,7 @@
     },
     {
       "path": "lab",
-      "help": null,
+      "help": "Forge Lab scenarios",
       "arguments": [
         {
           "name": "help",
@@ -7390,7 +7390,7 @@
     },
     {
       "path": "forge",
-      "help": null,
+      "help": "Forge interop",
       "arguments": [
         {
           "name": "help",
@@ -7535,7 +7535,7 @@
     },
     {
       "path": "capability",
-      "help": null,
+      "help": "capability registry",
       "arguments": [
         {
           "name": "help",
@@ -7670,7 +7670,7 @@
     },
     {
       "path": "risk",
-      "help": null,
+      "help": "§130 change-risk assessment",
       "arguments": [
         {
           "name": "help",
@@ -7780,7 +7780,7 @@
     },
     {
       "path": "change",
-      "help": null,
+      "help": "§85–86 change lifecycle (sandboxed)",
       "arguments": [
         {
           "name": "help",
@@ -7917,7 +7917,7 @@
     },
     {
       "path": "explain",
-      "help": null,
+      "help": "evidence chain for a finding",
       "arguments": [
         {
           "name": "help",
@@ -8036,7 +8036,7 @@
     },
     {
       "path": "recommend",
-      "help": null,
+      "help": "findings → recommendations",
       "arguments": [
         {
           "name": "help",
@@ -8133,7 +8133,7 @@
     },
     {
       "path": "store",
-      "help": null,
+      "help": "§151 artifact store stats/gc",
       "arguments": [
         {
           "name": "help",
@@ -8255,7 +8255,7 @@
     },
     {
       "path": "bench",
-      "help": null,
+      "help": "§148–150 measured benchmarks",
       "arguments": [
         {
           "name": "help",
@@ -8400,7 +8400,7 @@
     },
     {
       "path": "freeze",
-      "help": null,
+      "help": "architecture freeze governance",
       "arguments": [
         {
           "name": "help",
@@ -8533,7 +8533,7 @@
     },
     {
       "path": "cases",
-      "help": null,
+      "help": "real-world case corpus + replay",
       "arguments": [
         {
           "name": "help",
