@@ -50,12 +50,12 @@ def test_index_never_stores_raw_secret():
         root.mkdir()
         (root / "config.py").write_text(
             'AWS_KEY = "AKIAIOSFODNN7EXAMPLE"\npassword="hunter2secret"\n')
-        idx = SearchIndex(Path(td) / "idx.db")
-        stats = idx.index_workspace(root)
-        assert "redactions" in stats and "config.py" in stats["redactions"]
-        body = idx.read("config.py")
-        assert "AKIAIOSFODNN7EXAMPLE" not in body
-        assert "REDACTED" in body
+        with SearchIndex(Path(td) / "idx.db") as idx:
+            stats = idx.index_workspace(root)
+            assert "redactions" in stats and "config.py" in stats["redactions"]
+            body = idx.read("config.py")
+            assert "AKIAIOSFODNN7EXAMPLE" not in body
+            assert "REDACTED" in body
 
 
 def test_detail_level_bounds_output(capsys):

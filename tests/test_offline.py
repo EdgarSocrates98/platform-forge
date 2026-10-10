@@ -74,5 +74,5 @@ def test_no_network_imports_in_core():
         r"^\s*(import|from)\s+(boto3|botocore|requests|httpx|urllib3|"
         r"google\.cloud|azure)\b", re.MULTILINE)
     offenders = [str(f) for f in pkg.rglob("*.py")
-                 if pat.search(f.read_text())]
+                 if pat.search(f.read_text(encoding="utf-8"))]
     assert not offenders, offenders

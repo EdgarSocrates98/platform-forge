@@ -35,8 +35,7 @@ def run_qpt_bench(bench_dir: str | Path | None = None) -> dict[str, Any]:
         fixture = case_dir / case.get("fixture", "fixture")
         out = _analyze(case["domain"], fixture)
         facts = out.get("facts", [])
-        with tempfile.TemporaryDirectory() as td:
-            idx = SearchIndex(Path(td) / "i.db")
+        with tempfile.TemporaryDirectory() as td, SearchIndex(Path(td) / "i.db") as idx:
             idx.index_workspace(fixture)
             rep = quality_per_token(
                 facts_full=facts, findings_full=[],

@@ -188,7 +188,7 @@ def expected(root: str | Path) -> dict[str, str]:
         ext = ".toml" if fmt == "toml" else ".md"
         for spec in AGENTS.values():
             p = root / rel / f"{spec.name}{ext}"
-            out[str(p.relative_to(root))] = render(spec, fmt)
+            out[p.relative_to(root).as_posix()] = render(spec, fmt)
     return out
 
 
@@ -200,8 +200,8 @@ def sync(root: str | Path) -> dict[str, list[str]]:
         (root / rel).mkdir(parents=True, exist_ok=True)
     for rel_path, content in want.items():
         p = root / rel_path
-        p.write_text(content)
-        written[str(Path(rel_path).parent)].append(rel_path)
+        p.write_text(content, encoding="utf-8")
+        written[Path(rel_path).parent.as_posix()].append(rel_path)
     return {k: sorted(v) for k, v in written.items()}
 
 
@@ -215,14 +215,14 @@ def check(root: str | Path) -> dict[str, object]:
         p = root / rel_path
         if not p.is_file():
             problems.append(f"missing mirror: {rel_path}")
-        elif p.read_text() != content:
+        elif p.read_text(encoding="utf-8") != content:
             problems.append(f"stale mirror: {rel_path}")
     stale_dirs = []
     for rel in TARGETS:
         d = root / rel
         if d.is_dir():
             for f in sorted(d.iterdir()):
-                rel_f = str(f.relative_to(root))
+                rel_f = f.relative_to(root).as_posix()
                 if f.is_file() and rel_f not in want \
                         and f.suffix in (".md", ".toml"):
                     stale_dirs.append(rel_f)

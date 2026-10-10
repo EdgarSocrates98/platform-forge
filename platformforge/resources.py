@@ -18,12 +18,19 @@ def data_path(*parts: str) -> Path:
 
     Order: ``platformforge/data/<parts>`` inside an installed wheel first,
     then the repository root (development checkout / editable install where
-    no ``data/`` tree exists inside the package).
+    no bundled ``data/`` tree exists inside the package).
+
+    ``platformforge/data/`` also exists in a checkout — it ships
+    ``portable_skills`` as regular package content — so the wheel probe
+    checks a force-included sentinel (``data/rules``) rather than ``data``
+    itself.
     """
+    probe = parts if parts else ("rules",)
     try:
-        installed = resources.files("platformforge").joinpath("data", *parts)
+        pkg = resources.files("platformforge")
+        installed = pkg.joinpath("data", *probe)
         if installed.is_dir() or installed.is_file():
-            return Path(str(installed))
+            return Path(str(pkg.joinpath("data", *parts)))
     except (ModuleNotFoundError, TypeError, FileNotFoundError):
         pass
     return Path(__file__).resolve().parents[1].joinpath(*parts)
