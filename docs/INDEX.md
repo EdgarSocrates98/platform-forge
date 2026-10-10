@@ -98,6 +98,13 @@ _Task-oriented guides and workflows._
 - [Instalação portátil — platform-forge](installation/portable-installation.md)
 - [Instalação em workspace — platform-forge](installation/workspace-installation.md)
 
+### learn/
+
+- [Platform Forge — trilha de aprendizado](learn/README.md)
+- [Receita — o que depende de quê?](learn/recipes/graph-deps.md)
+- [Receita — postura determinística de um repositório](learn/recipes/inspect-repo.md)
+- [Receita — o que as regras dizem dos facts?](learn/recipes/judge-policy.md)
+
 ### portable/
 
 - [Install](portable/INSTALL.md)
