@@ -1,0 +1,230 @@
+{
+  "install": {
+    "why": "instala Platform Forge num projeto, workspace ou home do usuário",
+    "when": "ativar a forja num escopo governado pela primeira vez"
+  },
+  "uninstall": {
+    "why": "remove só o que o manifesto declara como gerenciado",
+    "when": "desinstalar sem deixar órfãos nos hosts"
+  },
+  "upgrade": {
+    "why": "atualiza a distribuição instalada",
+    "when": "manter o runtime instalado em dia"
+  },
+  "portable": {
+    "why": "distribuição portátil offline",
+    "when": "operar a forja em ambiente sem rede"
+  },
+  "workspace": {
+    "why": "workspace virtual: registra repos independentes sob workspace.yaml",
+    "when": "orquestrar vários repos num escopo declarado"
+  },
+  "init": {
+    "why": "inicializa o estado mínimo local da forja",
+    "when": "primeiro passo num diretório ainda não configurado"
+  },
+  "doctor": {
+    "why": "self-check de ambiente, instalação e capabilities",
+    "when": "primeira linha de troubleshooting local — nunca toca rede"
+  },
+  "status": {
+    "why": "resumo do estado do projeto/workspace",
+    "when": "visão rápida antes de qualquer verbo de análise"
+  },
+  "inspect": {
+    "why": "inspeção de artefatos do repo e postura declarada",
+    "when": "perguntar sobre artefatos — rode o verbo antes de ler o arquivo"
+  },
+  "judge": {
+    "why": "aplica o catálogo de regras sobre facts extraídos",
+    "when": "depois do analyze/collect: facts viram findings com rule_id"
+  },
+  "knowledge": {
+    "why": "knowledge packs versionados e proveniência",
+    "when": "consultar a fonte canônica de regras e matrizes"
+  },
+  "tokens": {
+    "why": "contabilidade de contexto em bytes, não tokens estimados",
+    "when": "medir custo de contexto de forma honesta"
+  },
+  "rtk": {
+    "why": "protocolo RTK de redução de contexto",
+    "when": "compactar saída antes de alimentar um host/agente"
+  },
+  "caveman": {
+    "why": "workflows caveman — protocolo de coordenação host-neutral",
+    "when": "executar decomposição de coordenador em passos"
+  },
+  "economy": {
+    "why": "economia medida da execução",
+    "when": "entender o custo real de contexto/descoberta"
+  },
+  "route": {
+    "why": "roteamento determinístico para o especialista certo",
+    "when": "decidir qual agente/domínio atende a pergunta"
+  },
+  "sdd": {
+    "why": "spec-driven development: cadeia de artefatos e gates",
+    "when": "trabalho não-trivial: discover→define→contract→design→plan→build→verify→review→ship"
+  },
+  "graph": {
+    "why": "grafo da plataforma: deps/blast/paths e identidade",
+    "when": "perguntas de dependência, impacto ou identidade"
+  },
+  "analyze": {
+    "why": "extrai facts determinísticos por domínio (secrets/iam/sbom/supply/drift...)",
+    "when": "inventário factual antes de judge/explain"
+  },
+  "observe": {
+    "why": "observabilidade: slo/incident/otel sobre evidência",
+    "when": "perguntas de SLO, incidente ou telemetria"
+  },
+  "live": {
+    "why": "superfície live/opt-in de observação",
+    "when": "observação de runtime quando o modo live está habilitado"
+  },
+  "ops": {
+    "why": "operações de plataforma",
+    "when": "tarefas operacionais declaradas no escopo da forja"
+  },
+  "finops": {
+    "why": "custo: costs/ingest/unit/report sobre dados medidos",
+    "when": "decidir por custo com baseline real, nunca estimativa"
+  },
+  "fleet": {
+    "why": "inteligência de frota/estate sobre manifesto multi-repo",
+    "when": "perguntas agregadas sobre muitos repos"
+  },
+  "analytics": {
+    "why": "summary/metric/maturity analíticos",
+    "when": "visão agregada de métricas e maturidade"
+  },
+  "optimize": {
+    "why": "candidatos de otimização com evidência",
+    "when": "depois do analyze: priorizar o que otimizar"
+  },
+  "ai": {
+    "why": "consciência de plataforma de IA (bounded)",
+    "when": "perguntas sobre capabilities de IA declaradas"
+  },
+  "federation": {
+    "why": "federação de forjas/workspaces",
+    "when": "coordenar escopo multi-forja declarado"
+  },
+  "product": {
+    "why": "superfície de produto declarada",
+    "when": "consultar capabilities de produto da plataforma"
+  },
+  "agents": {
+    "why": "roster de agentes, mirrors e referee",
+    "when": "inspecionar quem pode executar antes de delegar"
+  },
+  "mcp": {
+    "why": "servidor MCP e inspeção de catálogo",
+    "when": "servir a forja via MCP ou conferir a superfície exposta"
+  },
+  "collect": {
+    "why": "coleta de evidência em dumps offline",
+    "when": "trazer artefatos do ambiente para análise local"
+  },
+  "diagnose": {
+    "why": "diagnóstico offline sobre bundle de evidência",
+    "when": "falha sem causa clara — correlaciona evidência já coletada"
+  },
+  "plan": {
+    "why": "planejamento composto sobre facts já extraídos",
+    "when": "revisar passos antes de executar trabalho multi-passo"
+  },
+  "correlate": {
+    "why": "correlação de sinais de incidente/telemetria",
+    "when": "ligar sintomas a causas com dependência declarada"
+  },
+  "diff": {
+    "why": "o que mudou entre dois estados/snapshots",
+    "when": "comparar estado antes/depois de uma mudança"
+  },
+  "drift": {
+    "why": "detecta drift entre estado declarado e observado",
+    "when": "verificar se o ambiente divergiu da declaração"
+  },
+  "impact": {
+    "why": "impacto de uma mudança sobre o grafo de dependências",
+    "when": "antes de aplicar: quem quebra se eu mudar isto"
+  },
+  "context": {
+    "why": "resolução de contexto por workspace",
+    "when": "montar o contexto certo sob escopo declarado"
+  },
+  "cache": {
+    "why": "cache de evidência incremental — reusa só o que é fresco",
+    "when": "inspecionar/limpar o que está cacheado"
+  },
+  "routing": {
+    "why": "tabela de roteamento declarada",
+    "when": "inspecionar como requests são roteados"
+  },
+  "policy": {
+    "why": "avalia ações contra o catálogo de políticas",
+    "when": "checar permissão/veredito antes de uma ação"
+  },
+  "security": {
+    "why": "superfície de segurança: secrets, iam, supply",
+    "when": "perguntas de postura e exposição"
+  },
+  "reliability": {
+    "why": "SLO e caminho crítico de confiabilidade",
+    "when": "avaliar resiliência end-to-end com evidência"
+  },
+  "integrate": {
+    "why": "instala skills/agents/MCP nos hosts do usuário",
+    "when": "ativar a forja no Claude/Codex/Devin"
+  },
+  "evals": {
+    "why": "matriz de avaliação declarativa, goldens e holdout",
+    "when": "validar qualidade determinística antes de release"
+  },
+  "lab": {
+    "why": "Forge Lab: cenários reproduzíveis offline",
+    "when": "experimentar sem tocar o ambiente real"
+  },
+  "forge": {
+    "why": "Forge Protocol: capabilities, task, handoff, health",
+    "when": "interoperar com o control plane The Forge"
+  },
+  "capability": {
+    "why": "superfície de capabilities: list/describe/check",
+    "when": "perguntar o que a forja declara atender"
+  },
+  "risk": {
+    "why": "avaliação de risco de mudança proposta",
+    "when": "classificar risco antes de aplicar"
+  },
+  "change": {
+    "why": "review de mudança proposta; approve/apply ficam host-side",
+    "when": "revisar uma mudança — mutação só via gate de política"
+  },
+  "explain": {
+    "why": "explica um finding: regra, evidência, raciocínio",
+    "when": "entender por que um rule_id disparou"
+  },
+  "recommend": {
+    "why": "recomendações derivadas de findings",
+    "when": "priorizar ações a partir dos findings julgados"
+  },
+  "store": {
+    "why": "store local de fatos/snapshots",
+    "when": "persistir e recuperar evidência entre sessões"
+  },
+  "bench": {
+    "why": "benchmark medido entre runs",
+    "when": "comparar performance com dados observados"
+  },
+  "freeze": {
+    "why": "congela estado/snapshot para comparação",
+    "when": "fixar baseline antes de avaliar drift"
+  },
+  "cases": {
+    "why": "gerencia cases que ancoram findings e evidência",
+    "when": "iniciar/inspecionar o caso sob análise"
+  }
+}
