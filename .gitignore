@@ -12,3 +12,4 @@ dist/
 !.platformforge/cases/
 !.platformforge/ledgers/
 graphify-out/
+.pytest-tmp/
