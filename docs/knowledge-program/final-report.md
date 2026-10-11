@@ -4,13 +4,13 @@
 |---|---|
 | repository | `platform-forge` |
 | branch | `feat/ultimate-completion` |
-| commit | `c4e260e` |
-| docs inventoried | 448 (excl. GENERATED mirrors: 268; vendored upstream: 0) |
+| commit | `f4057cc` |
+| docs inventoried | 449 (excl. GENERATED mirrors: 269; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 448
+- `AUTOMATICALLY_CHECKED`: 449
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -24,7 +24,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - `USER_GUIDE`: 64
 - `ADR`: 63
 - `HOW_TO`: 15
-- `RELEASE_REPORT`: 12
+- `RELEASE_REPORT`: 13
 - `SKILL`: 12
 - `ARCHITECTURE`: 5
 - `GETTING_STARTED`: 3

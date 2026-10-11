@@ -153,6 +153,7 @@
 {"path": "docs/economy.md", "title": "Economia de tokens e contexto \u2014 Platform Forge", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/experience/accessibility.md", "title": "Accessibility", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/experience/automation-mode.md", "title": "Automation mode", "category": "UNKNOWN", "audience": "public", "related_commands": ["doctor", "install"], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "docs/experience/fase4-report.md", "title": "FASE 4 \u2014 Platform Forge: relat\u00f3rio de valida\u00e7\u00e3o", "category": "RELEASE_REPORT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/experience/installation-wizard.md", "title": "Installation wizard", "category": "USER_GUIDE", "audience": "public", "related_commands": ["install"], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/experience/interactive-cli.md", "title": "Interactive CLI", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/experience/themes.md", "title": "Themes and visual identity", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}

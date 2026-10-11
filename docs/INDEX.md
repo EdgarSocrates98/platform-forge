@@ -399,6 +399,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 - [Accessibility](experience/accessibility.md) `UNKNOWN`
 - [Automation mode](experience/automation-mode.md) `UNKNOWN`
+- [FASE 4 — Platform Forge: relatório de validação](experience/fase4-report.md) `RELEASE_REPORT`
 - [Interactive CLI](experience/interactive-cli.md) `UNKNOWN`
 - [Themes and visual identity](experience/themes.md) `UNKNOWN`
 
