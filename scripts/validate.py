@@ -29,7 +29,7 @@ def _run(cmd: list[str], cwd: Path = REPO) -> dict:
                        errors="replace", check=False)
     return {"cmd": " ".join(cmd), "rc": p.returncode,
             "seconds": round(time.time() - t0, 2),
-            "tail": (p.stdout + p.stderr).strip().splitlines()[-5:]}
+            "tail": (p.stdout + p.stderr).strip().splitlines()[-30:]}
 
 
 def _py(expr: str) -> dict:
@@ -709,9 +709,14 @@ def gate_economy_receipt() -> dict:
         "if not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\n"
         "head = subprocess.run(['git','rev-parse','HEAD'],\n"
         "    capture_output=True, text=True).stdout.strip()\n"
-        "head1 = subprocess.run(['git','rev-parse','HEAD~1'],\n"
+        "# PR merge ref: HEAD^2 is the pushed branch tip — the Option-A\n"
+        "# pair (functional commit + receipt commit) sits one level down.\n"
+        "head2 = subprocess.run(['git','rev-parse','HEAD^2'],\n"
         "    capture_output=True, text=True).stdout.strip()\n"
-        "if vs not in (head, head1):\n"
+        "base = head2 if __import__('re').fullmatch(r'[0-9a-f]{40}', head2) else head\n"
+        "head1 = subprocess.run(['git','rev-parse', base + '~1'],\n"
+        "    capture_output=True, text=True).stdout.strip()\n"
+        "if vs not in (base, head1):\n"
         "    bad.append(('validated_sha-stale', vs, head))\n"
         "canon = set(V._economy_gate_names())\n"
         "extra = set(r.get('gates', {})) - canon\n"
@@ -1124,11 +1129,14 @@ def main() -> int:
         if res.get("skipped"):
             entry["skipped"] = res["skipped"]
         if not ok:
-            entry["why"] = res.get("tail", [])[-3:]
+            entry["why"] = res.get("tail", [])[-25:]
             entry["unlock"] = UNLOCK.get(name, "see the gate output")
             failed.append(name)
         receipt["gates"][name] = entry
         print(f"{'PASS' if ok else 'FAIL'} {name}", file=sys.stderr)
+        if not ok:
+            for line in entry["why"]:
+                print(f"    {line}", file=sys.stderr)
 
     receipt["verdict"] = "validated" if not failed else "failed"
     receipt["failed"] = failed

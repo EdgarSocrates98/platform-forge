@@ -31,6 +31,20 @@ def _head(rev: str = "HEAD") -> str:
                           check=False).stdout.strip()
 
 
+def _bound_shas() -> tuple[str, str]:
+    """SHAs a receipt may bind: the functional commit and the
+    receipt-only closure commit on top of it (Option A, §5).
+
+    On a PR merge ref HEAD is the synthetic merge — the pushed branch
+    tip is its second parent (``HEAD^2``), so the same Option-A pair
+    sits one level down. On a linear checkout ``HEAD^2`` does not
+    resolve and the pair is the usual ``{HEAD, HEAD~1}``.
+    """
+    pr_tip = _head("HEAD^2")
+    base = pr_tip if re.fullmatch(r"[0-9a-f]{40}", pr_tip) else _head()
+    return (base, _head(f"{base}~1"))
+
+
 def _receipt() -> dict:
     assert RECEIPT.is_file(), "closure receipt missing — generate via " \
         "scripts/validate.py --economy-receipt"
@@ -52,9 +66,9 @@ class TestReceiptSemantics:
         """Option A (§5): receipt binds the functional commit; the
         receipt-only closure commit may sit on top (HEAD~1)."""
         vs = _receipt()["validated_sha"]
-        head, head1 = _head(), _head("HEAD~1")
-        assert vs in (head, head1), \
-            f"receipt binds {vs[:12]} but HEAD is {head[:12]}"
+        bound = _bound_shas()
+        assert vs in bound, \
+            f"receipt binds {vs[:12]} but HEAD is {_head()[:12]}"
 
     def test_closure_sha_null_in_committed_file(self):
         """§65 — the receipt-only commit cannot contain its own hash."""
@@ -256,7 +270,7 @@ class TestAdversarial:
         r = _receipt()
         foreign = "0" * 40
         assert r["validated_sha"] != foreign
-        assert r["validated_sha"] in (_head(), _head("HEAD~1"))
+        assert r["validated_sha"] in _bound_shas()
 
     def test_p2_no_dead_test_paths(self):
         """P2 — every reproduce path resolves (same check, adversarial
