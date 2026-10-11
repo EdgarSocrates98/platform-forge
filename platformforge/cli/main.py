@@ -136,8 +136,33 @@ def _emit(result: Any, args: argparse.Namespace, exit_code: int = 0) -> int:
     if getattr(args, "output", None):
         Path(args.output).write_text(text + "\n")
     _write_receipt(result, text, args, exit_code)
+    if _wants_human_doc(shown):
+        from platformforge.ui.kit import UIContext, format_status_doc
+
+        print(format_status_doc(shown, ctx=UIContext.detect()))
+        return exit_code
     print(text)
     return exit_code
+
+
+def _wants_human_doc(shown: Any) -> bool:
+    """forge/* install docs render through the shared kit for humans —
+    on a real TTY, or in a captured TUI subprocess via FORGE_TEXT_OUTPUT.
+    Everything else (and all pipes/CI) keeps the JSON contract."""
+    import os
+
+    if not isinstance(shown, dict):
+        return False
+    if not (
+        str(shown.get("schema", "")).startswith("forge/")
+        or "checks" in shown
+        or "drift" in shown
+    ):
+        return False
+    try:
+        return sys.stdout.isatty() or bool(os.environ.get("FORGE_TEXT_OUTPUT"))
+    except OSError:
+        return False
 
 
 def _write_receipt(result: Any, text: str, args: argparse.Namespace,
