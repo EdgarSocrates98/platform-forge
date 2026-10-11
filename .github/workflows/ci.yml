@@ -20,6 +20,10 @@ jobs:
         python: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          # economy-receipt tests rev-parse HEAD~1 / HEAD^2 — depth 1 leaves
+          # the merge ref with no resolvable parents.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
