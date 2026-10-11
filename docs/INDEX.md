@@ -101,9 +101,21 @@ _Task-oriented guides and workflows._
 ### learn/
 
 - [Platform Forge — trilha de aprendizado](learn/README.md)
+- [Receita — auditar CI/CD (GitHub Actions e pipelines)](learn/recipes/cicd.md)
+- [Receita — FinOps: custo, alocação e economia unitária](learn/recipes/custos.md)
 - [Receita — o que depende de quê?](learn/recipes/graph-deps.md)
+- [Receita — Graph Studio e visualização do grafo](learn/recipes/graph-studio.md)
+- [Receita — hosts: observar e abrir a IA no projeto](learn/recipes/hosts.md)
+- [Receita — blast radius e impacto de uma mudança](learn/recipes/impacto-blast.md)
 - [Receita — postura determinística de um repositório](learn/recipes/inspect-repo.md)
 - [Receita — o que as regras dizem dos facts?](learn/recipes/judge-policy.md)
+- [Receita — auditar Kubernetes/Helm/Kustomize](learn/recipes/kubernetes.md)
+- [Receita — postura de segurança (secrets, IAM, supply chain)](learn/recipes/seguranca.md)
+- [Receita — SLO, error budget e confiabilidade](learn/recipes/sre.md)
+- [Receita — auditar Terraform/IaC](learn/recipes/terraform.md)
+- [Receita — usar o roster de agents](learn/recipes/usar-agents.md)
+- [Receita — usar as skills instaladas no host](learn/recipes/usar-skills.md)
+- [Receita — verificar e usar o MCP](learn/recipes/verificar-mcp.md)
 
 ### portable/
 

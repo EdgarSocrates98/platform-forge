@@ -15,6 +15,18 @@
 | "Postura determinística deste repo" | [inspect-repo](recipes/inspect-repo.md) |
 | "O que as regras dizem dos facts?" | [judge-policy](recipes/judge-policy.md) |
 | "O que depende de quê?" | [graph-deps](recipes/graph-deps.md) |
+| "Auditar Terraform/IaC" | [terraform](recipes/terraform.md) |
+| "Auditar Kubernetes/Helm" | [kubernetes](recipes/kubernetes.md) |
+| "Auditar pipelines CI/CD" | [cicd](recipes/cicd.md) |
+| "O que essa mudança atinge?" | [impacto-blast](recipes/impacto-blast.md) |
+| "Postura de segurança" | [seguranca](recipes/seguranca.md) |
+| "SLO/error budget aguenta?" | [sre](recipes/sre.md) |
+| "Quanto custa / quem gasta?" | [custos](recipes/custos.md) |
+| "Qual agente pega isso?" | [usar-agents](recipes/usar-agents.md) |
+| "Usar as skills no host" | [usar-skills](recipes/usar-skills.md) |
+| "O MCP está respondendo?" | [verificar-mcp](recipes/verificar-mcp.md) |
+| "Ver o grafo no browser" | [graph-studio](recipes/graph-studio.md) |
+| "Meu host de IA está pronto?" | [hosts](recipes/hosts.md) |
 
 Hub do ecossistema (descoberta cross-forge): `the-forge/docs/hub/` — install, which-forge, hosts, MCP, troubleshooting.
 

@@ -4,13 +4,13 @@
 |---|---|
 | repository | `platform-forge` |
 | branch | `feat/ultimate-completion` |
-| commit | `14226ca` |
-| docs inventoried | 436 (excl. GENERATED mirrors: 256; vendored upstream: 0) |
+| commit | `3fde172` |
+| docs inventoried | 448 (excl. GENERATED mirrors: 268; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 436
+- `AUTOMATICALLY_CHECKED`: 448
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -23,11 +23,11 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - `UNKNOWN`: 86
 - `USER_GUIDE`: 64
 - `ADR`: 63
+- `HOW_TO`: 15
 - `RELEASE_REPORT`: 12
 - `SKILL`: 12
 - `ARCHITECTURE`: 5
 - `GETTING_STARTED`: 3
-- `HOW_TO`: 3
 - `AGENT_INSTRUCTIONS`: 2
 - `REFERENCE`: 2
 - `INTERNAL`: 1
@@ -45,7 +45,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Educational layer delivered
 
 - first-run/quickstart docs: 3
-- docs/learn/ entries: 4
+- docs/learn/ entries: 16
 - docs/hub/ entries: 0
 
 ## Documentation changes this program
