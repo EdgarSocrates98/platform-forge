@@ -29,7 +29,7 @@ def _run(cmd: list[str], cwd: Path = REPO) -> dict:
                        errors="replace", check=False)
     return {"cmd": " ".join(cmd), "rc": p.returncode,
             "seconds": round(time.time() - t0, 2),
-            "tail": (p.stdout + p.stderr).strip().splitlines()[-5:]}
+            "tail": (p.stdout + p.stderr).strip().splitlines()[-30:]}
 
 
 def _py(expr: str) -> dict:
@@ -1124,7 +1124,7 @@ def main() -> int:
         if res.get("skipped"):
             entry["skipped"] = res["skipped"]
         if not ok:
-            entry["why"] = res.get("tail", [])[-3:]
+            entry["why"] = res.get("tail", [])[-25:]
             entry["unlock"] = UNLOCK.get(name, "see the gate output")
             failed.append(name)
         receipt["gates"][name] = entry
