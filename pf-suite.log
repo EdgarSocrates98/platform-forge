@@ -1,0 +1,54 @@
+........................................................................ [  7%]
+........................................................................ [ 14%]
+......................................................................F. [ 21%]
+...................F.................................................... [ 28%]
+........................................................................ [ 35%]
+........................................................................ [ 42%]
+........................................................................ [ 49%]
+........................................................................ [ 56%]
+........................................................................ [ 63%]
+........................................................................ [ 70%]
+........................................................................ [ 77%]
+........................................................................ [ 84%]
+........................................................................ [ 91%]
+........................................................................ [ 98%]
+.................                                                        [100%]
+================================== FAILURES ===================================
+________ TestReceiptSemantics.test_validated_sha_binds_head_or_parent _________
+
+self = <tests.test_economy_closure.TestReceiptSemantics object at 0x00000200D7BAEE10>
+
+    def test_validated_sha_binds_head_or_parent(self):
+        """Option A (§5): receipt binds the functional commit; the
+        receipt-only closure commit may sit on top (HEAD~1)."""
+        vs = _receipt()["validated_sha"]
+        head, head1 = _head(), _head("HEAD~1")
+>       assert vs in (head, head1), \
+            f"receipt binds {vs[:12]} but HEAD is {head[:12]}"
+E       AssertionError: receipt binds 30b6af0febb4 but HEAD is c4e260e08552
+E       assert '30b6af0febb46aba18ffe109b1d8cdfc9330a798' in ('c4e260e08552a74bf5dd982c9c59a8dd0cd8e176', '3fde1729ee9499877a5608bfacd93bf094e1f48e')
+
+tests\test_economy_closure.py:56: AssertionError
+_________ TestAdversarial.test_p1_receipt_cannot_claim_different_head _________
+
+self = <tests.test_economy_closure.TestAdversarial object at 0x00000200D7BD1550>
+
+    def test_p1_receipt_cannot_claim_different_head(self):
+        """P1 — a receipt bound to a foreign SHA fails the gate's
+        sha check (validated_sha \u2209 {HEAD, HEAD~1})."""
+        r = _receipt()
+        foreign = "0" * 40
+        assert r["validated_sha"] != foreign
+>       assert r["validated_sha"] in (_head(), _head("HEAD~1"))
+E       AssertionError: assert '30b6af0febb46aba18ffe109b1d8cdfc9330a798' in ('c4e260e08552a74bf5dd982c9c59a8dd0cd8e176', '3fde1729ee9499877a5608bfacd93bf094e1f48e')
+
+tests\test_economy_closure.py:259: AssertionError
+============================== warnings summary ===============================
+tests/test_wave_l.py::test_doctor_deep
+  E:\projetos\FORJAS\platform-forge\platformforge\forge\manifest.py:20: UserWarning: catalog dir missing: C:\Users\edgar\AppData\Local\Temp\pytest-of-edgar\pytest-290\test_doctor_deep0\rules\catalog
+    rules = load_catalog(root / "rules" / "catalog")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_economy_closure.py::TestReceiptSemantics::test_validated_sha_binds_head_or_parent
+FAILED tests/test_economy_closure.py::TestAdversarial::test_p1_receipt_cannot_claim_different_head

@@ -209,10 +209,11 @@ def test_cli_apply_and_uninstall(project: Path) -> None:
 def test_hosts_none_e_csv():
     """GAP-003: `none` nunca vira `all`; csv subconjunto e validado."""
     import pytest
+
     from platformforge.install import service
     assert service._hosts("all")
     assert service._hosts("none") == []
     assert service._hosts("") == []
     assert len(service._hosts("claude,devin")) == 2
-    with pytest.raises(Exception):
+    with pytest.raises(service.InstallRefusal):
         service._hosts("nope")

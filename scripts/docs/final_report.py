@@ -21,7 +21,7 @@ def _git(repo: Path, *args: str) -> str:
     try:
         return subprocess.run(
             ["git", "-C", str(repo), *args],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, timeout=15, check=False,
         ).stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
         return "unknown"
@@ -83,13 +83,13 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
     lines = [
         "# Forge Knowledge Program — final report",
         "",
-        f"| Campo | Valor |",
-        f"|---|---|",
+        "| Campo | Valor |",
+        "|---|---|",
         f"| repository | `{forge}` |",
         f"| branch | `{branch}` |",
         f"| commit | `{commit}` |",
-        f"| docs inventoried | {len(rows)} (excl. GENERATED mirrors: "
-        f"{len(rows) - generated}; vendored upstream: {vendored}) |",
+        (f"| docs inventoried | {len(rows)} (excl. GENERATED mirrors: "
+         f"{len(rows) - generated}; vendored upstream: {vendored}) |"),
         "",
         "## Review levels (honest)",
         "",
@@ -100,8 +100,8 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
         lines.append(f"- `{lvl}`: {levels.get(lvl, 0)}")
     lines += [
         "",
-        "Automatic checks ran on every row; semantic review is recorded only "
-        "where a human/verified pass happened — nothing is inflated.",
+        ("Automatic checks ran on every row; semantic review is recorded only "
+         "where a human/verified pass happened — nothing is inflated."),
         "",
         "## Category counts",
         "",
@@ -113,10 +113,10 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
         "## Findings",
         "",
         f"- duplicate groups (non-generated): {dup_count}",
-        f"- broken internal links total: {bl_count} "
-        f"(active docs: {active_broken}; remainder in frozen/historical trees)",
-        f"- documented-but-missing commands: {len(div.get('documented_missing', []))} "
-        f"(active docs: {active_doc_missing})",
+        (f"- broken internal links total: {bl_count} "
+         f"(active docs: {active_broken}; remainder in frozen/historical trees)"),
+        (f"- documented-but-missing commands: {len(div.get('documented_missing', []))} "
+         f"(active docs: {active_doc_missing})"),
         f"- undocumented public commands: {len(div.get('undocumented_commands', []))}",
         "",
         "## Educational layer delivered",
@@ -134,27 +134,27 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
     if forge == "the-forge":
         lines += [
             "- `docs/hub/` — Learning Hub (markdown-first + optional mkdocs)",
-            "- `docs/learn/zero-to-multi-specialist.md` — end-to-end guide "
-            "with captured evidence",
+            ("- `docs/learn/zero-to-multi-specialist.md` — end-to-end guide "
+             "with captured evidence"),
         ]
     lines += [
         "",
         "## Tests / gates",
         "",
-        "- `tests/test_doc_manifest.py` — zero broken links in active docs "
-        "(frozen trees exempt)",
+        ("- `tests/test_doc_manifest.py` — zero broken links in active docs "
+         "(frozen trees exempt)"),
         "- `check_docs`/`doc_inventory` — command drift gate, parser-walked",
         "",
         "## Limitations & remaining gaps",
         "",
-        "- Semantic review of the full corpus is not claimed — review levels "
-        "in `inventory.jsonl` say which docs were actually reviewed.",
-        "- Historical/frozen trees keep their broken links by design (§4.5 "
-        "preservation) — they are reported, not repaired.",
-        "- Hub site build not executed (dev-only, `mkdocs-material`); the "
-        "markdown hub is the verified deliverable.",
-        "- Screen-reader and POSIX-terminal validation remain UNVERIFIED on "
-        "this host.",
+        ("- Semantic review of the full corpus is not claimed — review levels "
+         "in `inventory.jsonl` say which docs were actually reviewed."),
+        ("- Historical/frozen trees keep their broken links by design (§4.5 "
+         "preservation) — they are reported, not repaired."),
+        ("- Hub site build not executed (dev-only, `mkdocs-material`); the "
+         "markdown hub is the verified deliverable."),
+        ("- Screen-reader and POSIX-terminal validation remain UNVERIFIED on "
+         "this host."),
         "",
         f"## Final status: **{status}**",
         "",

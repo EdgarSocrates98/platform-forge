@@ -153,7 +153,7 @@ def _audience(category: str, rel: Path) -> str:
 
 
 _LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
-_ANCHOR_RE = re.compile(r"^#{1,6}\s+(.+)$", re.M)
+_ANCHOR_RE = re.compile(r"^#{1,6}\s+(.+)$", re.MULTILINE)
 _FENCE = re.compile(r"^```")
 
 
@@ -238,7 +238,7 @@ def build_manifest(repo: Path, forge_id: str, cli: str) -> tuple[list[dict], dic
         cp = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=repo,
                             capture_output=True, text=True, timeout=10, check=False)
         head_commit = cp.stdout.strip()
-    except Exception:
+    except Exception:  # noqa: BLE001,S110 — git absence degrades to empty head, not a crash
         pass
 
     rows: list[dict] = []
