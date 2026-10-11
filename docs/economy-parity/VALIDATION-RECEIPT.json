@@ -11,42 +11,42 @@
     "economy-agentic": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k uniqueness or debate or duplication or fanout or waste or stagnant",
-      "seconds": 0.77
+      "seconds": 0.82
     },
     "economy-budget": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py -k budget or limit or protected or dimension",
-      "seconds": 0.55
+      "seconds": 0.58
     },
     "economy-cache": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_cache.py",
-      "seconds": 0.72
+      "seconds": 0.75
     },
     "economy-closure": {
       "ok": true,
       "reproduce": "python -c import sys\nfrom pathlib import Path\nreq = {'docs/economy-parity/FINAL-REPORT.md':\n         ['validated_sha', 'remote_ci', 'known gap'],\n       'docs/economy-parity/FINAL-MATRIX.md':\n         ['validated', 'externally-unverified'],\n       'docs/economy-parity/ECONOMY-BENCHMARKS.md':\n         ['Control Plane Overhead', 'End-to-End'],\n       'docs/economy/ROUTING.md':\n         ['decide', 'advisory'],\n       'docs/economy-parity/POLISH-BASELINE.md': ['drift']}\nbad = []\nfor f, needles in req.items():\n    p = Path(f)\n    if not p.is_file(): bad.append(('missing', f)); continue\n    txt = p.read_text()\n    for n in needles:\n        if n not in txt: bad.append((f, n))\nm = Path('docs/economy-parity/FINAL-MATRIX.md').read_text()\nif '\\n' + '|' in m and ' fully-production' in m:\n    bad.append(('matrix', 'overclaimed status'))\nif bad: print(bad); sys.exit(1)\nprint('closure docs coherent')\n && pytest -q tests/test_economy_closure.py",
-      "seconds": 1.12
+      "seconds": 1.09
     },
     "economy-context": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k TestGateway or TestLazy or TestRole or Suff",
-      "seconds": 0.64
+      "seconds": 0.65
     },
     "economy-contracts": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py tests/test_economy_v2.py",
-      "seconds": 0.94
+      "seconds": 0.95
     },
     "economy-evals": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py",
-      "seconds": 0.88
+      "seconds": 0.9
     },
     "economy-qpt": {
       "ok": true,
       "reproduce": "pytest -q tests/test_qpt_v2.py tests/test_economy_fleet_qpt.py",
-      "seconds": 1.54
+      "seconds": 1.62
     },
     "economy-receipt": {
       "ok": true,
@@ -56,12 +56,12 @@
     "economy-reconcile": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py tests/test_economy_evals.py -k reconcil or mismatch or unobserved",
-      "seconds": 0.67
+      "seconds": 0.7
     },
     "economy-resume": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k resume or checkpoint",
-      "seconds": 0.58
+      "seconds": 0.65
     },
     "economy-routing": {
       "ok": true,
@@ -71,15 +71,15 @@
     "economy-surface": {
       "ok": true,
       "reproduce": "python -c import subprocess, sys\ncmds = [\n ['platformforge','economy','doctor'],\n ['platformforge','economy','checkpoint','--run-id','gate',\n  '--spent','{\"tokens\":1}'],\n ['platformforge','economy','resume','--run-id','gate'],\n ['platformforge','economy','reconcile',\n  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n ['platformforge','economy','explain','--run-id','gate'],\n ['platformforge','cache','stats'],\n ['platformforge','cache','gc'],\n ['platformforge','context','capsule','--task','t',\n  '--facts','[{\"fact_id\":\"f\"}]'],\n ['platformforge','context','gc'],\n ['platformforge','routing','explain','--signal','{}'],\n ['platformforge','routing','compare',\n  '--champion','{}','--challenger','{}'],\n]\nfor c in cmds:\n    r = subprocess.run(c, capture_output=True)\n    if r.returncode not in (0, 2):\n        print('FAIL', c, r.returncode, r.stderr[-300:])\n        sys.exit(1)\nprint('all economy verbs respond')\n",
-      "seconds": 3.85
+      "seconds": 3.81
     },
     "economy-verification": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_pricing_verify.py",
-      "seconds": 0.64
+      "seconds": 0.68
     }
   },
-  "generated_at": "2026-10-11T16:39:10Z",
+  "generated_at": "2026-10-11T16:59:27Z",
   "kind": "platformforge/economy-validation-receipt/1",
   "known_gaps": [
     "real provider pricing catalog not bundled (declared-rates engine only, by design)",
@@ -93,7 +93,7 @@
   "remote_ci": "not independently verified",
   "schema": "platformforge/economy-validation-receipt/v1",
   "spec": "prompt_evo_economy.md",
-  "validated_sha": "22a7ac4d3291f5d67cf85db63ef1490abd685a8e",
+  "validated_sha": "21e05779b099e917ff873630af683a99a16692a7",
   "validator": "scripts/validate.py",
   "validator_version": "economy-validation-receipt/v1",
   "verdict": "validated"
