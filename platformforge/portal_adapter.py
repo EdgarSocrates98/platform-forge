@@ -705,7 +705,7 @@ def _portal(args) -> dict[str, Any]:
     print(json.dumps({
         "url": url,
         "note": "portal is optional — CLI/MCP keep working without it",
-    }))
+    }), flush=True)
     if not getattr(args, "no_browser", False):
         webbrowser.open(url)
     try:
