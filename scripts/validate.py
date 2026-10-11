@@ -1129,6 +1129,9 @@ def main() -> int:
             failed.append(name)
         receipt["gates"][name] = entry
         print(f"{'PASS' if ok else 'FAIL'} {name}", file=sys.stderr)
+        if not ok:
+            for line in entry["why"]:
+                print(f"    {line}", file=sys.stderr)
 
     receipt["verdict"] = "validated" if not failed else "failed"
     receipt["failed"] = failed
