@@ -5,7 +5,7 @@ Every interactive surface degrades to a deterministic, scriptable path.
 | Situation | Behavior |
 |---|---|
 | Non-TTY bare `platformforge` | product summary, exit 0 |
-| Non-TTY `platformforge install` | usage error pointing at `install apply` |
+| Non-TTY `platformforge install` | structured approval refusal; no prompt, no writes |
 | Interactive fn called headless | `NonInteractive` raised — never blocks |
 | `--dry-run` | real plan, zero writes |
 | `--yes` | explicit approval for writes |
@@ -14,7 +14,7 @@ Every interactive surface degrades to a deterministic, scriptable path.
 CI pattern:
 
 ```bash
-platformforge install apply --scope project --profile minimal --yes
+platformforge install --scope project --profile minimal --yes
 platformforge doctor
 ```
 

@@ -2,6 +2,20 @@
 from __future__ import annotations
 
 
+def run_guided_install() -> int:
+    """Run guided install through the shared wizard and real service."""
+    from platformforge.install import service
+    from platformforge.ui.kit import UIContext
+    from platformforge.ui.wizard import run_wizard
+
+    return run_wizard(
+        forge_name="platform-forge",
+        install_fn=lambda **kw: service.install(root=None, host="all", **kw),
+        doctor_fn=lambda **kw: service.doctor(**kw),
+        ctx=UIContext.detect(),
+    )
+
+
 def register(sub, add_common, emit):
     def install(a):
         # forge/* contract surface: `install <op>` routes the shared
