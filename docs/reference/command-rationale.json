@@ -179,6 +179,10 @@
     "why": "instala skills/agents/MCP nos hosts do usuário",
     "when": "ativar a forja no Claude/Codex/Devin"
   },
+  "hosts": {
+    "why": "observa o estado real dos hosts de IA (binário, versão, auth, integração) e abre o host no repo",
+    "when": "antes de abrir o host: `hosts` mede, `hosts <h> --launch` abre com TTY"
+  },
   "evals": {
     "why": "matriz de avaliação declarativa, goldens e holdout",
     "when": "validar qualidade determinística antes de release"
@@ -226,5 +230,10 @@
   "cases": {
     "why": "gerencia cases que ancoram findings e evidência",
     "when": "iniciar/inspecionar o caso sob análise"
+  },
+  "portal": {
+    "why": "UI web local opcional sobre os mesmos serviços do CLI/MCP — jornada instalar, hosts, MCP e primeira tarefa numa SPA com sessão e confirmação",
+    "when": "primeiro uso da forja, configurar hosts Claude/Devin/Codex/Copilot, verificar MCP e revisar saúde/skills/agents/grafos/docs visualmente",
+    "when_not": "automação ou CI — use o CLI/MCP direto; o portal é um cliente local, nunca um serviço"
   }
 }

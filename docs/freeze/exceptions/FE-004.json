@@ -1,0 +1,25 @@
+{
+  "schema": "platformforge/feature-exception/v1",
+  "id": "FE-004",
+  "requested_capability": "AI host observe + launch surface — `platformforge hosts [all|<host>] [--launch]` CLI verb and the read-only `platformforge_hosts` MCP tool. Per-host receipt: binary detection, version, auth state through the documented status subcommand, repo integration state, and the launch command. Launch happens only on an explicit flag with a real TTY; a signed-out host is never launched and the receipt carries the official login hint instead.",
+  "reason": "Owner directive in the multi-Forge productization plan (prompt_evo_foco1.md, FASE 4): every Forge must offer the same host experience — observe the AI host, prove integration, open the host on the workspace. Spark Forge AWS (`sparkforge-aws ai`), Spark Forge Azure (`sfa_ai`) and API Forge (`apiforge ai`) already ship this flow; Platform Forge only had `integrate --host` (writes parity files) with no way to observe host readiness or open the host.",
+  "real_world_blocker": "A user who installed Platform Forge could not answer 'is my AI host ready to use the forge?' or open the host on the workspace from the forge itself — the same step the sibling forges already provide. The TUI had no host entry and the MCP registry had no host tool.",
+  "existing_capability_insufficient": "`platformforge integrate --host` writes parity files but never observes the host binary, version, auth state or integration health; `platformforge install status` reads the install receipt only. Neither can launch a host session or report why it cannot.",
+  "alternatives_considered": [
+    "Document the host CLIs manually: rejected — the sibling forges already measure this deterministically, and manual steps leave the 'is the host ready' question unresolved in the TUI/MCP surfaces the plan requires.",
+    "Extend `integrate` with observation: rejected — `integrate` is a guarded write verb (mutable, parity files); observation is a different, read-only contract and mixing them would weaken the risk profile of both.",
+    "Add a bounded additive `hosts` verb plus a read-only MCP tool and rebaseline the CLI/MCP/capabilities snapshots under this exception: chosen."
+  ],
+  "architectural_impact": "small/additive — one module (`distribution/hostflow.py`), one CLI verb, one MCP capability. Core semantics (evidence, Graphfy, economy, ops boundaries) unchanged.",
+  "schema_impact": "no new public schema; the receipt is an unstructured v1 dict like the sibling forges' host flow. CLI/MCP/capabilities snapshots rebaselined under this exception.",
+  "agent_impact": "none to roster/budgets/mirrors — the flow is distribution-surface, not agentic.",
+  "operations_impact": "launch is an explicit-flag + TTY subprocess in the repo directory — same trust level as typing the host binary on PATH; observation is read-only. MCP exposes observation only (launch stays a CLI+TTY human boundary). No production mutation path is added.",
+  "decision": "approved",
+  "decided_by": "owner (prompt_evo_foco1.md FASE 4 — host experience parity across the seven forges)",
+  "evidence": [
+    "platformforge/distribution/hostflow.py",
+    "tests/test_hosts_flow.py",
+    "tests/test_missing_input_refusals.py",
+    "tests/test_ui_tui.py"
+  ]
+}

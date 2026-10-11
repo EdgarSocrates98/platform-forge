@@ -13,6 +13,21 @@ def test_menu_well_formed():
         assert argv is None or argv == "__wizard__" or isinstance(argv, list)
 
 
+def test_menu_argv_parses_against_real_parser():
+    """Every menu argv must parse — a bare `["agents"]` used to fail argparse."""
+    from platformforge.cli.main import build_parser
+    from platformforge.ui import home
+    parser = build_parser()
+    for label, argv in home._MENU:
+        if argv is None or argv == "__wizard__":
+            continue
+        try:
+            ns = parser.parse_args(list(argv))
+        except SystemExit as exc:  # argparse exits 2 on required-arg failure
+            raise AssertionError(f"menu {label!r} argv {argv} fails parse") from exc
+        assert callable(getattr(ns, "func", None)), (label, argv)
+
+
 def test_tui_entries_real():
     from platformforge.ui import tui
     entries = tui.entries()

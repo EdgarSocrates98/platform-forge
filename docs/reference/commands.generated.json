@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "platform-forge",
   "cli": "platformforge",
-  "generated_at": "2026-10-10T10:34:14Z",
+  "generated_at": "2026-10-11T04:54:08Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 57,
+  "command_count": 59,
   "commands": [
     {
       "path": "install",
@@ -7112,6 +7112,230 @@
           "choices": null,
           "positional": false,
           "help": null
+        }
+      ]
+    },
+    {
+      "path": "hosts",
+      "help": "AI host observe + optional launch (integrate is the setup path)",
+      "arguments": [
+        {
+          "name": "help",
+          "flags": [
+            "-h",
+            "--help"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "show this help message and exit"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "True",
+          "choices": null,
+          "positional": false,
+          "help": "structured output (default)"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--output"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "write result to FILE"
+        },
+        {
+          "name": "detail_level",
+          "flags": [
+            "--detail-level"
+          ],
+          "required": false,
+          "default": "normal",
+          "choices": [
+            "summary",
+            "normal",
+            "full"
+          ],
+          "positional": false,
+          "help": "summary|normal|full payload bounding"
+        },
+        {
+          "name": "offline",
+          "flags": [
+            "--offline"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "forbid any network-capable adapter"
+        },
+        {
+          "name": "strict",
+          "flags": [
+            "--strict"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "unresolved/refusals -> exit code 2"
+        },
+        {
+          "name": "repo",
+          "flags": [
+            "--repo"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace/repo root"
+        },
+        {
+          "name": "host",
+          "flags": [],
+          "required": false,
+          "default": "all",
+          "choices": [
+            "all",
+            "claude",
+            "codex",
+            "devin",
+            "copilot"
+          ],
+          "positional": true,
+          "help": null
+        },
+        {
+          "name": "launch",
+          "flags": [
+            "--launch"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "launch the host REPL in the repo (TTY only)"
+        }
+      ]
+    },
+    {
+      "path": "portal",
+      "help": "optional local web portal (127.0.0.1, session token) — never inside MCP",
+      "arguments": [
+        {
+          "name": "help",
+          "flags": [
+            "-h",
+            "--help"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "show this help message and exit"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "True",
+          "choices": null,
+          "positional": false,
+          "help": "structured output (default)"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--output"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "write result to FILE"
+        },
+        {
+          "name": "detail_level",
+          "flags": [
+            "--detail-level"
+          ],
+          "required": false,
+          "default": "normal",
+          "choices": [
+            "summary",
+            "normal",
+            "full"
+          ],
+          "positional": false,
+          "help": "summary|normal|full payload bounding"
+        },
+        {
+          "name": "offline",
+          "flags": [
+            "--offline"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "forbid any network-capable adapter"
+        },
+        {
+          "name": "strict",
+          "flags": [
+            "--strict"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "unresolved/refusals -> exit code 2"
+        },
+        {
+          "name": "repo",
+          "flags": [
+            "--repo"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace/repo root"
+        },
+        {
+          "name": "no_browser",
+          "flags": [
+            "--no-browser"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "only print the session URL — SSH/headless or manual open"
+        },
+        {
+          "name": "port",
+          "flags": [
+            "--port"
+          ],
+          "required": false,
+          "default": "0",
+          "choices": null,
+          "positional": false,
+          "help": "fixed port (default: a free port of the system)"
         }
       ]
     },

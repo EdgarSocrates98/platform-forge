@@ -42,8 +42,8 @@ def register(sub, add_common, emit):
         except service.InstallRefusal as exc:
             return emit({"status": "refused",
                          "error": {"kind": exc.kind, "detail": exc.detail}}, a, 2)
-        rc = 0 if out.get("status") in (
-            "ok", "completed", "planned", "healthy", "unverified") else 1
+        rc = 0 if str(out.get("status", "")).lower() in (
+            "ok", "completed", "planned", "healthy", "unverified", "pass") else 1
         return emit(out, a, rc)
 
     def uninstall(a):

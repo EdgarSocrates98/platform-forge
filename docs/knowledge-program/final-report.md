@@ -3,14 +3,14 @@
 | Campo | Valor |
 |---|---|
 | repository | `platform-forge` |
-| branch | `main` |
-| commit | `feaab20` |
-| docs inventoried | 436 (excl. GENERATED mirrors: 256; vendored upstream: 0) |
+| branch | `feat/ultimate-completion` |
+| commit | `8b6c769` |
+| docs inventoried | 449 (excl. GENERATED mirrors: 269; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 436
+- `AUTOMATICALLY_CHECKED`: 449
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -23,11 +23,11 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - `UNKNOWN`: 86
 - `USER_GUIDE`: 64
 - `ADR`: 63
-- `RELEASE_REPORT`: 12
+- `HOW_TO`: 15
+- `RELEASE_REPORT`: 13
 - `SKILL`: 12
 - `ARCHITECTURE`: 5
 - `GETTING_STARTED`: 3
-- `HOW_TO`: 3
 - `AGENT_INSTRUCTIONS`: 2
 - `REFERENCE`: 2
 - `INTERNAL`: 1
@@ -40,12 +40,12 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - duplicate groups (non-generated): 0
 - broken internal links total: 0 (active docs: 0; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
-- undocumented public commands: 0
+- undocumented public commands: 1
 
 ## Educational layer delivered
 
 - first-run/quickstart docs: 3
-- docs/learn/ entries: 4
+- docs/learn/ entries: 16
 - docs/hub/ entries: 0
 
 ## Documentation changes this program

@@ -274,6 +274,16 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `graph ui`
 - `graph view`
 
+## `hosts`
+
+- `hosts`  
+  `--repo <v> — workspace/repo root (default '.')` · `--launch — launch the host REPL in the repo (TTY only)`
+- `hosts all`
+- `hosts claude`
+- `hosts codex`
+- `hosts copilot`
+- `hosts devin`
+
 ## `impact`
 
 - `impact`  
@@ -427,6 +437,11 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `portable doctor`
 - `portable install`
 - `portable verify`
+
+## `portal`
+
+- `portal`  
+  `--repo <v> — workspace/repo root (default '.')` · `--no-browser — only print the session URL — SSH/headless or manual open` · `--port <v> — fixed port (default: a free port of the system) (default 0)`
 
 ## `product`
 

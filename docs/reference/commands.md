@@ -2,7 +2,7 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **57/57** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **58/59** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -32,6 +32,7 @@ Rationale coverage: **57/57** first-level groups curated in `command-rationale.j
 - [`forge`](#forge) — 1 command(s)
 - [`freeze`](#freeze) — 1 command(s)
 - [`graph`](#graph) — 1 command(s)
+- [`hosts`](#hosts) — 1 command(s)
 - [`impact`](#impact) — 1 command(s)
 - [`init`](#init) — 1 command(s)
 - [`inspect`](#inspect) — 1 command(s)
@@ -48,6 +49,7 @@ Rationale coverage: **57/57** first-level groups curated in `command-rationale.j
 - [`plan`](#plan) — 1 command(s)
 - [`policy`](#policy) — 1 command(s)
 - [`portable`](#portable) — 1 command(s)
+- [`portal`](#portal) — 1 command(s)
 - [`product`](#product) — 1 command(s)
 - [`recommend`](#recommend) — 1 command(s)
 - [`reliability`](#reliability) — 1 command(s)
@@ -951,6 +953,37 @@ platformforge graph [help] [json] [FILE] [detail_level] [offline] [strict] [repo
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+## hosts
+
+### `hosts`
+
+**para que:** AI host observe + optional launch (integrate is the setup path)
+
+- **por que:** observa o estado real dos hosts de IA (binário, versão, auth, integração) e abre o host no repo
+- **quando usar:** antes de abrir o host: `hosts` mede, `hosts <h> --launch` abre com TTY
+
+**Syntax**
+
+```text
+platformforge hosts [help] [json] [FILE] [detail_level] [offline] [strict] [repo] [host] [launch]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `json` | no | — | structured output (default) |
+| `FILE` | no | — | write result to FILE |
+| `detail_level` | no | — | summary|normal|full payload bounding |
+| `offline` | no | — | forbid any network-capable adapter |
+| `strict` | no | — | unresolved/refusals -> exit code 2 |
+| `repo` | no | — | workspace/repo root |
+| `host` | no | — | — |
+| `launch` | no | — | launch the host REPL in the repo (TTY only) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ## impact
 
 ### `impact`
@@ -1523,6 +1556,34 @@ platformforge portable [help] [json] [FILE] [detail_level] [offline] [strict] [r
 | `profile` | no | — | — |
 | `host` | no | — | — |
 | `offline_bundle` | no | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## portal
+
+### `portal`
+
+**para que:** optional local web portal (127.0.0.1, session token) — never inside MCP
+
+**Syntax**
+
+```text
+platformforge portal [help] [json] [FILE] [detail_level] [offline] [strict] [repo] [no_browser] [port]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `json` | no | — | structured output (default) |
+| `FILE` | no | — | write result to FILE |
+| `detail_level` | no | — | summary|normal|full payload bounding |
+| `offline` | no | — | forbid any network-capable adapter |
+| `strict` | no | — | unresolved/refusals -> exit code 2 |
+| `repo` | no | — | workspace/repo root |
+| `no_browser` | no | — | only print the session URL — SSH/headless or manual open |
+| `port` | no | — | fixed port (default: a free port of the system) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_

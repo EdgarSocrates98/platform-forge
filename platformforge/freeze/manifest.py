@@ -159,7 +159,7 @@ def render_markdown(m: dict[str, Any]) -> str:
 
 def write_manifest(path: str | Path) -> dict[str, Any]:
     m = build_manifest()
-    Path(path).write_text(render_markdown(m))
+    Path(path).write_text(render_markdown(m), encoding="utf-8")
     return m
 
 
