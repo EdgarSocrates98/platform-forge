@@ -28,6 +28,7 @@ _MENU: list[tuple[str, list[str] | None]] = [
     ('AI hosts (observe + launch)', ['hosts']),
     ('MCP explorer (tool registry)', ['mcp', 'tools']),
     ('Check installation health', ['doctor']),
+    ('Installation status (ledger + drift)', ['install', 'status']),
     ('MCP verify (real handshake)', ['install', 'mcp-verify']),
     ('Graph Studio (browser)', ['graph','ui']),
     ("installation wizard", "__wizard__"),
@@ -58,8 +59,9 @@ def _cli_argv(extra: list[str]) -> list[str] | None:
 
 
 def _run_argv(argv: list[str]) -> int:
+    env = dict(__import__('os').environ, FORGE_TEXT_OUTPUT="1")
     try:
-        return subprocess.run(argv, check=False).returncode
+        return subprocess.run(argv, check=False, env=env).returncode
     except FileNotFoundError:
         return 127
 

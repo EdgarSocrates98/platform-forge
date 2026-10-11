@@ -32,13 +32,44 @@ def register(sub, add_common, emit):
                     tuple(c.strip() for c in a.components.split(",") if c.strip())
                     if getattr(a, "components", None) else None
                 )
-                out = service.install(
-                    scope=a.scope, root=a.repo,
-                    host="all" if hosts == ["all"] else hosts[0]
-                    if len(hosts) == 1 else "all",
-                    profile=a.profile if a.profile in service.PROFILES
-                    else "recommended",
-                    yes=a.yes, dry_run=a.dry_run, components=comps)
+
+                def call(*, yes: bool, dry_run: bool):
+                    return service.install(
+                        scope=a.scope, root=a.repo,
+                        host="all" if hosts == ["all"] else hosts[0]
+                        if len(hosts) == 1 else "all",
+                        profile=a.profile if a.profile in service.PROFILES
+                        else "recommended",
+                        yes=yes, dry_run=dry_run, components=comps)
+
+                import sys
+
+                interactive = (
+                    not a.yes and not a.dry_run
+                    and sys.stdin.isatty() and sys.stdout.isatty()
+                )
+                if interactive:
+                    # Interactive approval: render the real plan, confirm
+                    # once, apply — one command instead of dry-run + apply.
+                    from platformforge.ui.kit import NonInteractive, approve_plan
+                    try:
+                        approved = approve_plan(call(yes=False, dry_run=True))
+                    except NonInteractive:
+                        approved = False
+                    out = (
+                        call(yes=True, dry_run=False)
+                        if approved
+                        else {
+                            "schema": "forge/InstallReceipt/v1",
+                            "forge_id": "platform-forge", "operation": "install",
+                            "status": "declined", "checks": [], "managed_files": [],
+                            "verification": {"status": "UNVERIFIED"},
+                            "error": {"kind": "PF-INSTALL-DECLINED",
+                                      "detail": "declined — nothing written"},
+                        }
+                    )
+                else:
+                    out = call(yes=a.yes, dry_run=a.dry_run)
         except service.InstallRefusal as exc:
             return emit({"status": "refused",
                          "error": {"kind": exc.kind, "detail": exc.detail}}, a, 2)
