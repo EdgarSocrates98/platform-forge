@@ -26,7 +26,7 @@ REPO = Path(__file__).resolve().parents[1]
 def _run(cmd: list[str], cwd: Path = REPO) -> dict:
     t0 = time.time()
     p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
-                       check=False)
+                       errors="replace", check=False)
     return {"cmd": " ".join(cmd), "rc": p.returncode,
             "seconds": round(time.time() - t0, 2),
             "tail": (p.stdout + p.stderr).strip().splitlines()[-5:]}

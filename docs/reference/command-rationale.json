@@ -230,5 +230,10 @@
   "cases": {
     "why": "gerencia cases que ancoram findings e evidência",
     "when": "iniciar/inspecionar o caso sob análise"
+  },
+  "portal": {
+    "why": "UI web local opcional sobre os mesmos serviços do CLI/MCP — jornada instalar, hosts, MCP e primeira tarefa numa SPA com sessão e confirmação",
+    "when": "primeiro uso da forja, configurar hosts Claude/Devin/Codex/Copilot, verificar MCP e revisar saúde/skills/agents/grafos/docs visualmente",
+    "when_not": "automação ou CI — use o CLI/MCP direto; o portal é um cliente local, nunca um serviço"
   }
 }

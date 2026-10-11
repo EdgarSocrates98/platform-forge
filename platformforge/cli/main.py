@@ -1445,6 +1445,21 @@ def cmd_hosts(args: argparse.Namespace) -> int:
     return _emit(receipt, args, 2 if receipt["hosts"][0].get("state") == "refused" else 0)
 
 
+def cmd_portal(args: argparse.Namespace) -> int:
+    """Optional local web portal over the same services as this CLI.
+
+    Why: one local screen with the install dashboard, AI hosts, MCP
+    handshake, skills/agents catalog, safe tasks and graph — same engine
+    and receipts, no flags to learn. When to use: first onboarding, host
+    configuration, state audit. The portal is a human boundary — it never
+    runs inside MCP, and CLI/TUI/MCP keep working without it.
+    """
+    from platformforge import portal_adapter
+
+    doc = portal_adapter._portal(args)
+    return _emit(doc, args, exit_code=0 if doc.get("status") == "completed" else 2)
+
+
 def cmd_evals(args: argparse.Namespace) -> int:
     """§94–95 eval framework."""
     from platformforge.evals import run_all
@@ -3527,6 +3542,17 @@ def build_parser() -> argparse.ArgumentParser:
             ),
             sp.add_argument("--launch", action="store_true",
                             help="launch the host REPL in the repo (TTY only)"),
+        ),
+    )
+    verb(
+        "portal",
+        cmd_portal,
+        "optional local web portal (127.0.0.1, session token) — never inside MCP",
+        lambda sp: (
+            sp.add_argument("--no-browser", action="store_true",
+                            help="only print the session URL — SSH/headless or manual open"),
+            sp.add_argument("--port", type=int, default=0,
+                            help="fixed port (default: a free port of the system)"),
         ),
     )
     verb(

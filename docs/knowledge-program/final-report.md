@@ -4,7 +4,7 @@
 |---|---|
 | repository | `platform-forge` |
 | branch | `feat/ultimate-completion` |
-| commit | `f4057cc` |
+| commit | `8b6c769` |
 | docs inventoried | 449 (excl. GENERATED mirrors: 269; vendored upstream: 0) |
 
 ## Review levels (honest)
@@ -40,7 +40,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - duplicate groups (non-generated): 0
 - broken internal links total: 0 (active docs: 0; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
-- undocumented public commands: 0
+- undocumented public commands: 1
 
 ## Educational layer delivered
 

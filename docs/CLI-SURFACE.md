@@ -438,6 +438,11 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `portable install`
 - `portable verify`
 
+## `portal`
+
+- `portal`  
+  `--repo <v> — workspace/repo root (default '.')` · `--no-browser — only print the session URL — SSH/headless or manual open` · `--port <v> — fixed port (default: a free port of the system) (default 0)`
+
 ## `product`
 
 - `product`  
