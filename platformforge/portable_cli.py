@@ -11,7 +11,7 @@ def run_guided_install() -> int:
 
     return run_wizard(
         forge_name="platform-forge",
-        install_fn=lambda **kw: service.install(root=None, host="all", **kw),
+        install_fn=lambda **kw: service.install(root=None, **kw),
         doctor_fn=lambda **kw: service.doctor(**kw),
         ctx=UIContext.detect(),
     )
@@ -52,6 +52,7 @@ def register(sub, add_common, emit):
                         root=a.repo,
                         host="all" if hosts == ["all"] else hosts[0] if len(hosts) == 1 else "all",
                         profile=a.profile if a.profile in service.PROFILES else "recommended",
+                        gateway_profile=a.gateway_profile,
                         yes=yes,
                         dry_run=dry_run,
                         components=comps,
@@ -159,6 +160,10 @@ def register(sub, add_common, emit):
     sp.add_argument("--to", default=None, help="update: pinned version — never 'latest'")
     sp.add_argument(
         "--components", default=None, help="optional components csv: skills,agents,mcp,tui,graph-studio"
+    )
+    sp.add_argument(
+        "--gateway-profile", default="balanced", choices=["economy", "balanced", "deep"],
+        help="execution profile: economy|balanced|deep",
     )
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=install)

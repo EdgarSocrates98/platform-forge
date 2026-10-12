@@ -28,8 +28,13 @@ platformforge install --scope project --profile recommended --host all --dry-run
 platformforge install --scope project --profile recommended --host all --yes
 # optional components:
 platformforge install --yes --components skills,mcp,tui,graph-studio
+platformforge install --scope project --profile recommended --gateway-profile economy --dry-run
 platformforge install doctor
 ```
+
+Perfis de execução: `economy` prioriza custo e contexto enxuto; `balanced` é
+padrão; `deep` reserva mais capacidade para trabalho complexo. Valor aparece
+no plano/recibo e permanece intacto no wizard portátil.
 
 ## States shown
 

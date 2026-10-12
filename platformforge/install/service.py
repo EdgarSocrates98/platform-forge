@@ -25,6 +25,7 @@ from platformforge import _installkit as kit
 
 FORGE_ID = "platform-forge"
 PROFILES: tuple[str, ...] = ("minimal", "recommended", "full")
+GATEWAY_PROFILES: tuple[str, ...] = ("economy", "balanced", "deep")
 SCOPES: tuple[str, ...] = ("project", "workspace", "user")
 CONTRACT_HOSTS: tuple[str, ...] = ("claude", "devin", "codex", "copilot")
 # contract host -> native host prefix(es)
@@ -115,6 +116,15 @@ def _profile(profile: str) -> str:
     return profile
 
 
+def _gateway_profile(profile: str) -> str:
+    if profile not in GATEWAY_PROFILES:
+        raise InstallRefusal(
+            kit.E_PROFILE,
+            f"gateway_profile {profile!r}; expected {GATEWAY_PROFILES}",
+        )
+    return profile
+
+
 def _receipt(operation: str, scope: str, target: Path, *,
              status: str, checks: list[dict[str, Any]],
              managed_files: list[str] | None = None,
@@ -138,12 +148,15 @@ def _receipt(operation: str, scope: str, target: Path, *,
 def install(*, scope: str = "project", root: Path | None = None,
             host: str = "all", profile: str = "recommended",
             yes: bool = False, dry_run: bool = False,
-            components: tuple[str, ...] | None = None) -> dict[str, Any]:
+            components: tuple[str, ...] | None = None,
+            gateway_profile: str = "balanced") -> dict[str, Any]:
     """``platformforge install`` — governed apply over ``apply_install``."""
     from platformforge.distribution.service import apply_install, plan_install
 
     _profile(profile)  # validates; native profile is always "agentic"
+    _gateway_profile(gateway_profile)
     opts = kit.component_options("recommended", components)
+    opts["execution_profile"] = gateway_profile
     native_hosts = _hosts(host)
     target = _resolve(scope, root)
     state = target / ".platformforge"
@@ -156,6 +169,7 @@ def install(*, scope: str = "project", root: Path | None = None,
                      "detail": "dry-run — nothing written"}],
             extra={"dry_run": True,
                    "components": opts or None,
+                   "gateway_profile": gateway_profile,
                    "planned_files": sorted(plan.creates + plan.managed_updates),
                    "conflicts": plan.conflicts})
     if not yes:
@@ -180,7 +194,8 @@ def install(*, scope: str = "project", root: Path | None = None,
                  "detail": f"{len(receipt.get('files', {}))} managed files"}],
         managed_files=sorted(receipt.get("files", {})),
         extra={"plan": out.get("plan"), "profile": profile,
-               "components": opts or None})
+               "components": opts or None,
+               "gateway_profile": gateway_profile})
 
 
 def _read_receipt(target: Path) -> dict[str, Any]:
