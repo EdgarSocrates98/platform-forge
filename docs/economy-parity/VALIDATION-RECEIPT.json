@@ -93,7 +93,7 @@
   "remote_ci": "not independently verified",
   "schema": "platformforge/economy-validation-receipt/v1",
   "spec": "prompt_evo_economy.md",
-  "validated_sha": "54fa3c0a60fe9ac5f9a755f4f9de680912d8cca1",
+  "validated_sha": "54fa3c0a60fe9ac5f9a755f4f9de680912d0cca1",
   "validator": "scripts/validate.py",
   "validator_version": "economy-validation-receipt/v1",
   "verdict": "validated"
