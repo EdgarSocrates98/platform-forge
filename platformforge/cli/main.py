@@ -95,7 +95,7 @@ def _pf_code(code: str) -> str:
     codes are preserved for compat and aliased deterministically."""
     if not isinstance(code, str) or not code.startswith("platform."):
         return code
-    body = code[len("platform."):].replace("_", "-").replace(".", "-")
+    body = code[len("platform.") :].replace("_", "-").replace(".", "-")
     return "PF-" + body.upper()
 
 
@@ -104,16 +104,18 @@ def _annotate_pf(obj: Any) -> Any:
     if isinstance(obj, dict):
         out = {}
         for k, v in obj.items():
-            if k in ("refusal", "unresolved") and isinstance(v, str) \
-                    and v.startswith("platform."):
+            if k in ("refusal", "unresolved") and isinstance(v, str) and v.startswith("platform."):
                 out[k] = v
                 out["pf_code"] = _pf_code(v)
             elif k in ("refusals",) and isinstance(v, list):
                 out[k] = [
-                    ({**e, "pf_code": _pf_code(e.get("code", ""))}
-                     if isinstance(e, dict)
-                     and str(e.get("code", "")).startswith("platform.")
-                     else e) for e in v]
+                    (
+                        {**e, "pf_code": _pf_code(e.get("code", ""))}
+                        if isinstance(e, dict) and str(e.get("code", "")).startswith("platform.")
+                        else e
+                    )
+                    for e in v
+                ]
             else:
                 out[k] = _annotate_pf(v)
         return out
@@ -153,11 +155,7 @@ def _wants_human_doc(shown: Any) -> bool:
 
     if not isinstance(shown, dict):
         return False
-    if not (
-        str(shown.get("schema", "")).startswith("forge/")
-        or "checks" in shown
-        or "drift" in shown
-    ):
+    if not (str(shown.get("schema", "")).startswith("forge/") or "checks" in shown or "drift" in shown):
         return False
     try:
         return sys.stdout.isatty() or bool(os.environ.get("FORGE_TEXT_OUTPUT"))
@@ -165,8 +163,7 @@ def _wants_human_doc(shown: Any) -> bool:
         return False
 
 
-def _write_receipt(result: Any, text: str, args: argparse.Namespace,
-                   exit_code: int) -> None:
+def _write_receipt(result: Any, text: str, args: argparse.Namespace, exit_code: int) -> None:
     """§152/§156 — every operation emits an auditable receipt under
     .platformforge/receipts/. Never breaks the command on failure."""
     try:
@@ -177,29 +174,43 @@ def _write_receipt(result: Any, text: str, args: argparse.Namespace,
 
         from platformforge import __version__
         from platformforge.core.receipts import Receipt, ReceiptWriter
+
         cmd = getattr(args, "command", "")
         sub = getattr(args, f"{cmd}_cmd", "") if cmd else ""
         facts = result.get("facts", []) if isinstance(result, dict) else []
-        findings = result.get("findings", []) \
-            if isinstance(result, dict) else []
+        findings = result.get("findings", []) if isinstance(result, dict) else []
         rec = Receipt(
             operation=f"cli.{cmd}.{sub}" if sub else f"cli.{cmd}",
-            inputs=[str(v) for a, v in sorted(vars(args).items())
-                    if a in ("path", "spec", "intent", "plan",
-                             "policies", "desired", "observed",
-                             "planned", "facts", "output") and v],
-            hashes={"output": "sha256:" + hashlib.sha256(
-                text.encode()).hexdigest()},
+            inputs=[
+                str(v)
+                for a, v in sorted(vars(args).items())
+                if a
+                in (
+                    "path",
+                    "spec",
+                    "intent",
+                    "plan",
+                    "policies",
+                    "desired",
+                    "observed",
+                    "planned",
+                    "facts",
+                    "output",
+                )
+                and v
+            ],
+            hashes={"output": "sha256:" + hashlib.sha256(text.encode()).hexdigest()},
             versions={"platformforge": __version__},
-            facts=[f.get("fact_id", "") for f in facts
-                   if isinstance(f, dict)][:200],
-            findings=[f.get("finding_id", "") for f in findings
-                      if isinstance(f, dict)][:200],
+            facts=[f.get("fact_id", "") for f in facts if isinstance(f, dict)][:200],
+            findings=[f.get("finding_id", "") for f in findings if isinstance(f, dict)][:200],
             cost={"output_bytes": len(text)},
-            started_at=_RUN_STARTED or None, ended_at=time.time(),
-            extra={"exit_code": exit_code,
-                   "refusal": (result or {}).get("refusal")
-                   if isinstance(result, dict) else None})
+            started_at=_RUN_STARTED or None,
+            ended_at=time.time(),
+            extra={
+                "exit_code": exit_code,
+                "refusal": (result or {}).get("refusal") if isinstance(result, dict) else None,
+            },
+        )
         ReceiptWriter(repo).emit(rec)
     except OSError:
         pass  # receipts must never break the verb they observe
@@ -497,11 +508,9 @@ def cmd_tokens(args: argparse.Namespace) -> int:
         elif mode == "symbol":
             out = {"hits": idx.symbol(args.query)}
         elif mode == "path":
-            out = {"hits": [{"path": p} for p in
-                            idx.by_path(args.query)]}
+            out = {"hits": [{"path": p} for p in idx.by_path(args.query)]}
         elif mode == "kind":
-            out = {"hits": [{"path": p} for p in
-                            idx.by_kind(args.query)]}
+            out = {"hits": [{"path": p} for p in idx.by_kind(args.query)]}
         else:
             out = {"hits": idx.search(args.query, args.limit)}
         out["mode"] = mode
@@ -511,9 +520,11 @@ def cmd_tokens(args: argparse.Namespace) -> int:
         if getattr(args, "prev_pack", None):
             try:
                 prev = json.loads(Path(args.prev_pack).read_text())
-                prev_files = {f["path"]: f.get("sha256", "")
-                              for f in prev.get("relevant_files", [])
-                              if isinstance(f, dict)}
+                prev_files = {
+                    f["path"]: f.get("sha256", "")
+                    for f in prev.get("relevant_files", [])
+                    if isinstance(f, dict)
+                }
             except (OSError, json.JSONDecodeError):
                 prev_files = None
         pack = ContextPackBuilder(idx, ledger).build(
@@ -603,12 +614,10 @@ def cmd_bench(args: argparse.Namespace) -> int:
     if args.bench_cmd == "scale":
         # cycle5 §317 — controlled-size graph + analytics store bench
         from platformforge.graph.bench import run_scale_benchmarks
-        sizes = tuple(int(s) for s in (args.sizes or "50,200,800")
-                      .split(","))
-        edges = tuple(int(s) for s in (args.edges or "100000,250000,500000")
-                      .split(","))
-        return _emit(run_scale_benchmarks(
-            sizes, edge_targets=edges, store_sweep=args.events), args)
+
+        sizes = tuple(int(s) for s in (args.sizes or "50,200,800").split(","))
+        edges = tuple(int(s) for s in (args.edges or "100000,250000,500000").split(","))
+        return _emit(run_scale_benchmarks(sizes, edge_targets=edges, store_sweep=args.events), args)
     fn = {"run": bench.run_benchmark, "tokens": bench.token_benchmark}[args.bench_cmd]
     return _emit(fn(repeat=args.repeat), args)
 
@@ -627,26 +636,25 @@ def cmd_freeze(args: argparse.Namespace) -> int:
             return _emit(m, args)
         pathlib.Path(out).parent.mkdir(parents=True, exist_ok=True)
         pathlib.Path(out).write_text(render_markdown(m), encoding="utf-8")
-        return _emit({"written": out, "sha": m["freeze_start_sha"],
-                      "agents": m["agent_contracts"]["count"]}, args)
+        return _emit(
+            {"written": out, "sha": m["freeze_start_sha"], "agents": m["agent_contracts"]["count"]}, args
+        )
     if args.freeze_cmd == "snapshot":
-        out = fz.write_snapshots(repo=args.path or ".",
-                                 out=args.out or "docs/freeze/snapshots")
+        out = fz.write_snapshots(repo=args.path or ".", out=args.out or "docs/freeze/snapshots")
         return _emit({"written": str(out)}, args)
     if args.freeze_cmd == "check":
-        r = fz.check_snapshots(
-            repo=args.path or ".",
-            snap_dir=args.out or "docs/freeze/snapshots")
+        r = fz.check_snapshots(repo=args.path or ".", snap_dir=args.out or "docs/freeze/snapshots")
         return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
     if args.freeze_cmd == "exception":
         import json as _json
+
         if not args.json_file:
-            return _emit({"refusal": "PF-FREEZE-EXCEPTION-INPUT",
-                          "unlock": "freeze exception --spec <file>"}, args, 2)
+            return _emit(
+                {"refusal": "PF-FREEZE-EXCEPTION-INPUT", "unlock": "freeze exception --spec <file>"}, args, 2
+            )
         data = _json.loads(pathlib.Path(args.json_file).read_text())
         errs = fz.exception_errors(data)
-        return _emit({"valid": not errs, "errors": errs}, args,
-                     0 if not errs else 1)
+        return _emit({"valid": not errs, "errors": errs}, args, 0 if not errs else 1)
     return 2
 
 
@@ -657,8 +665,7 @@ def cmd_cases(args: argparse.Namespace) -> int:
 
     root = args.path or ".platformforge/cases"
     if args.cases_cmd == "list":
-        return _emit({"cases": [c.to_dict() for c in discover_cases(root)]},
-                     args)
+        return _emit({"cases": [c.to_dict() for c in discover_cases(root)]}, args)
     if args.cases_cmd == "validate":
         r = validate_corpus(root)
         return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
@@ -671,23 +678,28 @@ def cmd_cases(args: argparse.Namespace) -> int:
         return _emit({"written": out}, args)
     if args.cases_cmd == "ledger":
         from platformforge.cases.ledgers import ledger_report
+
         return _emit(ledger_report(), args)
     if args.cases_cmd == "ledger-check":
         from platformforge.cases.ledgers import validate_ledgers
+
         r = validate_ledgers()
         return _emit(r, args, 0 if r["verdict"] == "pass" else 1)
     if args.cases_cmd == "route-audit":
         from platformforge.cases.routing_audit import audit_corpus
+
         return _emit(audit_corpus(root), args)
     if args.cases_cmd == "route-bench":
         from platformforge.cases.routing_audit import champion_challenger
-        return _emit(champion_challenger(
-            root, challenger=args.out or None), args)
+
+        return _emit(champion_challenger(root, challenger=args.out or None), args)
     if args.cases_cmd == "context-audit":
         from platformforge.cases.context_audit import audit_case, write_back
         from platformforge.cases.context_audit import audit_corpus as ctx_corpus
+
         if args.stamp:
             from platformforge.cases.casefile import discover_cases as dc
+
             for c in dc(root):
                 write_back(c, audit_case(c))
         return _emit(ctx_corpus(root), args)
@@ -748,44 +760,52 @@ def cmd_economy(args: argparse.Namespace) -> int:
             spent_budget=json.loads(args.spent or "{}"),
             remaining_budget=json.loads(args.remaining or "{}"),
             routing_profile=args.profile or "balanced",
-            deps=json.loads(args.deps or "{}"))
+            deps=json.loads(args.deps or "{}"),
+        )
         st.save(cp)
         return _emit({"checkpoint": cp.to_dict()}, args)
     if sub == "resume":
         from platformforge.economy.checkpoint import CheckpointStore
 
         st = CheckpointStore(Path(args.repo) / ".platformforge" / "checkpoints")
-        out = st.resume(args.run_id,
-                        current_deps=json.loads(args.deps or "{}"),
-                        requested_profile=args.profile or "")
+        out = st.resume(
+            args.run_id, current_deps=json.loads(args.deps or "{}"), requested_profile=args.profile or ""
+        )
         return _emit(out, args, 2 if "refusal" in out else 0)
     if sub == "reconcile":
         from platformforge.economy.reconcile import reconcile
 
-        out = reconcile(planned=json.loads(args.planned or "{}"),
-                        observed=json.loads(args.observed or "{}"),
-                        run_id=args.run_id or "")
+        out = reconcile(
+            planned=json.loads(args.planned or "{}"),
+            observed=json.loads(args.observed or "{}"),
+            run_id=args.run_id or "",
+        )
         return _emit(out.to_dict(), args)
     if sub == "doctor":
         from platformforge.economy.doctor import doctor
 
         out = doctor(args.repo)
-        return _emit(out, args, 2 if (args.strict and out["overall"]
-                                      in ("warn", "fail")) else 0)
+        return _emit(out, args, 2 if (args.strict and out["overall"] in ("warn", "fail")) else 0)
     if sub == "explain":
         from platformforge.economy.checkpoint import CheckpointStore
 
         st = CheckpointStore(Path(args.repo) / ".platformforge" / "checkpoints")
         cp = st.load(args.run_id or "")
         if cp is None:
-            return _emit({"refusal": "PF-CHECKPOINT-MISSING",
-                          "reason": f"no checkpoint for {args.run_id}",
-                          "unlock": "economy checkpoint --run-id "
-                                    f"{args.run_id} ..."},
-                         args, 2)
+            return _emit(
+                {
+                    "refusal": "PF-CHECKPOINT-MISSING",
+                    "reason": f"no checkpoint for {args.run_id}",
+                    "unlock": f"economy checkpoint --run-id {args.run_id} ...",
+                },
+                args,
+                2,
+            )
         from platformforge.economy.ledger import unified_view
-        return _emit({"run_id": args.run_id, "checkpoint": cp.to_dict(),
-                      "ledger": unified_view(args.repo)}, args)
+
+        return _emit(
+            {"run_id": args.run_id, "checkpoint": cp.to_dict(), "ledger": unified_view(args.repo)}, args
+        )
     return _emit(eng.report(), args)
 
 
@@ -901,33 +921,29 @@ def cmd_graph(args: argparse.Namespace) -> int:
     if sub == "at":
         # §82 — graph as of timestamp T (nearest snapshot ≤ T)
         from platformforge.graph import temporal as T
+
         if not args.at:
-            return _emit(
-                {"refusal": "PF-GRAPH-NO-TS",
-                 "unlock": "pass --at <ISO ts>"}, args, 2)
+            return _emit({"refusal": "PF-GRAPH-NO-TS", "unlock": "pass --at <ISO ts>"}, args, 2)
         snap = T.snapshot_at(args.repo, args.at)
         if snap is None:
             return _emit(
-                {"refusal": "PF-GRAPH-NO-SNAPSHOT",
-                 "unlock": "platformforge graph build <facts> first"},
-                args, 2)
+                {"refusal": "PF-GRAPH-NO-SNAPSHOT", "unlock": "platformforge graph build <facts> first"},
+                args,
+                2,
+            )
         g2 = T.graph_at(args.repo, args.at)
-        return _emit({"snapshot": snap,
-                      "stats": g2.stats() if g2 else None}, args)
+        return _emit({"snapshot": snap, "stats": g2.stats() if g2 else None}, args)
     if sub == "timeline":
         # §82 — temporal provenance: first-seen / last-observed
         from platformforge.graph import temporal as T
+
         out: dict[str, Any] = {}
         if args.edge_id:
-            out["edge_first_seen"] = T.edge_first_seen(
-                args.repo, args.edge_id)
+            out["edge_first_seen"] = T.edge_first_seen(args.repo, args.edge_id)
         if args.node:
-            out["node_last_observed"] = T.node_last_observed(
-                args.repo, args.node)
+            out["node_last_observed"] = T.node_last_observed(args.repo, args.node)
         if not out:
-            return _emit(
-                {"refusal": "PF-GRAPH-NO-TARGET",
-                 "unlock": "pass --edge-id and/or --node"}, args, 2)
+            return _emit({"refusal": "PF-GRAPH-NO-TARGET", "unlock": "pass --edge-id and/or --node"}, args, 2)
         return _emit(out, args)
     if sub == "view":
         # Graph Studio contract: ForgeGraphView/v1 of the latest graph,
@@ -937,9 +953,11 @@ def cmd_graph(args: argparse.Namespace) -> int:
         view = graphview.build_view(args.repo, snapshot=args.snapshot or None)
         if view is None:
             code = "PF-GRAPH-NO-SNAPSHOT" if args.snapshot else "PF-GRAPH-NOGRAPH"
-            unlock = ("platformforge graph snapshots — pick a saved hash"
-                      if args.snapshot
-                      else "platformforge graph build <facts.json>")
+            unlock = (
+                "platformforge graph snapshots — pick a saved hash"
+                if args.snapshot
+                else "platformforge graph build <facts.json>"
+            )
             return _emit({"refusal": code, "unlock": unlock}, args, 2)
         return _emit(view.to_dict(), args)
     if sub == "ui":
@@ -952,16 +970,19 @@ def cmd_graph(args: argparse.Namespace) -> int:
             user_state_rel="~/.platformforge",
         ):
             return _emit(
-                {"refusal": "PF-GRAPH-STUDIO-DISABLED",
-                 "detail": "Graph Studio declined at install "
-                 "(components.json: graph_studio=false)",
-                 "unlock": "reinstall with the graph-studio component"},
-                args, 2)
+                {
+                    "refusal": "PF-GRAPH-STUDIO-DISABLED",
+                    "detail": "Graph Studio declined at install (components.json: graph_studio=false)",
+                    "unlock": "reinstall with the graph-studio component",
+                },
+                args,
+                2,
+            )
         view = graphview.build_view(args.repo)
         if view is None:
             return _emit(
-                {"refusal": "PF-GRAPH-NOGRAPH",
-                 "unlock": "platformforge graph build <facts.json>"}, args, 2)
+                {"refusal": "PF-GRAPH-NOGRAPH", "unlock": "platformforge graph build <facts.json>"}, args, 2
+            )
         return open_studio(
             [view],
             open_browser=not getattr(args, "no_browser", False),
@@ -1288,22 +1309,25 @@ def cmd_context(args: argparse.Namespace) -> int:
 
     gw = ContextGateway(args.repo)
     if sub == "capsule":
-        res = gw.build(ContextRequest(
-            task=args.task, scope=args.scope,
-            budget_bytes=args.budget_bytes,
-            essential_bytes=args.essential_bytes,
-            required_sections=args.required or [],
-            role=args.role,
-            facts=json.loads(args.facts or "[]"),
-            findings=json.loads(args.findings or "[]"),
-            rules=args.rules or [],
-            knowledge_refs=args.knowledge or [],
-            graph_refs=args.graph_refs or [],
-            open_questions=args.questions or []))
+        res = gw.build(
+            ContextRequest(
+                task=args.task,
+                scope=args.scope,
+                budget_bytes=args.budget_bytes,
+                essential_bytes=args.essential_bytes,
+                required_sections=args.required or [],
+                role=args.role,
+                facts=json.loads(args.facts or "[]"),
+                findings=json.loads(args.findings or "[]"),
+                rules=args.rules or [],
+                knowledge_refs=args.knowledge or [],
+                graph_refs=args.graph_refs or [],
+                open_questions=args.questions or [],
+            )
+        )
         return _emit(res, args, 2 if "refusal" in res else 0)
     if sub == "inspect":
-        return _emit(gw.inspect(args.ref), args,
-                     2 if "refusal" in gw.inspect(args.ref) else 0)
+        return _emit(gw.inspect(args.ref), args, 2 if "refusal" in gw.inspect(args.ref) else 0)
     if sub == "expand":
         return _emit(gw.expand(args.ref, args.section or ""), args)
     if sub == "delta":
@@ -1322,13 +1346,10 @@ def cmd_cache(args: argparse.Namespace) -> int:
     if sub == "stats":
         return _emit(store.stats(), args)
     if sub == "inspect":
-        dec, payload = store.get(args.layer, args.scope or args.key,
-                                 json.loads(args.deps or "{}"))
-        return _emit({"decision": dec.to_dict(), "payload": payload},
-                     args)
+        dec, payload = store.get(args.layer, args.scope or args.key, json.loads(args.deps or "{}"))
+        return _emit({"decision": dec.to_dict(), "payload": payload}, args)
     if sub == "invalidate":
-        return _emit(store.invalidate_dep(args.dep, args.value or ""),
-                     args)
+        return _emit(store.invalidate_dep(args.dep, args.value or ""), args)
     if sub == "gc":
         return _emit(store.gc(), args)
     return _emit({"error": f"unknown cache verb {sub}"}, args, 1)
@@ -1341,28 +1362,41 @@ def cmd_routing(args: argparse.Namespace) -> int:
     sub = args.routing_cmd
     if sub == "explain":
         from platformforge.routing.decision import decide
+
         req = RoutingRequest(
-            task=args.task, profile=args.profile, risk=args.risk,
-            signal=json.loads(args.signal or "{}"))
-        rec = receipt(req, decide(req),
-                      json.loads(args.estimated or "{}"))
-        return _emit({"request": {"task": req.task,
-                                  "profile": req.profile,
-                                  "effective_profile": req.effective_profile(),
-                                  "risk": req.risk},
-                      "receipt": rec}, args)
+            task=args.task, profile=args.profile, risk=args.risk, signal=json.loads(args.signal or "{}")
+        )
+        rec = receipt(req, decide(req), json.loads(args.estimated or "{}"))
+        return _emit(
+            {
+                "request": {
+                    "task": req.task,
+                    "profile": req.profile,
+                    "effective_profile": req.effective_profile(),
+                    "risk": req.risk,
+                },
+                "receipt": rec,
+            },
+            args,
+        )
     if sub == "compare":
         out = promote_verdict(
             champion=json.loads(args.champion or "{}"),
             challenger=json.loads(args.challenger or "{}"),
-            human_approved=args.approved)
+            human_approved=args.approved,
+        )
         return _emit(out, args, 2 if out["verdict"] == "rejected" else 0)
     if sub == "scorecard":
         from platformforge.routing.decision import RoutingScorecard
+
         sc = RoutingScorecard(
-            run_id=args.run_id or "", mode=args.mode,
-            correctness=args.correctness, tokens=args.tokens,
-            agents=args.agents, provider_calls=args.provider_calls)
+            run_id=args.run_id or "",
+            mode=args.mode,
+            correctness=args.correctness,
+            tokens=args.tokens,
+            agents=args.agents,
+            provider_calls=args.provider_calls,
+        )
         return _emit(sc.to_dict(), args)
     return _emit({"error": f"unknown routing verb {sub}"}, args, 1)
 
@@ -1383,9 +1417,8 @@ def cmd_policy(args: argparse.Namespace) -> int:
 
     if not Path(args.path).is_file():
         return _emit(
-            {"refusal": "PF-POLICY-NO-FACTS",
-             "unlock": "platformforge policy check <facts.json>"},
-            args, 2)
+            {"refusal": "PF-POLICY-NO-FACTS", "unlock": "platformforge policy check <facts.json>"}, args, 2
+        )
     facts = [Fact.from_dict(f) for f in _json_doc(args.path, "facts")]
     findings, skipped = RuleEngine(rules).evaluate(facts)
     out = {
@@ -1465,8 +1498,7 @@ def cmd_hosts(args: argparse.Namespace) -> int:
     """Hosts observe/launch — see ``distribution.hostflow`` for the contract."""
     from platformforge.distribution import hostflow
 
-    receipt = hostflow.hosts_flow(
-        args.host, repo=Path(args.repo), launch=args.launch)
+    receipt = hostflow.hosts_flow(args.host, repo=Path(args.repo), launch=args.launch)
     return _emit(receipt, args, 2 if receipt["hosts"][0].get("state") == "refused" else 0)
 
 
@@ -1849,10 +1881,14 @@ def cmd_live(args: argparse.Namespace) -> int:
     sub = args.live_cmd
     # §25 — offline mode refuses live transports before any subprocess
     if getattr(args, "offline", False) and sub in ("snapshot", "doctor"):
-        return _emit({"refusal": "PF-LIVE-OFFLINE",
-                      "unlock": f"`live {sub}` spawns provider binaries — "
-                                "drop --offline or use replay fixtures"},
-                     args, 2)
+        return _emit(
+            {
+                "refusal": "PF-LIVE-OFFLINE",
+                "unlock": f"`live {sub}` spawns provider binaries — drop --offline or use replay fixtures",
+            },
+            args,
+            2,
+        )
     if sub == "rbac":
         return _emit(required_rbac(namespaced_only=args.namespaced_only), args)
     if sub == "required-permissions":
@@ -1872,8 +1908,7 @@ def cmd_live(args: argparse.Namespace) -> int:
         store = ObservationStore(args.repo)
         out = store.status()
         out["cursors"] = CursorStore(args.repo).all()
-        out["change_events"] = len(
-            ChangeJournal(args.repo).read(limit=1_000_000))
+        out["change_events"] = len(ChangeJournal(args.repo).read(limit=1_000_000))
         return _emit(out, args)
     if sub == "changes":
         # §38/§78 — CloudTrail-style change events (T1 evidence).
@@ -1887,37 +1922,47 @@ def cmd_live(args: argparse.Namespace) -> int:
             res = journal.append(evs)
             return _emit({"journal": res}, args)
         if not args.collect:
-            return _emit({"events": journal.read(
-                since=args.since or "", resource=args.resource or "")}, args)
+            return _emit({"events": journal.read(since=args.since or "", resource=args.resource or "")}, args)
         if getattr(args, "offline", False):
             return _emit(
-                {"refusal": "PF-LIVE-OFFLINE",
-                 "unlock": "`live changes --collect` spawns the aws "
-                           "adapter — drop --offline"}, args, 2)
+                {
+                    "refusal": "PF-LIVE-OFFLINE",
+                    "unlock": "`live changes --collect` spawns the aws adapter — drop --offline",
+                },
+                args,
+                2,
+            )
         if args.provider != "aws":
             return _emit(
-                {"refusal": "PF-LIVE-UNKNOWN-PROVIDER",
-                 "unlock": "change-event collection is currently "
-                           "aws/cloudtrail only"}, args, 2)
+                {
+                    "refusal": "PF-LIVE-UNKNOWN-PROVIDER",
+                    "unlock": "change-event collection is currently aws/cloudtrail only",
+                },
+                args,
+                2,
+            )
         if not aws_transport.aws_available():
             return _emit(
-                {"refusal": "PF-LIVE-NO-AWSCLI",
-                 "unlock": "install aws CLI + configure credentials"},
-                args, 2)
+                {"refusal": "PF-LIVE-NO-AWSCLI", "unlock": "install aws CLI + configure credentials"}, args, 2
+            )
         collector = AwsCollector(transport=aws_transport.make_transport())
         pf = collector.preflight()
         if not pf.get("ok"):
-            return _emit({"refusal": "PF-LIVE-AWS-CREDS",
-                          "unlock": pf.get("hint", "configure creds")},
-                         args, 2)
+            return _emit(
+                {"refusal": "PF-LIVE-AWS-CREDS", "unlock": pf.get("hint", "configure creds")}, args, 2
+            )
         events: list = []
-        for region in (args.region or [""]):
-            events.extend(collector.lookup_events(
-                region=region, account=collector.account,
-                start_time=args.since or "", end_time=args.until or ""))
+        for region in args.region or [""]:
+            events.extend(
+                collector.lookup_events(
+                    region=region,
+                    account=collector.account,
+                    start_time=args.since or "",
+                    end_time=args.until or "",
+                )
+            )
         res = journal.append(events)
-        return _emit({"collected": len(events), "journal": res,
-                      "regions": args.region or ["default"]}, args)
+        return _emit({"collected": len(events), "journal": res, "regions": args.region or ["default"]}, args)
     if sub == "snapshot":
         scope = ObservationScope(namespaces=args.namespace or [], resource_types=args.resource_type or [])
         if args.selector:
@@ -2289,10 +2334,14 @@ def cmd_ops(args: argparse.Namespace) -> int:
 
     if sub == "run":
         if getattr(args, "offline", False) and args.execute:
-            return _emit({"refusal": "PF-OPS-OFFLINE",
-                          "unlock": "--execute spawns host transports; "
-                                    "drop --offline or run dry-run"},
-                         args, 2)
+            return _emit(
+                {
+                    "refusal": "PF-OPS-OFFLINE",
+                    "unlock": "--execute spawns host transports; drop --offline or run dry-run",
+                },
+                args,
+                2,
+            )
         spec = _load_yaml_or_json(args.spec)
         return _ops_run(args, spec)
 
@@ -2349,8 +2398,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
             return _emit(
                 {
                     "refusal": "PF-OPS-UNKNOWN-OPERATION",
-                    "unlock": "rollback needs a stored op+envelope; "
-                    "run `ops run` first",
+                    "unlock": "rollback needs a stored op+envelope; run `ops run` first",
                 },
                 args,
                 2,
@@ -2375,14 +2423,16 @@ def cmd_ops(args: argparse.Namespace) -> int:
         ledger = st.load_ledger(args.operation_id)
         mats = st.load_materials(args.operation_id)
         out = engine.execute_rollback(
-            op, env, transports=transports, ledger=ledger,
+            op,
+            env,
+            transports=transports,
+            ledger=ledger,
             locks=LockTable(),
             materials=mats,
-            trigger={"type": "manual",
-                     "requested_by": getattr(args, "actor", "") or "cli",
-                     "at": now_iso()},
+            trigger={"type": "manual", "requested_by": getattr(args, "actor", "") or "cli", "at": now_iso()},
             post_rollback_state=json.loads(args.post_rollback)
-            if getattr(args, "post_rollback", None) else None,
+            if getattr(args, "post_rollback", None)
+            else None,
             dry_run=not args.execute,
         )
         st.save(op, ledger)
@@ -2393,9 +2443,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
         from platformforge.ops.risk import classify_reversibility
 
         doc = _load_plan_doc(args.plan)
-        plan = engine.plan(
-            doc["intent"], steps=doc["steps"], expected_delta=doc["expected_delta"]
-        )
+        plan = engine.plan(doc["intent"], steps=doc["steps"], expected_delta=doc["expected_delta"])
         risk = engine.assess_risk(plan, {"environment": args.environment})
         worst = risk["risk_class"]
         actions = {s.action for s in plan.steps}
@@ -2429,8 +2477,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
         # Phase R wiring — rebuild the operational subgraph from
         # stored ledgers/envelopes (derived, never duplicated state).
         st = OperationStore(Path(args.repo) / ".platformforge/operations")
-        ids = ([args.operation_id] if args.operation_id
-               else st.list_operations())
+        ids = [args.operation_id] if args.operation_id else st.list_operations()
         nodes: dict = {}
         edges: list = []
         missing: list = []
@@ -2442,13 +2489,17 @@ def cmd_ops(args: argparse.Namespace) -> int:
             for n in proj["nodes"]:
                 nodes[n["node_id"]] = n
             edges.extend(proj["edges"])
-        return _emit({"nodes": sorted(nodes.values(),
-                                      key=lambda n: n["node_id"]),
-                      "edges": edges,
-                      "operations": [i for i in ids if i not in missing],
-                      "missing": missing,
-                      "counts": {"nodes": len(nodes), "edges": len(edges)}},
-                     args, 2 if missing and not nodes else 0)
+        return _emit(
+            {
+                "nodes": sorted(nodes.values(), key=lambda n: n["node_id"]),
+                "edges": edges,
+                "operations": [i for i in ids if i not in missing],
+                "missing": missing,
+                "counts": {"nodes": len(nodes), "edges": len(edges)},
+            },
+            args,
+            2 if missing and not nodes else 0,
+        )
 
     if sub in ("store-list", "store-verify"):
         st = OperationStore(Path(args.repo) / ".platformforge/operations")
@@ -2509,55 +2560,61 @@ def _ops_run(args, spec: dict) -> int:
     # rollback declaration precedes risk — the status feeds the risk
     # ceiling and policy inputs (cycle 4.1 §F)
     rb = derive_rollback(
-        [{"step_id": s.step_id, "action": s.action, "params": s.params}
-         for s in steps],
+        [{"step_id": s.step_id, "action": s.action, "params": s.params} for s in steps],
         {
             "environment": spec.get("environment"),
             "automatic_allowed": spec.get("auto_rollback", False),
         },
     )
     risk = engine.assess_risk(
-        plan, {"environment": spec.get("environment", "unknown")},
-        rollback_status=rb.status)
+        plan, {"environment": spec.get("environment", "unknown")}, rollback_status=rb.status
+    )
 
     # §GOVERN — cost/security gates evaluate declared change context
     # before policy/approval. fail blocks everywhere; unknown blocks
     # production (unknown ≠ clean).
     from platformforge.ops import gates as G
+
     gspec = spec.get("gates") or {}
     environment = spec.get("environment", "unknown")
     gate_out: dict = {"verdict": "skipped", "gates": []}
     cost_gate: dict = {}
     if gspec:
         sec = G.security_gates(
-            diff=gspec.get("diff") or ed,
-            ctx=gspec.get("context") or {},
-            vuln_scan=gspec.get("vuln_scan"))
+            diff=gspec.get("diff") or ed, ctx=gspec.get("context") or {}, vuln_scan=gspec.get("vuln_scan")
+        )
         gate_out = sec
         if gspec.get("cost"):
-            cd = G.CostDelta(**{
-                k: v for k, v in gspec["cost"].items()
-                if k in G.CostDelta.__dataclass_fields__})
+            cd = G.CostDelta(
+                **{k: v for k, v in gspec["cost"].items() if k in G.CostDelta.__dataclass_fields__}
+            )
             cost_gate = cd.gate(
                 budget_increase_max=gspec.get("budget_increase_max"),
-                increase_pct_max=gspec.get("increase_pct_max"))
+                increase_pct_max=gspec.get("increase_pct_max"),
+            )
             gate_out["cost"] = cost_gate
             gate_out["cost_delta"] = cd.to_dict()
             rank = {"fail": 3, "unknown": 2, "skipped": 1, "pass": 0}
-            if rank.get(cost_gate["status"], 2) > rank.get(
-                    gate_out["verdict"], 0):
+            if rank.get(cost_gate["status"], 2) > rank.get(gate_out["verdict"], 0):
                 gate_out["verdict"] = cost_gate["status"]
-        blocking = ("fail",) if environment not in (
-            "prod", "production") else ("fail", "unknown")
+        blocking = ("fail",) if environment not in ("prod", "production") else ("fail", "unknown")
         if gate_out["verdict"] in blocking:
             return _emit(
-                {"ok": False, "stage": "govern",
-                 "refusal": {"refusal": "PF-OPS-GATE-FAIL",
-                             "unlock": "resolve failing gate or "
-                                       "supply missing evidence",
-                             "verdict": gate_out["verdict"]},
-                 "gates": gate_out,
-                 "simulation": sim.to_dict(), "risk": risk}, args, 2)
+                {
+                    "ok": False,
+                    "stage": "govern",
+                    "refusal": {
+                        "refusal": "PF-OPS-GATE-FAIL",
+                        "unlock": "resolve failing gate or supply missing evidence",
+                        "verdict": gate_out["verdict"],
+                    },
+                    "gates": gate_out,
+                    "simulation": sim.to_dict(),
+                    "risk": risk,
+                },
+                args,
+                2,
+            )
     policies = [Policy(**p) for p in spec.get("policies", [])]
     decisions = (
         [
@@ -2677,9 +2734,9 @@ def _ops_run(args, spec: dict) -> int:
             slo_contract=v.get("slo"),
             metrics=v.get("metrics"),
             mutating=any(
-                (spec_for(a["action"]) or None) is not None
-                and spec_for(a["action"]).mutating
-                for a in env.actions),
+                (spec_for(a["action"]) or None) is not None and spec_for(a["action"]).mutating
+                for a in env.actions
+            ),
         )
         result["verify"] = vr.to_dict()
         result["final"] = engine.finalize_verify(op, ledger, {"convergence": vr.convergence})
@@ -2689,8 +2746,7 @@ def _ops_run(args, spec: dict) -> int:
         # rollback-planned for a human `ops rollback` call.
         if op.state == "rollback-planned":
             rbp = result.get("rollback_plan") or env.rollback
-            if (rbp or {}).get("status") == "executable" and \
-                    (rbp or {}).get("automatic"):
+            if (rbp or {}).get("status") == "executable" and (rbp or {}).get("automatic"):
                 result["rollback"] = engine.execute_rollback(
                     op,
                     env,
@@ -2699,9 +2755,7 @@ def _ops_run(args, spec: dict) -> int:
                     completed_results=result.get("results"),
                     materials=result.get("materials"),
                     rollback_plan=rbp,
-                    trigger={"type": "verification-failed",
-                             "observed_delta": ed,
-                             "at": now_iso()},
+                    trigger={"type": "verification-failed", "observed_delta": ed, "at": now_iso()},
                     post_rollback_state=(spec.get("post_rollback") or {}),
                     dry_run=not args.execute,
                 )
@@ -2781,12 +2835,15 @@ def cmd_finops(args: argparse.Namespace) -> int:
     from platformforge import finops as F
 
     sub = args.finops_cmd
-    if sub in {"costs", "allocate", "focus", "focus-validate", "unit",
-               "ingest", "report"} and not Path(args.path).is_file():
+    if (
+        sub in {"costs", "allocate", "focus", "focus-validate", "unit", "ingest", "report"}
+        and not Path(args.path).is_file()
+    ):
         return _emit(
-            {"refusal": "PF-FINOPS-NO-INPUT",
-             "unlock": "platformforge finops <verb> <billing.json|csv>"},
-            args, 2)
+            {"refusal": "PF-FINOPS-NO-INPUT", "unlock": "platformforge finops <verb> <billing.json|csv>"},
+            args,
+            2,
+        )
     if sub == "costs":
         doc = F.cost_facts(args.path)
         return _emit({**doc, "summary": F.cost_summary(doc["facts"])}, args)
@@ -2916,6 +2973,7 @@ def build_parser() -> argparse.ArgumentParser:
     # FE-003 — additive portable distribution/workspace surface.
     # Business logic stays in platformforge.distribution/workspace.
     from platformforge.portable_cli import register as register_portable_cli
+
     register_portable_cli(sub, _add_common, _emit)
 
     verb("init", cmd_init, "scaffold .platformforge/", lambda sp: sp.add_argument("--name", default=""))
@@ -2957,16 +3015,16 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("tokens_cmd", choices=["index", "search", "pack", "delta", "stats", "ledger"])
     sp.add_argument("--task", default="")
     sp.add_argument("--query", default="")
-    sp.add_argument("--mode", default="literal",
-                    choices=["literal", "regex", "symbol", "path", "kind"])
+    sp.add_argument("--mode", default="literal", choices=["literal", "regex", "symbol", "path", "kind"])
     sp.add_argument("--limit", type=int, default=20)
     sp.add_argument("--changed", nargs="*")
     sp.add_argument("--input-budget", type=int, default=None)
     sp.add_argument("--risk", default=None, choices=["low", "medium", "high", "critical"])
     sp.add_argument("--graph-nodes", nargs="*", help="seed nodes for graph-aware ranking")
     sp.add_argument("--prev-pack", default=None, help="previous pack hash — delta-aware dedup")
-    sp.add_argument("--allow-escalate", action="store_true",
-                    help="pack: escalate beyond budget instead of refusing")
+    sp.add_argument(
+        "--allow-escalate", action="store_true", help="pack: escalate beyond budget instead of refusing"
+    )
     sp.set_defaults(func=cmd_tokens)
 
     sp = sub.add_parser("rtk", help="compact command output (rtk)")
@@ -2998,9 +3056,18 @@ def build_parser() -> argparse.ArgumentParser:
         "economy_cmd",
         nargs="?",
         default="report",
-        choices=["report", "strategy", "compare", "qpt", "qpt-bench",
-                 "checkpoint", "resume", "reconcile", "doctor",
-                 "explain"],
+        choices=[
+            "report",
+            "strategy",
+            "compare",
+            "qpt",
+            "qpt-bench",
+            "checkpoint",
+            "resume",
+            "reconcile",
+            "doctor",
+            "explain",
+        ],
     )
     sp.add_argument("--signal", default="", help="JSON TaskSignal (strategy/compare)")
     sp.add_argument("--path", default="", help="facts doc for qpt")
@@ -3097,11 +3164,10 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="graph ui: serve without opening a browser (SSH/remote)",
     )
+    sp.add_argument("--port", type=int, default=0, help="graph ui: port (default ephemeral)")
     sp.add_argument(
-        "--port", type=int, default=0, help="graph ui: port (default ephemeral)"
-    )
-    sp.add_argument(
-        "--snapshot", default="",
+        "--snapshot",
+        default="",
         help="graph view: emit the view of a saved snapshot hash",
     )
     sp.set_defaults(func=cmd_graph)
@@ -3218,12 +3284,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--after", default="", help="drift: obs id/file")
     sp.add_argument("--incident", default="", help="incident: incident JSON {timestamp,resources}")
     sp.add_argument("--changes", default="", help="incident: candidate changes JSON list")
-    sp.add_argument("--events-file", default="",
-                    help="changes: append ChangeEvents from JSON file (offline-safe)")
-    sp.add_argument("--collect", action="store_true",
-                    help="changes: collect via provider adapter (host-side)")
-    sp.add_argument("--gc", action="store_true",
-                    help="changes: garbage-collect the change journal")
+    sp.add_argument(
+        "--events-file", default="", help="changes: append ChangeEvents from JSON file (offline-safe)"
+    )
+    sp.add_argument(
+        "--collect", action="store_true", help="changes: collect via provider adapter (host-side)"
+    )
+    sp.add_argument("--gc", action="store_true", help="changes: garbage-collect the change journal")
     sp.add_argument("--since", default="", help="changes: events after ISO ts")
     sp.add_argument("--until", default="", help="changes: events before ISO ts")
     sp.add_argument("--resource", default="", help="changes: filter by resource id")
@@ -3281,24 +3348,32 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--bind", default="", help="runbook bind params JSON")
     sp.add_argument("name_pos", nargs="?", default="", help="runbook id or 'list'")
     sp.add_argument("--operation-id", default="")
-    sp.add_argument("--post-rollback", default="",
-                    help="rollback: post-rollback observation JSON "
-                         "{step_id: {dim: value}} for verification")
+    sp.add_argument(
+        "--post-rollback",
+        default="",
+        help="rollback: post-rollback observation JSON {step_id: {dim: value}} for verification",
+    )
     sp.add_argument("--resource", default="", help="history filter")
     sp.add_argument("--evidence-tier", default="", help="autorem-eval")
     # ops approve — mint a hash-bound approval artifact (never executes)
     sp.add_argument("--approval-id", default="")
-    sp.add_argument("--subject-hash", default="",
-                    help="envelope/plan hash being approved")
+    sp.add_argument("--subject-hash", default="", help="envelope/plan hash being approved")
     sp.add_argument("--subject-kind", default="execution-envelope")
     sp.add_argument("--actor", default="", help="human identity")
-    sp.add_argument("--actor-kind", default="human",
-                    choices=["human", "agent", "host", "system"])
+    sp.add_argument("--actor-kind", default="human", choices=["human", "agent", "host", "system"])
     sp.add_argument("--role", default="")
-    sp.add_argument("--approval-type", default="single-human",
-                    choices=["automatic-policy", "single-human",
-                             "resource-owner", "platform-owner",
-                             "security-review", "dual-human"])
+    sp.add_argument(
+        "--approval-type",
+        default="single-human",
+        choices=[
+            "automatic-policy",
+            "single-human",
+            "resource-owner",
+            "platform-owner",
+            "security-review",
+            "dual-human",
+        ],
+    )
     sp.add_argument("--expires-at", default="")
     sp.add_argument("--bounds", default="", help="parameter bounds JSON")
     sp.add_argument("--scope", default="", help="csv resource scope")
@@ -3329,58 +3404,59 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(sp)
     sp.add_argument(
         "fleet_cmd",
-        choices=["list", "status", "coverage", "graph", "risks", "costs",
-                 "capacity", "incidents", "operations", "drift",
-                 "golden-path", "policies", "recommendations", "report"])
-    sp.add_argument("path", nargs="?", default="",
-                    help="fleet dir (lab/fleets/acme shape)")
-    sp.add_argument("--question", default="",
-                    help="risks: run a single fleet question")
+        choices=[
+            "list",
+            "status",
+            "coverage",
+            "graph",
+            "risks",
+            "costs",
+            "capacity",
+            "incidents",
+            "operations",
+            "drift",
+            "golden-path",
+            "policies",
+            "recommendations",
+            "report",
+        ],
+    )
+    sp.add_argument("path", nargs="?", default="", help="fleet dir (lab/fleets/acme shape)")
+    sp.add_argument("--question", default="", help="risks: run a single fleet question")
     sp.add_argument("--limit", type=int, default=0)
     sp.add_argument("--window", default="", help="drift window (24h/7d/30d/90d)")
     sp.set_defaults(func=lambda a: _emit(cmd_fleet(a), a))
 
     sp = sub.add_parser("analytics", help="analytics summary/metric/maturity")
     _add_common(sp)
-    sp.add_argument("analytics_cmd",
-                    choices=["summary", "metric", "maturity"])
+    sp.add_argument("analytics_cmd", choices=["summary", "metric", "maturity"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--id", default="", help="metric id")
     sp.set_defaults(func=lambda a: _emit(cmd_analytics(a), a))
 
-    sp = sub.add_parser("optimize",
-                        help="optimization scan → ChangeIntent only")
+    sp = sub.add_parser("optimize", help="optimization scan → ChangeIntent only")
     _add_common(sp)
-    sp.add_argument("optimize_cmd",
-                    choices=["scan", "list", "explain", "plan", "portfolio"])
+    sp.add_argument("optimize_cmd", choices=["scan", "list", "explain", "plan", "portfolio"])
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--id", default="", help="recommendation id")
-    sp.add_argument("--out", default="",
-                    help="plan: write the ChangeIntent doc to this file")
+    sp.add_argument("--out", default="", help="plan: write the ChangeIntent doc to this file")
     sp.add_argument("--limit", type=int, default=0)
     sp.set_defaults(func=lambda a: _emit(cmd_optimize(a), a))
 
     sp = sub.add_parser("ai", help="AI platform awareness (bounded)")
     _add_common(sp)
     sp.add_argument("ai_cmd", choices=["workloads", "gpu", "economics"])
-    sp.add_argument("path", nargs="?", default="",
-                    help="yaml input (resources / capacity doc)")
+    sp.add_argument("path", nargs="?", default="", help="yaml input (resources / capacity doc)")
     sp.add_argument("--cost", type=float, default=None)
-    sp.add_argument("--denominators", default="",
-                    help='JSON {tokens,inferences,gpu_hours}')
+    sp.add_argument("--denominators", default="", help="JSON {tokens,inferences,gpu_hours}")
     sp.set_defaults(func=lambda a: _emit(cmd_ai(a), a))
 
-    sp = sub.add_parser("federation",
-                        help="intelligence exchange — no credentials")
+    sp = sub.add_parser("federation", help="intelligence exchange — no credentials")
     _add_common(sp)
-    sp.add_argument("federation_cmd",
-                    choices=["manifest", "export", "query"])
-    sp.add_argument("path", nargs="?", default="",
-                    help="payload yaml (export)")
-    sp.add_argument("question", nargs="?", default="",
-                    help="fleet question (query)")
-    sp.add_argument("--nodes", nargs="*", default=[],
-                    help="fleet dirs (query)")
+    sp.add_argument("federation_cmd", choices=["manifest", "export", "query"])
+    sp.add_argument("path", nargs="?", default="", help="payload yaml (export)")
+    sp.add_argument("question", nargs="?", default="", help="fleet question (query)")
+    sp.add_argument("--nodes", nargs="*", default=[], help="fleet dirs (query)")
     sp.add_argument("--classification", default="")
     sp.add_argument("--manifest", default="")
     sp.add_argument("--node-id", default="")
@@ -3464,9 +3540,12 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_context,
         "context pack for a task; capsule/inspect/expand/delta/gc",
         lambda sp: (
-            sp.add_argument("context_cmd", nargs="?", default="pack",
-                            choices=["pack", "capsule", "inspect",
-                                     "expand", "delta", "gc"]),
+            sp.add_argument(
+                "context_cmd",
+                nargs="?",
+                default="pack",
+                choices=["pack", "capsule", "inspect", "expand", "delta", "gc"],
+            ),
             sp.add_argument("--task", default=""),
             sp.add_argument("--input-budget", type=int, default=None),
             sp.add_argument("--changed", nargs="*"),
@@ -3490,9 +3569,7 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_cache,
         "multilayer cache stats/inspect/invalidate/gc",
         lambda sp: (
-            sp.add_argument("cache_cmd",
-                            choices=["stats", "inspect", "invalidate",
-                                     "gc"]),
+            sp.add_argument("cache_cmd", choices=["stats", "inspect", "invalidate", "gc"]),
             sp.add_argument("--layer", default="fact"),
             sp.add_argument("--key", default=""),
             sp.add_argument("--scope", default=""),
@@ -3506,8 +3583,7 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_routing,
         "routing explain/compare/scorecard",
         lambda sp: (
-            sp.add_argument("routing_cmd",
-                            choices=["explain", "compare", "scorecard"]),
+            sp.add_argument("routing_cmd", choices=["explain", "compare", "scorecard"]),
             sp.add_argument("--task", default=""),
             sp.add_argument("--profile", default="balanced"),
             sp.add_argument("--risk", default="low"),
@@ -3562,11 +3638,14 @@ def build_parser() -> argparse.ArgumentParser:
         "AI host observe + optional launch (integrate is the setup path)",
         lambda sp: (
             sp.add_argument(
-                "host", nargs="?", default="all",
+                "host",
+                nargs="?",
+                default="all",
                 choices=["all", "claude", "codex", "devin", "copilot"],
             ),
-            sp.add_argument("--launch", action="store_true",
-                            help="launch the host REPL in the repo (TTY only)"),
+            sp.add_argument(
+                "--launch", action="store_true", help="launch the host REPL in the repo (TTY only)"
+            ),
         ),
     )
     verb(
@@ -3574,10 +3653,14 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_portal,
         "optional local web portal (127.0.0.1, session token) — never inside MCP",
         lambda sp: (
-            sp.add_argument("--no-browser", action="store_true",
-                            help="only print the session URL — SSH/headless or manual open"),
-            sp.add_argument("--port", type=int, default=0,
-                            help="fixed port (default: a free port of the system)"),
+            sp.add_argument(
+                "--no-browser",
+                action="store_true",
+                help="only print the session URL — SSH/headless or manual open",
+            ),
+            sp.add_argument(
+                "--port", type=int, default=0, help="fixed port (default: a free port of the system)"
+            ),
         ),
     )
     verb(
@@ -3662,11 +3745,10 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("bench_cmd", choices=["run", "tokens", "scale"], nargs="?", default="run")
     sp.add_argument("--repeat", type=int, default=3)
     sp.add_argument("--sizes", help="comma list for scale bench (default 50,200,800)")
-    sp.add_argument("--edges", help="comma list for edge sweep "
-                    "(default 100000,250000,500000)")
-    sp.add_argument("--events", action="store_true",
-                    help="also run the analytics store event sweep "
-                         "(10k/100k/1M)")
+    sp.add_argument("--edges", help="comma list for edge sweep (default 100000,250000,500000)")
+    sp.add_argument(
+        "--events", action="store_true", help="also run the analytics store event sweep (10k/100k/1M)"
+    )
     sp.set_defaults(func=cmd_bench)
 
     sp = sub.add_parser("freeze", help="architecture freeze governance")
@@ -3677,23 +3759,33 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--out", default="")
-    sp.add_argument("--spec", dest="json_file", default="",
-                    help="FeatureException JSON for `freeze exception`")
+    sp.add_argument(
+        "--spec", dest="json_file", default="", help="FeatureException JSON for `freeze exception`"
+    )
     sp.set_defaults(func=cmd_freeze)
 
     sp = sub.add_parser("cases", help="real-world case corpus + replay")
     _add_common(sp)
-    sp.add_argument("cases_cmd",
-                    choices=["list", "validate", "replay", "template",
-                             "ledger", "ledger-check", "route-audit",
-                             "route-bench", "context-audit"])
+    sp.add_argument(
+        "cases_cmd",
+        choices=[
+            "list",
+            "validate",
+            "replay",
+            "template",
+            "ledger",
+            "ledger-check",
+            "route-audit",
+            "route-bench",
+            "context-audit",
+        ],
+    )
     sp.add_argument("path", nargs="?", default="")
     sp.add_argument("--tier", default="", choices=["golden", "holdout"])
-    sp.add_argument("--out", default="",
-                    help="challenger routing.yaml for route-bench")
-    sp.add_argument("--stamp", action="store_true",
-                    help="context-audit: write measured context_cost "
-                         "back into case.yaml")
+    sp.add_argument("--out", default="", help="challenger routing.yaml for route-bench")
+    sp.add_argument(
+        "--stamp", action="store_true", help="context-audit: write measured context_cost back into case.yaml"
+    )
     sp.set_defaults(func=cmd_cases)
     return p
 
@@ -3714,9 +3806,11 @@ def main(argv: list[str] | None = None) -> int:
     if not argv:
         try:
             import sys as _sys
+
             if _sys.stdin.isatty() and _sys.stdout.isatty():
                 from platformforge.ui.home import run_home
                 from platformforge.ui.kit import NonInteractive
+
                 try:
                     return run_home()
                 except NonInteractive:

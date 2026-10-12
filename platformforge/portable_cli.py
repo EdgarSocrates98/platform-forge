@@ -1,4 +1,5 @@
 """Thin CLI adapter for portable distribution and workspace."""
+
 from __future__ import annotations
 
 
@@ -30,42 +31,40 @@ def register(sub, add_common, emit):
                 fn = {
                     "status": lambda: service.status(scope=a.scope, root=a.repo),
                     "doctor": lambda: service.doctor(scope=a.scope, root=a.repo),
-                    "repair": lambda: service.repair(scope=a.scope, root=a.repo,
-                                                   dry_run=a.dry_run),
-                    "uninstall": lambda: service.uninstall(scope=a.scope,
-                                                         root=a.repo,
-                                                         purge=a.purge,
-                                                         dry_run=a.dry_run),
-                    "update": lambda: service.update(to=a.to, repo=None,
-                                                   dry_run=a.dry_run),
+                    "repair": lambda: service.repair(scope=a.scope, root=a.repo, dry_run=a.dry_run),
+                    "uninstall": lambda: service.uninstall(
+                        scope=a.scope, root=a.repo, purge=a.purge, dry_run=a.dry_run
+                    ),
+                    "update": lambda: service.update(to=a.to, repo=None, dry_run=a.dry_run),
                     "mcp-verify": service.mcp_verify,
                 }[op]
                 out = fn()
             else:
                 comps = (
                     tuple(c.strip() for c in a.components.split(",") if c.strip())
-                    if getattr(a, "components", None) else None
+                    if getattr(a, "components", None)
+                    else None
                 )
 
                 def call(*, yes: bool, dry_run: bool):
                     return service.install(
-                        scope=a.scope, root=a.repo,
-                        host="all" if hosts == ["all"] else hosts[0]
-                        if len(hosts) == 1 else "all",
-                        profile=a.profile if a.profile in service.PROFILES
-                        else "recommended",
-                        yes=yes, dry_run=dry_run, components=comps)
+                        scope=a.scope,
+                        root=a.repo,
+                        host="all" if hosts == ["all"] else hosts[0] if len(hosts) == 1 else "all",
+                        profile=a.profile if a.profile in service.PROFILES else "recommended",
+                        yes=yes,
+                        dry_run=dry_run,
+                        components=comps,
+                    )
 
                 import sys
 
-                interactive = (
-                    not a.yes and not a.dry_run
-                    and sys.stdin.isatty() and sys.stdout.isatty()
-                )
+                interactive = not a.yes and not a.dry_run and sys.stdin.isatty() and sys.stdout.isatty()
                 if interactive:
                     # Interactive approval: render the real plan, confirm
                     # once, apply — one command instead of dry-run + apply.
                     from platformforge.ui.kit import NonInteractive, approve_plan
+
                     try:
                         approved = approve_plan(call(yes=False, dry_run=True))
                     except NonInteractive:
@@ -75,20 +74,25 @@ def register(sub, add_common, emit):
                         if approved
                         else {
                             "schema": "forge/InstallReceipt/v1",
-                            "forge_id": "platform-forge", "operation": "install",
-                            "status": "declined", "checks": [], "managed_files": [],
+                            "forge_id": "platform-forge",
+                            "operation": "install",
+                            "status": "declined",
+                            "checks": [],
+                            "managed_files": [],
                             "verification": {"status": "UNVERIFIED"},
-                            "error": {"kind": "PF-INSTALL-DECLINED",
-                                      "detail": "declined — nothing written"},
+                            "error": {"kind": "PF-INSTALL-DECLINED", "detail": "declined — nothing written"},
                         }
                     )
                 else:
                     out = call(yes=a.yes, dry_run=a.dry_run)
         except service.InstallRefusal as exc:
-            return emit({"status": "refused",
-                         "error": {"kind": exc.kind, "detail": exc.detail}}, a, 2)
-        rc = 0 if str(out.get("status", "")).lower() in (
-            "ok", "completed", "planned", "healthy", "unverified", "pass") else 1
+            return emit({"status": "refused", "error": {"kind": exc.kind, "detail": exc.detail}}, a, 2)
+        rc = (
+            0
+            if str(out.get("status", "")).lower()
+            in ("ok", "completed", "planned", "healthy", "unverified", "pass")
+            else 1
+        )
         return emit(out, a, rc)
 
     def uninstall(a):
@@ -136,24 +140,26 @@ def register(sub, add_common, emit):
 
     sp = sub.add_parser("install", help="install Platform Forge assets into a workspace")
     add_common(sp)
-    sp.add_argument("op", nargs="?", default="apply",
-                    choices=["apply", "status", "doctor", "repair",
-                             "uninstall", "update", "mcp-verify"],
-                    help="forge/* lifecycle verb (default: apply)")
-    sp.add_argument("--profile", default="recommended",
-                    help="minimal|recommended|full (contract) or native profile name")
-    sp.add_argument("--host", action="append",
-                    choices=["agents", "claude", "codex", "devin", "copilot", "all"])
-    sp.add_argument("--scope", default="project",
-                    choices=["project", "workspace", "user"])
-    sp.add_argument("--yes", "-y", action="store_true",
-                    help="explicit approval — required for writes")
-    sp.add_argument("--purge", action="store_true",
-                    help="uninstall: also remove .platformforge state")
-    sp.add_argument("--to", default=None,
-                    help="update: pinned version — never 'latest'")
-    sp.add_argument("--components", default=None,
-                    help="optional components csv: skills,agents,mcp,tui,graph-studio")
+    sp.add_argument(
+        "op",
+        nargs="?",
+        default="apply",
+        choices=["apply", "status", "doctor", "repair", "uninstall", "update", "mcp-verify"],
+        help="forge/* lifecycle verb (default: apply)",
+    )
+    sp.add_argument(
+        "--profile", default="recommended", help="minimal|recommended|full (contract) or native profile name"
+    )
+    sp.add_argument(
+        "--host", action="append", choices=["agents", "claude", "codex", "devin", "copilot", "all"]
+    )
+    sp.add_argument("--scope", default="project", choices=["project", "workspace", "user"])
+    sp.add_argument("--yes", "-y", action="store_true", help="explicit approval — required for writes")
+    sp.add_argument("--purge", action="store_true", help="uninstall: also remove .platformforge state")
+    sp.add_argument("--to", default=None, help="update: pinned version — never 'latest'")
+    sp.add_argument(
+        "--components", default=None, help="optional components csv: skills,agents,mcp,tui,graph-studio"
+    )
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=install)
 
