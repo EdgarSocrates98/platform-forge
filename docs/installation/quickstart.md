@@ -5,7 +5,7 @@ Três comandos:
 ```bash
 git clone <platform-forge repo>
 cd platform-forge
-./setup.sh        # Windows: .\setup.ps1
+./install.sh      # Windows: .\install.ps1 — account runtime + editable CLI
 ```
 
 Depois, dentro de qualquer projeto:
@@ -25,4 +25,4 @@ platformforge status
 platformforge doctor
 ```
 
-Problemas? → [troubleshooting.md](troubleshooting.md)
+Detalhes: [account-installation.md](account-installation.md). Problemas? → [troubleshooting.md](troubleshooting.md)
