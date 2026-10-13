@@ -1,0 +1,19 @@
+schema: platformforge/knowledge/v1
+id: aws-network-exposure
+domain: aws
+applies_to: {}
+sources: [aws-vpc-docs, aws-s3-docs]
+claims:
+  - id: sg-world-ingress
+    statement: "Security group ingress from 0.0.0.0/0 or ::/0 exposes the
+      port to the internet; admin ports (22, 3389, 6379, 5432...) amplify
+      the blast radius."
+    versions: {}
+  - id: s3-public-acl
+    statement: "S3 public ACLs (public-read, public-read-write,
+      authenticated-read) bypass bucket policy intent; Block Public
+      Access is the account-level guardrail."
+    versions: {}
+used_by:
+  rules: [PF-IAC-001, PF-IAC-002, PF-IAC-003]
+  analyzers: [iac, cloud-aws]

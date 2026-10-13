@@ -1,0 +1,3 @@
+fault: pod_kill
+target: workload/prod/api
+facts: facts.json

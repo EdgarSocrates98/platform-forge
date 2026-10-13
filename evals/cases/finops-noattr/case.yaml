@@ -1,0 +1,9 @@
+id: finops-noattr
+type: golden
+variant: positive
+case_of: PF-FIN-002
+domain: finops
+fixture: fixture
+expect:
+  rules_fired: [PF-FIN-002]
+  rules_not_fired: [PF-FIN-001]

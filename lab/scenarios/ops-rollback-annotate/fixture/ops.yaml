@@ -1,0 +1,41 @@
+# §133 — annotation change, rollback restores exact previous metadata
+intent:
+  intent_id: lab-rb-ann
+  owner: team-a
+  requested_by: bob
+  reason: {type: compliance}
+  target_resources: ["k8s:lab/apps/Deployment/web"]
+  desired_change: {annotate: {cost-center: "cc-9", team: "a"}}
+steps:
+  - step_id: annotate
+    action: kubernetes.annotate
+    params: {kind: Deployment, name: web, namespace: apps,
+             annotations: {ops.platformforge.io/cost-center: "cc-9"},
+             resource_version: "2002"}
+expected_delta:
+  changes: {resources: [{id: "dep/web",
+                         annotations: {ops.platformforge.io/cost-center: "cc-9"}}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+pre_state:
+  annotate: {annotations: {ops.platformforge.io/team: "a", ops.platformforge.io/owner: "x"},
+             resource_version: "2002"}
+post_rollback:
+  annotate: {annotations: {ops.platformforge.io/team: "a", ops.platformforge.io/owner: "x"}}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
+environment: lab
+auto_rollback: true
+transports: {kubernetes: {rc: 0, stdout: "annotated"}}
+verify:
+  observations:
+    immediate: {changes: {resources: [{id: "dep/web",
+                         annotations: {ops.platformforge.io/cost-center: "cc-9"}}]}}
+  slo: {error_rate_max: 0.01}
+  metrics: {error_rate: 0.9}
+expect:
+  ok: true
+  state: rolled-back
+  rollback_status: executable
+  rollback_verification: restored

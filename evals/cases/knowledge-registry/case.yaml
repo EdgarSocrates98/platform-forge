@@ -1,0 +1,10 @@
+id: knowledge-registry
+type: knowledge
+expect:
+  sources:
+    - kubernetes-docs
+    - terraform-docs
+    - aws-docs
+    - argo-rollouts-docs
+    - focus-spec
+    - slsa-spec

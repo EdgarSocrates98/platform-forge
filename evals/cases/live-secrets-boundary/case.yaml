@@ -1,0 +1,8 @@
+id: live-secrets-boundary
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: secret-free
+  must_not_contain: ["c3VwZXJzZWNyZXQ=", "supersecret",
+                     "AKIAIOSFODNN7EXAMPLE"]

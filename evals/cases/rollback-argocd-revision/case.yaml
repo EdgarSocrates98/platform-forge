@@ -1,0 +1,6 @@
+id: rollback-argocd-revision
+type: live
+domain: ops-rollback
+fixture: ../../../lab/scenarios/ops-rollback-gitops/fixture
+expect:
+  check: ops-scenario

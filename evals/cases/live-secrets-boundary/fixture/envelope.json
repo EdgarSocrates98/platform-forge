@@ -1,0 +1,16 @@
+{
+  "schema": "platformforge/observation/v1",
+  "observation_id": "obs-dddd000000000004",
+  "collector": "kubernetes", "collector_version": "k8s-collector/0.3.0",
+  "provider": "kubernetes", "source_type": "observed",
+  "captured_at": "2025-06-01T00:00:00Z",
+  "scope": {}, "coverage": {"status": "complete"},
+  "objects": [
+    {"resource_id": "k8s://lab/prod/Secret/db-creds#uid-s1",
+     "resource_type": "k8s:Secret",
+     "provider": "kubernetes", "namespace": "prod", "name": "db-creds",
+     "uid": "uid-s1",
+     "attributes": {"secret_payload_blank": true,
+                    "secret_type": "Opaque"}}
+  ]
+}

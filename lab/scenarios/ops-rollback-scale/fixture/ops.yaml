@@ -1,0 +1,40 @@
+# §132 — scale 3→5, verification fails, auto-rollback 5→3, restored
+intent:
+  intent_id: lab-rb-scale
+  owner: team-a
+  requested_by: bob
+  reason: {type: capacity}
+  target_resources: ["k8s:lab/apps/Deployment/web"]
+  desired_change: {replicas: 5}
+steps:
+  - step_id: scale
+    action: kubernetes.scale
+    params: {kind: Deployment, name: web, namespace: apps,
+             replicas: 5, current_replicas: 3,
+             resource_version: "1001"}
+expected_delta:
+  changes: {resources: [{id: "dep/web", replicas: 5}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+pre_state:
+  scale: {replicas: 3, resource_version: "1001"}
+post_rollback:
+  scale: {replicas: 3}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
+environment: lab
+auto_rollback: true
+transports: {kubernetes: {rc: 0, stdout: "scaled"}}
+verify:
+  observations:
+    immediate: {changes: {resources: [{id: "dep/web", replicas: 5}]}}
+  slo: {error_rate_max: 0.01}
+  metrics: {error_rate: 0.5}
+expect:
+  ok: true
+  state: rolled-back
+  convergence: regressed
+  rollback_status: executable
+  rollback_verification: restored
+  ledger_event: rollback.completed

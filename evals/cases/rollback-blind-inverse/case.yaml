@@ -1,0 +1,6 @@
+id: rollback-blind-inverse
+type: live
+domain: ops-rollback
+expect:
+  check: ops-invariant
+  probe: blind-inverse-refused

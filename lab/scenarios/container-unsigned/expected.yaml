@@ -1,0 +1,5 @@
+tier: smoke
+description: "Container image unpinned, unsigned, no SLSA provenance."
+analyzers: [supply]
+violated_rules: [PF-SEC-030, PF-SEC-031]
+fact_kinds: [security.artifact]

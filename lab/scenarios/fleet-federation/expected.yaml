@@ -1,0 +1,11 @@
+id: fleet-federation
+name: Federation — secrets never exported; restricted classification denied
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - federation:
+      exports:
+        - {action: aggregate}
+        - {action: deny}
+        - {action: deny}

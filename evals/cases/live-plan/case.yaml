@@ -1,0 +1,7 @@
+id: live-plan
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: plan
+  counts: {actions: 3, mutating: 2, decision_required: 1}

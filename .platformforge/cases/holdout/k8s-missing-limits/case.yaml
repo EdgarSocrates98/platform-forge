@@ -1,0 +1,29 @@
+id: k8s-missing-limits
+classification: fixture-derived
+tier: holdout
+truth_class: known-bad
+task: Workload without resource limits.
+scope: lab/scenarios/k8s-missing-limits/fixture
+analyzers:
+- k8s
+fixture_from: lab/scenarios/k8s-missing-limits
+expected_known_truth:
+  violated_rules:
+  - PF-K8S-002
+  absent_rules:
+  - PF-K8S-001
+  - PF-K8S-003
+  - PF-K8S-012
+  fact_kinds:
+  - k8s.workload
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 894
+  relevant_bytes: 894
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

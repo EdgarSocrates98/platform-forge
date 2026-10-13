@@ -1,0 +1,6 @@
+id: rollback-git-commit
+type: live
+domain: ops-rollback
+expect:
+  check: ops-invariant
+  probe: git-revert-builder

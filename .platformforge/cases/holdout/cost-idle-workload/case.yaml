@@ -1,0 +1,26 @@
+id: cost-idle-workload
+classification: fixture-derived
+tier: holdout
+truth_class: known-bad
+task: Idle workload with non-trivial cost.
+scope: lab/scenarios/cost-idle-workload/fixture
+analyzers:
+- finops
+fixture_from: lab/scenarios/cost-idle-workload
+expected_known_truth:
+  violated_rules:
+  - PF-FIN-001
+  absent_rules: []
+  fact_kinds:
+  - finops.cost
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 206
+  relevant_bytes: 206
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

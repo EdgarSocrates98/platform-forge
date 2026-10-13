@@ -1,0 +1,18 @@
+id: fleet-golden-path
+name: Golden path — batch-job fails often, escapes, worse outcomes
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - fleet_query:
+      question: outside-golden-path
+      min_count: 3
+      node_ids:
+        - "service/service-batch-etl"
+        - "service/service-ml-inference"
+  - golden_path:
+      path: batch-job
+      expect:
+        failed: 4
+      escape_reason: policy-block
+      min_recs: 1

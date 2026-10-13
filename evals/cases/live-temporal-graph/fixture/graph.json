@@ -1,0 +1,22 @@
+{
+  "schema": "platformforge/graph/v2",
+  "nodes": [
+    {"node_id": "service/web", "kind": "service", "label": "web"},
+    {"node_id": "service/db", "kind": "service", "label": "db"},
+    {"node_id": "service/cache", "kind": "service", "label": "cache"}
+  ],
+  "edges": [
+    {"from": "service/web", "to": "service/db", "kind": "calls",
+     "provenance": "observed", "confidence": 1.0,
+     "temporal": {"first_seen": "2025-06-10T08:00:00Z",
+                  "last_seen": "2025-06-10T09:00:00Z",
+                  "sample_count": 42}},
+    {"from": "service/web", "to": "service/cache", "kind": "calls",
+     "provenance": "observed", "confidence": 1.0,
+     "temporal": {"first_seen": "2025-06-10T11:30:00Z",
+                  "last_seen": "2025-06-10T11:59:00Z",
+                  "sample_count": 7}},
+    {"from": "service/web", "to": "service/db", "kind": "depends_on",
+     "provenance": "declared", "confidence": 1.0}
+  ]
+}

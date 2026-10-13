@@ -1,0 +1,7 @@
+id: fleet-inv-history-window-deterministic
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: history-window-deterministic

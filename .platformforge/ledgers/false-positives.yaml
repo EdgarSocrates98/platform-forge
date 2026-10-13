@@ -1,0 +1,23 @@
+schema: platformforge/fp-ledger/v1
+note: >
+  Entries are claims about rule verdicts on real cases — not repo bugs.
+  Every record needs a regression_test resolving to a case or test.
+records:
+- finding_id: FP-RW5-001
+  rule: PF-SEC-010
+  case: secret-prose-mixed
+  why_false: >-
+    password_kv matched lowercase prose after the key
+    ("pass: refuse and route", "db_pass: check the runbook") — a value
+    with only lowercase words is a sentence, not a secret. Found during
+    cross-forge dogfood on sibling repos (docs/freeze/REAL-WORLD-ISSUES.md
+    RW-5).
+  evidence:
+  - docs/freeze/REAL-WORLD-ISSUES.md
+  - docs/freeze/DOGFOOD.md
+  root_cause: rule-too-broad
+  fix: >-
+    password_kv now requires a delimiter (:= or quote) and >=1
+    non-lowercase char in the value; prose no longer qualifies.
+  regression_test: tests/test_security.py::test_secret_scan_prose_is_not_a_leak
+  status: fixed

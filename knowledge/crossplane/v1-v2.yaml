@@ -1,0 +1,25 @@
+schema: platformforge/knowledge/v1
+id: crossplane-v1-vs-v2
+domain: crossplane
+applies_to:
+  versions: [crossplane]
+sources: [crossplane-docs]
+claims:
+  - id: xpv2-namespaced-xr
+    statement: "Crossplane v2 makes composite resources namespaced by
+      default (XRD spec.scope: Namespaced) and removes claims as a
+      separate object — the XR is consumed directly."
+    versions: {crossplane: ">=2.0"}
+  - id: xpv1-claims
+    statement: "In Crossplane v1 an XRD may declare claimNames — a
+      namespaced Claim that binds to a cluster-scoped XR;
+      connectionSecretKeys materialize the connection secret."
+    versions: {crossplane: "<2.0"}
+  - id: xpv2-providerconfig-groups
+    statement: "v2 moves ProviderConfig kinds out of pkg.crossplane.io
+      into provider family groups (e.g. aws.upbound.io) — group, not
+      kind, carries the provider identity."
+    versions: {crossplane: ">=2.0"}
+used_by:
+  rules: []
+  analyzers: [crossplane]

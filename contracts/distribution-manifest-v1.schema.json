@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/distribution-manifest/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "distribution_id",
+    "platformforge_version",
+    "profile",
+    "hosts",
+    "assets",
+    "offline"
+  ],
+  "properties": {
+    "schema": {
+      "const": "platformforge/distribution-manifest/v1"
+    },
+    "distribution_id": {
+      "type": "string",
+      "pattern": "^sha256:"
+    },
+    "platformforge_version": {
+      "type": "string"
+    },
+    "source_sha": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "hosts": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "agents",
+          "claude",
+          "codex",
+          "devin"
+        ]
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "offline": {
+      "type": "boolean"
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256",
+          "owner",
+          "kind"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner": {
+            "const": "platformforge"
+          },
+          "kind": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

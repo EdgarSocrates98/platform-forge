@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/change-plan/v1",
+  "title": "ChangePlan — DAG of typed steps + ExpectedDelta",
+  "type": "object",
+  "required": ["schema", "plan_id", "intent_id", "steps", "expected_delta"],
+  "properties": {
+    "schema": {"const": "platformforge/change-plan/v1"},
+    "plan_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+    "intent_id": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "affected_resources": {"type": "array", "items": {"type": "string"}},
+    "source_changes": {"type": "array", "items": {"type": "object"}},
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step_id", "action"],
+        "properties": {
+          "step_id": {"type": "string"},
+          "action": {"type": "string",
+                     "description": "typed action — e.g. git.apply_patch, terraform.plan; never shell.run"},
+          "description": {"type": "string"},
+          "depends_on": {"type": "array", "items": {"type": "string"}},
+          "params": {"type": "object"},
+          "validation": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "expected_delta": {
+      "type": "object",
+      "properties": {
+        "adds": {"type": "object"},
+        "removes": {"type": "object"},
+        "changes": {"type": "object"},
+        "unknown_dimensions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "validation": {"type": "array", "items": {"type": "string"}},
+    "rollback_requirements": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "string"}
+  }
+}

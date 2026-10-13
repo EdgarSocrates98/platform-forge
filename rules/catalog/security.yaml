@@ -1,0 +1,159 @@
+# DevSecOps rules — PF-SEC-*.
+rules:
+  - rule_id: PF-SEC-001
+    domain: security
+    title: "Wildcard actions or admin grant in IAM policy"
+    severity: critical
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      any:
+        - {path: attrs.admin_grant, op: equals, value: true}
+        - {path: attrs.wildcard_actions, op: gt, value: 0}
+    message: "* actions widen compromise to everything the role can name"
+    sources: ['aws-iam-docs']
+    source_refs:
+      aws-iam-docs: "IAM/latest/UserGuide/access_policies_manage-attach-detach.html"
+
+  - rule_id: PF-SEC-002
+    domain: security
+    title: "Public principal in IAM policy"
+    severity: critical
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      all:
+        - {path: attrs.public_principals, op: gt, value: 0}
+    message: "Principal '*' grants the internet access"
+    sources: ['aws-iam-docs']
+    source_refs:
+      aws-iam-docs: "IAM/latest/UserGuide/reference_policies_elements_principal.html"
+
+  - rule_id: PF-SEC-003
+    domain: security
+    title: "Wildcard resource in IAM policy"
+    severity: medium
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      all:
+        - {path: attrs.wildcard_resources, op: gt, value: 0}
+    message: "Resource '*' applies the grant to every object"
+    sources: ['aws-iam-docs']
+    source_refs:
+      aws-iam-docs: "IAM/latest/UserGuide/reference_policies_elements_resource.html"
+
+  - rule_id: PF-SEC-010
+    domain: security
+    title: "Secret pattern in repository file"
+    severity: critical
+    applies_to: {fact_kind: security.secret_leak}
+    conditions:
+      all:
+        - {path: attrs.hit_count, op: gt, value: 0}
+    message: "rotate first, scrub second — history retains the value"
+    sources: ['github-security-docs']
+    source_refs:
+      github-security-docs: "en/code-security/secret-scanning/about-secret-scanning"
+
+  - rule_id: PF-SEC-020
+    domain: security
+    title: "Component with known CVE (offline vuln list)"
+    severity: high
+    applies_to: {fact_kind: security.sbom}
+    conditions:
+      all:
+        - {path: attrs.vuln_count, op: gt, value: 0}
+    message: "matched against caller-supplied vuln list — freshness matters"
+    sources: ['nvd', 'osv']
+    source_refs:
+      nvd: "vuln"
+
+  - rule_id: PF-SEC-021
+    domain: security
+    title: "Component without declared license"
+    severity: low
+    applies_to: {fact_kind: security.sbom}
+    conditions:
+      all:
+        - {path: attrs.unlicensed_components, op: not_empty}
+    message: "license posture unknown — legal exposure is unbounded"
+    sources: ['spdx-licenses']
+    source_refs:
+      spdx-licenses: "licenses"
+
+  - rule_id: PF-SEC-030
+    domain: security
+    title: "Artifact image not digest-pinned"
+    severity: high
+    applies_to: {fact_kind: security.artifact}
+    conditions:
+      all:
+        - {path: attrs.digest_pinned, op: equals, value: false}
+    message: "tag references are mutable — pin sha256 digest"
+    sources: ['kubernetes-docs']
+    source_refs:
+      kubernetes-docs: "docs/concepts/containers/images#image-pull-policy"
+
+  - rule_id: PF-SEC-031
+    domain: security
+    title: "Artifact without signature attestation"
+    severity: medium
+    applies_to: {fact_kind: security.artifact}
+    conditions:
+      all:
+        - {path: attrs.signed, op: equals, value: false}
+    message: "unsigned artifacts can't prove origin (cosign/SLSA)"
+    sources: ['slsa-spec', 'sigstore-docs']
+    source_refs:
+      slsa-spec: "spec/v1.0/levels"
+
+  - rule_id: PF-SEC-040
+    domain: security
+    title: "Legacy Kyverno policy type on deprecated engine version"
+    severity: medium
+    applies_to: {fact_kind: kyverno.policy}
+    conditions:
+      all:
+        - {path: attrs.legacy_type, op: equals, value: true}
+        - {path: attrs.legacy_deprecated, op: equals, value: true}
+    message: "Policy/ClusterPolicy are deprecated on kyverno ≥1.13 — migrate to CEL-based types"
+    sources: ['kyverno-docs']
+    source_refs:
+      kyverno-docs: "docs/"
+
+  - rule_id: PF-SEC-041
+    domain: security
+    title: "Kyverno policy with no rules"
+    severity: low
+    applies_to: {fact_kind: kyverno.policy}
+    conditions:
+      all:
+        - {path: attrs.rules, op: equals, value: 0}
+        - {path: attrs.policy_kind, op: in, value: [Policy, ClusterPolicy]}
+    message: "empty ruleset enforces nothing — declared intent without effect"
+    sources: ['kyverno-docs']
+    source_refs:
+      kyverno-docs: "docs/"
+
+  - rule_id: PF-SEC-042
+    domain: security
+    title: "Signature claimed but never verified"
+    severity: high
+    applies_to: {fact_kind: supply.signature}
+    conditions:
+      all:
+        - {path: attrs.claimed_signed, op: equals, value: true}
+        - {path: attrs.verified, op: equals, value: false}
+    message: "signed=true in a document is a claim — verification needs rekor/key lookup (host boundary)"
+    sources: ['sigstore-docs']
+
+  - rule_id: PF-SEC-043
+    domain: security
+    title: "OIDC-federated principal in trust policy"
+    severity: info
+    applies_to: {fact_kind: security.iam_policy}
+    conditions:
+      all:
+        - {path: attrs.federated_providers, op: not_empty}
+    message: "web-identity federation — check audience/sub conditions on the provider"
+    sources: ['aws-iam-docs']
+    source_refs:
+      aws-iam-docs: "IAM/latest/UserGuide/id_roles_providers_oidc.html"

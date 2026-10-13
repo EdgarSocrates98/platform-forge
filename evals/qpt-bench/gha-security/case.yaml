@@ -1,0 +1,5 @@
+id: gha-security
+task: "github actions security review — pinning, permissions, injection"
+domain: gha
+fixture: fixture/ci.yml
+budget: 50000

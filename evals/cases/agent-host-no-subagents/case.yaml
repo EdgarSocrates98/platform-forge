@@ -1,0 +1,6 @@
+id: agent-host-no-subagents
+type: agent
+check: playbook_equivalence
+expect:
+  agent: platform-incident-coordinator
+  required_sections: [required_evidence, verifier, never, outputs]

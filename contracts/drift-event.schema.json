@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/drift-event/v1",
+  "title": "PlatformForge DriftEvent",
+  "type": "object",
+  "required": ["schema", "drift_id", "resource_id", "drift_class"],
+  "properties": {
+    "schema": {"const": "platformforge/drift-event/v1"},
+    "drift_id": {"type": "string", "minLength": 1},
+    "resource_id": {"type": "string", "minLength": 1},
+    "drift_class": {"type": "string"},
+    "before": {"type": "object"},
+    "after": {"type": "object"},
+    "facts": {"type": "array", "items": {"type": "string"}},
+    "change_event": {"type": "string"},
+    "risk": {"type": "string"},
+    "owner": {"type": "string"},
+    "observed_at": {"type": "string"}
+  },
+  "additionalProperties": true
+}

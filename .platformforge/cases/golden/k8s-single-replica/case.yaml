@@ -1,0 +1,26 @@
+id: k8s-single-replica
+classification: fixture-derived
+tier: golden
+truth_class: known-bad
+task: Single-replica workload — availability risk.
+scope: lab/scenarios/k8s-single-replica/fixture
+analyzers:
+- k8s
+fixture_from: lab/scenarios/k8s-single-replica
+expected_known_truth:
+  violated_rules:
+  - PF-K8S-011
+  absent_rules: []
+  fact_kinds:
+  - k8s.workload
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 704
+  relevant_bytes: 704
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

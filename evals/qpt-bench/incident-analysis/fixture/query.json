@@ -1,0 +1,5 @@
+{"status":"success","data":{"result":[
+ {"metric":{"__name__":"http_requests_total","job":"api","code":"500"},
+  "value":[1700000000,"4201"]},
+ {"metric":{"__name__":"up","job":"api"},"value":[1700000000,"0"]}
+]}}

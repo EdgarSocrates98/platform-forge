@@ -1,0 +1,26 @@
+schema: platformforge/knowledge/v1
+id: terraform-plan-semantics
+domain: terraform
+applies_to: {}
+sources: [terraform-docs]
+claims:
+  - id: tf-plan-actions
+    statement: "Plan actions are no-op, create, read, update, delete,
+      delete_then_create and create_then_delete (replace). A replace means
+      the resource is destroyed — irreversible for stateful resources
+      unless deposed/prevented."
+    versions: {}
+  - id: tf-plan-is-declared
+    statement: "A plan file is declared intent, not observed state — it
+      proves what apply would do, not what the cloud looks like. Drift
+      between state and real infrastructure is invisible without a
+      refresh or an observed dump."
+    versions: {}
+  - id: tf-module-pin
+    statement: "A module source without a version/ref constraint resolves
+      to whatever the registry or branch serves at init — builds are not
+      reproducible and upgrades are silent."
+    versions: {}
+used_by:
+  rules: [PF-IAC-010, PF-IAC-011, PF-IAC-020]
+  analyzers: [plan, state, iac]

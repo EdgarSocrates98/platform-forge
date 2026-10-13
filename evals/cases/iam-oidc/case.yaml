@@ -1,0 +1,8 @@
+id: iam-oidc
+type: golden
+variant: positive
+case_of: PF-SEC-043
+domain: iam
+fixture: fixture
+expect:
+  rules_fired: [PF-SEC-043]

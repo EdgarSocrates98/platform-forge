@@ -1,0 +1,6 @@
+id: rollback-k8s-annotation-restore
+type: live
+domain: ops-rollback
+fixture: ../../../lab/scenarios/ops-rollback-annotate/fixture
+expect:
+  check: ops-scenario

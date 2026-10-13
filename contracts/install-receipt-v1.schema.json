@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/install-receipt/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "distribution_id",
+    "platformforge_version",
+    "target",
+    "profile",
+    "hosts",
+    "files"
+  ],
+  "properties": {
+    "schema": {
+      "const": "platformforge/install-receipt/v1"
+    },
+    "distribution_id": {
+      "type": "string",
+      "pattern": "^sha256:"
+    },
+    "platformforge_version": {
+      "type": "string"
+    },
+    "source_sha": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "hosts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    }
+  },
+  "additionalProperties": false
+}

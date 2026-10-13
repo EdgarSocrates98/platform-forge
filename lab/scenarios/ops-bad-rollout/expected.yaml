@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "rollout restart + SLO regression → regressed"

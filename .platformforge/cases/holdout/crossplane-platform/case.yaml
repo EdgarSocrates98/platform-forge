@@ -1,0 +1,31 @@
+id: crossplane-platform
+classification: fixture-derived
+tier: holdout
+truth_class: known-bad
+task: Crossplane platform — deletionPolicy Delete on XR.
+scope: lab/scenarios/crossplane-platform/fixture
+analyzers:
+- crossplane
+fixture_from: lab/scenarios/crossplane-platform
+expected_known_truth:
+  violated_rules:
+  - PF-XR-001
+  absent_rules: []
+  fact_kinds:
+  - platform.xrd
+  - platform.composition
+  - platform.crossplane_provider
+  - platform.provider_config
+  - platform.managed_resource
+  - platform.xr
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 2337
+  relevant_bytes: 2337
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

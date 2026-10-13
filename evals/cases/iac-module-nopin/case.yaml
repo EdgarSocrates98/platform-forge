@@ -1,0 +1,8 @@
+id: iac-module-nopin
+type: golden
+variant: positive
+case_of: PF-IAC-020
+domain: iac
+fixture: fixture
+expect:
+  rules_fired: [PF-IAC-020]

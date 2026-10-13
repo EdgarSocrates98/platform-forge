@@ -1,0 +1,7 @@
+id: fleet-inv-low-util-not-deletable
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: low-util-not-deletable

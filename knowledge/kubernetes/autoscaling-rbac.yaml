@@ -1,0 +1,27 @@
+schema: platformforge/knowledge/v1
+id: kubernetes-autoscaling-rbac
+domain: kubernetes
+applies_to:
+  versions: [kubernetes]
+sources: [kubernetes-docs, keda-docs, karpenter-docs]
+claims:
+  - id: hpa-needs-requests
+    statement: "HorizontalPodAutoscaler scales on utilization relative to
+      resource requests; a target without requests computes a meaningless
+      percentage and the HPA cannot make progress."
+    versions: {}
+  - id: hpa-v2-ga
+    statement: "autoscaling/v2 is stable since 1.23 and supports memory and
+      custom metrics; autoscaling/v2beta2 was removed in 1.26."
+    versions: {kubernetes: ">=1.26"}
+  - id: rbac-wildcards
+    statement: "RBAC '*' in verbs or resources grants all present and future
+      permissions in the group — wildcard rules survive API additions."
+    versions: {}
+  - id: cluster-admin-binding
+    statement: "Binding cluster-admin to a service account or group gives
+      unrestricted cluster control including RBAC mutation itself."
+    versions: {}
+used_by:
+  rules: [PF-K8S-020, PF-K8S-021, PF-K8S-022]
+  analyzers: [k8s]

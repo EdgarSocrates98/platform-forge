@@ -1,0 +1,7 @@
+{"Roles": [{"Arn": "arn:aws:iam::111:role/deploy", "RoleName": "deploy",
+            "AssumeRolePolicyDocument": {"Statement": [{"Principal": {"Service": "ec2.amazonaws.com"}}]}}],
+ "Policies": [{"Arn": "arn:aws:iam::aws:policy/ReadOnlyAccess", "PolicyName": "ReadOnlyAccess", "AttachmentCount": 3},
+              {"Arn": "arn:aws:iam::111:policy/wildcard", "PolicyName": "wildcard", "AttachmentCount": 1}],
+ "Users": [{"Arn": "arn:aws:iam::111:user/ci", "UserName": "ci"}],
+ "Policy": {"Arn": "arn:aws:iam::111:policy/wildcard"},
+ "PolicyVersion": {"Document": {"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"}]}}}

@@ -1,0 +1,7 @@
+id: fleet-inv-missing-denominator
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: missing-denominator

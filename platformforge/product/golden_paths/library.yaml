@@ -1,0 +1,198 @@
+# §75 Golden Path seed library — seven starter paths covering the common
+# platform shapes. Each declares the full §74 contract incl. its escape
+# hatch (§77). Paths are declared knowledge (T5), not observed state.
+schema: platformforge/golden-paths/v1
+paths:
+  - id: rest-service
+    name: REST Service
+    version: "1.0.0"
+    use_case: "HTTP API deployed to the cluster with CI, scanning, SLO"
+    inputs:
+      - {name: service_name, required: true}
+      - {name: language, required: true, enum: [python, go, java, node]}
+      - {name: team, required: true}
+    outputs: [repository, pipeline, manifests, slo_contract, runbook]
+    steps:
+      - {id: scaffold, produces: repository}
+      - {id: ci, produces: pipeline}
+      - {id: secure, produces: sbom}
+      - {id: deploy, produces: manifests}
+      - {id: observe, produces: slo_contract}
+    policies: [pf-sec-baseline, pf-slo-required, pf-cost-tagging]
+    ownership: {owner_field: team, reviewer: platform-team}
+    observability: {metrics: required, traces: required, logs: required,
+                    dashboards: generated}
+    security: {sbom: required, image_signing: required,
+               network_policy: default-deny}
+    cost: {tag_required: [team, service], budget_alert: true}
+    slo: {availability: 99.9, latency_p99_ms: 500}
+    escape_hatches:
+      happy_path: "scaffold → CI green → deploy to dev → promote"
+      supported_customizations: [replicas, resources, ingress_host,
+                                 autoscaling]
+      escape_hatch: "file a platform.ticket with category path-escape;
+                     platform team reviews within SLA"
+      unsupported_state: "custom controllers, host mounts, privileged
+                          containers without exception record"
+    supported_variants: [public-api, internal-api]
+
+  - id: worker
+    name: Background Worker
+    version: "1.0.0"
+    use_case: "queue/topic consumer with retries, DLQ, autoscaling"
+    inputs:
+      - {name: worker_name, required: true}
+      - {name: source, required: true, enum: [sqs, kafka, pubsub]}
+      - {name: team, required: true}
+    outputs: [repository, pipeline, manifests, dlq, slo_contract]
+    steps:
+      - {id: scaffold, produces: repository}
+      - {id: ci, produces: pipeline}
+      - {id: secure, produces: sbom}
+      - {id: deploy, produces: manifests}
+      - {id: observe, produces: slo_contract}
+    policies: [pf-sec-baseline, pf-dlq-required, pf-cost-tagging]
+    ownership: {owner_field: team, reviewer: platform-team}
+    observability: {metrics: required, traces: recommended,
+                    logs: required}
+    security: {sbom: required, image_signing: required}
+    cost: {tag_required: [team, service]}
+    slo: {processing_lag_seconds: 60, success_rate: 99.5}
+    escape_hatches:
+      happy_path: "scaffold → wire trigger → deploy"
+      supported_customizations: [concurrency, batch_size, dlq_policy]
+      escape_hatch: "platform.ticket category path-escape"
+      unsupported_state: "custom brokers without platform review"
+    supported_variants: [fifo, at-least-once]
+
+  - id: scheduled-job
+    name: Scheduled Job
+    version: "1.0.0"
+    use_case: "cron workload with timeout, retries, alert on failure"
+    inputs:
+      - {name: job_name, required: true}
+      - {name: schedule, required: true}
+      - {name: team, required: true}
+    outputs: [repository, pipeline, cronjob_manifest, alert_rules]
+    steps:
+      - {id: scaffold, produces: repository}
+      - {id: ci, produces: pipeline}
+      - {id: deploy, produces: cronjob_manifest}
+    policies: [pf-sec-baseline, pf-cost-tagging]
+    ownership: {owner_field: team, reviewer: platform-team}
+    observability: {metrics: required, logs: required,
+                    alert_on_failure: true}
+    security: {sbom: required}
+    cost: {tag_required: [team, job]}
+    slo: {completion_rate: 99.0}
+    escape_hatches:
+      happy_path: "scaffold → schedule → alert wired"
+      supported_customizations: [schedule, timeout, retries]
+      escape_hatch: "platform.ticket category path-escape"
+      unsupported_state: "jobs needing state beyond idempotent retries"
+    supported_variants: [daily, hourly]
+
+  - id: kubernetes-service
+    name: Kubernetes Service
+    version: "1.0.0"
+    use_case: "containerized workload with HPA, PDB, netpol, GitOps"
+    inputs:
+      - {name: service_name, required: true}
+      - {name: image, required: true}
+      - {name: team, required: true}
+    outputs: [manifests, gitops_application, slo_contract]
+    steps:
+      - {id: generate, produces: manifests}
+      - {id: gitops, produces: gitops_application}
+      - {id: observe, produces: slo_contract}
+    policies: [pf-k8s-baseline, pf-netpol-default-deny, pf-pdb-multi-replica]
+    ownership: {owner_field: team, reviewer: platform-team}
+    observability: {metrics: required, dashboards: generated}
+    security: {network_policy: default-deny, pod_security: restricted}
+    cost: {tag_required: [team, service]}
+    slo: {availability: 99.9}
+    escape_hatches:
+      happy_path: "generate manifests → argocd app → deploys"
+      supported_customizations: [hpa_bounds, pdb, env_vars]
+      escape_hatch: "platform.ticket category path-escape"
+      unsupported_state: "privileged pods, host networking"
+    supported_variants: [stateless, stateful-rwo]
+
+  - id: terraform-workload
+    name: Terraform Workload
+    version: "1.0.0"
+    use_case: "IaC-managed infra with plan-gate, drift watch, cost tags"
+    inputs:
+      - {name: module_name, required: true}
+      - {name: provider, required: true, enum: [aws, azurerm, google]}
+      - {name: team, required: true}
+    outputs: [module_repo, ci_plan_gate, drift_monitor]
+    steps:
+      - {id: scaffold, produces: module_repo}
+      - {id: ci, produces: ci_plan_gate}
+      - {id: drift, produces: drift_monitor}
+    policies: [pf-iac-review, pf-cost-tagging]
+    ownership: {owner_field: team, reviewer: platform-team}
+    observability: {plan_artifacts: retained, drift_alerts: true}
+    security: {policy_check: required, state_backend: remote}
+    cost: {tag_required: [team], estimate_in_pr: true}
+    slo: {}
+    escape_hatches:
+      happy_path: "module → plan PR → review → apply by CI"
+      supported_customizations: [variables, outputs]
+      escape_hatch: "manual apply only via break-glass with receipt"
+      unsupported_state: "local state, console changes outside IaC"
+    supported_variants: [module, stack]
+
+  - id: database-request
+    name: Database Request
+    version: "1.0.0"
+    use_case: "managed datastore with backup, access policy, cost center"
+    inputs:
+      - {name: db_name, required: true}
+      - {name: engine, required: true,
+         enum: [postgres, mysql, dynamodb, redis]}
+      - {name: team, required: true}
+      - {name: data_classification, required: true}
+    outputs: [iac_module, access_policy, backup_policy]
+    steps:
+      - {id: request, produces: ticket}
+      - {id: provision, produces: iac_module}
+      - {id: secure, produces: access_policy}
+    policies: [pf-data-classification, pf-backup-required]
+    ownership: {owner_field: team, reviewer: dba-team}
+    observability: {metrics: required, slow_query_alerts: true}
+    security: {encryption: required, network: private-only}
+    cost: {tag_required: [team, db_name], budget_alert: true}
+    slo: {backup_rpo_hours: 24}
+    escape_hatches:
+      happy_path: "request → module PR → provisioned"
+      supported_customizations: [size, replicas, engine_version]
+      escape_hatch: "platform.ticket category database-exception"
+      unsupported_state: "public endpoints, unencrypted storage"
+    supported_variants: [dev, prod]
+
+  - id: queue-topic
+    name: Queue/Topic Request
+    version: "1.0.0"
+    use_case: "messaging resource with DLQ, retention, consumer wiring"
+    inputs:
+      - {name: resource_name, required: true}
+      - {name: kind, required: true, enum: [queue, topic]}
+      - {name: team, required: true}
+    outputs: [iac_module, dlq, consumer_contract]
+    steps:
+      - {id: request, produces: ticket}
+      - {id: provision, produces: iac_module}
+    policies: [pf-dlq-required, pf-cost-tagging]
+    ownership: {owner_field: team, reviewer: platform-team}
+    observability: {metrics: required, lag_alerts: true}
+    security: {encryption: required, access: scoped}
+    cost: {tag_required: [team]}
+    slo: {delivery_lag_seconds: 30}
+    escape_hatches:
+      happy_path: "request → module → wired"
+      supported_customizations: [retention, max_message_size]
+      escape_hatch: "platform.ticket category messaging-exception"
+      unsupported_state: "public topics, no DLQ"
+    supported_variants: [standard, fifo]

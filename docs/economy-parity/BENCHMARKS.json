@@ -1,0 +1,82 @@
+{
+  "env": {
+    "python": "3.12.3"
+  },
+  "measured": {
+    "cache_put": {
+      "n": 100,
+      "median_us": 222.3,
+      "p95_us": 281.9,
+      "max_us": 292.6
+    },
+    "cache_get_hit": {
+      "n": 100,
+      "median_us": 2601.4,
+      "p95_us": 2817.1,
+      "max_us": 3203.3
+    },
+    "cache_get_miss": {
+      "n": 100,
+      "median_us": 3829.2,
+      "p95_us": 4313.6,
+      "max_us": 10267.5
+    },
+    "cache_stats": {
+      "n": 20,
+      "median_us": 1225.5,
+      "p95_us": 1285.2,
+      "max_us": 1285.2
+    },
+    "cache_entries": 200,
+    "context_build": {
+      "n": 50,
+      "median_us": 850.3,
+      "p95_us": 903.3,
+      "max_us": 969.0
+    },
+    "context_inspect": {
+      "n": 50,
+      "median_us": 45.2,
+      "p95_us": 61.4,
+      "max_us": 82.7
+    },
+    "context_expand": {
+      "n": 50,
+      "median_us": 45.0,
+      "p95_us": 50.3,
+      "max_us": 52.4
+    },
+    "router_route": {
+      "n": 200,
+      "median_us": 8326.7,
+      "p95_us": 8419.5,
+      "max_us": 12272.0
+    },
+    "routing_profile_floor": {
+      "n": 500,
+      "median_us": 0.6,
+      "p95_us": 0.7,
+      "max_us": 5.3
+    },
+    "ledger_record": {
+      "n": 100,
+      "median_us": 23.3,
+      "p95_us": 29.7,
+      "max_us": 100.5
+    },
+    "ledger_entries": 100,
+    "budget_check": {
+      "n": 500,
+      "median_us": 2.7,
+      "p95_us": 2.9,
+      "max_us": 10.3
+    },
+    "context_bytes_by_mode": {
+      "full": 3748,
+      "tokensave": 3749,
+      "cache-only": 3748,
+      "deep": 3750
+    }
+  },
+  "note": "microbenchmarks on synthetic payloads \u2014 overhead of the economy layer itself, not savings"
+}

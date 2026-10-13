@@ -1,0 +1,6 @@
+{"Vpcs": [{"VpcId": "vpc-1", "CidrBlock": "10.0.0.0/16", "OwnerId": "111"}],
+ "Subnets": [{"SubnetId": "sn-1", "VpcId": "vpc-1", "CidrBlock": "10.0.1.0/24",
+              "AvailabilityZone": "us-east-1a", "MapPublicIpOnLaunch": true}],
+ "InternetGateways": [{"InternetGatewayId": "igw-1", "Attachments": [{"VpcId": "vpc-1"}]}],
+ "SecurityGroups": [{"GroupId": "sg-1", "GroupName": "web",
+                     "IpPermissions": [{"FromPort": 22, "IpRanges": [{"CidrIp": "0.0.0.0/0"}]}]}]}

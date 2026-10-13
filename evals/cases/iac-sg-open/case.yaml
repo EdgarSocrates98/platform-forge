@@ -1,0 +1,8 @@
+id: iac-sg-open
+type: golden
+variant: positive
+case_of: PF-IAC-002
+domain: iac
+fixture: fixture
+expect:
+  rules_fired: [PF-IAC-002]

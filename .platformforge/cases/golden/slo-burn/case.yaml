@@ -1,0 +1,26 @@
+id: slo-burn
+classification: fixture-derived
+tier: golden
+truth_class: ambiguous
+task: SLO burn-rate window — borderline budget consumption.
+scope: lab/scenarios/slo-burn/fixture
+analyzers:
+- slo
+fixture_from: lab/scenarios/slo-burn
+expected_known_truth:
+  violated_rules:
+  - PF-SLO-001
+  absent_rules: []
+  fact_kinds:
+  - sre.error_budget
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 100
+  relevant_bytes: 100
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

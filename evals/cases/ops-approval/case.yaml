@@ -1,0 +1,6 @@
+id: ops-approval
+type: live
+domain: ops-approval
+fixture: ../../../lab/scenarios/ops-expired-approval/fixture
+expect:
+  check: ops-scenario

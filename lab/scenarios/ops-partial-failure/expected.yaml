@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "step failure mid-DAG → failed + downstream skipped"

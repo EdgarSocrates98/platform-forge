@@ -1,0 +1,253 @@
+{
+  "commands": [
+    {
+      "cmd": "platformforge --help",
+      "ms": 141.0,
+      "rc": 0
+    },
+    {
+      "cmd": "platformforge doctor",
+      "ms": 186.4,
+      "rc": 0
+    },
+    {
+      "cmd": "platformforge inspect --repo .",
+      "ms": 715.2,
+      "rc": 0
+    },
+    {
+      "cmd": "platformforge agents list",
+      "ms": 164.1,
+      "rc": 0
+    },
+    {
+      "cmd": "platformforge capability manifest",
+      "ms": 265.2,
+      "rc": 0
+    }
+  ],
+  "environment": {
+    "commit": "2cd24f78a53edf0fd4d535d7aa7015a3df54cd28",
+    "cores": 16,
+    "cpu": "x86_64",
+    "os": "Linux 7.0.0-38-generic",
+    "python": "3.12.3",
+    "ram_gib": 30.7
+  },
+  "graph": {
+    "edge_sweep": {
+      "10000": {
+        "build_ms": 130.46,
+        "diff_ms": 624.81,
+        "edges": 20000,
+        "nodes": 10008,
+        "status": "measured"
+      },
+      "100000": {
+        "build_ms": 391.44,
+        "diff_ms": 2009.14,
+        "edges": 110000,
+        "nodes": 10008,
+        "status": "measured"
+      },
+      "1000000": {
+        "build_ms": 3565.11,
+        "diff_ms": 15530.23,
+        "edges": 1010000,
+        "nodes": 10008,
+        "status": "measured"
+      },
+      "250000": {
+        "build_ms": 884.23,
+        "diff_ms": 4407.67,
+        "edges": 260000,
+        "nodes": 10008,
+        "status": "measured"
+      },
+      "50000": {
+        "build_ms": 243.03,
+        "diff_ms": 1260.97,
+        "edges": 60000,
+        "nodes": 10008,
+        "status": "measured"
+      },
+      "500000": {
+        "build_ms": 1778.87,
+        "diff_ms": 8178.21,
+        "edges": 510000,
+        "nodes": 10008,
+        "status": "measured"
+      }
+    },
+    "environment": {
+      "commit": "2cd24f78a53edf0fd4d535d7aa7015a3df54cd28",
+      "cores": 16,
+      "cpu": "x86_64",
+      "os": "Linux 7.0.0-38-generic",
+      "python": "3.12.3",
+      "ram_gib": 30.7
+    },
+    "method": "perf_counter ms; tracemalloc KiB; seeded synthetic graphs (deterministic shape per n)",
+    "schema": "platformforge/scale-benchmarks/v2",
+    "sizes": {
+      "1000": {
+        "blast_ms": 0.89,
+        "blast_nodes": 192,
+        "build_ms": 21.84,
+        "dependents_found": 192,
+        "dependents_ms": 0.75,
+        "deserialize_ms": 4.29,
+        "diff_ms": 19.14,
+        "edges": 4000,
+        "merge_ms": 39.73,
+        "merged_nodes": 1008,
+        "neighbors_found": 4,
+        "neighbors_ms": 0.34,
+        "nodes": 1008,
+        "path_ms": 761.59,
+        "paths_found": 0,
+        "peak_build_kib": 2330.1,
+        "serialize_ms": 3.65,
+        "snapshot_bytes": 581572,
+        "status": "measured",
+        "store_forget_ms": 0.09,
+        "store_insert_ms": 13.42,
+        "store_query_ms": 3.09,
+        "store_size_bytes": 208896
+      },
+      "10000": {
+        "blast_ms": 8.65,
+        "blast_nodes": 192,
+        "build_ms": 209.47,
+        "dependents_found": 192,
+        "dependents_ms": 9.12,
+        "deserialize_ms": 49.67,
+        "diff_ms": 187.58,
+        "edges": 40000,
+        "merge_ms": 441.35,
+        "merged_nodes": 10008,
+        "neighbors_found": 4,
+        "neighbors_ms": 7.19,
+        "nodes": 10008,
+        "path_ms": 889.91,
+        "paths_found": 0,
+        "peak_build_kib": 23287.2,
+        "serialize_ms": 36.68,
+        "snapshot_bytes": 5900572,
+        "status": "measured",
+        "store_forget_ms": 0.12,
+        "store_insert_ms": 138.17,
+        "store_query_ms": 29.28,
+        "store_size_bytes": 1691648
+      },
+      "100000": {
+        "blast_ms": 101.45,
+        "blast_nodes": 192,
+        "build_ms": 2107.27,
+        "dependents_found": 192,
+        "dependents_ms": 103.41,
+        "deserialize_ms": 509.42,
+        "diff_ms": 2371.3,
+        "edges": 400000,
+        "merge_ms": 4243.69,
+        "merged_nodes": 100008,
+        "neighbors_found": 4,
+        "neighbors_ms": 90.73,
+        "nodes": 100008,
+        "path_ms": 1057.27,
+        "paths_found": 0,
+        "peak_build_kib": 241749.2,
+        "serialize_ms": 381.61,
+        "snapshot_bytes": 59900572,
+        "status": "measured",
+        "store_forget_ms": 0.14,
+        "store_insert_ms": 1051.7,
+        "store_query_ms": 41.34,
+        "store_size_bytes": 17485824
+      },
+      "25000": {
+        "blast_ms": 100.29,
+        "blast_nodes": 192,
+        "build_ms": 481.18,
+        "dependents_found": 192,
+        "dependents_ms": 23.54,
+        "deserialize_ms": 127.91,
+        "diff_ms": 531.28,
+        "edges": 100000,
+        "merge_ms": 998.95,
+        "merged_nodes": 25008,
+        "neighbors_found": 4,
+        "neighbors_ms": 17.08,
+        "nodes": 25008,
+        "path_ms": 1007.28,
+        "paths_found": 0,
+        "peak_build_kib": 60310.8,
+        "serialize_ms": 97.63,
+        "snapshot_bytes": 14900572,
+        "status": "measured",
+        "store_forget_ms": 0.13,
+        "store_insert_ms": 264.57,
+        "store_query_ms": 30.81,
+        "store_size_bytes": 4325376
+      },
+      "50000": {
+        "blast_ms": 48.55,
+        "blast_nodes": 192,
+        "build_ms": 1008.4,
+        "dependents_found": 192,
+        "dependents_ms": 48.37,
+        "deserialize_ms": 279.46,
+        "diff_ms": 1050.72,
+        "edges": 200000,
+        "merge_ms": 2100.35,
+        "merged_nodes": 50008,
+        "neighbors_found": 4,
+        "neighbors_ms": 199.47,
+        "nodes": 50008,
+        "path_ms": 1018.05,
+        "paths_found": 0,
+        "peak_build_kib": 120790.2,
+        "serialize_ms": 221.49,
+        "snapshot_bytes": 29900572,
+        "status": "measured",
+        "store_forget_ms": 0.13,
+        "store_insert_ms": 560.9,
+        "store_query_ms": 42.21,
+        "store_size_bytes": 8753152
+      }
+    },
+    "store_sweep": {
+      "10000": {
+        "bulk_insert_ms": 104.45,
+        "db_bytes": 1691648,
+        "forget_ms": 7.95,
+        "query_ms": 28.63,
+        "status": "measured",
+        "windowed_query_ms": 37.65
+      },
+      "100000": {
+        "bulk_insert_ms": 1037.07,
+        "db_bytes": 17485824,
+        "forget_ms": 74.33,
+        "query_ms": 37.48,
+        "status": "measured",
+        "windowed_query_ms": 76.57
+      },
+      "1000000": {
+        "bulk_insert_ms": 11924.42,
+        "db_bytes": 174665728,
+        "forget_ms": 689.18,
+        "query_ms": 39.36,
+        "status": "measured",
+        "windowed_query_ms": 235.75
+      }
+    }
+  },
+  "regression": {
+    "regression_flags": [],
+    "threshold_pct": 20.0,
+    "verdict": "pass"
+  },
+  "schema": "platformforge/performance-receipt/v1",
+  "sha": "2cd24f78a53edf0fd4d535d7aa7015a3df54cd28"
+}

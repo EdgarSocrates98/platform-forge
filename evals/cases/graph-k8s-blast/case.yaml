@@ -1,0 +1,7 @@
+id: graph-k8s-blast
+type: graph_correctness
+domain: k8s
+fixture: fixture
+expect:
+  node: workload/prod/api
+  dependents_of: []

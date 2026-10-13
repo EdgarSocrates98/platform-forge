@@ -1,0 +1,14 @@
+id: agent-multi-domain-platform-audit
+type: agent
+check: route
+signal:
+  task_type: analysis
+  domains: [iac, k8s, aws, security]
+  complexity: high
+  risk: medium
+expect:
+  mode: coordinated
+  coordinator: platform-orchestrator
+  includes: [platform-iac-specialist, platform-kubernetes-specialist,
+             platform-aws-specialist, platform-security-specialist]
+  verifier_required: true

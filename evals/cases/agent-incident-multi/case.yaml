@@ -1,0 +1,13 @@
+id: agent-incident-multi-specialist
+type: agent
+check: route
+signal:
+  task_type: incident
+  domains: [k8s, sre]
+  incident_status: active
+  risk: high
+expect:
+  mode: coordinated
+  coordinator: platform-incident-coordinator
+  includes: [platform-kubernetes-specialist, platform-sre-specialist]
+  verifier_required: true

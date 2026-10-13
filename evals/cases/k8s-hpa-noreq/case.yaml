@@ -1,0 +1,8 @@
+id: k8s-hpa-noreq
+type: golden
+variant: positive
+case_of: PF-K8S-020
+domain: k8s
+fixture: fixture
+expect:
+  rules_fired: [PF-K8S-020]   # HPA target lacks requests

@@ -1,0 +1,27 @@
+id: gitops-drift
+classification: fixture-derived
+tier: golden
+truth_class: contradictory
+task: GitOps desired vs observed drift — both states must surface.
+scope: lab/scenarios/gitops-drift/fixture
+analyzers:
+- gitops
+fixture_from: lab/scenarios/gitops-drift
+expected_known_truth:
+  violated_rules:
+  - PF-GITOPS-001
+  absent_rules:
+  - PF-GITOPS-003
+  fact_kinds:
+  - gitops.argocd_app
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 332
+  relevant_bytes: 332
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

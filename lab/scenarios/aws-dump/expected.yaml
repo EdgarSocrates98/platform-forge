@@ -1,0 +1,19 @@
+tier: standard
+description: "§93 AWS dump regression — Organizations, IAM, VPC/EC2/EKS,
+  S3/RDS shapes produce T1 cloud.aws facts; nothing is silently dropped."
+analyzers: [cloud-aws]
+violated_rules: []
+fact_kinds:
+  - cloud.aws.organization
+  - cloud.aws.account
+  - cloud.aws.role
+  - cloud.aws.policy
+  - cloud.aws.principal
+  - cloud.aws.vpc
+  - cloud.aws.subnet
+  - cloud.aws.internet_gateway
+  - cloud.aws.instance
+  - cloud.aws.cluster
+  - cloud.aws.bucket
+  - cloud.aws.database
+absent_rules: []

@@ -1,0 +1,476 @@
+{
+  "cases": [
+    {
+      "case": "argo-bad-rollout",
+      "duplicate_bytes": 0,
+      "input_bytes": 320,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 320,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 320,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 320
+        },
+        "graph_aware": {
+          "bytes": 320,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 320,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "aws-dump",
+      "duplicate_bytes": 0,
+      "input_bytes": 2019,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 2019,
+      "retrieval_count": 5,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 2019,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 2019
+        },
+        "graph_aware": {
+          "bytes": 2019,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 2019,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "container-unsigned",
+      "duplicate_bytes": 0,
+      "input_bytes": 215,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 215,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 215,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 215
+        },
+        "graph_aware": {
+          "bytes": 215,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 215,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "gitops-drift",
+      "duplicate_bytes": 0,
+      "input_bytes": 332,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 332,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 332,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 332
+        },
+        "graph_aware": {
+          "bytes": 332,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 332,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "k8s-bad-readiness",
+      "duplicate_bytes": 0,
+      "input_bytes": 756,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 756,
+      "retrieval_count": 2,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 756,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 756
+        },
+        "graph_aware": {
+          "bytes": 756,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 756,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "k8s-single-replica",
+      "duplicate_bytes": 0,
+      "input_bytes": 704,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 704,
+      "retrieval_count": 2,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 704,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 704
+        },
+        "graph_aware": {
+          "bytes": 704,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 704,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "network-policy-missing",
+      "duplicate_bytes": 0,
+      "input_bytes": 562,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 562,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 562,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 562
+        },
+        "graph_aware": {
+          "bytes": 562,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 562,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "secret-exposure",
+      "duplicate_bytes": 0,
+      "input_bytes": 116,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 116,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 116,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 116
+        },
+        "graph_aware": {
+          "bytes": 116,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 116,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "slo-burn",
+      "duplicate_bytes": 0,
+      "input_bytes": 100,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 100,
+      "retrieval_count": 2,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 100,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 100
+        },
+        "graph_aware": {
+          "bytes": 100,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 100,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "terraform-public-bucket",
+      "duplicate_bytes": 0,
+      "input_bytes": 151,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 151,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 151,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 151
+        },
+        "graph_aware": {
+          "bytes": 151,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 151,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "golden",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "cost-idle-workload",
+      "duplicate_bytes": 0,
+      "input_bytes": 206,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 206,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 206,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 206
+        },
+        "graph_aware": {
+          "bytes": 206,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 206,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "holdout",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "crossplane-platform",
+      "duplicate_bytes": 0,
+      "input_bytes": 2337,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 2337,
+      "retrieval_count": 2,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 2337,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 2337
+        },
+        "graph_aware": {
+          "bytes": 2337,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 2337,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "holdout",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "demo-platform",
+      "duplicate_bytes": 0,
+      "input_bytes": 625,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 625,
+      "retrieval_count": 3,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 625,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 625
+        },
+        "graph_aware": {
+          "bytes": 625,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 625,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "holdout",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "k8s-missing-limits",
+      "duplicate_bytes": 0,
+      "input_bytes": 894,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 894,
+      "retrieval_count": 2,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 894,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 894
+        },
+        "graph_aware": {
+          "bytes": 894,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 894,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "holdout",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "secret-prose-mixed",
+      "duplicate_bytes": 0,
+      "input_bytes": 284,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 284,
+      "retrieval_count": 2,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 284,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 284
+        },
+        "graph_aware": {
+          "bytes": 284,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 284,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "holdout",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    },
+    {
+      "case": "terraform-iam-wildcard",
+      "duplicate_bytes": 0,
+      "input_bytes": 215,
+      "note": "relevant bytes are files the case's analyzers read \u2014 graph-aware context \u2248 relevant-only; full context = everything (\u00a779 comparison)",
+      "relevant_bytes": 215,
+      "retrieval_count": 1,
+      "schema": "platformforge/context-audit/v1",
+      "strategies": {
+        "delta": {
+          "bytes": 215,
+          "note": "first run \u2014 no previous pack hash; savings only measurable on re-runs"
+        },
+        "full": {
+          "bytes": 215
+        },
+        "graph_aware": {
+          "bytes": 215,
+          "savings_bytes": 0
+        },
+        "tokensave": {
+          "bytes": 215,
+          "note": "TokenSave retrieval == relevant file set for analyzer-scoped tasks"
+        }
+      },
+      "tier": "holdout",
+      "unused_bytes": 0,
+      "unused_context_ratio": 0.0
+    }
+  ],
+  "note": "economy changes that cut bytes while raising false negatives are rejected (\u00a780) \u2014 the replay gate grades correctness, this audit grades cost",
+  "schema": "platformforge/context-audit-corpus/v1",
+  "totals": {
+    "avg_unused_context_ratio": 0.0,
+    "input_bytes": 9836,
+    "relevant_bytes": 9836,
+    "unused_bytes": 0
+  }
+}

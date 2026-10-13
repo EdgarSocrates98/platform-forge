@@ -1,0 +1,11 @@
+id: k8s-dep-api-unknown
+type: version
+variant: unresolved
+case_of: PF-K8S-030
+domain: k8s
+fixture: fixture
+# no versions declared → gated rules produce status=unresolved findings
+# carrying refusal metadata, never passed/violated (cycle 2.1 §13–22)
+expect:
+  unresolved: [PF-K8S-030, PF-K8S-031]
+  rules_not_fired: [PF-K8S-030, PF-K8S-031]

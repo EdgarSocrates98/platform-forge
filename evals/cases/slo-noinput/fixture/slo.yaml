@@ -1,0 +1,4 @@
+service: search
+sli: latency
+target: 99.5
+window: 7d

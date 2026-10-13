@@ -1,0 +1,6 @@
+[
+  {"cluster_id": "kind-lab", "provider": "kind", "context": "kind-lab",
+   "environment": "dev"},
+  {"cluster_id": "eks-prod", "provider": "aws", "account": "123456789012",
+   "region": "us-east-1", "environment": "prod"}
+]

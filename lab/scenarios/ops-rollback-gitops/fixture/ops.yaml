@@ -1,0 +1,38 @@
+# §134 — GitOps sync A→B, failed verification, Argo rollback to A
+intent:
+  intent_id: lab-rb-gitops
+  owner: team-a
+  requested_by: bob
+  reason: {type: release}
+  target_resources: ["argocd:lab/apps/web"]
+  desired_change: {revision: "rev-b"}
+steps:
+  - step_id: sync
+    action: argocd.sync
+    params: {app: web, revision: "rev-b"}
+expected_delta:
+  changes: {resources: [{id: "app/web", revision: "rev-b"}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+pre_state:
+  sync: {history_id: "42", previous_revision: "rev-a"}
+post_rollback:
+  sync: {previous_revision: "rev-a", history_id: "42"}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
+environment: lab
+auto_rollback: true
+transports: {argocd: {rc: 0, stdout: "synced"}}
+verify:
+  observations:
+    immediate: {changes: {resources: [{id: "app/web",
+                                     revision: "rev-b"}]}}
+  slo: {error_rate_max: 0.01}
+  metrics: {error_rate: 0.6}
+expect:
+  ok: true
+  state: rolled-back
+  rollback_status: executable
+  rollback_verification: restored
+  ledger_event: rollback.completed

@@ -1,0 +1,8 @@
+id: xr-graph-chain
+type: graph_correctness
+domain: crossplane
+fixture: fixture
+expect:
+  node: crossplane_provider/aws-prod
+  blast_of:
+    - crossplane_managed_resource/data-lake-prod

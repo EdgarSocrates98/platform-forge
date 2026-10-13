@@ -1,0 +1,35 @@
+id: demo-platform
+classification: fixture-derived
+tier: holdout
+truth_class: known-bad
+task: Multi-domain platform fixture — iac+k8s+gha violations.
+scope: lab/scenarios/demo-platform/fixture
+analyzers:
+- iac
+- k8s
+- gha
+fixture_from: lab/scenarios/demo-platform
+expected_known_truth:
+  violated_rules:
+  - PF-IAC-001
+  - PF-K8S-001
+  - PF-K8S-002
+  - PF-K8S-004
+  - PF-CICD-002
+  absent_rules:
+  - PF-IAC-010
+  fact_kinds:
+  - iac.resource
+  - k8s.workload
+  - cicd.github_workflow
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 625
+  relevant_bytes: 625
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

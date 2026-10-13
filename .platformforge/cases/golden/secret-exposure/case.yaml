@@ -1,0 +1,26 @@
+id: secret-exposure
+classification: fixture-derived
+tier: golden
+truth_class: known-bad
+task: Secret material exposed in IaC fixtures.
+scope: lab/scenarios/secret-exposure/fixture
+analyzers:
+- secrets
+fixture_from: lab/scenarios/secret-exposure
+expected_known_truth:
+  violated_rules:
+  - PF-SEC-010
+  absent_rules: []
+  fact_kinds:
+  - security.secret_leak
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 116
+  relevant_bytes: 116
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

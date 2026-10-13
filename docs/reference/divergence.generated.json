@@ -1,0 +1,9 @@
+{
+  "schema": "forge/DocDivergence/v1",
+  "cli": "platformforge",
+  "documented_missing": [],
+  "undocumented_commands": [
+    "portal"
+  ],
+  "generated_at": "2026-10-11T04:54:08Z"
+}

@@ -1,0 +1,6 @@
+id: rollback-k8s-scale
+type: live
+domain: ops-rollback
+fixture: ../../../lab/scenarios/ops-rollback-scale/fixture
+expect:
+  check: ops-scenario

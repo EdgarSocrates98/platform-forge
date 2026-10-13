@@ -1,0 +1,12 @@
+id: agent-security-review-mandatory
+type: agent
+check: route
+signal:
+  task_type: review
+  domains: [aws]
+  security_sensitive: true
+  risk: high
+expect:
+  reviewers_include: [platform-security-reviewer,
+                      platform-evidence-reviewer]
+  verifier_required: true

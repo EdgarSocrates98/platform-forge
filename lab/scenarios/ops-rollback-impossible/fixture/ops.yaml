@@ -1,0 +1,34 @@
+# §136 — git.push has no executable rollback → human escalation,
+# never an invented action, no automatic rollback
+intent:
+  intent_id: lab-rb-imp
+  owner: team-a
+  requested_by: bob
+  reason: {type: release}
+  target_resources: ["git:origin/main"]
+  desired_change: {push: true}
+steps:
+  - step_id: push
+    action: git.push
+    params: {repo: "platform.git", branch: "main", remote: "origin"}
+expected_delta:
+  changes: {resources: [{id: "origin/main", pushed: true}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner, type: dual-human}
+environment: lab
+auto_rollback: true
+trigger_rollback: true
+transports: {git: {rc: 0, stdout: "pushed"}}
+verify:
+  observations:
+    immediate: {changes: {resources: [{id: "origin/main", pushed: true}]}}
+  slo: {error_rate_max: 0.01}
+  metrics: {error_rate: 0.8}
+expect:
+  ok: true
+  convergence: regressed
+  rollback_status: manual-only
+  rollback_refusal: PF-OPS-ROLLBACK-NOT-EXECUTABLE

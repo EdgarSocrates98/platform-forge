@@ -1,0 +1,33 @@
+{
+ "mediaType": "application/vnd.dev.sigstore.bundle+json;version=0.3",
+ "verificationMaterial": {
+  "certificate": {
+   "rawBytes": "MIIC..."
+  },
+  "timestampVerificationData": {}
+ },
+ "dsseEnvelope": {
+  "payloadType": "application/vnd.in-toto+json",
+  "payload": "eyJ...",
+  "signatures": [
+   {
+    "keyid": "",
+    "sig": "MEUC..."
+   }
+  ]
+ },
+ "subject": [
+  {
+   "name": "registry/app",
+   "digest": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   }
+  }
+ ],
+ "signatures": [
+  {
+   "keyid": "",
+   "sig": "MEUC..."
+  }
+ ]
+}

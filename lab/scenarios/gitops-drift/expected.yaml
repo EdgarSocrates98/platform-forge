@@ -1,0 +1,6 @@
+tier: smoke
+description: "ArgoCD app without automated sync — git drift stays live."
+analyzers: [gitops]
+violated_rules: [PF-GITOPS-001]
+absent_rules: [PF-GITOPS-003]
+fact_kinds: [gitops.argocd_app]

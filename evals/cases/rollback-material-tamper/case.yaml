@@ -1,0 +1,6 @@
+id: rollback-material-tamper
+type: live
+domain: ops-rollback
+expect:
+  check: ops-invariant
+  probe: material-tamper

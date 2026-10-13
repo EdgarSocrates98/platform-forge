@@ -1,0 +1,1 @@
+Error from server (Forbidden): configmaps is forbidden: User "pf-live" cannot list resource "configmaps"

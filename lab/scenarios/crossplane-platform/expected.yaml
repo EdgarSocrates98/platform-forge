@@ -1,0 +1,16 @@
+tier: standard
+description: "Crossplane platform: XRD + pipeline Composition + Upbound AWS
+  provider family (Provider, ProviderConfig, S3 Bucket MR) + XR bound by
+  compositionRef. Negative docs (plain CRD, Upbound Spaces ControlPlane
+  without MR shape) must produce no facts — §53/§58."
+analyzers: [crossplane]
+violated_rules:
+  - PF-XR-001   # data-lake-prod carries deletionPolicy: Delete
+fact_kinds:
+  - platform.xrd
+  - platform.composition
+  - platform.crossplane_provider
+  - platform.provider_config
+  - platform.managed_resource
+  - platform.xr
+absent_rules: []

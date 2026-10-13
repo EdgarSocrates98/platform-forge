@@ -1,0 +1,21 @@
+intent:
+  intent_id: lab-i1
+  owner: team-a
+  requested_by: bob
+  reason: {type: drift, drift_ids: [d1]}
+  target_resources: ["k8s:lab/apps/Deployment/web"]
+  desired_change: {replicas: 3}
+steps:
+  - step_id: fix-selector
+    action: git.open_pr
+    params: {repo: "org/infra", title: "fix svc selector", head: fix, base: main, body: "evidence"}
+expected_delta:
+  changes: {network: [{id: "svc/web", selector: "fixed"}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+approvals:
+  - {approval_id: ap1, binds: envelope, actor: alice, role: owner}
+environment: lab
+transports: {git: {rc: 0, stdout: "pr opened"}}
+expect: {ok: true, ledger_event: step.completed}

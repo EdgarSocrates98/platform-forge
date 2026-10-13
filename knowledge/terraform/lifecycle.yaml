@@ -1,0 +1,18 @@
+schema: platformforge/knowledge/v1
+id: terraform-lifecycle
+domain: terraform
+applies_to: {}
+sources: [terraform-docs]
+claims:
+  - id: tf-lifecycle-prevent-destroy
+    statement: "prevent_destroy only guards the destroy inside plan/apply;
+      removing the block or the resource from config still destroys it."
+    versions: {}
+  - id: tf-create-before-destroy
+    statement: "create_before_destroy inverts replace order — required for
+      resources that must exist continuously, but doubles transient
+      capacity and can violate unique constraints."
+    versions: {}
+used_by:
+  rules: [PF-IAC-010, PF-IAC-011]
+  analyzers: [plan, iac]

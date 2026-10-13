@@ -1,0 +1,28 @@
+id: k8s-bad-readiness
+classification: fixture-derived
+tier: golden
+truth_class: known-bad
+task: Workload without health probes — readiness/liveness must surface.
+scope: lab/scenarios/k8s-bad-readiness/fixture
+analyzers:
+- k8s
+fixture_from: lab/scenarios/k8s-bad-readiness
+expected_known_truth:
+  violated_rules:
+  - PF-K8S-003
+  absent_rules:
+  - PF-K8S-002
+  - PF-K8S-012
+  fact_kinds:
+  - k8s.workload
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 756
+  relevant_bytes: 756
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

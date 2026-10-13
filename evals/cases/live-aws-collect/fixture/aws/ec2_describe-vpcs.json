@@ -1,0 +1,15 @@
+{
+  "Vpcs": [
+    {
+      "VpcId": "vpc-0a1b2c3d",
+      "CidrBlock": "10.0.0.0/16",
+      "State": "available",
+      "Tags": [{"Key": "Name", "Value": "prod-vpc"}]
+    },
+    {
+      "VpcId": "vpc-9z8y7x6w",
+      "CidrBlock": "172.16.0.0/16",
+      "State": "available"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/agent-run/v1",
+  "title": "PlatformForge AgentRunRecord — auditable agentic run",
+  "type": "object",
+  "required": ["schema", "run_id", "task_spec_hash", "verdict"],
+  "properties": {
+    "schema": {"const": "platformforge/agent-run/v1"},
+    "run_id": {"type": "string", "minLength": 1},
+    "task_spec_hash": {"type": "string", "minLength": 1},
+    "router_decision": {"type": "object"},
+    "agents": {"type": "array", "items": {"type": "string"}},
+    "handoffs": {"type": "array", "items": {"type": "object"}},
+    "budget": {"type": "object"},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "debates": {"type": "array", "items": {"type": "string"}},
+    "gates": {"type": "array", "items": {"type": "string"}},
+    "verifier": {"type": "string"},
+    "verdict": {"type": "string", "enum": ["confirmed", "supported",
+                "candidate", "unresolved", "refuted", "unsupported",
+                "not-observed"]},
+    "checkpoint": {"type": "object"},
+    "started_at": {"type": "string"},
+    "finished_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

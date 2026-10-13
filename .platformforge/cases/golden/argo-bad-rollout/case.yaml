@@ -1,0 +1,28 @@
+id: argo-bad-rollout
+classification: fixture-derived
+tier: golden
+truth_class: known-bad
+task: ArgoCD app with bad rollout strategy.
+scope: lab/scenarios/argo-bad-rollout/fixture
+analyzers:
+- gitops
+fixture_from: lab/scenarios/argo-bad-rollout
+expected_known_truth:
+  violated_rules:
+  - PF-GITOPS-002
+  - PF-GITOPS-003
+  absent_rules:
+  - PF-GITOPS-001
+  fact_kinds:
+  - gitops.argocd_app
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 320
+  relevant_bytes: 320
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

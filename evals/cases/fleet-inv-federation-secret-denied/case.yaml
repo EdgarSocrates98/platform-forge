@@ -1,0 +1,7 @@
+id: fleet-inv-federation-secret-denied
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: federation-secret-denied

@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "freeze + valid break-glass → executes with audit"

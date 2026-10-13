@@ -1,0 +1,6 @@
+id: rollback-impossible
+type: live
+domain: ops-rollback
+fixture: ../../../lab/scenarios/ops-rollback-impossible/fixture
+expect:
+  check: ops-scenario

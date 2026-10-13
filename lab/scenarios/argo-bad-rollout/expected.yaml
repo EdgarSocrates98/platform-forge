@@ -1,0 +1,6 @@
+tier: smoke
+description: "Automated sync without self-heal or prune — partial rollouts persist."
+analyzers: [gitops]
+violated_rules: [PF-GITOPS-002, PF-GITOPS-003]
+absent_rules: [PF-GITOPS-001]
+fact_kinds: [gitops.argocd_app]

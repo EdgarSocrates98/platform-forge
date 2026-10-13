@@ -1,0 +1,10 @@
+id: live-k8s-collect
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: collect-k8s
+  resource_types: [deployments.apps, pods, secrets, configmaps]
+  objects_min: 4
+  coverage: partial
+  denied_types: [configmaps]

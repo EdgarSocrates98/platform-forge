@@ -1,0 +1,19 @@
+schema: platformforge/knowledge/v1
+id: aws-organizations
+domain: aws
+applies_to: {}
+sources: [aws-organizations-docs]
+claims:
+  - id: org-account-isolation
+    statement: "Organization account boundaries are the strong isolation
+      primitive for workload separation; SCPs bound what member accounts
+      can do even for their root user."
+    versions: {}
+  - id: org-tag-allocation
+    statement: "Cost allocation across an organization depends on
+      consistent tags/cost categories; untagged spend lands in the
+      unallocated bucket and breaks chargeback."
+    versions: {}
+used_by:
+  rules: [PF-FIN-001]
+  analyzers: [cloud-aws]

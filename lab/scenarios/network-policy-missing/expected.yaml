@@ -1,0 +1,6 @@
+tier: smoke
+description: "Workload in a namespace with no NetworkPolicy selecting it."
+analyzers: [k8s]
+violated_rules: [PF-K8S-012]
+absent_rules: [PF-K8S-002, PF-K8S-003]
+fact_kinds: [k8s.workload]

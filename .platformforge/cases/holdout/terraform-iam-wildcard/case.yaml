@@ -1,0 +1,28 @@
+id: terraform-iam-wildcard
+classification: fixture-derived
+tier: holdout
+truth_class: known-bad
+task: IAM policy with wildcard actions/resources.
+scope: lab/scenarios/terraform-iam-wildcard/fixture
+analyzers:
+- iam
+fixture_from: lab/scenarios/terraform-iam-wildcard
+expected_known_truth:
+  violated_rules:
+  - PF-SEC-001
+  - PF-SEC-002
+  - PF-SEC-003
+  absent_rules: []
+  fact_kinds:
+  - security.iam_policy
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 215
+  relevant_bytes: 215
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

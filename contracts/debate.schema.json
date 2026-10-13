@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/debate/v1",
+  "title": "PlatformForge Debate — bounded evidence-based disagreement",
+  "type": "object",
+  "required": ["schema", "debate_id", "question", "outcome"],
+  "properties": {
+    "schema": {"const": "platformforge/debate/v1"},
+    "debate_id": {"type": "string", "minLength": 1},
+    "question": {"type": "string", "minLength": 1},
+    "positions": {"type": "array", "items": {"type": "object",
+        "required": ["agent", "claim"],
+        "properties": {
+          "agent": {"type": "string"},
+          "claim": {"type": "string"},
+          "evidence": {"type": "array", "items": {"type": "string"}},
+          "evidence_tier": {"type": "integer", "minimum": 0,
+                            "maximum": 7},
+          "freshness": {"type": "string"},
+          "round": {"type": "integer", "minimum": 0}}}},
+    "max_participants": {"type": "integer", "minimum": 2, "maximum": 8},
+    "max_rounds": {"type": "integer", "minimum": 1, "maximum": 3},
+    "round": {"type": "integer", "minimum": 0},
+    "outcome": {"type": "string", "enum": ["open", "winner", "tied",
+                "unresolved"]},
+    "winner": {"type": "string"},
+    "axes": {"type": "array", "items": {"type": "string"}},
+    "receipt": {"type": "object"}
+  },
+  "additionalProperties": false
+}

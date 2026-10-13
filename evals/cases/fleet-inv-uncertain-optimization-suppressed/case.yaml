@@ -1,0 +1,7 @@
+id: fleet-inv-uncertain-optimization-suppressed
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: uncertain-optimization-suppressed

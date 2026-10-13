@@ -1,0 +1,20 @@
+schema: platformforge/knowledge/v1
+id: crossplane-composition-providers
+domain: crossplane
+applies_to: {}
+sources: [crossplane-docs]
+claims:
+  - id: composition-pipeline
+    statement: "A Composition in Pipeline mode runs function steps
+      (functionRef) that transform desired state; classic mode lists
+      static resource templates. The XR selects it via
+      spec.compositionRef."
+    versions: {}
+  - id: provider-revisions
+    statement: "Provider installs create ProviderRevision objects pinned
+      to an xpkg image; revisionActivationPolicy Automatic upgrades
+      in-place, Manual requires approval — relevant for change review."
+    versions: {}
+used_by:
+  rules: [PF-XR-001]
+  analyzers: [crossplane]

@@ -1,0 +1,90 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xbuckets.platform.example.org
+spec:
+  group: platform.example.org
+  names:
+    kind: XBucket
+    plural: xbuckets
+  claimNames:
+    kind: BucketClaim
+    plural: bucketclaims
+  connectionSecretKeys:
+    - endpoint
+  versions:
+    - name: v1alpha1
+      kind: XBucket
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                region:
+                  type: string
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: bucket-aws
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: XBucket
+  mode: Pipeline
+  pipeline:
+    - step: s3-bucket
+      functionRef:
+        name: function-auto-ready
+    - step: patch
+      functionRef:
+        name: function-patch-and-transform
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-s3
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-s3:v1.14.0
+---
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: aws-prod
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-creds
+      key: creds
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: data-lake-prod
+spec:
+  forProvider:
+    region: us-east-1
+  managementPolicies:
+    - "*"
+  deletionPolicy: Delete
+  providerConfigRef:
+    name: aws-prod
+---
+apiVersion: platform.example.org/v1alpha1
+kind: XBucket
+metadata:
+  name: analytics-bucket
+spec:
+  compositionRef:
+    name: bucket-aws
+  resourceRefs:
+    - apiVersion: s3.aws.upbound.io/v1beta1
+      kind: Bucket
+      name: data-lake-prod
+  region: us-east-1

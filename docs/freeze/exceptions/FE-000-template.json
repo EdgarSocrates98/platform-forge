@@ -1,0 +1,16 @@
+{
+  "schema": "platformforge/feature-exception/v1",
+  "id": "FE-000",
+  "requested_capability": "<the feature>",
+  "reason": "<why it is being requested>",
+  "real_world_blocker": "<the observed blocker — a case id, an issue, a reproduction>",
+  "existing_capability_insufficient": "<which verbs were tried and what they returned>",
+  "alternatives_considered": ["<alternative 1>", "<alternative 2>"],
+  "architectural_impact": "none|small|medium|large + description",
+  "schema_impact": "none|<which contracts/ files change>",
+  "agent_impact": "none|<roster/budget delta>",
+  "operations_impact": "none|<operational surface>",
+  "decision": "rejected",
+  "decided_by": "<name/role>",
+  "evidence": [".platformforge/cases/<id>/case.yaml"]
+}

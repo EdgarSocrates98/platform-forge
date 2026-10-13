@@ -1,0 +1,7 @@
+id: k8s-nopdb
+type: golden
+variant: positive
+domain: k8s
+fixture: fixture
+expect:
+  rules_fired: [PF-K8S-008]   # deployment without PDB

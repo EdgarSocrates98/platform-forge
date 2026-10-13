@@ -1,0 +1,28 @@
+schema: platformforge/knowledge/v1
+id: aws-iam
+domain: aws
+applies_to: {}
+sources: [aws-iam-docs]
+claims:
+  - id: iam-wildcard-action
+    statement: "Action '*' or 'service:*' grants every current and future
+      action in scope — least-privilege requires enumerating actions."
+    versions: {}
+  - id: iam-public-principal
+    statement: "Principal '*' or a public ARN makes the resource reachable
+      by any AWS principal; resource policies need scoping plus
+      aws:PrincipalOrgID or similar condition."
+    versions: {}
+  - id: iam-wildcard-resource
+    statement: "Resource '*' is acceptable only for actions that do not
+      support resource-level permissions; everywhere else it defeats
+      least privilege."
+    versions: {}
+  - id: iam-oidc-federation
+    statement: "OIDC trust policies (token.actions.githubusercontent.com,
+      EKS oidc-provider) must constrain sub/aud via condition keys —
+      an unconstrained trust lets any repo/cluster workload assume."
+    versions: {}
+used_by:
+  rules: [PF-SEC-001, PF-SEC-002, PF-SEC-003, PF-SEC-043]
+  analyzers: [iam, cloud-aws]

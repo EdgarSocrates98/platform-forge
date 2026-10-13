@@ -1,0 +1,5 @@
+schema: platformforge/fn-ledger/v1
+note: >
+  Verdicts that should have fired but did not, with the evidence that
+  was present but unfound.
+records: []

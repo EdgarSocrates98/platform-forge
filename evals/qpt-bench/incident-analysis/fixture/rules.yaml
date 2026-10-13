@@ -1,0 +1,6 @@
+groups:
+  - name: availability
+    rules:
+      - alert: ApiDown
+        expr: up{job="api"} == 0
+        for: 5m

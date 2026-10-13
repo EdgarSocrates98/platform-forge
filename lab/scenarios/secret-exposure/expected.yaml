@@ -1,0 +1,5 @@
+tier: smoke
+description: "Credential patterns committed to a file in the repo."
+analyzers: [secrets]
+violated_rules: [PF-SEC-010]
+fact_kinds: [security.secret_leak]

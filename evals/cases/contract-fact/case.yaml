@@ -1,0 +1,5 @@
+id: contract-fact
+type: contract
+fixture: fixture/doc.json
+expect:
+  schema: fact.schema.json

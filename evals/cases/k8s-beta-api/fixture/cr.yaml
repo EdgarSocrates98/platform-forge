@@ -1,0 +1,7 @@
+apiVersion: app.example.io/v1beta1
+kind: Widget
+metadata:
+  name: sample
+  namespace: prod
+spec:
+  size: 2

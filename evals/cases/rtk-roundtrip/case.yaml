@@ -1,0 +1,5 @@
+id: rtk-roundtrip
+type: property
+fixture: fixture/verbose.txt
+expect:
+  check: rtk_round_trip

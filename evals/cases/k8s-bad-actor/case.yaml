@@ -1,0 +1,19 @@
+id: k8s-bad-actor
+type: golden
+variant: positive
+domain: k8s
+fixture: fixture
+expect:
+  rules_fired:
+    - PF-K8S-005   # root possible (no runAsNonRoot)
+    - PF-K8S-006   # hostNetwork
+    - PF-K8S-007   # automounted SA token
+    - PF-K8S-009   # hardcoded env secret
+    - PF-K8S-010   # ingress no TLS
+    - PF-K8S-013   # secret keys in manifest
+    - PF-K8S-021   # wildcard RBAC
+    - PF-K8S-022   # cluster-admin binding
+    - PF-K8S-023   # gateway plain HTTP
+    - PF-K8S-024   # canary without analysis
+    - PF-K8S-025   # 2 replicas, no spread
+    - PF-K8S-026   # PVC no storage class

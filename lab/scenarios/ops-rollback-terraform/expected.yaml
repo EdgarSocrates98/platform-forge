@@ -1,0 +1,3 @@
+kind: ops
+tier: standard
+description: "§135 terraform forward plan → requires-replan, no auto-reverse"

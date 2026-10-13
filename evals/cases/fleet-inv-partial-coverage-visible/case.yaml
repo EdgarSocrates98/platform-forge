@@ -1,0 +1,7 @@
+id: fleet-inv-partial-coverage-visible
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: partial-coverage-visible

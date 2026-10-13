@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/receipt/v1",
+  "title": "PlatformForge operation receipt",
+  "type": "object",
+  "required": ["operation", "inputs", "hashes", "started_at", "ended_at"],
+  "properties": {
+    "operation": {"type": "string"},
+    "inputs": {"type": "array"},
+    "hashes": {"type": "object", "additionalProperties": {"type": "string"}},
+    "tools": {"type": "array", "items": {"type": "string"}},
+    "versions": {"type": "object"},
+    "facts": {"type": "array", "items": {"type": "string"}},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "graph": {"type": ["string", "null"]},
+    "started_at": {"type": "string"},
+    "ended_at": {"type": "string"},
+    "extra": {"type": "object"}
+  },
+  "additionalProperties": false
+}

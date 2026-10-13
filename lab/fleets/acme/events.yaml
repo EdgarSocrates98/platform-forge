@@ -1,0 +1,41 @@
+operation:
+  - {ts: "2025-11-01T10:00:00Z", action: kubernetes.rollout_restart, service: batch-etl, state: converged, converge_seconds: 90}
+  - {ts: "2025-11-03T10:00:00Z", action: kubernetes.rollout_restart, service: batch-etl, state: converged, converge_seconds: 95}
+  - {ts: "2025-11-07T10:00:00Z", action: kubernetes.rollout_restart, service: batch-etl, state: failed, converge_seconds: 120}
+  - {ts: "2025-11-10T10:00:00Z", action: kubernetes.rollout_restart, service: batch-etl, state: converged, converge_seconds: 88}
+  - {ts: "2025-11-12T10:00:00Z", action: kubernetes.scale, service: checkout, state: converged}
+  - {ts: "2025-11-14T10:00:00Z", action: git.open_pr, service: payments, state: converged}
+rollback:
+  - {ts: "2025-11-07T11:00:00Z", service: batch-etl, strategy: direct-inverse, outcome: rolled-back}
+  - {ts: "2025-10-28T11:00:00Z", service: batch-etl, strategy: direct-inverse, outcome: rolled-back}
+incident:
+  - {ts: "2025-11-07T10:30:00Z", incident_id: inc-101, service: batch-etl, signature: "batch-etl:latency", opened_at: "2025-11-07T10:30:00Z", resolved_at: "2025-11-07T12:10:00Z"}
+  - {ts: "2025-10-28T10:30:00Z", incident_id: inc-102, service: batch-etl, signature: "batch-etl:latency", opened_at: "2025-10-28T10:30:00Z", resolved_at: "2025-10-28T11:00:00Z"}
+  - {ts: "2025-10-14T09:00:00Z", incident_id: inc-103, service: batch-etl, signature: "batch-etl:latency", opened_at: "2025-10-14T09:00:00Z", resolved_at: "2025-10-14T09:40:00Z"}
+deployment:
+  - {ts: "2025-11-07T10:00:00Z", service: batch-etl, incident_linked: true}
+  - {ts: "2025-10-28T10:00:00Z", service: batch-etl, incident_linked: true}
+  - {ts: "2025-10-14T08:30:00Z", service: batch-etl, incident_linked: true}
+  - {ts: "2025-11-01T09:00:00Z", service: checkout}
+  - {ts: "2025-11-05T09:00:00Z", service: checkout}
+remediation:
+  - {ref: rem-1, finding: "k8s.no-limits", remediation: "add-resource-limits", category: config, ts: "2025-10-02T00:00:00Z"}
+  - {ref: rem-2, finding: "k8s.no-limits", remediation: "add-resource-limits", category: config, ts: "2025-10-20T00:00:00Z"}
+  - {ref: rem-3, finding: "k8s.no-limits", remediation: "add-resource-limits", category: config, ts: "2025-11-08T00:00:00Z"}
+policy_decision:
+  - {policy: require-owner, decision: deny, subject: orphan-api, ts: "2025-11-01T00:00:00Z"}
+  - {policy: require-owner, decision: deny, subject: legacy-batch, ts: "2025-11-02T00:00:00Z"}
+  - {policy: require-owner, decision: deny, subject: unknown-svc, ts: "2025-11-03T00:00:00Z"}
+  - {policy: require-owner, decision: deny, subject: tmp-svc, ts: "2025-11-04T00:00:00Z"}
+  - {policy: no-public-s3, decision: shadow-deny, subject: bucket-x, team: data, ts: "2025-11-05T00:00:00Z"}
+  - {policy: no-public-s3, decision: shadow-deny, subject: bucket-y, team: data, ts: "2025-11-06T00:00:00Z"}
+  - {policy: no-public-s3, decision: shadow-deny, subject: bucket-z, team: data, ts: "2025-11-07T00:00:00Z"}
+golden_path_request:
+  - {path: web-svc, status: provisioned, requested_at: "2025-11-01T09:00:00Z", ready_at: "2025-11-01T09:20:00Z"}
+  - {path: web-svc, status: provisioned, requested_at: "2025-11-02T09:00:00Z", ready_at: "2025-11-02T09:18:00Z"}
+  - {path: web-svc, status: provisioned, requested_at: "2025-11-03T09:00:00Z", ready_at: "2025-11-03T09:22:00Z"}
+  - {path: web-svc, status: provisioned, requested_at: "2025-11-04T09:00:00Z", ready_at: "2025-11-04T09:19:00Z"}
+  - {path: batch-job, status: failed, requested_at: "2025-11-05T09:00:00Z"}
+  - {path: batch-job, status: failed, requested_at: "2025-11-06T09:00:00Z"}
+  - {path: batch-job, status: failed, requested_at: "2025-11-07T09:00:00Z"}
+  - {path: batch-job, status: provisioned, requested_at: "2025-11-08T09:00:00Z", ready_at: "2025-11-08T11:30:00Z", approval_wait_s: 7200}

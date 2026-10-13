@@ -1,0 +1,21 @@
+intent:
+  intent_id: lab-i1
+  owner: team-a
+  requested_by: bob
+  reason: {type: drift, drift_ids: [d1]}
+  target_resources: ["k8s:lab/apps/Deployment/web"]
+  desired_change: {replicas: 3}
+steps:
+  - step_id: scale
+    action: kubernetes.scale
+    params: {kind: Deployment, name: web, namespace: apps, replicas: 3, current_replicas: 5}
+expected_delta:
+  changes: {resources: [{id: "dep/web", replicas: [5, 3]}]}
+observation:
+  captured_at: "2999-01-01T00:00:00Z"
+  coverage: {complete: true}
+environment: lab
+transports: {kubernetes: {rc: 0, stdout: "scaled"}}
+freeze_active: true
+break_glass: {ticket_id: BG-77, actor: oncall, reason: "sev1 mitigation", expires_at: "2999-01-01T00:00:00Z", scope: ["k8s:lab/apps/Deployment/web"]}
+expect: {ok: true, ledger_event: step.completed}

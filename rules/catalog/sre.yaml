@@ -1,0 +1,67 @@
+# SRE rules — operate on sre.* facts emitted by observe verbs.
+rules:
+  - rule_id: PF-SLO-001
+    domain: sre
+    title: "Error budget exhausted"
+    severity: critical
+    applies_to: {fact_kind: sre.error_budget}
+    conditions:
+      all:
+        - {path: attrs.status, op: equals, value: exhausted}
+    message: "freeze non-essential change; reliability is the feature now"
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "sre-book/service-level-objectives"
+
+  - rule_id: PF-SLO-002
+    domain: sre
+    title: "Burn rate above 1 — budget consumed faster than window"
+    severity: high
+    applies_to: {fact_kind: sre.error_budget}
+    conditions:
+      all:
+        - {path: attrs.status, op: in, value: [at_risk, exhausted]}
+        - {path: attrs.burn_rate, op: gte, value: 2.0}
+    message: "sustained burn ≥2× empties the budget inside half the window"
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "workbook/alerting-on-slos"
+
+  - rule_id: PF-SLO-003
+    domain: sre
+    title: "SLO inputs unresolved"
+    severity: info
+    applies_to: {fact_kind: sre.error_budget}
+    conditions:
+      all:
+        - {path: attrs.status, op: equals, value: unresolved}
+    message: "no SLI events — budget position cannot be claimed"
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "sre-book/service-level-objectives"
+
+  - rule_id: PF-SRE-001
+    domain: sre
+    title: "Saturated resource"
+    severity: high
+    applies_to: {fact_kind: sre.capacity}
+    conditions:
+      all:
+        - {path: attrs.class, op: equals, value: saturated}
+    message: "≥95% utilization — headroom gone before the next spike"
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "sre-book/monitoring-distributed-systems"
+
+  - rule_id: PF-SRE-002
+    domain: sre
+    title: "Hot resource"
+    severity: medium
+    applies_to: {fact_kind: sre.capacity}
+    conditions:
+      all:
+        - {path: attrs.class, op: equals, value: hot}
+    message: "≥85% utilization — plan capacity, don't wait for the page"
+    sources: ['google-sre-book']
+    source_refs:
+      google-sre-book: "workbook/implementing-slos"

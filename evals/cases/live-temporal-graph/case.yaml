@@ -1,0 +1,10 @@
+id: live-temporal-graph
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: temporal
+  now: "2025-06-10T12:00:00Z"
+  max_age_s: 3600
+  expired_edges:
+    - "service/web->service/db:calls"

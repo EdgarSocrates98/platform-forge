@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platformforge/refusal/v1",
+  "title": "PlatformForge Refusal — named unresolved, never a guess",
+  "type": "object",
+  "required": ["refusal_id", "code", "field", "unlock"],
+  "properties": {
+    "refusal_id": {"type": "string"},
+    "code": {"type": "string", "pattern": "^platform\\.[a-z_]+\\.unresolved$|^PF-[A-Z]+-[0-9]+$"},
+    "field": {"type": "string", "minLength": 1},
+    "message": {"type": "string"},
+    "unlock": {"type": "string", "minLength": 1},
+    "missing_evidence": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

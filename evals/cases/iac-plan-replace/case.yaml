@@ -1,0 +1,8 @@
+id: iac-plan-replace
+type: golden
+variant: positive
+case_of: PF-IAC-011
+domain: plan
+fixture: fixture
+expect:
+  rules_fired: [PF-IAC-011]

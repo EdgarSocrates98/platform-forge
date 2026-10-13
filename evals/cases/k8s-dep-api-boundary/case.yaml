@@ -1,0 +1,15 @@
+id: k8s-dep-api-boundary
+type: version
+variant: boundary
+case_of: PF-K8S-030
+domain: k8s
+fixture: fixture
+# kubernetes exactly at the PF-K8S-030 floor (>=1.22): satisfied → the
+# rule evaluates and violates (extensions/v1beta1 removed in 1.16).
+# PF-K8S-031 requires >=1.24 → version-mismatch skip at 1.22.
+versions: {kubernetes: "1.22"}
+expect:
+  rules_fired: [PF-K8S-030]
+  rules_skipped:
+    - PF-K8S-031: version-mismatch
+  rules_not_fired: [PF-K8S-031]

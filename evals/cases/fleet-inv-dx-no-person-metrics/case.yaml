@@ -1,0 +1,7 @@
+id: fleet-inv-dx-no-person-metrics
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: dx-no-person-metrics

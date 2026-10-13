@@ -1,0 +1,28 @@
+id: network-policy-missing
+classification: fixture-derived
+tier: golden
+truth_class: known-bad
+task: Namespace without network policies.
+scope: lab/scenarios/network-policy-missing/fixture
+analyzers:
+- k8s
+fixture_from: lab/scenarios/network-policy-missing
+expected_known_truth:
+  violated_rules:
+  - PF-K8S-012
+  absent_rules:
+  - PF-K8S-002
+  - PF-K8S-003
+  fact_kinds:
+  - k8s.workload
+observations: []
+agent_route:
+  selected: []
+  rejected: []
+  fanout: 0
+context_cost:
+  input_bytes: 562
+  relevant_bytes: 562
+  unused_context_ratio: 0.0
+  duplicate_bytes: 0
+verdict: unresolved

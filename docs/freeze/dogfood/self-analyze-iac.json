@@ -1,0 +1,506 @@
+{
+  "counts": {
+    "facts": 14,
+    "files": 10
+  },
+  "facts": [
+    {
+      "attrs": {
+        "graph": {
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/iac-module-nopin/fixture/main.tf",
+                "source": "terraform-aws-modules/vpc/aws",
+                "version": null
+              },
+              "kind": "terraform_module",
+              "label": "vpc"
+            }
+          ]
+        },
+        "name": "vpc",
+        "source": "terraform-aws-modules/vpc/aws",
+        "version": null
+      },
+      "fact_id": "PF-IAC-351166449845",
+      "kind": "iac.module",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/iac-module-nopin/fixture/main.tf",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/iac-module-nopin/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_security_group.wide",
+        "body": {
+          "ingress": [
+            {
+              "cidr_blocks": [
+                "0.0.0.0/0"
+              ],
+              "from_port": 22,
+              "protocol": "tcp",
+              "to_port": 22
+            }
+          ],
+          "name": "wide"
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/iac-sg-open/fixture/main.tf",
+                "type": "aws_security_group"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_security_group.wide"
+            }
+          ]
+        },
+        "name": "wide",
+        "tags": null,
+        "type": "aws_security_group"
+      },
+      "fact_id": "PF-IAC-110377730615",
+      "kind": "iac.resource",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/iac-sg-open/fixture/main.tf",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/cases/iac-sg-open/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_security_group.web",
+        "body": {
+          "ingress": [
+            {
+              "cidr_blocks": [
+                "0.0.0.0/0"
+              ],
+              "from_port": 22,
+              "protocol": "tcp",
+              "to_port": 22
+            }
+          ],
+          "name": "web-sg"
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+                "type": "aws_security_group"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_security_group.web"
+            }
+          ]
+        },
+        "name": "web",
+        "tags": null,
+        "type": "aws_security_group"
+      },
+      "fact_id": "PF-IAC-676907161388",
+      "kind": "iac.resource",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_s3_bucket.data",
+        "body": {
+          "bucket": "corp-data"
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+                "type": "aws_s3_bucket"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_s3_bucket.data"
+            }
+          ]
+        },
+        "name": "data",
+        "tags": null,
+        "type": "aws_s3_bucket"
+      },
+      "fact_id": "PF-IAC-543477847753",
+      "kind": "iac.resource",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_db_instance.db",
+        "body": {
+          "engine": "postgres",
+          "instance_class": "db.t3.micro",
+          "storage_encrypted": false
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [
+            {
+              "dst": "db.t3",
+              "dst_kind": "terraform_resource",
+              "kind": "depends_on",
+              "src": "aws_db_instance.db",
+              "src_kind": "terraform_resource"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+                "type": "aws_db_instance"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_db_instance.db"
+            }
+          ]
+        },
+        "name": "db",
+        "tags": null,
+        "type": "aws_db_instance"
+      },
+      "fact_id": "PF-IAC-317824482597",
+      "kind": "iac.resource",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/evals/qpt-bench/tf-security/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_s3_bucket.assets",
+        "body": {
+          "acl": "public-read",
+          "bucket": "acme-assets",
+          "tags": {
+            "team": "web"
+          }
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/demo-platform/fixture/infra.tf",
+                "type": "aws_s3_bucket"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_s3_bucket.assets"
+            }
+          ]
+        },
+        "name": "assets",
+        "tags": {
+          "team": "web"
+        },
+        "type": "aws_s3_bucket"
+      },
+      "fact_id": "PF-IAC-810393875785",
+      "kind": "iac.resource",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/demo-platform/fixture/infra.tf",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/demo-platform/fixture/infra.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_s3_bucket.public_assets",
+        "body": {
+          "acl": "public-read",
+          "bucket": "acme-public-assets",
+          "tags": {
+            "cost_center": "web",
+            "team": "web"
+          }
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/terraform-public-bucket/fixture/main.tf",
+                "type": "aws_s3_bucket"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_s3_bucket.public_assets"
+            }
+          ]
+        },
+        "name": "public_assets",
+        "tags": {
+          "cost_center": "web",
+          "team": "web"
+        },
+        "type": "aws_s3_bucket"
+      },
+      "fact_id": "PF-IAC-872034276663",
+      "kind": "iac.resource",
+      "location": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/terraform-public-bucket/fixture/main.tf",
+      "source": ".venv/lib/python3.12/site-packages/platformforge/data/lab/scenarios/terraform-public-bucket/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "graph": {
+          "nodes": [
+            {
+              "attrs": {
+                "file": "evals/cases/iac-module-nopin/fixture/main.tf",
+                "source": "terraform-aws-modules/vpc/aws",
+                "version": null
+              },
+              "kind": "terraform_module",
+              "label": "vpc"
+            }
+          ]
+        },
+        "name": "vpc",
+        "source": "terraform-aws-modules/vpc/aws",
+        "version": null
+      },
+      "fact_id": "PF-IAC-374764914495",
+      "kind": "iac.module",
+      "location": "evals/cases/iac-module-nopin/fixture/main.tf",
+      "source": "evals/cases/iac-module-nopin/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_security_group.wide",
+        "body": {
+          "ingress": [
+            {
+              "cidr_blocks": [
+                "0.0.0.0/0"
+              ],
+              "from_port": 22,
+              "protocol": "tcp",
+              "to_port": 22
+            }
+          ],
+          "name": "wide"
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": "evals/cases/iac-sg-open/fixture/main.tf",
+                "type": "aws_security_group"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_security_group.wide"
+            }
+          ]
+        },
+        "name": "wide",
+        "tags": null,
+        "type": "aws_security_group"
+      },
+      "fact_id": "PF-IAC-524767108779",
+      "kind": "iac.resource",
+      "location": "evals/cases/iac-sg-open/fixture/main.tf",
+      "source": "evals/cases/iac-sg-open/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_security_group.web",
+        "body": {
+          "ingress": [
+            {
+              "cidr_blocks": [
+                "0.0.0.0/0"
+              ],
+              "from_port": 22,
+              "protocol": "tcp",
+              "to_port": 22
+            }
+          ],
+          "name": "web-sg"
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": "evals/qpt-bench/tf-security/fixture/main.tf",
+                "type": "aws_security_group"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_security_group.web"
+            }
+          ]
+        },
+        "name": "web",
+        "tags": null,
+        "type": "aws_security_group"
+      },
+      "fact_id": "PF-IAC-117241405052",
+      "kind": "iac.resource",
+      "location": "evals/qpt-bench/tf-security/fixture/main.tf",
+      "source": "evals/qpt-bench/tf-security/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_s3_bucket.data",
+        "body": {
+          "bucket": "corp-data"
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": "evals/qpt-bench/tf-security/fixture/main.tf",
+                "type": "aws_s3_bucket"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_s3_bucket.data"
+            }
+          ]
+        },
+        "name": "data",
+        "tags": null,
+        "type": "aws_s3_bucket"
+      },
+      "fact_id": "PF-IAC-111783109101",
+      "kind": "iac.resource",
+      "location": "evals/qpt-bench/tf-security/fixture/main.tf",
+      "source": "evals/qpt-bench/tf-security/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_db_instance.db",
+        "body": {
+          "engine": "postgres",
+          "instance_class": "db.t3.micro",
+          "storage_encrypted": false
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [
+            {
+              "dst": "db.t3",
+              "dst_kind": "terraform_resource",
+              "kind": "depends_on",
+              "src": "aws_db_instance.db",
+              "src_kind": "terraform_resource"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": "evals/qpt-bench/tf-security/fixture/main.tf",
+                "type": "aws_db_instance"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_db_instance.db"
+            }
+          ]
+        },
+        "name": "db",
+        "tags": null,
+        "type": "aws_db_instance"
+      },
+      "fact_id": "PF-IAC-328268268285",
+      "kind": "iac.resource",
+      "location": "evals/qpt-bench/tf-security/fixture/main.tf",
+      "source": "evals/qpt-bench/tf-security/fixture/main.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_s3_bucket.assets",
+        "body": {
+          "acl": "public-read",
+          "bucket": "acme-assets",
+          "tags": {
+            "team": "web"
+          }
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": "lab/scenarios/demo-platform/fixture/infra.tf",
+                "type": "aws_s3_bucket"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_s3_bucket.assets"
+            }
+          ]
+        },
+        "name": "assets",
+        "tags": {
+          "team": "web"
+        },
+        "type": "aws_s3_bucket"
+      },
+      "fact_id": "PF-IAC-116344234677",
+      "kind": "iac.resource",
+      "location": "lab/scenarios/demo-platform/fixture/infra.tf",
+      "source": "lab/scenarios/demo-platform/fixture/infra.tf",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "address": "aws_s3_bucket.public_assets",
+        "body": {
+          "acl": "public-read",
+          "bucket": "acme-public-assets",
+          "tags": {
+            "cost_center": "web",
+            "team": "web"
+          }
+        },
+        "cloud": "aws",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "attrs": {
+                "file": "lab/scenarios/terraform-public-bucket/fixture/main.tf",
+                "type": "aws_s3_bucket"
+              },
+              "kind": "terraform_resource",
+              "label": "aws_s3_bucket.public_assets"
+            }
+          ]
+        },
+        "name": "public_assets",
+        "tags": {
+          "cost_center": "web",
+          "team": "web"
+        },
+        "type": "aws_s3_bucket"
+      },
+      "fact_id": "PF-IAC-974789299141",
+      "kind": "iac.resource",
+      "location": "lab/scenarios/terraform-public-bucket/fixture/main.tf",
+      "source": "lab/scenarios/terraform-public-bucket/fixture/main.tf",
+      "tier": 3
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+id: ops-rollback
+type: live
+domain: ops-rollback
+fixture: ../../../lab/scenarios/ops-bad-rollout/fixture
+expect:
+  check: ops-scenario

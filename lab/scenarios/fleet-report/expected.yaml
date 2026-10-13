@@ -1,0 +1,13 @@
+id: fleet-report
+name: Fleet report — north-star receipt, cited invest list, bounded coverage
+kind: fleet
+tier: standard
+shared_fixture: lab/fleets/acme
+checks:
+  - fleet_report:
+      limit: 5
+      min_invest: 1
+      min_suppressed: 1
+      dimensions: [security, standardization, reliability, platform-product, cost]
+      invest_cited: true
+      coverage_below: 1.0

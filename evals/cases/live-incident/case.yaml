@@ -1,0 +1,7 @@
+id: live-incident
+type: live
+domain: live
+fixture: fixture
+expect:
+  check: incident
+  top_status: supported

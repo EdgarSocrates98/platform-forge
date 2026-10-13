@@ -1,0 +1,18 @@
+id: fleet-risk
+name: Fleet risk — unsupported K8s, public exposure, IAM wildcard
+kind: fleet
+tier: smoke
+shared_fixture: lab/fleets/acme
+checks:
+  - fleet_query:
+      question: public-services
+      min_count: 2
+      node_ids: ["service/service-checkout", "service/service-orphan-api"]
+  - fleet_query:
+      question: unsupported-k8s
+      min_count: 1
+      node_ids: ["workload/workload-legacy-batch"]
+  - fleet_query:
+      question: wildcard-iam
+      min_count: 1
+      node_ids: ["role/role-wildcard-admin"]

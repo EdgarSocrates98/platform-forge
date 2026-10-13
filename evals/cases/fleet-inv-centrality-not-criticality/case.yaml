@@ -1,0 +1,7 @@
+id: fleet-inv-centrality-not-criticality
+type: live
+variant: boundary
+domain: fleet
+expect:
+  check: fleet-invariant
+  probe: centrality-not-criticality

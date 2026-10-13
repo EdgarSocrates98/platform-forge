@@ -1,0 +1,25 @@
+{
+  "schema": "platformforge/feature-exception/v1",
+  "id": "FE-002",
+  "requested_capability": "Economy Control Plane — unified BudgetEnvelope, multilayer content-addressed cache with dependency invalidation, Context Gateway (capsules/refs/lazy expansion/sufficiency), checkpoint/resume, budget reconciliation, declared provider pricing, selective verification, agent fanout economy, routing profiles/scorecards/champion-challenger, waste detection, fleet+live economy integration, QPT v3, and the grouped CLIs/MCP read-only surface specified by prompt_evo_economy.md",
+  "reason": "Owner directive: prompt_evo_economy.md is the authored spec for the next hardening front. The agentic runtime has economy primitives (TokenSave, QPT, provider-call budget, run ledger, Router V2) but no unified plan/envelope/receipt chain — the DoD questions (cost? observed vs estimated? why this context/agent/tool? cache reuse? planned vs spent?) cannot be answered with receipts.",
+  "real_world_blocker": "Economy today is fragmented: `economy report` reads only the token ledger; provider-call ledger (live/budget.py) and agent run ledger (agents/runledger.py) are separate silos; there is no multilayer cache (only the FTS5 index), no checkpoint/resume of spend, no reconciliation, no routing receipt/scorecard. Context packs exist but no capsule/refs/expand contract. Verification runs are not risk-selective. Cross-forge parity gap vs api-forge (gateway, pricing, reconciliation) and spark-forge-aws (decision plane, waste detector, model router).",
+  "existing_capability_insufficient": "Verified by audit (docs/economy-parity/BASELINE.md): `economy` engine covers strategy pick + shadow compare + report; TokenSave covers index/packs/budget/ledger; live/budget.py covers provider calls; agents/ covers bounded debate + run ledger + context pack. Missing per spec: EconomyPlan, BudgetEnvelope, cache layers/dependency graph/decision cache, Context Gateway contract, EconomyCheckpoint, BudgetReconciliation, ProviderPricing, VerificationPlanner, RefereePacket/stagnation, RoutingRequest/Decision/Scorecard/profiles, waste detector, collection economy plan, knowledge selector, case economy records, usage-import adapters, grouped CLIs, MCP economy surface, economy eval categories, property/adversarial suites.",
+  "alternatives_considered": [
+    "Document fragmentation and stay frozen: rejected — leaves the spec's DoD questions unanswerable and diverges further from sibling-forge parity.",
+    "Copy API Forge gateway / Spark Forge decision-kernel internals: rejected by spec §6 — Platform has large graphs, fleet context, live provider calls and governed operations the siblings do not; adapt concepts, not code.",
+    "Implement prompt_evo_economy.md in its own phase order (§276 A–U) under freeze governance — chosen."
+  ],
+  "architectural_impact": "large — a new control-plane layer (economy/controlplane.py) plus new contracts; no frozen contract is modified (all new schemas are additive v1; existing ledgers append-compatible).",
+  "schema_impact": "new schema family platformforge/economy-*/v1 (plan, envelope, cache entry/receipt, capsule, checkpoint, reconciliation, pricing, routing decision/scorecard, waste finding); contract snapshots regenerated via freeze manifest after landing.",
+  "agent_impact": "small — no roster change; per-role budgets and delta-context attach to existing AgentContextPack/run ledger; champion/challenger stays shadow-mode with human-gated promotion (§153).",
+  "operations_impact": "small — read-only reporting surfaces; no production mutation path added; MCP economy surface is read-only and cannot change policy (§191).",
+  "decision": "approved",
+  "decided_by": "owner (prompt_evo_economy.md directive)",
+  "evidence": [
+    "prompt_evo_economy.md",
+    "docs/freeze/rfc/RFC-ECONOMY-UNFREEZE.md",
+    "docs/economy-parity/BASELINE.md",
+    "docs/economy-parity/GAP-MATRIX.md"
+  ]
+}

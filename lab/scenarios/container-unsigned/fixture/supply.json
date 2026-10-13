@@ -1,0 +1,11 @@
+{
+  "artifacts": [
+    {
+      "name": "payments-api",
+      "image": "registry.internal/payments-api:latest",
+      "digest": "sha256:nothexdigest",
+      "signed": false,
+      "slsa_provenance": false
+    }
+  ]
+}
