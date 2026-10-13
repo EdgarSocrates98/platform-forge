@@ -1,4 +1,4 @@
-from platformforge.ui import screen, tui
+from platformforge.ui import screen, tui, wizard
 from platformforge.ui.app import ActionData, Entry, ForgeApp, TextData
 from platformforge.ui.kit import UIContext
 from platformforge.ui.screen import Buffer, Column, Theme, key_bar, table
@@ -6,6 +6,12 @@ from platformforge.ui.screen import Buffer, Column, Theme, key_bar, table
 
 def _ctx(width=60, height=16):
     return UIContext(interactive=False, color=False, unicode=False, width=width, height=height, ansi=False)
+
+
+def test_fresh_directory_hides_repository_scope(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert wizard._scope_choices(_ctx()) == ["workspace", "user"]
+    assert "No repository detected" in capsys.readouterr().out
 
 
 def test_narrow_table_keeps_flexible_column_visible():

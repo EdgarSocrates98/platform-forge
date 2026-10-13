@@ -77,15 +77,13 @@ def _resolve(scope: str, root: Path | None) -> Path:
                 kit.E_NOTREPO,
                 f"{t} is not a repository root (no .git / forge.json)")
         return t
-    # workspace: walk up for .platformforge/workspace.json else refuse
+    # workspace: reuse existing manifest when present. Fresh directories are
+    # valid workspace targets; apply_install creates manifest atomically.
     t = Path(root).resolve() if root else Path.cwd().resolve()
     for cand in (t, *t.parents):
         if (cand / ".platformforge" / "workspace.json").is_file():
             return cand
-    raise InstallRefusal(
-        kit.E_NOTINSTALLED,
-        "no .platformforge/workspace.json in ancestry — "
-        "platformforge workspace init first")
+    return t
 
 
 def _hosts(host: str) -> list[str]:

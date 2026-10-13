@@ -62,6 +62,11 @@ def test_project_scope_requires_repo(tmp_path: Path) -> None:
     assert exc.value.kind == "FORGE-INSTALL-NOT-A-REPO"
 
 
+def test_workspace_scope_accepts_fresh_directory(tmp_path: Path) -> None:
+    doc = service.install(scope="workspace", root=tmp_path, dry_run=True)
+    assert doc["status"] == "planned"
+
+
 # --- AC3: apply writes managed assets + receipt --------------------------
 
 

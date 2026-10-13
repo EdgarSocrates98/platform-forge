@@ -18,6 +18,10 @@ platformforge install
 Pronto. Abra seu AI host (Devin, Claude, Codex ou Copilot) — as skills do
 platform-forge já estão instaladas.
 
+Em diretório vazio, escolha `Entire workspace`: o manifesto
+`.platformforge/workspace.json` é criado durante o apply. `Current repository`
+fica disponível apenas quando há VCS detectado.
+
 ## Verificar
 
 ```bash
