@@ -117,9 +117,7 @@ def load_config(repo: Path) -> dict[str, Any]:
     """``forge.json`` at the repo root is the declarative driver."""
     cfg_path = repo / "forge.json"
     if not cfg_path.exists():
-        raise Refusal(
-            "FORGE-INSTALL-NO-CONFIG", f"{cfg_path} missing — run inside a Forge checkout"
-        )
+        raise Refusal("FORGE-INSTALL-NO-CONFIG", f"{cfg_path} missing — run inside a Forge checkout")
     try:
         cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
     except ValueError as exc:
@@ -314,9 +312,7 @@ def install_package(
     cmd.append(req)
     r = _run(cmd, timeout=900)
     if r.returncode != 0:
-        offline_hint = (
-            "" if allow_download else (" — retry with --allow-download if deps are missing")
-        )
+        offline_hint = "" if allow_download else (" — retry with --allow-download if deps are missing")
         raise Refusal(
             "FORGE-INSTALL-RUNTIME-FAILED",
             f"pip install failed{offline_hint}: {r.stderr.strip()[-400:]}",
@@ -335,9 +331,7 @@ def write_launcher(cli: str, venv: Path, no_launcher: bool, log) -> Path | None:
     bindir = _venv_bin(venv)
     real = _cli_executable(cli, venv)
     if not real.exists():
-        raise Refusal(
-            "FORGE-INSTALL-CLI-MISSING", f"{cli} not in {bindir} — package script entry missing?"
-        )
+        raise Refusal("FORGE-INSTALL-CLI-MISSING", f"{cli} not in {bindir} — package script entry missing?")
     d = shim_dir()
     d.mkdir(parents=True, exist_ok=True)
     if os.name == "nt":
@@ -389,14 +383,46 @@ def environment_contract(
 def _posix_env_paths() -> tuple[Path, Path]:
     config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
     env_file = config_home / ENV_DIR_NAME / ENV_FILE_NAME
-    shell = Path(os.environ.get("SHELL", "/bin/sh")).name
+    shell = Path(os.environ.get("SHELL", "/bin/sh")).name.lower().removesuffix(".exe")
     rc_name = {"bash": ".bashrc", "zsh": ".zshrc"}.get(shell, ".profile")
     return env_file, Path.home() / rc_name
 
 
-def _persist_windows(
-    values: dict[str, str], aliases: dict[str, str], shim: Path | None
-) -> str | None:
+def _is_git_bash() -> bool:
+    """Return whether Windows Python was launched from MSYS2/Git Bash.
+
+    Git Bash starts native Windows Python with ``os.name == 'nt'``.  Treating
+    that process as plain Windows loses the shell-local environment file, so
+    installs look successful but the next Bash command cannot see variables.
+    ``MSYSTEM`` is the strongest signal; ``OSTYPE`` covers older Git Bash
+    launchers and keeps the check independent of the exact MSYS profile.
+    """
+    if os.name != "nt":
+        return False
+    system = os.environ.get("MSYSTEM", "").lower()
+    ostype = os.environ.get("OSTYPE", "").lower()
+    return system.startswith(("msys", "mingw", "ucrt", "cygwin")) or ostype.startswith(
+        ("msys", "mingw", "ucrt", "cygwin")
+    )
+
+
+def _shell_path(value: str) -> str:
+    """Render a native path usable by the current Git Bash shell."""
+    if not _is_git_bash():
+        return value
+    converter = shutil.which("cygpath")
+    if converter:
+        try:
+            converted = _run([converter, "-u", value], timeout=10)
+        except OSError:
+            converted = None
+        if converted and converted.returncode == 0 and converted.stdout.strip():
+            return converted.stdout.strip()
+    # Git Bash accepts forward-slash native paths when cygpath is unavailable.
+    return value.replace("\\", "/")
+
+
+def _persist_windows(values: dict[str, str], aliases: dict[str, str], shim: Path | None) -> str | None:
     import winreg
 
     all_values = {**values, **aliases}
@@ -410,9 +436,7 @@ def _persist_windows(
         for name, value in all_values.items():
             winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
         if shim:
-            current = (
-                winreg.QueryValueEx(key, "Path")[0] if _registry_has_value(key, "Path") else ""
-            )
+            current = winreg.QueryValueEx(key, "Path")[0] if _registry_has_value(key, "Path") else ""
             parts = [p for p in current.split(os.pathsep) if p]
             if str(shim) not in parts:
                 parts.append(str(shim))
@@ -437,7 +461,7 @@ def _registry_has_value(key: Any, name: str) -> bool:
     return True
 
 
-def _persist_posix(values: dict[str, str], shim: Path | None) -> str:
+def _persist_posix(values: dict[str, str], shim: Path | None, shell_shim: str | None = None) -> str:
     env_file, rc_file = _posix_env_paths()
     marker_start = "# >>> forjas account environment >>>"
     marker_end = "# <<< forjas account environment <<<"
@@ -445,7 +469,8 @@ def _persist_posix(values: dict[str, str], shim: Path | None) -> str:
     for name, value in sorted(values.items()):
         lines.append(f"export {name}={shlex.quote(value)}")
     if shim:
-        quoted = shlex.quote(str(shim))
+        path_entry = shell_shim or str(shim)
+        quoted = shlex.quote(path_entry)
         lines.extend(
             [
                 f"case :${{PATH:-}}: in *:{quoted}:*) ;; *) export PATH={quoted}:${{PATH:-}} ;; esac",
@@ -458,11 +483,7 @@ def _persist_posix(values: dict[str, str], shim: Path | None) -> str:
     pattern = re.compile(rf"{re.escape(marker_start)}.*?{re.escape(marker_end)}\n?", re.DOTALL)
     # A Windows checkout path may contain backslashes; use callable
     # replacement so ``re`` never interprets them as replacement escapes.
-    rendered = (
-        pattern.sub(lambda _match: block, existing)
-        if pattern.search(existing)
-        else block + existing
-    )
+    rendered = pattern.sub(lambda _match: block, existing) if pattern.search(existing) else block + existing
     _atomic_write(env_file, rendered.encode("utf-8"))
     env_file.chmod(0o600)
 
@@ -477,8 +498,9 @@ def _persist_posix(values: dict[str, str], shim: Path | None) -> str:
         os.environ[name] = value
     if shim:
         current = os.environ.get("PATH", "")
-        if str(shim) not in current.split(os.pathsep):
-            os.environ["PATH"] = str(shim) + os.pathsep + current
+        path_entry = shell_shim or str(shim)
+        if path_entry not in current.split(os.pathsep):
+            os.environ["PATH"] = path_entry + os.pathsep + current
     return str(env_file)
 
 
@@ -486,9 +508,16 @@ def persist_environment(environment: dict[str, Any], shim: Path | None, log) -> 
     values = dict(environment["variables"])
     if os.name == "nt":
         _persist_windows(values, dict(environment.get("windows_aliases") or {}), shim)
-        environment["persistence"] = "HKCU\\Environment"
-        environment["shell_init"] = None
-        log("account environment written to HKCU\\Environment")
+        if _is_git_bash():
+            env_file = _persist_posix(values, shim, _shell_path(str(shim)) if shim else None)
+            environment["persistence"] = "HKCU\\Environment + Git Bash shell-init"
+            environment["shell_init"] = env_file
+            environment["shell"] = "git-bash"
+            log("account environment written to HKCU\\Environment and Git Bash shell-init")
+        else:
+            environment["persistence"] = "HKCU\\Environment"
+            environment["shell_init"] = None
+            log("account environment written to HKCU\\Environment")
     else:
         env_file = _persist_posix(values, shim)
         environment["persistence"] = "shell-init"
@@ -606,9 +635,7 @@ def run(argv: list[str] | None = None) -> int:
     ap.add_argument("--repo", default=".", help="forge checkout root")
     ap.add_argument("--install-dir", default=None, help="override ~/.forge/installs/<forge_id>")
     ap.add_argument("--python", default=None)
-    ap.add_argument(
-        "--editable", action="store_true", help="pip install -e (dev mode; ties CLI to checkout)"
-    )
+    ap.add_argument("--editable", action="store_true", help="pip install -e (dev mode; ties CLI to checkout)")
     ap.add_argument(
         "--persist-env",
         action="store_true",
@@ -633,11 +660,7 @@ def run(argv: list[str] | None = None) -> int:
     try:
         cfg = load_config(repo)
     except Refusal as exc:
-        print(
-            json.dumps(
-                {"status": "failed", "error": {"kind": exc.kind, "detail": exc.detail}}, indent=2
-            )
-        )
+        print(json.dumps({"status": "failed", "error": {"kind": exc.kind, "detail": exc.detail}}, indent=2))
         return 2
 
     extras = [e.strip() for e in args.extras.split(",") if e.strip()] or cfg.get("extras", [])
@@ -692,13 +715,9 @@ def run(argv: list[str] | None = None) -> int:
         venv_dir = stage("create-venv", lambda: create_venv(install_root, python, log))
         stage(
             "install-runtime",
-            lambda: install_package(
-                repo, venv_dir, extras, args.editable, args.allow_download, log
-            ),
+            lambda: install_package(repo, venv_dir, extras, args.editable, args.allow_download, log),
         )
-        shim = stage(
-            "write-launcher", lambda: write_launcher(cfg["cli"], venv_dir, args.no_launcher, log)
-        )
+        shim = stage("write-launcher", lambda: write_launcher(cfg["cli"], venv_dir, args.no_launcher, log))
         planned_venv = venv_dir or (install_root / ".venv")
         planned_shim = shim or (shim_dir() / cfg["cli"])
         environment = environment_contract(cfg, repo, install_root, planned_venv, planned_shim)
@@ -761,6 +780,9 @@ def _path_guidance() -> str | None:
     d = str(shim_dir())
     if d in os.environ.get("PATH", "").split(os.pathsep):
         return None
+    if _is_git_bash():
+        env_file, _ = _posix_env_paths()
+        return f"source {shlex.quote(str(env_file))}  # reload Git Bash environment"
     if os.name == "nt":
         return f'setx PATH "%PATH%;{d}"  # open a new terminal after'
     sh = Path(os.environ.get("SHELL", "/bin/sh")).name
