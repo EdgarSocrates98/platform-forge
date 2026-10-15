@@ -1,7 +1,7 @@
 ---
 id: cyc9-07
 title: scenarios-platform-engineering
-status: inbox
+status: active
 created: 2026-10-15
 owner: platform-forge
 scope: repo
