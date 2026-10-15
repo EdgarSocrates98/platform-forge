@@ -23,11 +23,25 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 
 
+def _display_cmd(cmd: list[str]) -> str:
+    # Receipts are committed docs — never embed machine-specific absolute
+    # paths (venv/home leak the dev machine layout into evidence).
+    home = str(Path.home())
+    out = []
+    for part in cmd:
+        if part.startswith(str(REPO)):
+            part = "<repo>" + part[len(str(REPO)):]
+        elif home in part:
+            part = part.replace(home, "~")
+        out.append(part)
+    return " ".join(out)
+
+
 def _run(cmd: list[str], cwd: Path = REPO) -> dict:
     t0 = time.time()
     p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
                        errors="replace", check=False)
-    return {"cmd": " ".join(cmd), "rc": p.returncode,
+    return {"cmd": _display_cmd(cmd), "rc": p.returncode,
             "seconds": round(time.time() - t0, 2),
             "tail": (p.stdout + p.stderr).strip().splitlines()[-30:]}
 

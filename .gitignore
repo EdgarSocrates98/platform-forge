@@ -15,3 +15,8 @@ graphify-out/
 .pytest-tmp/
 *.log
 *.err
+
+# Environment stubs/secrets — never commit filled .env files
+.env
+.env.*
+/config.yaml

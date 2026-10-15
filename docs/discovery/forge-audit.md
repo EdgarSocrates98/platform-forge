@@ -2,7 +2,7 @@
 
 Purpose: separate *generic Forge capability* (reuse/inspire) from *domain-specific*
 capability (reimplement for Platform Engineering). Audited at
-`/home/edgar/Documentos/projetos/forjas/{spark-forge-aws,api-forge}`.
+`~/forjas/{spark-forge-aws,api-forge}`.
 
 ## spark-forge-aws (0.5.0, pkg `sparkforge_aws`, CLI `sparkforge-aws`)
 

@@ -24,10 +24,21 @@ def _run(cmd: list[str]) -> dict:
     t0 = time.time()
     p = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True,
                        check=False)
-    return {"cmd": " ".join(cmd), "rc": p.returncode,
+    return {"cmd": _display_cmd(cmd), "rc": p.returncode,
             "ms": round((time.time() - t0) * 1000, 1),
             "tail": p.stdout.strip().splitlines()[-1:] or
             p.stderr.strip().splitlines()[-1:]}
+
+
+def _display_cmd(cmd: list[str]) -> str:
+    # Receipts are committed docs — keep machine-specific absolute paths
+    # (venv/home) out of the recorded command.
+    home = str(Path.home())
+    return " ".join(
+        "<repo>" + p[len(str(REPO)):] if p.startswith(str(REPO))
+        else p.replace(home, "~") if home in p else p
+        for p in cmd
+    )
 
 
 def main() -> int:
