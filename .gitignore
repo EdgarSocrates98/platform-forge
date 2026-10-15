@@ -20,3 +20,5 @@ graphify-out/
 .env
 .env.*
 /config.yaml
+factory/runs/*
+.forge/
