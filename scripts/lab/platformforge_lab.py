@@ -2,6 +2,7 @@
 """Forge Lab emitter — runs platformforge.lab.runner.run_all (static profile)
 and emits forge/BenchmarkResult/v1. Deterministic, offline, stdlib-only.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,6 +17,7 @@ SUITE = "platform-forge-lab"
 
 
 import re as _re
+
 
 def _slug(s: object) -> str:
     return _re.sub(r"[^a-z0-9-]+", "-", str(s).lower()).strip("-") or "scenario"
@@ -48,9 +50,7 @@ def main() -> int:
     for r in data.get("scenarios", []):
         failures = r.get("failures", []) or []
         counts = r.get("counts", {}) or {}
-        base = _slug(
-            f"{r.get('scenario', 'unknown')}-{r.get('tier', '')}-{r.get('profile', '')}"
-        )
+        base = _slug(f"{r.get('scenario', 'unknown')}-{r.get('tier', '')}-{r.get('profile', '')}")
         seen_ids[base] = seen_ids.get(base, 0) + 1
         sid = base if seen_ids[base] == 1 else f"{base}-{seen_ids[base]}"
         results.append(
@@ -80,7 +80,7 @@ def main() -> int:
         "forge": FORGE,
         "mode": a.mode,
         "notes": [
-            f"profile=static",
+            "profile=static",
             f"skipped_profile_guard={len(data.get('skipped_profile_guard', []))}",
         ],
         "producer": {"id": FORGE, "version": "lab-script"},
