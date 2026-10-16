@@ -1,7 +1,7 @@
 {
   "gates": {
     "cmd": "<repo>/.venv/bin/python scripts/validate.py",
-    "ms": 96381.5,
+    "ms": 80806.6,
     "rc": 0,
     "tail": [
       "}"
@@ -20,6 +20,6 @@
     "SOAK-RECEIPT.json": true
   },
   "schema": "platformforge/validation-receipt/v1",
-  "sha": "51bcca9ad00fef33bd82337a039267273a41effc",
+  "sha": "fd68e6724f22d8cf3cd1b6156da19e3144166973",
   "verdict": "pass"
 }
