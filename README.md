@@ -1,8 +1,8 @@
 
-> Instalação portátil: [`docs/installation/quickstart.md`](docs/installation/quickstart.md) — clone → setup → install. Delegação agêntica: [forge.agentic.json](forge.agentic.json) (SpecialistAgenticManifest/v1).
-> Docs: [commands](docs/reference/commands.md) · [skills](docs/reference/skills.md) · [agents](docs/reference/agents.md) · [tutorial](docs/tutorials/first-run.md) · [economy](docs/economy.md) · [troubleshooting](docs/installation/troubleshooting.md)
+> Instalação portátil: [`docs/installation/quickstart.md`](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/installation/quickstart.md) — clone → setup → install. Delegação agêntica: [forge.agentic.json](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/forge.agentic.json) (SpecialistAgenticManifest/v1).
+> Docs: [commands](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/reference/commands.md) · [skills](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/reference/skills.md) · [agents](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/reference/agents.md) · [tutorial](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/tutorials/first-run.md) · [economy](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/economy.md) · [troubleshooting](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/installation/troubleshooting.md)
 <p align="center">
-  <img src="docs/assets/logo.png" alt="Platform Forge" width="420">
+  <img src="https://raw.githubusercontent.com/EdgarSocrates98/platform-forge/v0.1.0/docs/assets/logo.png" alt="Platform Forge" width="420">
 </p>
 
 # Platform Forge
@@ -20,9 +20,15 @@ builds one coherent, evidence-backed model of a platform. Facts have
 provenance; findings cite evidence; unanswered questions come back as
 named refusals, never hedged prose.
 
-*Versão em Português: [README.pt-BR.md](README.pt-BR.md)*
+*Versão em Português: [README.pt-BR.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/README.pt-BR.md)*
 
 ## Install
+
+```bash
+pip install platformforge   # from PyPI — offline-capable
+```
+
+From a checkout (development):
 
 ```bash
 pip install -e .            # core — offline-capable
@@ -95,47 +101,47 @@ the core itself never mutates anything.
 
 ## Design docs
 
-Index: [docs/README.md](docs/README.md) — ADRs, agent docs, cycle reports.
+Index: [docs/README.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/README.md) — ADRs, agent docs, cycle reports.
 
-Architecture & model: [ARCHITECTURE.md](ARCHITECTURE.md) ·
-[GRAPHFY.md](GRAPHFY.md) · [DOMAIN-MAP.md](DOMAIN-MAP.md) ·
-[RUNTIME-TOPOLOGY.md](RUNTIME-TOPOLOGY.md) ·
-[RECONCILIATION.md](RECONCILIATION.md) · [CLOUD.md](CLOUD.md) ·
-[OBSERVATION-MODEL.md](OBSERVATION-MODEL.md) ·
-[COMPATIBILITY.md](COMPATIBILITY.md) · [DEPRECATION.md](DEPRECATION.md)
+Architecture & model: [ARCHITECTURE.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/ARCHITECTURE.md) ·
+[GRAPHFY.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/GRAPHFY.md) · [DOMAIN-MAP.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/DOMAIN-MAP.md) ·
+[RUNTIME-TOPOLOGY.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/RUNTIME-TOPOLOGY.md) ·
+[RECONCILIATION.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/RECONCILIATION.md) · [CLOUD.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CLOUD.md) ·
+[OBSERVATION-MODEL.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/OBSERVATION-MODEL.md) ·
+[COMPATIBILITY.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/COMPATIBILITY.md) · [DEPRECATION.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/DEPRECATION.md)
 
-Scale & ops: [FLEET.md](FLEET.md) · [MULTI-CLUSTER.md](MULTI-CLUSTER.md) ·
-[PLATFORM-ANALYTICS.md](PLATFORM-ANALYTICS.md) ·
-[OPTIMIZATION.md](OPTIMIZATION.md) · [FEDERATION.md](FEDERATION.md) ·
-[OPS.md](OPS.md) · [APPROVALS.md](APPROVALS.md) · [ROLLBACK.md](ROLLBACK.md) ·
-[LIVE.md](LIVE.md) · [COLLECTORS.md](COLLECTORS.md) ·
-[CAPACITY.md](CAPACITY.md) · [AI-PLATFORM.md](AI-PLATFORM.md) ·
-[ENTERPRISE.md](ENTERPRISE.md) ·
-[GOLDEN-PATHS.md](GOLDEN-PATHS.md) ·
-[GOLDEN-PATH-ANALYTICS.md](GOLDEN-PATH-ANALYTICS.md) ·
-[POLICY-INTELLIGENCE.md](POLICY-INTELLIGENCE.md) ·
-[PLATFORM-MEASUREMENT.md](PLATFORM-MEASUREMENT.md) ·
-[INCIDENTS.md](INCIDENTS.md) · [RUNBOOKS.md](RUNBOOKS.md) ·
-[EXECUTION.md](EXECUTION.md)
+Scale & ops: [FLEET.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/FLEET.md) · [MULTI-CLUSTER.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/MULTI-CLUSTER.md) ·
+[PLATFORM-ANALYTICS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/PLATFORM-ANALYTICS.md) ·
+[OPTIMIZATION.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/OPTIMIZATION.md) · [FEDERATION.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/FEDERATION.md) ·
+[OPS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/OPS.md) · [APPROVALS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/APPROVALS.md) · [ROLLBACK.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/ROLLBACK.md) ·
+[LIVE.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/LIVE.md) · [COLLECTORS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/COLLECTORS.md) ·
+[CAPACITY.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CAPACITY.md) · [AI-PLATFORM.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/AI-PLATFORM.md) ·
+[ENTERPRISE.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/ENTERPRISE.md) ·
+[GOLDEN-PATHS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/GOLDEN-PATHS.md) ·
+[GOLDEN-PATH-ANALYTICS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/GOLDEN-PATH-ANALYTICS.md) ·
+[POLICY-INTELLIGENCE.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/POLICY-INTELLIGENCE.md) ·
+[PLATFORM-MEASUREMENT.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/PLATFORM-MEASUREMENT.md) ·
+[INCIDENTS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/INCIDENTS.md) · [RUNBOOKS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/RUNBOOKS.md) ·
+[EXECUTION.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/EXECUTION.md)
 
-Agentic & economy: [AGENTIC-OS.md](AGENTIC-OS.md) ·
-[docs/agents/](docs/agents/) (agentic runtime) ·
-[ECONOMY.md](ECONOMY.md) · [QUALITY-PER-TOKEN.md](QUALITY-PER-TOKEN.md) ·
-[KNOWLEDGE.md](KNOWLEDGE.md) · [SDD.md](SDD.md) ·
-[VERIFICATION.md](VERIFICATION.md)
+Agentic & economy: [AGENTIC-OS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/AGENTIC-OS.md) ·
+[docs/agents/](https://github.com/EdgarSocrates98/platform-forge/tree/v0.1.0/docs/agents/) (agentic runtime) ·
+[ECONOMY.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/ECONOMY.md) · [QUALITY-PER-TOKEN.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/QUALITY-PER-TOKEN.md) ·
+[KNOWLEDGE.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/KNOWLEDGE.md) · [SDD.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/SDD.md) ·
+[VERIFICATION.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/VERIFICATION.md)
 
-Rules & evidence: [RULES.md](RULES.md) · [EVALS.md](EVALS.md) ·
-[SECURITY.md](SECURITY.md) · [SOURCES.md](SOURCES.md) ·
-[CAPABILITIES.md](CAPABILITIES.md) · [RESEARCH.md](RESEARCH.md) ·
-[docs/freeze/](docs/freeze/) (architecture freeze)
+Rules & evidence: [RULES.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/RULES.md) · [EVALS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/EVALS.md) ·
+[SECURITY.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/SECURITY.md) · [SOURCES.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/SOURCES.md) ·
+[CAPABILITIES.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CAPABILITIES.md) · [RESEARCH.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/RESEARCH.md) ·
+[docs/freeze/](https://github.com/EdgarSocrates98/platform-forge/tree/v0.1.0/docs/freeze/) (architecture freeze)
 
-Reference: [CLI-REFERENCE.md](CLI-REFERENCE.md) (curated) ·
-[docs/CLI-SURFACE.md](docs/CLI-SURFACE.md) (generated index) ·
-[GLOSSARY.md](GLOSSARY.md) · [MCP.md](MCP.md) ·
-[ROADMAP.md](ROADMAP.md) · [CHANGELOG.md](CHANGELOG.md) ·
-[CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) ·
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) ·
-[README.pt-BR.md](README.pt-BR.md)
+Reference: [CLI-REFERENCE.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CLI-REFERENCE.md) (curated) ·
+[docs/CLI-SURFACE.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/docs/CLI-SURFACE.md) (generated index) ·
+[GLOSSARY.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/GLOSSARY.md) · [MCP.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/MCP.md) ·
+[ROADMAP.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/ROADMAP.md) · [CHANGELOG.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CHANGELOG.md) ·
+[CONTRIBUTING.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CONTRIBUTING.md) · [AGENTS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/AGENTS.md) ·
+[CODE_OF_CONDUCT.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CODE_OF_CONDUCT.md) ·
+[README.pt-BR.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/README.pt-BR.md)
 
 ## Support matrix
 
@@ -150,7 +156,7 @@ Reference: [CLI-REFERENCE.md](CLI-REFERENCE.md) (curated) ·
 
 ## License
 
-MIT — see [LICENSE](LICENSE), [SOURCES.md](SOURCES.md), [CREDITS.md](CREDITS.md).
+MIT — see [LICENSE](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/LICENSE), [SOURCES.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/SOURCES.md), [CREDITS.md](https://github.com/EdgarSocrates98/platform-forge/blob/v0.1.0/CREDITS.md).
 
 ## Graph Studio
 
