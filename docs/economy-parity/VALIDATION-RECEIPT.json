@@ -93,7 +93,7 @@
   "remote_ci": "PR pending; local gates canonical",
   "schema": "platformforge/economy-validation-receipt/v1",
   "spec": "prompt_evo_economy.md",
-  "validated_sha": "9b5524817ad2f23421866cbb162e6855bb6f47fe",
+  "validated_sha": "4ae36c4d272810523605d474de2def8e480cbd46",
   "validator": "scripts/validate.py",
   "validator_version": "economy-validation-receipt/v1",
   "verdict": "validated"
