@@ -43,6 +43,9 @@ the existing surface (docs/freeze/, prompt_evo_freezing.md).
   identical graphs — hash fast-path + structural shortcut.
 - `graph paths` DFS → bounded BFS (first paths fast on dense graphs;
   100k-node bench unblocked).
+- `doc_manifest._check_links` (post-release polish): `#fragment` anchors
+  on tag-pinned repo URLs verified again (silently dropped before);
+  GitHub line refs (`#L10`) exempt; `%5C` backslash escapes rejected.
 
 ### Changed
 - pytest 8.4.2 → 9.1.1 (PYSEC-2026-1845, dev-only; suite green).
