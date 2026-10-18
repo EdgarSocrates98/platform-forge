@@ -2,6 +2,11 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
+## [0.1.1] - 2026-10-18
+
+### Fixed
+- Portal vendored 2.1 final (Cycles 0-6)
+
 ## [Unreleased] — Architecture Freeze (stability & real-world validation)
 
 No new product capability — the freeze hardens, measures, and dogfoods
