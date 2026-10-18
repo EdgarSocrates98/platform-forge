@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from platformforge import _forge_portal as fp
+from platformforge import _portal_telemetry as _pt
 from platformforge.install import service
 
 _PACKAGE_ROOT = Path(__file__).resolve().parent
@@ -89,40 +90,50 @@ class PlatformForgePortal(fp.PortalAdapter):
         self.assets_dir = _ASSETS_DIR
         self._tasks: list[dict[str, Any]] = []
         self._task_seq = 0
-        self.ops = fp.default_operations(self) + [
-            fp.Operation("GET", "/profiles", lambda ctx: self._profiles()),
-            fp.Operation("GET", "/hosts", lambda ctx: self._hosts()),
-            fp.Operation("GET", "/mcp/servers", lambda ctx: self._mcp_servers()),
-            fp.Operation("GET", "/skills", lambda ctx: self._skills()),
-            fp.Operation("GET", "/agents", lambda ctx: self._agents()),
-            fp.Operation("GET", "/tasks", lambda ctx: list(self._tasks)),
-            fp.Operation("GET", "/graphs", lambda ctx: self._graphs()),
-            fp.Operation("GET", "/docs/search", lambda ctx: self._docs_search(ctx)),
-            fp.Operation("POST", "/installation/plan", self._install_plan, mutating=True),
-            fp.Operation(
-                "POST", "/installation/apply", self._install_apply,
-                mutating=True, confirm="apply", needs_plan_token=True,
-            ),
-            fp.Operation(
-                "POST", "/installation/repair", self._install_repair,
-                mutating=True, confirm="repair",
-            ),
-            fp.Operation(
-                "POST", "/installation/uninstall", self._install_uninstall,
-                mutating=True, confirm="uninstall",
-            ),
-            fp.Operation(
-                "POST", "/profiles/apply", self._profiles_apply,
-                mutating=True, confirm="apply",
-            ),
-            fp.Operation("POST", "/hosts/launch", self._hosts_launch, mutating=False),
-            fp.Operation("POST", "/mcp/verify", self._mcp_verify, mutating=True, confirm="verify"),
-            fp.Operation("POST", "/tasks/plan", self._tasks_plan, mutating=True),
-            fp.Operation(
-                "POST", "/tasks/execute", self._tasks_execute,
-                mutating=True, confirm="execute", needs_plan_token=True, timeout=120,
-            ),
-        ]
+        self._telemetry_recorder = _pt.EventRecorder()
+        self.event_sink = self._telemetry_recorder.emit
+        self.ops = (
+            fp.default_operations(self)
+            + _pt.operations(self._telemetry_recorder, self)
+            + [
+                fp.Operation("GET", "/profiles", lambda ctx: self._profiles()),
+                fp.Operation("GET", "/hosts", lambda ctx: self._hosts()),
+                fp.Operation("GET", "/mcp/servers", lambda ctx: self._mcp_servers()),
+                fp.Operation("GET", "/skills", lambda ctx: self._skills()),
+                fp.Operation("GET", "/agents", lambda ctx: self._agents()),
+                fp.Operation("GET", "/tasks", lambda ctx: list(self._tasks)),
+                _pt.task_events_op(self._telemetry_recorder, lambda: list(self._tasks)),
+                fp.Operation("GET", "/graphs", lambda ctx: self._graphs()),
+                fp.Operation("GET", "/docs/search", lambda ctx: self._docs_search(ctx)),
+                fp.Operation("POST", "/installation/plan", self._install_plan, mutating=True),
+                fp.Operation(
+                    "POST", "/installation/apply", self._install_apply,
+                    mutating=True, confirm="apply", needs_plan_token=True,
+                ),
+                fp.Operation(
+                    "POST", "/installation/repair", self._install_repair,
+                    mutating=True, confirm="repair",
+                ),
+                fp.Operation(
+                    "POST", "/installation/uninstall", self._install_uninstall,
+                    mutating=True, confirm="uninstall",
+                ),
+                fp.Operation(
+                    "POST", "/profiles/apply", self._profiles_apply,
+                    mutating=True, confirm="apply",
+                ),
+                fp.Operation("POST", "/hosts/launch", self._hosts_launch, mutating=False),
+                fp.Operation(
+                    "POST", "/mcp/verify", self._mcp_verify,
+                    mutating=True, confirm="verify",
+                ),
+                fp.Operation("POST", "/tasks/plan", self._tasks_plan, mutating=True),
+                fp.Operation(
+                    "POST", "/tasks/execute", self._tasks_execute,
+                    mutating=True, confirm="execute", needs_plan_token=True, timeout=120,
+                ),
+            ]
+        )
 
     # ------------------------------------------------------------------
     # descriptor / health / capabilities
