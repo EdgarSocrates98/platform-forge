@@ -2,6 +2,13 @@
 
 All notable changes. Format: wave/feature, the "why", key commits.
 
+## [0.1.2] - 2026-10-18
+
+### Changed
+- Portal 2.2 vendored generation (44-asset frontend, telemetry,
+  py3.10-safe server); hardened PyPI pipeline (build-once/
+  publish-same-artifact, version gate, post-publish verify)
+
 ## [0.1.1] - 2026-10-18
 
 ### Fixed

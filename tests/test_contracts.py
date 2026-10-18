@@ -58,6 +58,6 @@ def test_slo_contract_validates(tmp_path):
 
 
 def test_version_pinned():
-    assert __version__ == "0.1.1"
+    assert __version__ == "0.1.2"
     import platformforge
     assert platformforge.__version__
