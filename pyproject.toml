@@ -82,5 +82,6 @@ exclude = ["evals/cases/*/fixture/**", "lab/scenarios/*/fixture/**"]
 # Vendored Forge Portal server (canonical: forge-portal/portal_core) — kept
 # byte-identical to the shared source; linted in the canonical repo.
 "platformforge/_forge_portal.py" = ["ALL"]
+"platformforge/_portal_telemetry.py" = ["ALL"]
 "scripts/forge_bootstrap.py" = ["ALL"]
 "scripts/forge_installkit.py" = ["ALL"]
