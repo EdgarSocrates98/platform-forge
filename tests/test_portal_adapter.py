@@ -251,3 +251,33 @@ def test_docs_search_vazio_sem_query(server):
     code, env = _call(server, "GET", "/docs/search")
     assert code == 200
     assert env["data"] == []
+
+
+# ---------------------------------------------------------------------------
+# telemetria — forge/PortalEvent/1 via _portal_telemetry vendored
+# ---------------------------------------------------------------------------
+
+def test_telemetria_events_e_metrics(server):
+    # /health primeiro: grava operation.start + operation.end no buffer
+    code, env = _call(server, "GET", "/health")
+    assert code == 200
+
+    code, env = _call(server, "GET", "/events")
+    assert code == 200
+    report = env["data"]
+    assert report["schema"] == "forge/PortalEventReport/1"
+    ends = [e for e in report["events"] if e.get("event_type") == "operation.end"]
+    assert ends
+    ev = ends[0]
+    assert ev["schema"] == "forge/PortalEvent/1"
+    assert ev["correlation_id"]
+    assert ev["status"] == "ok"
+    assert isinstance(ev["duration_ms"], (int, float))
+
+    code, env = _call(server, "GET", "/metrics")
+    assert code == 200
+    metrics = env["data"]
+    assert metrics["generated_at"]
+    assert metrics["counters"]["operation.end"] >= 1
+    assert isinstance(metrics["events"], list)
+    assert metrics["truncated"] is False
