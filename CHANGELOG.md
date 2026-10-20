@@ -1,6 +1,11 @@
 # CHANGELOG
 
 All notable changes. Format: wave/feature, the "why", key commits.
+## [0.1.4] - 2026-10-20
+
+### Changed
+- Cycle 12.1: vendored `scripts/forge_bootstrap.py` re-stamped to the canonical ruff-formatted source; `install.windows.sh` added as the Git Bash/MSYS install route; CI gains a `bash -n` gate for it; economy validation receipt rebound to the release head.
+
 ## [0.1.3] - 2026-10-20
 
 ### Changed
