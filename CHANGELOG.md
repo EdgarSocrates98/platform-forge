@@ -1,6 +1,15 @@
 # CHANGELOG
 
 All notable changes. Format: wave/feature, the "why", key commits.
+## [0.1.3] - 2026-10-20
+
+### Changed
+- Cycle 12 portable distribution: `data_path()` zipimport-safe via
+  `as_file` + ExitStack with thread-safe dedupe; contracts/freeze/envelope
+  loaders resolve packaged data without a checkout.
+- `test_artifact_contents.py` builds the real wheel and asserts
+  `data/{rules,knowledge,contracts,evals}` file-by-file.
+- Economy-parity validation receipt rebound to the functional HEAD.
 
 ## [0.1.2] - 2026-10-18
 
