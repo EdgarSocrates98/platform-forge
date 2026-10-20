@@ -33,6 +33,9 @@ mcp = ["mcp>=2.2,<3"]
 dev = [
     "pytest>=9,<10",
     "ruff>=0.7,<1",
+    # Sem isto `.[dev]` nao traz `python -m build` e o teste de
+    # artefato real (test_artifact_contents) pularia o gate da wheel.
+    "build>=1.0",
 ]
 
 [project.scripts]
