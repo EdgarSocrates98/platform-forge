@@ -32,6 +32,10 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install
         run: pip install -e ".[dev]"
+      # lf-0019 B2 — rota Git Bash no Windows depende deste shim;
+      # `bash -n` pega erro de sintaxe/CRLF antes de qualquer usuário.
+      - name: Git Bash installer syntax (lf-0019)
+        run: bash -n install.windows.sh
       - name: Lint
         run: python scripts/validate.py --gate lint
       - name: Tests
