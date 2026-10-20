@@ -10,11 +10,13 @@ depends on the checkout being present.
 from __future__ import annotations
 
 import atexit
+import threading
 from contextlib import ExitStack
 from importlib import resources
 from pathlib import Path
 
 _MATERIALIZED = ExitStack()
+_MATERIALIZE_LOCK = threading.Lock()
 atexit.register(_MATERIALIZED.close)
 
 
@@ -26,21 +28,23 @@ def data_path(*parts: str) -> Path:
     no bundled ``data/`` tree exists inside the package).
 
     ``platformforge/data/`` also exists in a checkout — it ships
-    ``portable_skills`` as regular package content — so the wheel probe
-    checks a force-included sentinel (``data/rules``) rather than ``data``
-    itself.
+    ``portable_skills`` as regular package content — so the probe checks
+    the requested path itself (``data/<parts>``, defaulting to
+    ``data/rules`` when nothing was asked), not a fixed sentinel.
     """
     probe = parts if parts else ("rules",)
     try:
         pkg = resources.files("platformforge")
-        installed = pkg.joinpath("data", *probe)
-        if installed.is_dir() or installed.is_file():
-            # as_file materializa o recurso num caminho real — Path(str(t))
-            # devolve um pseudo-caminho dentro do zip sob zipimport. O
-            # ExitStack vive ate o fim do processo para o path seguir valido.
-            return _MATERIALIZED.enter_context(
-                resources.as_file(pkg.joinpath("data", *parts))
-            )
+        with _MATERIALIZE_LOCK:
+            installed = pkg.joinpath("data", *probe)
+            if installed.is_dir() or installed.is_file():
+                # as_file materializa o recurso num caminho real — Path(str(t))
+                # devolve um pseudo-caminho dentro do zip sob zipimport. O
+                # ExitStack vive ate o fim do processo para o path seguir
+                # valido; o lock evita materializacao dupla sob threads.
+                return _MATERIALIZED.enter_context(
+                    resources.as_file(pkg.joinpath("data", *parts))
+                )
     except (ModuleNotFoundError, TypeError, FileNotFoundError):
         pass
     return Path(__file__).resolve().parents[1].joinpath(*parts)
