@@ -9,8 +9,13 @@ depends on the checkout being present.
 
 from __future__ import annotations
 
+import atexit
+from contextlib import ExitStack
 from importlib import resources
 from pathlib import Path
+
+_MATERIALIZED = ExitStack()
+atexit.register(_MATERIALIZED.close)
 
 
 def data_path(*parts: str) -> Path:
@@ -30,7 +35,12 @@ def data_path(*parts: str) -> Path:
         pkg = resources.files("platformforge")
         installed = pkg.joinpath("data", *probe)
         if installed.is_dir() or installed.is_file():
-            return Path(str(pkg.joinpath("data", *parts)))
+            # as_file materializa o recurso num caminho real — Path(str(t))
+            # devolve um pseudo-caminho dentro do zip sob zipimport. O
+            # ExitStack vive ate o fim do processo para o path seguir valido.
+            return _MATERIALIZED.enter_context(
+                resources.as_file(pkg.joinpath("data", *parts))
+            )
     except (ModuleNotFoundError, TypeError, FileNotFoundError):
         pass
     return Path(__file__).resolve().parents[1].joinpath(*parts)
