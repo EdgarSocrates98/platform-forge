@@ -17,6 +17,7 @@ from pathlib import Path
 
 _MATERIALIZED = ExitStack()
 _MATERIALIZE_LOCK = threading.Lock()
+_MATERIALIZED_PATHS: dict[tuple[str, ...], Path] = {}
 atexit.register(_MATERIALIZED.close)
 
 
@@ -41,10 +42,15 @@ def data_path(*parts: str) -> Path:
                 # as_file materializa o recurso num caminho real — Path(str(t))
                 # devolve um pseudo-caminho dentro do zip sob zipimport. O
                 # ExitStack vive ate o fim do processo para o path seguir
-                # valido; o lock evita materializacao dupla sob threads.
-                return _MATERIALIZED.enter_context(
+                # valido; o lock + o cache evitam re-materializar o mesmo
+                # traversable a cada chamada sob zipimport/threads.
+                if parts in _MATERIALIZED_PATHS:
+                    return _MATERIALIZED_PATHS[parts]
+                path = _MATERIALIZED.enter_context(
                     resources.as_file(pkg.joinpath("data", *parts))
                 )
+                _MATERIALIZED_PATHS[parts] = path
+                return path
     except (ModuleNotFoundError, TypeError, FileNotFoundError):
         pass
     return Path(__file__).resolve().parents[1].joinpath(*parts)
