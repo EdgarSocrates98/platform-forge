@@ -11,17 +11,17 @@
     "economy-agentic": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k uniqueness or debate or duplication or fanout or waste or stagnant",
-      "seconds": 0.37
+      "seconds": 0.59
     },
     "economy-budget": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py -k budget or limit or protected or dimension",
-      "seconds": 0.28
+      "seconds": 0.43
     },
     "economy-cache": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_cache.py",
-      "seconds": 0.4
+      "seconds": 0.46
     },
     "economy-closure": {
       "ok": true,
@@ -31,22 +31,22 @@
     "economy-context": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k TestGateway or TestLazy or TestRole or Suff",
-      "seconds": 0.31
+      "seconds": 0.41
     },
     "economy-contracts": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py tests/test_economy_v2.py",
-      "seconds": 0.48
+      "seconds": 0.54
     },
     "economy-evals": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py",
-      "seconds": 0.37
+      "seconds": 0.57
     },
     "economy-qpt": {
       "ok": true,
       "reproduce": "pytest -q tests/test_qpt_v2.py tests/test_economy_fleet_qpt.py",
-      "seconds": 0.95
+      "seconds": 1.07
     },
     "economy-receipt": {
       "ok": true,
@@ -56,22 +56,22 @@
     "economy-reconcile": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py tests/test_economy_evals.py -k reconcil or mismatch or unobserved",
-      "seconds": 0.35
+      "seconds": 0.37
     },
     "economy-resume": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k resume or checkpoint",
-      "seconds": 0.28
+      "seconds": 0.29
     },
     "economy-routing": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py -k routing or profile or champion or simple_task",
-      "seconds": 0.32
+      "seconds": 0.34
     },
     "economy-surface": {
       "ok": true,
       "reproduce": "python -c import subprocess, sys\ncmds = [\n ['platformforge','economy','doctor'],\n ['platformforge','economy','checkpoint','--run-id','gate',\n  '--spent','{\"tokens\":1}'],\n ['platformforge','economy','resume','--run-id','gate'],\n ['platformforge','economy','reconcile',\n  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n ['platformforge','economy','explain','--run-id','gate'],\n ['platformforge','cache','stats'],\n ['platformforge','cache','gc'],\n ['platformforge','context','capsule','--task','t',\n  '--facts','[{\"fact_id\":\"f\"}]'],\n ['platformforge','context','gc'],\n ['platformforge','routing','explain','--signal','{}'],\n ['platformforge','routing','compare',\n  '--champion','{}','--challenger','{}'],\n]\nfor c in cmds:\n    r = subprocess.run(c, capture_output=True)\n    if r.returncode not in (0, 2):\n        print('FAIL', c, r.returncode, r.stderr[-300:])\n        sys.exit(1)\nprint('all economy verbs respond')\n",
-      "seconds": 1.63
+      "seconds": 2.11
     },
     "economy-verification": {
       "ok": true,
@@ -79,7 +79,7 @@
       "seconds": 0.31
     }
   },
-  "generated_at": "2026-10-20T07:36:57Z",
+  "generated_at": "2026-10-20T09:54:57Z",
   "kind": "platformforge/economy-validation-receipt/1",
   "known_gaps": [
     "real provider pricing catalog not bundled (declared-rates engine only, by design)",
@@ -93,7 +93,7 @@
   "remote_ci": "not independently verified",
   "schema": "platformforge/economy-validation-receipt/v1",
   "spec": "prompt_evo_economy.md",
-  "validated_sha": "23a613b7de67e0cfc9300e1a4f621c55827f63d5",
+  "validated_sha": "8277cbe5c719a05ea7ab27155b61421f6169726f",
   "validator": "scripts/validate.py",
   "validator_version": "economy-validation-receipt/v1",
   "verdict": "validated"
