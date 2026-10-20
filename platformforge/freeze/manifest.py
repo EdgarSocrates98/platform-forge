@@ -7,7 +7,14 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA = "platformforge/freeze-manifest/v1"
-CONTRACTS = Path(__file__).resolve().parents[2] / "contracts"
+
+
+def _contracts_dir() -> Path:
+    # `parents[2]` so existe no checkout; no wheel os schemas moram em
+    # `platformforge/data/contracts` (force-include) — `data_path` resolve os dois.
+    from platformforge.resources import data_path
+
+    return data_path("contracts")
 
 
 def _cli_verbs() -> list[str]:
@@ -30,7 +37,7 @@ def _capabilities() -> dict[str, Any]:
 
 
 def _schemas() -> dict[str, Any]:
-    files = sorted(p.name for p in CONTRACTS.glob("*.schema.json"))
+    files = sorted(p.name for p in _contracts_dir().glob("*.schema.json"))
     return {"count": len(files), "files": files}
 
 
@@ -44,7 +51,9 @@ def _agents() -> dict[str, Any]:
 
 
 def _knowledge_packs() -> dict[str, Any]:
-    kroot = Path(__file__).resolve().parents[2] / "knowledge"
+    from platformforge.resources import data_path
+
+    kroot = data_path("knowledge")
     packs = sorted(p.name for p in kroot.iterdir() if p.is_dir())
     srcs = 0
     import yaml

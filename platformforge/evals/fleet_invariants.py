@@ -240,7 +240,9 @@ def probe_fleet_report_all_cited(tmp) -> dict[str, Any]:
     from pathlib import Path
 
     from platformforge.cli.fleetcmd import cmd_fleet
-    src = Path("lab/fleets/acme")
+    from platformforge.resources import data_path
+
+    src = data_path("lab", "fleets", "acme")
     with tempfile.TemporaryDirectory() as td:
         for f in src.glob("*.yaml"):
             (Path(td) / f.name).write_text(f.read_text())

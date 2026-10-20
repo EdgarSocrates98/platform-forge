@@ -16,11 +16,16 @@ import jsonschema
 from platformforge.core.redaction import redact_obj, redact_text_report
 from platformforge.live.models import SCHEMA, CollectorReceipt, ObservationEnvelope
 
-_CONTRACT_DIR = Path(__file__).resolve().parents[2] / "contracts"
+
+def _contract_dir() -> Path:
+    # Checkout le `contracts/` da raiz; wheel le `platformforge/data/contracts`.
+    from platformforge.resources import data_path
+
+    return data_path("contracts")
 
 
 def _schema(name: str) -> dict[str, Any]:
-    p = _CONTRACT_DIR / name
+    p = _contract_dir() / name
     if not p.exists():
         return {}
     return json.loads(p.read_text())
