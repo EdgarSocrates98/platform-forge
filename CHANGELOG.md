@@ -34,7 +34,14 @@ All notable changes. Format: wave/feature, the "why", key commits.
 ### Fixed
 - Portal vendored 2.1 final (Cycles 0-6)
 
-## [Unreleased] — Architecture Freeze (stability & real-world validation)
+## [Unreleased]
+## [0.1.6] - 2026-10-21
+
+### Changed
+
+- Integrations cycle: portal bundle re-vendored — Specialist/Delegation Explorer pages (lf-0032) now ship in the wheel.
+
+ — Architecture Freeze (stability & real-world validation)
 
 No new product capability — the freeze hardens, measures, and dogfoods
 the existing surface (docs/freeze/, prompt_evo_freezing.md).
