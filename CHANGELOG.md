@@ -1,6 +1,21 @@
 # CHANGELOG
 
 All notable changes. Format: wave/feature, the "why", key commits.
+## [0.2.0] - 2026-10-22
+
+### Added
+
+- Install 2.0: `forge-context/v1` registry integration, transactional
+  install/uninstall via vendored `_forgecontext` v1.3.1, consumer-doc managed
+  blocks, evals classification, `qualified_ids` + `route()` support.
+
+### Fixed
+
+- `_txn_restore` journal path validation; interrupt-safe rollback;
+  stale-lock `created_at` fallback (Windows); vendored `_installkit` v1.0.1 +
+  `forge_bootstrap` v1.1.1 security backports (userinfo redaction, argv trim,
+  empty-stdout smoke).
+
 ## [0.1.5] - 2026-10-21
 
 ### Changed
