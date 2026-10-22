@@ -303,3 +303,155 @@ def test_uninstall_desregistra_so_o_proprio_forge(project: Path) -> None:
     assert {e["forge_id"] for e in registry["forges"]} == {"forge-alheia"}
     assert not (ctx / "capabilities" / "platform-forge.json").exists()
     assert (ctx / "capabilities" / "forge-alheia.json").exists()
+
+
+# --- consumer docs + .mcp.json — install-2.0 ciclo 3 (lf-0036) ----------
+
+
+def test_install_escreve_consumer_docs_e_mcp(project: Path) -> None:
+    import json
+
+    out = service.install(scope="project", root=project, yes=True)
+    assert out["status"] == "completed"
+    ids = {c["id"]: c["status"] for c in out["checks"]}
+    assert ids.get("consumer-docs") == "PASS"
+    assert ids.get("mcp-json") == "PASS"
+
+    agents = (project / "AGENTS.md").read_text(encoding="utf-8")
+    claude = (project / "CLAUDE.md").read_text(encoding="utf-8")
+    proto = (project / "AGENT_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "<!-- forge:ecosystem:begin -->" in agents
+    assert "<!-- forge:platform-forge:begin -->" in agents
+    assert "@AGENTS.md" in claude
+    assert proto.startswith("<!-- forge:agent-protocol:v1 -->")
+    for sec in (
+        "1. Discovery", "2. Classification", "3. Routing",
+        "4. Context Retrieval", "5. Planning", "6. Execution",
+        "7. Evaluation", "8. Verification", "9. Reporting",
+    ):
+        assert sec in proto
+
+    mcp = json.loads((project / ".mcp.json").read_text(encoding="utf-8"))
+    assert mcp["mcpServers"]["platformforge"]["command"] == "platformforge-mcp"
+    assert "platform-forge" in mcp["_forge_managed"]
+
+
+def test_install_docs_idempotente_byte_a_byte(project: Path) -> None:
+    service.install(scope="project", root=project, yes=True)
+    nomes = ("AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md", ".mcp.json")
+    snap = {n: (project / n).read_bytes() for n in nomes}
+    service.install(scope="project", root=project, yes=True)
+    assert {n: (project / n).read_bytes() for n in nomes} == snap
+
+
+def test_install_preserva_conteudo_do_usuario(project: Path) -> None:
+    import json
+
+    (project / "AGENTS.md").write_text("# minhas regras\nuser text\n",
+                                       encoding="utf-8")
+    (project / ".mcp.json").write_text(json.dumps(
+        {"mcpServers": {"other": {"command": "x"}}, "own": True}))
+    service.install(scope="project", root=project, yes=True)
+    agents = (project / "AGENTS.md").read_text(encoding="utf-8")
+    assert agents.startswith("# minhas regras\nuser text\n")
+    mcp = json.loads((project / ".mcp.json").read_text(encoding="utf-8"))
+    assert mcp["mcpServers"]["other"] == {"command": "x"}
+    assert mcp["own"] is True
+
+
+def test_uninstall_seletivo_docs_entre_forges(project: Path) -> None:
+    import json
+
+    from platformforge import _forgecontext as fctx
+
+    service.install(scope="project", root=project, yes=True)
+    alheio = fctx.build_manifest(
+        forge_id="forge-alheia", name="Forge Alheia", version="1.0.0",
+        cli="forge-alheia", package="forge_alheia",
+        distribution="forge-alheia", python_spec=">=3.10",
+        scope="project", domains=("dominio-alheio",),
+        skills=("skill-alheia",),
+    )
+    fctx.register_forge(project, alheio, owner="forge-alheia")
+    fctx.install_docs(project, alheio, owner="forge-alheia")
+
+    service.uninstall(scope="project", root=project)
+    agents = (project / "AGENTS.md").read_text(encoding="utf-8")
+    assert "forge:platform-forge" not in agents
+    assert "forge:forge-alheia:begin" in agents
+    proto = (project / "AGENT_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "forge:forge-alheia" in proto and "platform-forge" not in proto
+    if (project / ".mcp.json").exists():
+        mcp = json.loads((project / ".mcp.json").read_text(encoding="utf-8"))
+        assert "platformforge" not in (mcp.get("mcpServers") or {})
+
+
+def test_uninstall_ultimo_forge_remove_docs_gerados(project: Path) -> None:
+    service.install(scope="project", root=project, yes=True)
+    service.uninstall(scope="project", root=project)
+    assert not (project / "AGENT_PROTOCOL.md").exists()
+    assert not (project / "AGENTS.md").exists()
+    assert not (project / "CLAUDE.md").exists()
+    assert not (project / ".mcp.json").exists()
+
+
+def test_install_recusa_marcador_ambiguo(project: Path) -> None:
+    (project / "AGENTS.md").write_text(
+        "# x\n<!-- forge:platform-forge:begin -->\na\n"
+        "<!-- forge:platform-forge:begin -->\nb\n"
+        "<!-- forge:platform-forge:end -->\n",
+        encoding="utf-8")
+    out = service.install(scope="project", root=project, yes=True)
+    check = next(
+        (c for c in out["checks"] if c["id"] == "consumer-docs"), None)
+    assert check is not None and check["status"] == "BLOCKED"
+    assert "FORGE-CONTEXT-CONFLICT" in check["detail"]
+
+
+def test_install_recusa_protocolo_estrangeiro(project: Path) -> None:
+    (project / "AGENT_PROTOCOL.md").write_text("# protocolo proprio\n",
+                                             encoding="utf-8")
+    out = service.install(scope="project", root=project, yes=True)
+    check = next(
+        (c for c in out["checks"] if c["id"] == "consumer-docs"), None)
+    assert check is not None and check["status"] == "BLOCKED"
+    assert (project / "AGENT_PROTOCOL.md").read_text(
+        encoding="utf-8") == "# protocolo proprio\n"
+
+
+def test_repair_reconstroi_doc_e_mcp(project: Path) -> None:
+    service.install(scope="project", root=project, yes=True)
+    (project / "AGENTS.md").unlink()
+    (project / ".mcp.json").unlink()
+    out = service.repair(scope="project", root=project)
+    assert out["status"] == "completed"
+    ids = {c["id"]: c["status"] for c in out["checks"]}
+    assert ids.get("consumer-docs") == "PASS"
+    assert ids.get("mcp-json") == "PASS"
+    assert "forge:platform-forge:begin" in (
+        project / "AGENTS.md").read_text(encoding="utf-8")
+    import json
+    mcp = json.loads((project / ".mcp.json").read_text(encoding="utf-8"))
+    assert mcp["mcpServers"]["platformforge"]["command"] == "platformforge-mcp"
+
+
+def test_uninstall_sem_estado_limpa_residuo_docs(project: Path) -> None:
+    """State dir removido a mao: residuos de contexto/docs ainda sao
+    limpos pelo caminho de leftovers; root pristino nao ganha
+    `.forge/context`."""
+    import shutil
+
+    service.install(scope="project", root=project, yes=True)
+    shutil.rmtree(project / ".platformforge")
+    out = service.uninstall(scope="project", root=project)
+    assert out["status"] == "completed"
+    assert not (project / "AGENT_PROTOCOL.md").exists()
+    assert "forge:platform-forge" not in (
+        project / "AGENTS.md").read_text(encoding="utf-8") \
+        if (project / "AGENTS.md").exists() else True
+
+    pristine = project / "pristine"
+    pristine.mkdir()
+    (pristine / ".git").mkdir()
+    service.uninstall(scope="project", root=pristine)
+    assert not (pristine / ".forge").exists()
