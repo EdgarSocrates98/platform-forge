@@ -61,11 +61,21 @@ packages = ["platformforge"]
 "evals" = "platformforge/data/evals"
 "lab" = "platformforge/data/lab"
 "portal/assets" = "platformforge/portal_assets"
+# Forge manifests (install-2.0 §8.2): install/service._context_manifest le
+# `forge.json`/`forge.agentic.json` da raiz do checkout para compor o
+# manifesto forge/context/v1 (integrity digests, host_adapters). Sob o wheel
+# a raiz nao existe — os manifestos vao para `data`, a mesma convencao dos
+# demais dados de runtime resolvidos por platformforge/resources.py.
+"forge.json" = "platformforge/data/forge.json"
+"forge.agentic.json" = "platformforge/data/forge.agentic.json"
 
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "slow: builds packages / clean-venv installs (wheel isolation gate — install-2.0 §8.4)",
+]
 
 [tool.ruff]
 line-length = 110
