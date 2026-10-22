@@ -460,6 +460,23 @@ def cmd_knowledge(args: argparse.Namespace) -> int:
 
     reg = SourceRegistry.default()
     sub = getattr(args, "knowledge_cmd", "check") or "check"
+    if sub in ("search", "get"):
+        from platformforge import discovery
+
+        try:
+            if sub == "get":
+                return _emit(discovery.knowledge_get(args.term_or_file), args)
+            return _emit(
+                discovery.knowledge_search(
+                    args.term_or_file,
+                    domain=args.domain or None,
+                    limit=args.limit,
+                    cursor=args.cursor,
+                ),
+                args,
+            )
+        except discovery.DiscoveryError as exc:
+            return _emit({"refusal": "PF-DISCOVERY-INPUT", "detail": str(exc)}, args, 2)
     if sub == "contract":
         out = reg.contract_check()
         return _emit(out, args, 2 if (args.strict and not out["ok"]) else 0)
@@ -1296,6 +1313,18 @@ def cmd_context(args: argparse.Namespace) -> int:
     """§7 context — pack for a task + ContextGateway capsule verbs."""
     sub = getattr(args, "context_cmd", "pack") or "pack"
     if sub == "pack":
+        if getattr(args, "domain", None):
+            # §6.2 context.build — bounded domain pack (lf-0037), offline.
+            from platformforge import discovery
+
+            return _emit(
+                discovery.context_pack(
+                    args.domain,
+                    rules_limit=getattr(args, "rules_limit", None),
+                    knowledge_limit=getattr(args, "knowledge_limit", None),
+                ),
+                args,
+            )
         from platformforge.tokensave.budget import Budget
         from platformforge.tokensave.ledger import TokenLedger
         from platformforge.tokensave.packs import ContextPackBuilder
@@ -1407,6 +1436,21 @@ def cmd_policy(args: argparse.Namespace) -> int:
 
     cat_dir = data_path("rules", "catalog")
     rules = load_catalog(cat_dir)
+    if args.policy_cmd in ("search", "get"):
+        from platformforge import discovery
+
+        if args.policy_cmd == "get":
+            return _emit(discovery.rules_get(args.path), args)
+        return _emit(
+            discovery.rules_search(
+                query=args.query,
+                domain=args.domain,
+                severity=args.severity,
+                limit=args.limit,
+                cursor=args.cursor,
+            ),
+            args,
+        )
     if args.policy_cmd == "list":
         return _emit(
             {"rules": [{"rule_id": r.rule_id, "domain": r.domain, "severity": r.severity} for r in rules]},
@@ -3005,8 +3049,17 @@ def build_parser() -> argparse.ArgumentParser:
         "knowledge",
         cmd_knowledge,
         "knowledge freshness/drift check",
-        lambda sp: sp.add_argument(
-            "knowledge_cmd", nargs="?", default="check", choices=["check", "contract", "drift", "packs"]
+        lambda sp: (
+            sp.add_argument(
+                "knowledge_cmd",
+                nargs="?",
+                default="check",
+                choices=["check", "contract", "drift", "packs", "search", "get"],
+            ),
+            sp.add_argument("term_or_file", nargs="?", default=""),
+            sp.add_argument("--domain", default=""),
+            sp.add_argument("--limit", type=int, default=None),
+            sp.add_argument("--cursor", default=None),
         ),
     )
 
@@ -3558,6 +3611,9 @@ def build_parser() -> argparse.ArgumentParser:
             sp.add_argument("--findings", default=""),
             sp.add_argument("--rules", nargs="*"),
             sp.add_argument("--knowledge", nargs="*"),
+            sp.add_argument("--domain", default="", help="§6.2 domain pack (lf-0037)"),
+            sp.add_argument("--rules-limit", type=int, default=None),
+            sp.add_argument("--knowledge-limit", type=int, default=None),
             sp.add_argument("--graph-refs", nargs="*"),
             sp.add_argument("--questions", nargs="*"),
             sp.add_argument("--ref", default=""),
@@ -3601,12 +3657,22 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     verb(
+        "capabilities",
+        lambda args: _emit(__import__("platformforge.discovery", fromlist=["discovery"]).capabilities(), args),
+        "§6.2 installed capabilities + op map (offline)",
+    )
+    verb(
         "policy",
         cmd_policy,
         "policy-as-code catalog check",
         lambda sp: (
-            sp.add_argument("policy_cmd", choices=["check", "list"]),
+            sp.add_argument("policy_cmd", choices=["check", "list", "search", "get"]),
             sp.add_argument("path", nargs="?", default=""),
+            sp.add_argument("--query", default=None),
+            sp.add_argument("--domain", default=None),
+            sp.add_argument("--severity", default=None),
+            sp.add_argument("--limit", type=int, default=None),
+            sp.add_argument("--cursor", default=None),
         ),
     )
     verb(

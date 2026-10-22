@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from platformforge import __version__
+from platformforge import __version__, discovery_ops
 from platformforge import _forgecontext as fctx
 from platformforge import _installkit as kit
 
@@ -592,7 +592,13 @@ def _context_manifest(
             {"id": "forge/context/v1", "version": "1"},
             {"id": "forge/context-registry/v1", "version": "1"},
         ),
+        discovery_ops=discovery_ops.ops(),
         discovery_commands=(
+            *(
+                c
+                for c in discovery_ops.commands()
+                if c["id"] != "doctor"  # `doctor` declared below
+            ),
             {
                 "id": "analyze",
                 "argv": ["platformforge", "analyze", "{target}"],
