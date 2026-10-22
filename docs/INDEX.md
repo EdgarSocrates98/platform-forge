@@ -420,7 +420,6 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### factory/
 
-- [Run — cyc9-07 Forge Lab emitter (platform-forge)](../factory/runs/2026-10-15.cyc9-07.md) `UNKNOWN`
 - [Cenários Forge Lab — Platform Engineering](../factory/specs/archive/2026/cyc9-07-scenarios-platform.md) `HISTORICAL`
 
 ### freeze/
