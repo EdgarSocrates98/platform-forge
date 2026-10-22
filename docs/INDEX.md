@@ -437,17 +437,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [UNFREEZE RFC — Economy Control Plane (prompt_evo_economy.md)](freeze/rfc/RFC-ECONOMY-UNFREEZE.md) `UNKNOWN`
 - [RFC — Portable Distribution Unfreeze (FE-003)](freeze/rfc/RFC-PORTABLE-DISTRIBUTION.md) `UNKNOWN`
 
-### graphify-out/
 
-- [Graph Report - platform-forge  (2026-10-15)](../graphify-out/2026-10-15/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-16)](../graphify-out/2026-10-16/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-17)](../graphify-out/2026-10-17/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-18)](../graphify-out/2026-10-18/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-19)](../graphify-out/2026-10-19/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-20)](../graphify-out/2026-10-20/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-21)](../graphify-out/2026-10-21/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-22)](../graphify-out/2026-10-22/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - platform-forge  (2026-10-22)](../graphify-out/GRAPH_REPORT.md) `UNKNOWN`
 
 ### knowledge-program/
 
