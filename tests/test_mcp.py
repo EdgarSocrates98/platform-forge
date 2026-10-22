@@ -93,3 +93,48 @@ def test_cycle5_tools_exposed_readonly():
                   {"op": "export", "classification": "internal",
                    "path": "evals/cases/contract-fact/fixture/facts.yaml"})
     assert "refusal" in r["result"] or r["result"].get("action")
+
+
+def test_parity_command_is_console_script(tmp_path):
+    """The installed entry point is `platformforge-mcp` — never a bare
+    `python -m` (python may not exist on the consumer PATH)."""
+    from platformforge.mcp.parity import SERVER_CMD
+    assert SERVER_CMD == ["platformforge-mcp"]
+    assert "wrote" in integrate("claude", tmp_path)
+    cfg = json.loads((tmp_path / ".mcp.json").read_text())
+    assert cfg["mcpServers"]["platformforge"]["command"] == "platformforge-mcp"
+    # managed ownership is tracked for clean detach
+    assert "platform-forge" in cfg["_forge_managed"]
+
+
+def test_parity_codex_dedupes_and_detaches(tmp_path):
+    integrate("codex", tmp_path)
+    integrate("codex", tmp_path)  # idempotent: no duplicate table
+    text = (tmp_path / ".codex" / "config.toml").read_text()
+    assert text.count("[mcp_servers.platformforge]") == 1
+    assert detach("codex", tmp_path)["detached"] is True
+    text = (tmp_path / ".codex" / "config.toml").read_text()
+    assert "platformforge" not in text
+    assert detach("codex", tmp_path)["detached"] is False
+
+
+def test_parity_preserves_other_servers(tmp_path):
+    p = tmp_path / ".mcp.json"
+    p.write_text(json.dumps({"mcpServers": {"other": {"command": "x"}},
+                             "own": True}))
+    integrate("claude", tmp_path)
+    cfg = json.loads(p.read_text())
+    assert cfg["mcpServers"]["other"] == {"command": "x"}
+    assert cfg["own"] is True
+    detach("claude", tmp_path)
+    cfg = json.loads(p.read_text())
+    assert cfg["mcpServers"] == {"other": {"command": "x"}}
+    assert cfg["own"] is True
+
+
+def test_parity_refuses_invalid_json(tmp_path):
+    p = tmp_path / ".mcp.json"
+    p.write_text("not json {")
+    out = integrate("claude", tmp_path)
+    assert out["refusal"] == "PF-MCP-CONFIG-INVALID"
+    assert p.read_text() == "not json {"

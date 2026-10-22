@@ -199,6 +199,8 @@ def install(*, scope: str = "project", root: Path | None = None,
         {next((c for c, n in _HOST_MAP.items() if n == h), h)
          for h in native_hosts}
     )
+    if _mcp_enabled(opts):
+        doc.setdefault("checks", []).append(_mcp_set_project(target))
     _register_context(
         target, doc, scope=scope, profile=profile,
         hosts=contract_hosts, components=opts or None,
@@ -329,16 +331,40 @@ def repair(*, scope: str = "project", root: Path | None = None,
     after = dist_doctor(target)
     remaining = sorted(after.get("missing", []))
     kept = sorted(set(after.get("drift", [])))
+    checks = [{"id": "repair",
+               "status": "PASS" if not remaining else "FAIL",
+               "detail": f"{len(missing)} missing restored, "
+                         f"{len(remaining)} remaining; "
+                         f"{len(kept)} user-modified preserved"}]
+    # Consumer docs: re-assert dos blocos `forge:*` a partir dos manifests
+    # em `.forge/context/`; recusa nomeada vira check BLOCKED. Escopo user
+    # nunca registra contexto — so roda quando ha residuo.
+    if scope != "user" and _docs_leftovers(target):
+        try:
+            out_docs = fctx.repair_docs(target)
+            checks.append({
+                "id": "consumer-docs",
+                "status": "PASS",
+                "detail": f"{out_docs['status']} "
+                          f"({len(out_docs['written'])} writes)",
+            })
+        except fctx.ContextError as exc:
+            checks.append({
+                "id": "consumer-docs",
+                "status": "BLOCKED",
+                "detail": f"{exc.kind}: {exc.detail}",
+            })
+    # `.mcp.json` managed key: re-assert when the recorded component set
+    # enables mcp and the key is missing/drifted.
+    stored = kit.load_components(state)
+    if _mcp_enabled(stored) and _mcp_current(target) != _MCP_ENTRY:
+        checks.append(_mcp_set_project(target))
     # Modified managed files are user content by the platform-forge
     # ownership contract — preserved, never force-rewritten.
     return _receipt(
         "repair", scope, target,
         status="completed" if not remaining else "failed",
-        checks=[{"id": "repair",
-                 "status": "PASS" if not remaining else "FAIL",
-                 "detail": f"{len(missing)} missing restored, "
-                           f"{len(remaining)} remaining; "
-                           f"{len(kept)} user-modified preserved"}],
+        checks=checks,
         extra={"repaired": [r for r in restored if r not in remaining],
                "kept": kept})
 
@@ -357,9 +383,17 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
                                "planned_remove": sorted(rec.get("files", {}))})
     state = target / ".platformforge"
     if not state.exists():
+        # No-op idempotente que nao escreve estado — a menos que restem
+        # residuos de contexto/docs (state dir sumiu mas a entry no
+        # registry ou os blocos `forge:*` continuam). As ops de contexto
+        # adquirem lock, entao so rodam quando ha residuo.
+        checks = [{"id": "uninstall", "status": "PASS",
+                   "detail": "0 removed — nothing installed"}]
+        if scope != "user" and _docs_leftovers(target):
+            checks += [_unregister_context(target), _uninstall_docs(target)]
+        checks.append(_mcp_unset_project(target))
         return _receipt("uninstall", scope, target, status="completed",
-                        checks=[{"id": "uninstall", "status": "PASS",
-                                 "detail": "0 removed — nothing installed"}],
+                        checks=checks,
                         extra={"removed": [], "kept": []})
     with kit.acquire_lock(state):
         out = dist_uninstall(target, purge=purge)
@@ -369,12 +403,15 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
                                  "detail": out["refusal"]}])
     removed = out.get("removed", [])
     kit._prune_empty_dirs(target, removed)
+    checks = [{"id": "uninstall", "status": "PASS",
+               "detail": f"{len(removed)} removed, "
+                         f"{len(out.get('preserved_modified', []))} preserved"}]
+    if scope != "user" and _docs_leftovers(target):
+        checks += [_unregister_context(target), _uninstall_docs(target)]
+    checks.append(_mcp_unset_project(target))
     return _receipt(
         "uninstall", scope, target, status="completed",
-        checks=[{"id": "uninstall", "status": "PASS",
-                 "detail": f"{len(removed)} removed, "
-                           f"{len(out.get('preserved_modified', []))} preserved"},
-                _unregister_context(target)],
+        checks=checks,
         extra={"removed": removed,
                "kept": out.get("preserved_modified", [])})
 
@@ -652,7 +689,12 @@ def _register_context(
     components: dict[str, Any] | None,
 ) -> None:
     """Grava `.forge/context/` — manifesto + entrada no registry +
-    ROUTING.md. Falha vira check BLOCKED nomeado no recibo."""
+    ROUTING.md + os consumer docs (blocos `forge:*` e o AGENT_PROTOCOL.md
+    compartilhado). Falha vira check BLOCKED nomeado no recibo.
+    Escopo user tem target=~: `~/.forge/` e nivel de conta
+    (`installations/`); contexto de workspace nao se escreve la."""
+    if scope == "user":
+        return
     try:
         manifest = _context_manifest(
             scope=scope, profile=profile, hosts=hosts, components=components
@@ -669,6 +711,24 @@ def _register_context(
     except fctx.ContextError as exc:
         receipt.setdefault("checks", []).append(
             {"id": "context-registry", "status": "BLOCKED",
+             "detail": f"{exc.kind}: {exc.detail}"}
+        )
+        return
+    try:
+        docs = fctx.install_docs(target, manifest, owner=FORGE_ID)
+        receipt.setdefault("checks", []).append(
+            {
+                "id": "consumer-docs",
+                "status": "PASS",
+                "detail": (
+                    f"{docs['status']}: {len(docs['written'])} written, "
+                    f"{len(docs['kept'])} kept"
+                ),
+            }
+        )
+    except fctx.ContextError as exc:
+        receipt.setdefault("checks", []).append(
+            {"id": "consumer-docs", "status": "BLOCKED",
              "detail": f"{exc.kind}: {exc.detail}"}
         )
 
@@ -688,3 +748,120 @@ def _unregister_context(target: Path) -> dict[str, Any]:
             "status": "BLOCKED",
             "detail": f"{exc.kind}: {exc.detail}",
         }
+
+
+# --------------------------------------------------------------------------
+# consumer docs + `.mcp.json` managed key — install-2.0 ciclo 3 (lf-0036)
+# `install_docs`/`uninstall_docs`/`repair_docs` sao da camada forge_context
+# vendored; `.mcp.json` usa `mcp_set`/`mcp_unset` do installkit com
+# ownership tracking em `_forge_managed`. platform-forge nunca emitiu
+# markers legados — `_LEGACY_DOC_TAGS` fica vazio.
+# --------------------------------------------------------------------------
+
+_LEGACY_DOC_TAGS: tuple[str, ...] = ()
+_CONSUMER_DOCS: tuple[str, ...] = (
+    "AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md")
+_MCP_NAME = "platformforge"
+_MCP_ENTRY: dict[str, Any] = {"command": "platformforge-mcp", "args": []}
+
+
+def _docs_leftovers(target: Path) -> bool:
+    """True quando o target ainda carrega residuo forge_context — leitura
+    sem lock; so um hit justifica o caminho de escrita (nunca criamos
+    `.forge/context/` num root pristino)."""
+    if (target / fctx.CONTEXT_DIR).exists():
+        return True
+    needles = (
+        f"forge:{FORGE_ID}:", f"{fctx.DOC_TAG_ECOSYSTEM}:",
+        fctx.PROTOCOL_SENTINEL,
+    )
+    for name in _CONSUMER_DOCS:
+        path = target / name
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if any(n in text for n in needles):
+            return True
+    return False
+
+
+def _uninstall_docs(target: Path) -> dict[str, Any]:
+    """Retira os blocos `forge:platform-forge` dos consumer docs — depois
+    do unregister, para o protocolo regen sem nos."""
+    try:
+        out = fctx.uninstall_docs(target, FORGE_ID, owner=FORGE_ID)
+        return {
+            "id": "consumer-docs",
+            "status": "PASS",
+            "detail": f"{out['status']}: {len(out['written'])} changed",
+        }
+    except fctx.ContextError as exc:
+        return {
+            "id": "consumer-docs",
+            "status": "BLOCKED",
+            "detail": f"{exc.kind}: {exc.detail}",
+        }
+
+
+def _mcp_enabled(components: dict[str, Any] | None) -> bool:
+    """`mcp` e kind de todos os profiles; desligado so quando uma selecao
+    explicita de componentes o exclui."""
+    kinds = (components or {}).get("asset_kinds")
+    return kinds is None or "mcp" in kinds
+
+
+def _mcp_current(target: Path) -> dict[str, Any] | None:
+    doc = kit._load_json(target / ".mcp.json", None)
+    if not isinstance(doc, dict):
+        return None
+    servers = doc.get("mcpServers")
+    if not isinstance(servers, dict):
+        return None
+    entry = servers.get(_MCP_NAME)
+    return entry if isinstance(entry, dict) else None
+
+
+def _mcp_set_project(target: Path) -> dict[str, Any]:
+    """Managed `mcpServers.platformforge` no `.mcp.json` compartilhado —
+    outros servidores e top-level keys sao preservados."""
+    path = target / ".mcp.json"
+    cur: dict[str, Any] | None = None
+    if path.exists():
+        cur = kit._load_json(path, None)
+        if not isinstance(cur, dict):
+            return {"id": "mcp-json", "status": "BLOCKED",
+                    "detail": ".mcp.json exists but is not a JSON object"}
+    new = kit.mcp_set(cur, _MCP_NAME, _MCP_ENTRY, FORGE_ID)
+    payload = kit._json_bytes(new)
+    if path.exists() and path.read_bytes() == payload:
+        return {"id": "mcp-json", "status": "PASS",
+                "detail": ".mcp.json managed key unchanged"}
+    kit._atomic_write(path, payload)
+    return {"id": "mcp-json", "status": "PASS",
+            "detail": ".mcp.json managed key set (platformforge-mcp)"}
+
+
+def _mcp_unset_project(target: Path) -> dict[str, Any]:
+    """Remove so a nossa managed key; preserva outros servidores. Arquivo
+    que so tinha conteudo nosso e removido."""
+    path = target / ".mcp.json"
+    if not path.exists():
+        return {"id": "mcp-json", "status": "PASS", "detail": "absent"}
+    cur = kit._load_json(path, None)
+    if not isinstance(cur, dict):
+        return {"id": "mcp-json", "status": "BLOCKED",
+                "detail": ".mcp.json is not a JSON object"}
+    servers = cur.get("mcpServers") or {}
+    managed = (cur.get("_forge_managed") or {}).get(FORGE_ID) or []
+    if _MCP_NAME not in servers and "mcpServers.platformforge" not in managed:
+        return {"id": "mcp-json", "status": "PASS", "detail": "key absent"}
+    new = kit.mcp_unset(cur, _MCP_NAME, FORGE_ID)
+    if new:
+        kit._atomic_write(path, kit._json_bytes(new))
+    else:
+        path.unlink()
+    return {"id": "mcp-json", "status": "PASS",
+            "detail": ".mcp.json managed key removed"}
