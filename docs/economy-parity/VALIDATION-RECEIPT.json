@@ -11,75 +11,75 @@
     "economy-agentic": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k uniqueness or debate or duplication or fanout or waste or stagnant",
-      "seconds": 3.42
+      "seconds": 4.16
     },
     "economy-budget": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py -k budget or limit or protected or dimension",
-      "seconds": 2.69
+      "seconds": 2.46
     },
     "economy-cache": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_cache.py",
-      "seconds": 2.9
+      "seconds": 2.6
     },
     "economy-closure": {
       "ok": true,
       "reproduce": "python -c import sys\nfrom pathlib import Path\nreq = {'docs/economy-parity/FINAL-REPORT.md':\n         ['validated_sha', 'remote_ci', 'known gap'],\n       'docs/economy-parity/FINAL-MATRIX.md':\n         ['validated', 'externally-unverified'],\n       'docs/economy-parity/ECONOMY-BENCHMARKS.md':\n         ['Control Plane Overhead', 'End-to-End'],\n       'docs/economy/ROUTING.md':\n         ['decide', 'advisory'],\n       'docs/economy-parity/POLISH-BASELINE.md': ['drift']}\nbad = []\nfor f, needles in req.items():\n    p = Path(f)\n    if not p.is_file(): bad.append(('missing', f)); continue\n    txt = p.read_text()\n    for n in needles:\n        if n not in txt: bad.append((f, n))\nm = Path('docs/economy-parity/FINAL-MATRIX.md').read_text()\nif '\\n' + '|' in m and ' fully-production' in m:\n    bad.append(('matrix', 'overclaimed status'))\nif bad: print(bad); sys.exit(1)\nprint('closure docs coherent')\n && pytest -q tests/test_economy_closure.py",
-      "seconds": 3.69
+      "seconds": 3.39
     },
     "economy-context": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k TestGateway or TestLazy or TestRole or Suff",
-      "seconds": 2.83
+      "seconds": 2.65
     },
     "economy-contracts": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py tests/test_economy_v2.py",
-      "seconds": 4.4
+      "seconds": 3.83
     },
     "economy-evals": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py",
-      "seconds": 3.28
+      "seconds": 3.18
     },
     "economy-qpt": {
       "ok": true,
       "reproduce": "pytest -q tests/test_qpt_v2.py tests/test_economy_fleet_qpt.py",
-      "seconds": 9.37
+      "seconds": 19.27
     },
     "economy-receipt": {
       "ok": true,
       "reproduce": "python -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\n# PR merge ref: HEAD^2 is the pushed branch tip \u2014 the Option-A\n# pair (functional commit + receipt commit) sits one level down.\nhead2 = subprocess.run(['git','rev-parse','HEAD^2'],\n    capture_output=True, text=True).stdout.strip()\nbase = head2 if __import__('re').fullmatch(r'[0-9a-f]{40}', head2) else head\nhead1 = subprocess.run(['git','rev-parse', base + '~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (base, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
-      "seconds": 0.37
+      "seconds": 0.36
     },
     "economy-reconcile": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py tests/test_economy_evals.py -k reconcil or mismatch or unobserved",
-      "seconds": 3.59
+      "seconds": 2.77
     },
     "economy-resume": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k resume or checkpoint",
-      "seconds": 2.69
+      "seconds": 2.35
     },
     "economy-routing": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py -k routing or profile or champion or simple_task",
-      "seconds": 3.1
+      "seconds": 2.78
     },
     "economy-surface": {
       "ok": true,
       "reproduce": "python -c import subprocess, sys\ncmds = [\n ['platformforge','economy','doctor'],\n ['platformforge','economy','checkpoint','--run-id','gate',\n  '--spent','{\"tokens\":1}'],\n ['platformforge','economy','resume','--run-id','gate'],\n ['platformforge','economy','reconcile',\n  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n ['platformforge','economy','explain','--run-id','gate'],\n ['platformforge','cache','stats'],\n ['platformforge','cache','gc'],\n ['platformforge','context','capsule','--task','t',\n  '--facts','[{\"fact_id\":\"f\"}]'],\n ['platformforge','context','gc'],\n ['platformforge','routing','explain','--signal','{}'],\n ['platformforge','routing','compare',\n  '--champion','{}','--challenger','{}'],\n]\nfor c in cmds:\n    r = subprocess.run(c, capture_output=True)\n    if r.returncode not in (0, 2):\n        print('FAIL', c, r.returncode, r.stderr[-300:])\n        sys.exit(1)\nprint('all economy verbs respond')\n",
-      "seconds": 16.52
+      "seconds": 17.78
     },
     "economy-verification": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_pricing_verify.py",
-      "seconds": 2.99
+      "seconds": 2.62
     }
   },
-  "generated_at": "2026-10-22T20:18:35Z",
+  "generated_at": "2026-10-22T20:28:38Z",
   "kind": "platformforge/economy-validation-receipt/1",
   "known_gaps": [
     "real provider pricing catalog not bundled (declared-rates engine only, by design)",
@@ -93,7 +93,7 @@
   "remote_ci": "not independently verified",
   "schema": "platformforge/economy-validation-receipt/v1",
   "spec": "prompt_evo_economy.md",
-  "validated_sha": "8262800d176af3ee9afa2f707548a06af88cdc04",
+  "validated_sha": "8dcfa67b4163465ffcea04716787b361b9504713",
   "validator": "scripts/validate.py",
   "validator_version": "economy-validation-receipt/v1",
   "verdict": "validated"
