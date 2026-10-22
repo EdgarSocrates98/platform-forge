@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from platformforge import __version__
+from platformforge import __version__, discovery_ops
 from platformforge import _forgecontext as fctx
 from platformforge import _installkit as kit
 
@@ -504,10 +504,15 @@ def _context_manifest(
     from platformforge.agents.roster import AGENTS
     from platformforge.resources import data_path
 
-    forge_json = kit._load_json(_REPO_DIR / "forge.json", None)
-    forge_json = forge_json if isinstance(forge_json, dict) else None
-    agentic = kit._load_json(_REPO_DIR / "forge.agentic.json", None)
-    agentic = agentic if isinstance(agentic, dict) else None
+    def _bundled_json(name: str) -> dict[str, Any] | None:
+        for cand in (_PKG_DIR / "data" / name, _REPO_DIR / name):
+            data = kit._load_json(cand, None)
+            if isinstance(data, dict):
+                return data
+        return None
+
+    forge_json = _bundled_json("forge.json")
+    agentic = _bundled_json("forge.agentic.json")
 
     skills_root = data_path("portable_skills")
     skills = (
@@ -592,7 +597,13 @@ def _context_manifest(
             {"id": "forge/context/v1", "version": "1"},
             {"id": "forge/context-registry/v1", "version": "1"},
         ),
+        discovery_ops=discovery_ops.ops(),
         discovery_commands=(
+            *(
+                c
+                for c in discovery_ops.commands()
+                if c["id"] != "doctor"  # `doctor` declared below
+            ),
             {
                 "id": "analyze",
                 "argv": ["platformforge", "analyze", "{target}"],

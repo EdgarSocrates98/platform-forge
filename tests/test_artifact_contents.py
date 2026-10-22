@@ -37,6 +37,12 @@ def _names(wheel: zipfile.ZipFile, prefix: str) -> list[str]:
 
 
 class TestWheelCarriesDataLayer:
+    def test_forge_manifests(self, wheel):
+        # install/service._context_manifest compõe forge/context/v1 destes —
+        # sem eles no wheel o manifesto instalado degrada (install-2.0 §8.2).
+        assert "platformforge/data/forge.json" in wheel.namelist()
+        assert "platformforge/data/forge.agentic.json" in wheel.namelist()
+
     def test_rules(self, wheel):
         assert _names(wheel, "platformforge/data/rules/")
 
