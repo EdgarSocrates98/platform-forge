@@ -222,3 +222,84 @@ def test_hosts_none_e_csv():
     assert len(service._hosts("claude,devin")) == 2
     with pytest.raises(service.InstallRefusal):
         service._hosts("nope")
+
+
+# --- forge/context/v1 — workspace registry (install-2.0 ciclo 2) ----------
+
+
+def test_install_escreve_forge_context(project: Path) -> None:
+    import json
+
+    from platformforge import _forgecontext as fctx
+
+    out = service.install(scope="project", root=project, yes=True)
+    assert out["status"] == "completed"
+    check = next(c for c in out["checks"] if c["id"] == "context-registry")
+    assert check["status"] == "PASS"
+
+    ctx = project / ".forge" / "context"
+    registry = json.loads((ctx / "registry.json").read_text(encoding="utf-8"))
+    assert registry["schema"] == "forge/context-registry/v1"
+    entry = next(
+        e for e in registry["forges"] if e["forge_id"] == "platform-forge")
+    assert entry["scope"] == "project"
+
+    manifest = json.loads(
+        (ctx / "capabilities" / "platform-forge.json").read_text(
+            encoding="utf-8"))
+    assert manifest["schema"] == "forge/context/v1"
+    assert fctx.validate_manifest(manifest) == []
+    assert manifest["skills"], "manifesto sem skills reais"
+    assert manifest["agents"], "manifesto sem roster agents"
+    assert manifest["integrity"]["files"]["forge.json"].startswith("sha256:")
+
+    routing = (ctx / "ROUTING.md").read_text(encoding="utf-8")
+    assert "platform-forge" in routing
+    assert "platform-engineering" in routing
+
+
+def test_install_context_idempotente_byte_a_byte(project: Path) -> None:
+    service.install(scope="project", root=project, yes=True)
+    ctx = project / ".forge" / "context"
+    snap = {
+        p.relative_to(ctx).as_posix(): p.read_bytes()
+        for p in sorted(ctx.rglob("*"))
+        if p.is_file()
+    }
+    service.install(scope="project", root=project, yes=True)
+    depois = {
+        p.relative_to(ctx).as_posix(): p.read_bytes()
+        for p in sorted(ctx.rglob("*"))
+        if p.is_file()
+    }
+    assert snap == depois
+
+
+def test_uninstall_desregistra_so_o_proprio_forge(project: Path) -> None:
+    import json
+
+    from platformforge import _forgecontext as fctx
+
+    service.install(scope="project", root=project, yes=True)
+    estrangeiro = fctx.build_manifest(
+        forge_id="forge-alheia",
+        name="Forge Alheia",
+        version="1.0.0",
+        cli="forge-alheia",
+        package="forge_alheia",
+        distribution="forge-alheia",
+        python_spec=">=3.10",
+        scope="project",
+        domains=("dominio-alheio",),
+        skills=("skill-alheia",),
+    )
+    fctx.register_forge(project, estrangeiro, owner="forge-alheia")
+
+    un = service.uninstall(scope="project", root=project)
+    assert un["status"] == "completed"
+
+    ctx = project / ".forge" / "context"
+    registry = json.loads((ctx / "registry.json").read_text(encoding="utf-8"))
+    assert {e["forge_id"] for e in registry["forges"]} == {"forge-alheia"}
+    assert not (ctx / "capabilities" / "platform-forge.json").exists()
+    assert (ctx / "capabilities" / "forge-alheia.json").exists()

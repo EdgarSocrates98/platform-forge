@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from platformforge import __version__
+from platformforge import _forgecontext as fctx
 from platformforge import _installkit as kit
 
 FORGE_ID = "platform-forge"
@@ -186,7 +187,7 @@ def install(*, scope: str = "project", root: Path | None = None,
             checks=[{"id": "apply", "status": "FAIL",
                      "detail": f"{out['refusal']}: {out.get('conflicts')}"}])
     receipt = out.get("receipt") or {}
-    return _receipt(
+    doc = _receipt(
         "install", scope, target, status="completed",
         checks=[{"id": "apply", "status": "PASS",
                  "detail": f"{len(receipt.get('files', {}))} managed files"}],
@@ -194,6 +195,15 @@ def install(*, scope: str = "project", root: Path | None = None,
         extra={"plan": out.get("plan"), "profile": profile,
                "components": opts or None,
                "gateway_profile": gateway_profile})
+    contract_hosts = sorted(
+        {next((c for c, n in _HOST_MAP.items() if n == h), h)
+         for h in native_hosts}
+    )
+    _register_context(
+        target, doc, scope=scope, profile=profile,
+        hosts=contract_hosts, components=opts or None,
+    )
+    return doc
 
 
 def _read_receipt(target: Path) -> dict[str, Any]:
@@ -363,7 +373,8 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
         "uninstall", scope, target, status="completed",
         checks=[{"id": "uninstall", "status": "PASS",
                  "detail": f"{len(removed)} removed, "
-                           f"{len(out.get('preserved_modified', []))} preserved"}],
+                           f"{len(out.get('preserved_modified', []))} preserved"},
+                _unregister_context(target)],
         extra={"removed": removed,
                "kept": out.get("preserved_modified", [])})
 
@@ -419,3 +430,261 @@ __all__ = [
     "uninstall",
     "update",
 ]
+
+
+# --------------------------------------------------------------------------
+# forge-context/v1 wiring (install-2.0 ciclo 2, the-forge ADR-0061)
+# `.forge/context/` e o registry de workspace compartilhado entre forges.
+# Este forge so registra e desregistra o proprio `forge_id`.
+# --------------------------------------------------------------------------
+
+_PKG_DIR = Path(__file__).resolve().parents[1]
+_REPO_DIR = _PKG_DIR.parent
+
+_PF_DOMAINS: tuple[str, ...] = (
+    "platform-engineering",
+    "infrastructure-as-code",
+    "kubernetes",
+    "crossplane",
+    "terraform",
+    "finops",
+    "sre",
+    "supply-chain",
+)
+
+
+def _mds(base: Path) -> list[str]:
+    return sorted(p.stem for p in base.glob("*.md")) if base.is_dir() else []
+
+
+def _context_manifest(
+    *, scope: str, profile: str, hosts: list[str],
+    components: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Manifesto forge/context/v1 das fontes reais: `forge.json` +
+    `forge.agentic.json` no checkout, roster canonico (`agents.roster`),
+    `data_path("portable_skills")` e os grupos de dados do pacote."""
+    from platformforge.agents.roster import AGENTS
+    from platformforge.resources import data_path
+
+    forge_json = kit._load_json(_REPO_DIR / "forge.json", None)
+    forge_json = forge_json if isinstance(forge_json, dict) else None
+    agentic = kit._load_json(_REPO_DIR / "forge.agentic.json", None)
+    agentic = agentic if isinstance(agentic, dict) else None
+
+    skills_root = data_path("portable_skills")
+    skills = (
+        sorted(
+            d.name for d in skills_root.iterdir()
+            if d.is_dir() and (d / "SKILL.md").is_file()
+        )
+        if skills_root.is_dir()
+        else []
+    )
+    agent_ids = sorted(AGENTS)
+    coordinators = sorted(
+        s.name
+        for s in AGENTS.values()
+        if s.role in ("coordinator", "orchestrator", "planner")
+    )
+
+    rules_root = data_path("rules")
+    rule_areas = (
+        sorted(p.stem for p in rules_root.glob("*.yaml"))
+        + sorted(p.stem for p in rules_root.glob("**/*.yaml"))
+        if rules_root.is_dir()
+        else []
+    )
+    rule_areas = sorted(set(rule_areas))
+    knowledge_root = data_path("knowledge")
+    providers = (
+        [{"id": "knowledge-base", "interface": "bundled"}]
+        if knowledge_root.is_dir()
+        else []
+    )
+    evals_root = data_path("evals")
+    eval_suites = (
+        [
+            {"id": p.name, "kind": "output-verification"}
+            for p in sorted(evals_root.iterdir())
+            if p.is_dir()
+        ]
+        if evals_root.is_dir()
+        else []
+    )
+
+    checks: list[dict[str, Any]] = [
+        {
+            "id": "skills-bundle",
+            "status": "PASS" if skills else "UNVERIFIED",
+            "detail": f"{len(skills)} skills",
+        },
+        {
+            "id": "agent-specs",
+            "status": "PASS" if agent_ids else "UNVERIFIED",
+            "detail": f"{len(agent_ids)} roster agents",
+        },
+        {
+            "id": "rules-catalog",
+            "status": "PASS" if rule_areas else "UNVERIFIED",
+            "detail": f"{len(rule_areas)} rule files",
+        },
+    ]
+    return fctx.build_manifest(
+        forge_id=FORGE_ID,
+        name="Platform Forge",
+        version=__version__,
+        cli="platformforge",
+        package="platformforge",
+        distribution="platformforge",
+        python_spec=">=3.10",
+        scope=scope,
+        profile=profile,
+        hosts=hosts,
+        forge_json=forge_json,
+        agentic=agentic,
+        domains=_PF_DOMAINS,
+        skills=skills,
+        coordinators=coordinators,
+        agents=agent_ids,
+        rule_areas=rule_areas,
+        knowledge_providers=providers,
+        eval_suites=eval_suites,
+        protocols=(
+            {"id": "forge/v1", "version": "1"},
+            {"id": "forge/context/v1", "version": "1"},
+            {"id": "forge/context-registry/v1", "version": "1"},
+        ),
+        discovery_commands=(
+            {
+                "id": "analyze",
+                "argv": ["platformforge", "analyze", "{target}"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "analyze platform/IaC surfaces",
+            },
+            {
+                "id": "capability-list",
+                "argv": ["platformforge", "capability", "list"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "capability surface inventory",
+            },
+            {
+                "id": "forge-manifest",
+                "argv": ["platformforge", "forge", "manifest"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "emitted forge manifest",
+            },
+            {
+                "id": "doctor",
+                "argv": ["platformforge", "doctor"],
+                "mode": "diagnostic-only",
+                "read_only": True,
+                "description": "environment + installation health",
+            },
+        ),
+        mcp={
+            "server_name": "platformforge",
+            "command": ["platformforge-mcp"],
+            "verify_tool": "platformforge_inspect",
+        },
+        resources={
+            "skills-bundle": {
+                "kind": "bundled",
+                "location": "platformforge/data/portable_skills",
+                "optional": False,
+            },
+            "agents-roster": {
+                "kind": "bundled",
+                "location": "platformforge/agents/roster.py",
+                "optional": False,
+            },
+            "rules-catalog": {
+                "kind": "bundled",
+                "location": "platformforge/data/rules",
+                "optional": False,
+            },
+            "knowledge-base": {
+                "kind": "bundled",
+                "location": "platformforge/data/knowledge",
+                "optional": True,
+            },
+            "install-state": {
+                "kind": "referenced",
+                "location": ".platformforge",
+                "optional": True,
+            },
+        },
+        mutating_verbs=(
+            "install",
+            "uninstall",
+            "repair",
+            "integrate",
+            "detach",
+            "collect",
+            "case update",
+            "change apply",
+        ),
+        requires_approval=(
+            "install", "uninstall", "integrate", "detach", "change apply"
+        ),
+        offline_available=True,
+        health={
+            "status": (
+                "healthy" if skills and agent_ids and rule_areas else "degraded"
+            ),
+            "checks": checks,
+        },
+        components=components,
+        recorded_by="platformforge",
+    )
+
+
+def _register_context(
+    target: Path,
+    receipt: dict[str, Any],
+    *,
+    scope: str,
+    profile: str,
+    hosts: list[str],
+    components: dict[str, Any] | None,
+) -> None:
+    """Grava `.forge/context/` — manifesto + entrada no registry +
+    ROUTING.md. Falha vira check BLOCKED nomeado no recibo."""
+    try:
+        manifest = _context_manifest(
+            scope=scope, profile=profile, hosts=hosts, components=components
+        )
+        out = fctx.register_forge(target, manifest, owner=FORGE_ID)
+        receipt.setdefault("checks", []).append(
+            {
+                "id": "context-registry",
+                "status": "PASS",
+                "detail": f".forge/context {out['status']} "
+                f"({len(out['written'])} writes)",
+            }
+        )
+    except fctx.ContextError as exc:
+        receipt.setdefault("checks", []).append(
+            {"id": "context-registry", "status": "BLOCKED",
+             "detail": f"{exc.kind}: {exc.detail}"}
+        )
+
+
+def _unregister_context(target: Path) -> dict[str, Any]:
+    """Remove somente o manifesto/entry deste forge."""
+    try:
+        out = fctx.unregister_forge(target, FORGE_ID, owner=FORGE_ID)
+        return {
+            "id": "context-registry",
+            "status": "PASS",
+            "detail": f".forge/context {out['status']}",
+        }
+    except fctx.ContextError as exc:
+        return {
+            "id": "context-registry",
+            "status": "BLOCKED",
+            "detail": f"{exc.kind}: {exc.detail}",
+        }
