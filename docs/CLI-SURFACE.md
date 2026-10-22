@@ -186,10 +186,12 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `evals`
 
 - `evals`  
-  `--repo <v> — workspace/repo root (default '.')` · `--type <v> (default '')` · `--cases <v> (default '')`
+  `--repo <v> — workspace/repo root (default '.')` · `--type <v> (default '')` · `--cases <v> (default '')` · `--suite <v> (default '')` · `--run <v> (default '')` · `--classified`
 - `evals coverage`
+- `evals describe`
 - `evals list`
 - `evals precision`
+- `evals result`
 - `evals run`
 
 ## `explain`
