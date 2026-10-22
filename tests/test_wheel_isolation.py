@@ -64,11 +64,12 @@ def _build_wheel(tmp: Path) -> Path:
     testing the artifact that is a function of the current checkout."""
     dist = tmp / "dist"
     dist.mkdir()
-    result = subprocess.run(  # noqa: S603 - build invoked by the test itself
+    result = subprocess.run(  # build invoked by the test itself
         [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist), str(ROOT)],
         capture_output=True,
         text=True,
         timeout=900,
+        check=False,
     )
     if result.returncode != 0:
         pytest.skip(f"`python -m build` unavailable or failed: {result.stderr[-400:]}")
@@ -89,8 +90,9 @@ def _clean_env() -> dict[str, str]:
 
 
 def _run(argv: list[str], *, cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess:
-    return subprocess.run(  # noqa: S603 - CLI/venv created by the test itself
+    return subprocess.run(  # CLI/venv created by the test itself
         argv, cwd=str(cwd), env=env, capture_output=True, text=True, timeout=300,
+        check=False,
     )
 
 
@@ -155,10 +157,12 @@ def test_wheel_install_lifecycle_outside_checkout(tmp_path: Path):
         [
             str(python),
             "-c",
-            "import sys, sysconfig\n"
-            f"import {PACKAGE}\n"
-            f"print({PACKAGE}.__file__)\n"
-            "print(sysconfig.get_paths()['purelib'])",
+            (
+                "import sys, sysconfig\n"
+                f"import {PACKAGE}\n"
+                f"print({PACKAGE}.__file__)\n"
+                "print(sysconfig.get_paths()['purelib'])"
+            ),
         ],
         cwd=tmp_path,
         env=env,
