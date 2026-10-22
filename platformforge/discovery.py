@@ -245,6 +245,7 @@ def capabilities() -> dict[str, Any]:
     )
     agents_root = data_path("agents")
     agents = sorted(p.stem for p in agents_root.glob("*.md")) if agents_root.is_dir() else []
+    from platformforge.evals import taxonomy as _evals_taxonomy
     return {
         "status": "ok",
         "forge": "platformforge",
@@ -259,6 +260,17 @@ def capabilities() -> dict[str, Any]:
         "knowledge": {"root": str(root), "documents": len(docs)},
         "skills": {"count": len(skills), "ids": skills},
         "agents": {"count": len(agents), "ids": agents},
+        # §7.1 (lf-0038): inventario classificado — taxonomia declarada,
+        # nao varrimento; o varrimento fica como `dirs` informativo.
+        "eval_suites": _evals_taxonomy.suite_ids(),
+        "evals": {
+            "categories": list(_evals_taxonomy.KINDS),
+            "counts": _evals_taxonomy.kind_counts(),
+            "detail": _evals_taxonomy.capability_detail(),
+            # §7.2 — ops conceituais de evals/verification -> argv real;
+            # `discovery.ops` do manifesto e fechado no §6.2.
+            "ops": discovery_ops.eval_ops_expanded(),
+        },
         "domains": list(discovery_ops.DOMAINS),
         "protocols": list(discovery_ops.PROTOCOLS),
         "interfaces": {"mcp": discovery_ops.MCP_INTERFACE},

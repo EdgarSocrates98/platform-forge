@@ -73,6 +73,7 @@ _Task-oriented guides and workflows._
 - [RUNTIME-TOPOLOGY — observed edges](../RUNTIME-TOPOLOGY.md)
 - [SECURITY — defensive platform analysis & the redaction boundary](../SECURITY.md)
 - [SOURCES — provenance & clean-room registry](../SOURCES.md)
+- [Suporte](../SUPPORT.md)
 - [VERIFICATION — observed evidence, never exit codes (Cycle 4 + 4.1)](../VERIFICATION.md)
 
 ### docs/
@@ -87,8 +88,13 @@ _Task-oriented guides and workflows._
 
 - [docs/freeze/ — Architecture Freeze](freeze/README.md)
 
+### install/
+
+- [Distribution parity — Platform Forge](install/DISTRIBUTION_PARITY.md)
+
 ### installation/
 
+- [Account-scoped installation](installation/account-installation.md)
 - [platform-forge + Claude Code](installation/claude-code.md)
 - [platform-forge + Codex CLI](installation/codex-cli.md)
 - [platform-forge + GitHub Copilot CLI](installation/copilot-cli.md)
@@ -299,6 +305,10 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Routing](agents/ROUTING.md) `UNKNOWN`
 - [Verification](agents/VERIFICATION.md) `UNKNOWN`
 
+### audits/
+
+- [FORGE_CONTEXT_BASELINE — platform-forge](audits/FORGE_CONTEXT_BASELINE.md) `UNKNOWN`
+
 ### cycle2/
 
 - [CYCLE 2 — FINAL ARCHITECTURAL REVIEW (§190)](cycle2/ARCHITECTURAL-REVIEW.md) `UNKNOWN`
@@ -367,6 +377,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 - [CLI SURFACE — generated reference](CLI-SURFACE.md) `UNKNOWN`
 - [Economia de tokens e contexto — Platform Forge](economy.md) `UNKNOWN`
+- [Evals taxonomy — install-2.0 §7 (lf-0038)](evals-taxonomy.md) `UNKNOWN`
 
 ### economy/
 
@@ -391,6 +402,10 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Comparative Gap Matrix — §5](economy-parity/GAP-MATRIX.md) `UNKNOWN`
 - [Economy Closure Polish — Baseline Audit (prompt_evo_polish §2)](economy-parity/POLISH-BASELINE.md) `UNKNOWN`
 
+### engineering-excellence/
+
+- [Engineering Excellence — Platform Fitness](engineering-excellence/fitness-and-gates.md) `UNKNOWN`
+
 ### evals/
 
 - [Password rotation policy](../evals/cases/secret-prose-mixed/fixture/policy-notes.md) `UNKNOWN`
@@ -402,6 +417,11 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [FASE 4 — Platform Forge: relatório de validação](experience/fase4-report.md) `RELEASE_REPORT`
 - [Interactive CLI](experience/interactive-cli.md) `UNKNOWN`
 - [Themes and visual identity](experience/themes.md) `UNKNOWN`
+
+### factory/
+
+- [Run — cyc9-07 Forge Lab emitter (platform-forge)](../factory/runs/2026-10-15.cyc9-07.md) `UNKNOWN`
+- [Cenários Forge Lab — Platform Engineering](../factory/specs/archive/2026/cyc9-07-scenarios-platform.md) `HISTORICAL`
 
 ### freeze/
 
@@ -418,6 +438,18 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [UNFREEZE RFC — Economy Control Plane (prompt_evo_economy.md)](freeze/rfc/RFC-ECONOMY-UNFREEZE.md) `UNKNOWN`
 - [RFC — Portable Distribution Unfreeze (FE-003)](freeze/rfc/RFC-PORTABLE-DISTRIBUTION.md) `UNKNOWN`
 
+### graphify-out/
+
+- [Graph Report - platform-forge  (2026-10-15)](../graphify-out/2026-10-15/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-16)](../graphify-out/2026-10-16/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-17)](../graphify-out/2026-10-17/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-18)](../graphify-out/2026-10-18/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-19)](../graphify-out/2026-10-19/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-20)](../graphify-out/2026-10-20/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-21)](../graphify-out/2026-10-21/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-22)](../graphify-out/2026-10-22/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - platform-forge  (2026-10-22)](../graphify-out/GRAPH_REPORT.md) `UNKNOWN`
+
 ### knowledge-program/
 
 - [Broken link report](knowledge-program/broken-link-report.md) `UNKNOWN`
@@ -433,6 +465,10 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Portable Distribution — Final Report](portable/FINAL-REPORT.md) `UNKNOWN`
 - [Offline bundles](portable/OFFLINE.md) `UNKNOWN`
 - [Workspaces](portable/WORKSPACES.md) `UNKNOWN`
+
+### releasing/
+
+- [PyPI patch plan — platformforge](releasing/pypi-patch-plan.md) `UNKNOWN`
 
 ### reports/
 

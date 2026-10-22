@@ -1562,16 +1562,40 @@ def cmd_portal(args: argparse.Namespace) -> int:
 
 
 def cmd_evals(args: argparse.Namespace) -> int:
-    """§94–95 eval framework."""
+    """§94–95 eval framework + §7.2 evals surface (lf-0038)."""
     from platformforge.evals import run_all
 
     cases = Path(args.cases) if args.cases else None
+    # §7.2 — superficie classificada. `list` com --classified emite o
+    # inventario §7.1 (evals.list); sem a flag preserva o comportamento
+    # legado (lista de case ids do corpus).
     if args.evals_cmd == "list":
+        if getattr(args, "classified", False):
+            from platformforge.evals import taxonomy
+            return _emit(taxonomy.listing(), args)
         d = cases or __import__("platformforge.evals.runner", fromlist=["CASES_DIR"]).CASES_DIR
         return _emit(
             {"cases": [c.parent.name for c in sorted(d.glob("*/case.yaml"))] if Path(d).is_dir() else []},
             args,
         )
+    if args.evals_cmd in ("describe", "result"):
+        if not getattr(args, "suite", ""):
+            return _emit({"refusal": "EVALS-SUITE-REQUIRED: --suite <id>"}, args, 2)
+        from platformforge.evals import surface, taxonomy
+        try:
+            if args.evals_cmd == "describe":
+                return _emit(taxonomy.describe(args.suite), args)
+            return _emit(surface.result(args.suite, getattr(args, "run", None)), args)
+        except taxonomy.TaxonomyError as exc:
+            return _emit({"refusal": str(exc)}, args, 2)
+    if args.evals_cmd == "run" and getattr(args, "suite", ""):
+        # §7.2 evals.run — suite da taxonomia (nao confunde com o run
+        # legado por diretorio de cases).
+        from platformforge.evals import surface, taxonomy
+        try:
+            return _emit(surface.run(args.suite), args)
+        except taxonomy.TaxonomyError as exc:
+            return _emit({"refusal": str(exc)}, args, 2)
     if args.evals_cmd == "coverage":
         # §122 — rule → variant coverage matrix
         from platformforge.evals.coverage import rule_coverage
@@ -3735,10 +3759,16 @@ def build_parser() -> argparse.ArgumentParser:
         "eval framework (§94–95)",
         lambda sp: (
             sp.add_argument(
-                "evals_cmd", choices=["run", "list", "coverage", "precision"], nargs="?", default="run"
+                "evals_cmd",
+                choices=["run", "list", "coverage", "precision", "describe", "result"],
+                nargs="?",
+                default="run",
             ),
             sp.add_argument("--type", default=""),
             sp.add_argument("--cases", default=""),
+            sp.add_argument("--suite", default=""),
+            sp.add_argument("--run", default=""),
+            sp.add_argument("--classified", action="store_true"),
         ),
     )
 
