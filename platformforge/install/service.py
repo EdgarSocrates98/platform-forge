@@ -340,6 +340,27 @@ def repair(*, scope: str = "project", root: Path | None = None,
     # em `.forge/context/`; recusa nomeada vira check BLOCKED. Escopo user
     # nunca registra contexto — so roda quando ha residuo.
     if scope != "user" and _docs_leftovers(target):
+        # Registry de contexto (recuperacao §9.2): redo de journal de
+        # transacao, reclaim de lock velho, rebuild de registry+ROUTING.md.
+        try:
+            out_ctx = fctx.repair_context(target)
+            rec = out_ctx.get("recovered")
+            checks.append({
+                "id": "context-registry",
+                "status": "PASS",
+                "detail": (
+                    f"{out_ctx['status']} "
+                    f"({len(out_ctx['written'])} writes)"
+                    + (f"; recovered {rec['op']}:{rec['forge_id']}" if rec else "")
+                    + ("; stale lock reclaimed" if out_ctx.get("lock_recovered") else "")
+                ),
+            })
+        except fctx.ContextError as exc:
+            checks.append({
+                "id": "context-registry",
+                "status": "BLOCKED",
+                "detail": f"{exc.kind}: {exc.detail}",
+            })
         try:
             out_docs = fctx.repair_docs(target)
             checks.append({
@@ -390,7 +411,7 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
         checks = [{"id": "uninstall", "status": "PASS",
                    "detail": "0 removed — nothing installed"}]
         if scope != "user" and _docs_leftovers(target):
-            checks += [_unregister_context(target), _uninstall_docs(target)]
+            checks += _unregister_context(target)
         checks.append(_mcp_unset_project(target))
         return _receipt("uninstall", scope, target, status="completed",
                         checks=checks,
@@ -407,7 +428,7 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
                "detail": f"{len(removed)} removed, "
                          f"{len(out.get('preserved_modified', []))} preserved"}]
     if scope != "user" and _docs_leftovers(target):
-        checks += [_unregister_context(target), _uninstall_docs(target)]
+        checks += _unregister_context(target)
     checks.append(_mcp_unset_project(target))
     return _receipt(
         "uninstall", scope, target, status="completed",
@@ -738,7 +759,13 @@ def _register_context(
         manifest = _context_manifest(
             scope=scope, profile=profile, hosts=hosts, components=components
         )
-        out = fctx.register_forge(target, manifest, owner=FORGE_ID)
+        # Uma UNICA transacao (install-2.0 §9.2): manifesto + entrada no
+        # registry + ROUTING.md + consumer docs sob um lock, com backup,
+        # verify e rollback — nunca registry-orfao de docs nem docs-orfaos
+        # de registry.
+        out = fctx.install_transaction(
+            target, manifest, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
+        )
         receipt.setdefault("checks", []).append(
             {
                 "id": "context-registry",
@@ -747,14 +774,7 @@ def _register_context(
                 f"({len(out['written'])} writes)",
             }
         )
-    except fctx.ContextError as exc:
-        receipt.setdefault("checks", []).append(
-            {"id": "context-registry", "status": "BLOCKED",
-             "detail": f"{exc.kind}: {exc.detail}"}
-        )
-        return
-    try:
-        docs = fctx.install_docs(target, manifest, owner=FORGE_ID)
+        docs = out["docs"]
         receipt.setdefault("checks", []).append(
             {
                 "id": "consumer-docs",
@@ -767,26 +787,41 @@ def _register_context(
         )
     except fctx.ContextError as exc:
         receipt.setdefault("checks", []).append(
-            {"id": "consumer-docs", "status": "BLOCKED",
+            {"id": "context-registry", "status": "BLOCKED",
              "detail": f"{exc.kind}: {exc.detail}"}
         )
 
 
-def _unregister_context(target: Path) -> dict[str, Any]:
-    """Remove somente o manifesto/entry deste forge."""
+def _unregister_context(target: Path) -> list[dict[str, Any]]:
+    """Remove manifesto/entry/blocos `forge:*` deste forge numa UNICA
+    transacao (§9.2) — só artifacts próprios: nosso capability file, nossa
+    entrada no registry, nossos blocos; docs compartilhados regeneram
+    para os sobreviventes."""
     try:
-        out = fctx.unregister_forge(target, FORGE_ID, owner=FORGE_ID)
-        return {
-            "id": "context-registry",
-            "status": "PASS",
-            "detail": f".forge/context {out['status']}",
-        }
+        out = fctx.uninstall_transaction(
+            target, FORGE_ID, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
+        )
+        docs = out["docs"]
+        return [
+            {
+                "id": "context-registry",
+                "status": "PASS",
+                "detail": f".forge/context {out['status']}",
+            },
+            {
+                "id": "consumer-docs",
+                "status": "PASS",
+                "detail": f"{docs['status']}: {len(docs['written'])} changed",
+            },
+        ]
     except fctx.ContextError as exc:
-        return {
-            "id": "context-registry",
-            "status": "BLOCKED",
-            "detail": f"{exc.kind}: {exc.detail}",
-        }
+        return [
+            {
+                "id": "context-registry",
+                "status": "BLOCKED",
+                "detail": f"{exc.kind}: {exc.detail}",
+            }
+        ]
 
 
 # --------------------------------------------------------------------------
@@ -825,24 +860,6 @@ def _docs_leftovers(target: Path) -> bool:
         if any(n in text for n in needles):
             return True
     return False
-
-
-def _uninstall_docs(target: Path) -> dict[str, Any]:
-    """Retira os blocos `forge:platform-forge` dos consumer docs — depois
-    do unregister, para o protocolo regen sem nos."""
-    try:
-        out = fctx.uninstall_docs(target, FORGE_ID, owner=FORGE_ID)
-        return {
-            "id": "consumer-docs",
-            "status": "PASS",
-            "detail": f"{out['status']}: {len(out['written'])} changed",
-        }
-    except fctx.ContextError as exc:
-        return {
-            "id": "consumer-docs",
-            "status": "BLOCKED",
-            "detail": f"{exc.kind}: {exc.detail}",
-        }
 
 
 def _mcp_enabled(components: dict[str, Any] | None) -> bool:
