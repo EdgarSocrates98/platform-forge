@@ -83,6 +83,11 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `cache invalidate`
 - `cache stats`
 
+## `capabilities`
+
+- `capabilities`  
+  `--repo <v> — workspace/repo root (default '.')`
+
 ## `capability`
 
 - `capability`  
@@ -130,7 +135,7 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `context`
 
 - `context`  
-  `--repo <v> — workspace/repo root (default '.')` · `--task <v> (default '')` · `--input-budget <v>` · `--changed <v>` · `--scope <v> (default 'repository')` · `--budget-bytes <v>` · `--essential-bytes <v>` · `--required <v>` · `--role <v> (default 'specialist')` · `--facts <v> (default '')` · `--findings <v> (default '')` · `--rules <v>` · `--knowledge <v>` · `--graph-refs <v>` · `--questions <v>` · `--ref <v> (default '')` · `--section <v> (default '')`
+  `--repo <v> — workspace/repo root (default '.')` · `--task <v> (default '')` · `--input-budget <v>` · `--changed <v>` · `--scope <v> (default 'repository')` · `--budget-bytes <v>` · `--essential-bytes <v>` · `--required <v>` · `--role <v> (default 'specialist')` · `--facts <v> (default '')` · `--findings <v> (default '')` · `--rules <v>` · `--knowledge <v>` · `--domain <v> — §6.2 domain pack (lf-0037) (default '')` · `--rules-limit <v>` · `--knowledge-limit <v>` · `--graph-refs <v>` · `--questions <v>` · `--ref <v> (default '')` · `--section <v> (default '')`
 - `context capsule`
 - `context delta`
 - `context expand`
@@ -323,12 +328,14 @@ Global flags on every verb: `--json` · `--output <file>` ·
 
 ## `knowledge`
 
-- `knowledge`  
-  `--repo <v> — workspace/repo root (default '.')`
+- `knowledge` <term_or_file> (default '')  
+  `--repo <v> — workspace/repo root (default '.')` · `--domain <v> (default '')` · `--limit <v>` · `--cursor <v>`
 - `knowledge check`
 - `knowledge contract`
 - `knowledge drift`
+- `knowledge get`
 - `knowledge packs`
+- `knowledge search`
 
 ## `lab`
 
@@ -425,9 +432,11 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `policy`
 
 - `policy` <path> (default '')  
-  `--repo <v> — workspace/repo root (default '.')`
+  `--repo <v> — workspace/repo root (default '.')` · `--query <v>` · `--domain <v>` · `--severity <v>` · `--limit <v>` · `--cursor <v>`
 - `policy check`
+- `policy get`
 - `policy list`
+- `policy search`
 
 ## `portable`
 
