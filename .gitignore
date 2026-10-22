@@ -22,3 +22,8 @@ graphify-out/
 /config.yaml
 factory/runs/*
 .forge/
+
+# Dev-tool caches / local MCP secrets — .git/info/exclude does NOT reach
+# hatchling VCS-aware sdist; must live here or it ships in published sdists.
+.tokensave/
+.devin/mcp_config.local.json
