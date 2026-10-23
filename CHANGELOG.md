@@ -1,6 +1,13 @@
 # CHANGELOG
 
 All notable changes. Format: wave/feature, the "why", key commits.
+## [0.2.3] - 2026-10-24
+
+### Security
+
+- Vendored `_installkit` 1.0.4: unsafe ledger keys surfaced in
+  `status().drift.unsafe`; `doctor` marks them non-repairable.
+
 ## [0.2.2] - 2026-10-29
 
 ### Fixed
