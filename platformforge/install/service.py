@@ -73,7 +73,8 @@ def _resolve(scope: str, root: Path | None) -> Path:
         return Path.home()
     if scope == "project":
         t = Path(root).resolve() if root else Path.cwd().resolve()
-        if not (t / ".git").exists() and not (t / "forge.json").exists():
+        if not (t / ".git").exists() and not (
+            (t / "forge.json").exists() and (t / "pyproject.toml").exists()):
             raise InstallRefusal(
                 kit.E_NOTREPO,
                 f"{t} is not a repository root (no .git / forge.json)")

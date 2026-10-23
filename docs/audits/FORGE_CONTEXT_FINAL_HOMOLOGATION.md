@@ -122,9 +122,9 @@ Mapeamento gap do baseline (§5) → correção entregue:
 
 ## 6. Gaps restantes
 
-- **E2E real de hosts (§10.2) — NÃO EXECUTADO** (ciclo 8 pendente; ver §9).
-- **Economia/observabilidade (ciclo 9, §11) — pendente.**
-- **Publicação PyPI — pendente** (§10).
+- **E2E real de hosts (§10.2) — EXECUTADO parcial** (ciclo 8: host Devin verificado com evidência compartilhada via sparkforge-aws; Claude/Codex/Copilot não verificados — hosts indisponíveis; ver §9 e secção Cycle 8).
+- **Economia/observabilidade (ciclo 9, §11) — MEDIDO** (ver secção Cycle 9; tokens `unresolved`, nunca estimados).
+- **Publicação PyPI — PUBLICADO** nos 7 pacotes PyPI (§10); data-sentinel-forge BLOQUEADO por approval humana no env `pypi` (trusted publisher pendente — ação do dono).
 - **P0-3** — registry global `~/.forge/installations/` continua
   bootstrap-owned: `install/service.py` **lê** `installations_dir()` só em
   `update` (`:447`) e nunca chama `kit.register_installation` no install —
@@ -198,10 +198,16 @@ permutações de ordem de instalação (`test_multi_forge_e2e.py`, marker
 
 ## 9. Evidências Devin/Claude/Codex
 
-**NÃO EXECUTADO.** A prova E2E real por host (§10.2 — Devin CLI, Claude
-Code, Codex CLI, Copilot) pertence ao ciclo 8, pendente. Os artefatos
-instalados foram verificados por testes de integração e wheel isolation
-— não por telemetria de host real.
+**EXECUTADO (parcial — host Devin).** A prova E2E §10.2 foi executada em
+2026-10-23 no host Devin (esta CLI): install a partir dos wheels PyPI
+publicados, managed block, registry/routing, capabilities, `rules lookup`,
+`knowledge search` (origem pacote), `analyze`+`judge` com finding real e
+telemetria — evidência na secção Cycle 8. O install E2E rodou com o wheel
+de **sparkforge-aws**; as demais forges compartilham a mesma engine
+(`_installkit`/`_forgecontext` byte-idênticos) — a prova vale como
+evidência compartilhada, não como execução por-forge. Claude Code,
+Codex CLI e Copilot **não verificados** (binários indisponíveis no
+ambiente) — declarados, não assumidos.
 
 ## 10. Matriz PyPI
 
@@ -270,11 +276,11 @@ Herdada do motor vendored + wiring local:
 
 | Forge | `forge/context/v1` | `_forgecontext` | `_installkit` | `forge_bootstrap` | Status |
 |---|---|---|---|---|---|
-| the-forge | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **merged, pendente de release** (0.6.0) |
-| spark-forge-aws | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **merged, pendente de release** (0.6.0) |
-| spark-forge-azure | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **merged, pendente de release** (0.2.0) |
-| api-forge | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **merged, pendente de release** (0.2.0) |
-| **platform-forge** | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **merged, pendente de release** (0.2.0) |
+| the-forge | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **released** (0.7.0) |
+| spark-forge-aws | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **released** (0.7.0) |
+| spark-forge-azure | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **released** (0.3.0) |
+| api-forge | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **released** (0.3.0) |
+| **platform-forge** | registry + docs + txn | v1.3.1 | v1.0.1 | v1.1.1 | **released** (0.3.0) |
 | forge-doctor-api | — | ausente | v1.0.1 | v1.1.1 | **installkit only (boundary)** |
 | forge-doctor-data | — | ausente | v1.0.1 | v1.1.1 | **installkit only (boundary)**; certifi PYSEC-2026-4320 |
 | data-sentinel-forge | — | ausente | v1.0.0 | ausente | **deferred by owner** |
@@ -329,7 +335,7 @@ Duas ondas de patch: `0.2.2` (install 2.0 hardening — traversal containment, l
 | GitHub Release | CRIADO | `gh release view v0.2.3` |
 | PyPI | PUBLICADO | `pypi.org/pypi/platformforge/json` → `0.2.3` |
 | Wheel conteúdo | VERIFICADO | `pip download platformforge==0.2.3` → `_installkit` 1.0.4 (`_INSTALLKIT_VERSION`) |
-| Install E2E (wheel→workspace) | PASS | ver secção Cycle 8 abaixo |
+| Install E2E (wheel→workspace) | parcial — evidência compartilhada (spark-forge-aws) | ver secção Cycle 8 abaixo |
 
 ## Cycle 8 — E2E real em host Devin (EXECUTADO 2026-10-23)
 
@@ -371,3 +377,15 @@ Sentinel: release `v0.2.2` existe no GitHub; publicação PyPI
 **bloqueada** — workflow `Release` gated no environment `pypi`
 (trusted publisher + approval humana). Job `publish to PyPI (OIDC, gated)`
 falhou por design até o dono aprovar.
+
+
+## Nota — marcador de raiz de projeto (2026-10-23)
+
+`forge.json` num diretório ancestral só é marcador de raiz quando
+acompanhado de `pyproject.toml` (`ui/wizard._has_vcs_root`,
+`ui/home._cli_argv`, `platformforge/install/service`). Um
+`forge.json` solto — ex.: o manifesto de workspace opcional do
+forge-cli ou artefato de instalação em `/tmp` — não oferece mais
+scope `project`: sem `.git` e sem `pyproject.toml`, o diretório é
+tratado como workspace/fresh dir, não como checkout. Regressão:
+`tests/test_vcs_marker.py`.
