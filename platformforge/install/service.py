@@ -77,7 +77,7 @@ def _resolve(scope: str, root: Path | None) -> Path:
             (t / "forge.json").exists() and (t / "pyproject.toml").exists()):
             raise InstallRefusal(
                 kit.E_NOTREPO,
-                f"{t} is not a repository root (no .git / forge.json)")
+                f"{t} is not a repository root (no .git / forge.json+pyproject.toml); fresh dirs are valid --scope workspace targets")
         return t
     # workspace: reuse existing manifest when present. Fresh directories are
     # valid workspace targets; apply_install creates manifest atomically.

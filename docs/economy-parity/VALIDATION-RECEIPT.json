@@ -1,7 +1,7 @@
 {
   "benchmarks": {
     "control_plane_overhead": "docs/economy-parity/ECONOMY-BENCHMARKS.md",
-    "end_to_end": "insufficient evidence \u2014 no production corpus claimed"
+    "end_to_end": "insufficient evidence — no production corpus claimed"
   },
   "closure_sha": null,
   "cycle": "economy-parity",
@@ -50,7 +50,7 @@
     },
     "economy-receipt": {
       "ok": true,
-      "reproduce": "python -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\n# PR merge ref: HEAD^2 is the pushed branch tip \u2014 the Option-A\n# pair (functional commit + receipt commit) sits one level down.\nhead2 = subprocess.run(['git','rev-parse','HEAD^2'],\n    capture_output=True, text=True).stdout.strip()\nbase = head2 if __import__('re').fullmatch(r'[0-9a-f]{40}', head2) else head\nhead1 = subprocess.run(['git','rev-parse', base + '~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (base, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
+      "reproduce": "python -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\n# PR merge ref: HEAD^2 is the pushed branch tip — the Option-A\n# pair (functional commit + receipt commit) sits one level down.\nhead2 = subprocess.run(['git','rev-parse','HEAD^2'],\n    capture_output=True, text=True).stdout.strip()\nbase = head2 if __import__('re').fullmatch(r'[0-9a-f]{40}', head2) else head\nhead1 = subprocess.run(['git','rev-parse', base + '~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (base, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
       "seconds": 0.34
     },
     "economy-reconcile": {
@@ -83,9 +83,9 @@
   "kind": "platformforge/economy-validation-receipt/1",
   "known_gaps": [
     "real provider pricing catalog not bundled (declared-rates engine only, by design)",
-    "money axis lacks a real model-call corpus \u2014 QPC money is unresolved without declared pricing + measured usage",
+    "money axis lacks a real model-call corpus — QPC money is unresolved without declared pricing + measured usage",
     "production savings unproven; microbench overhead only",
-    "analysis cache reuse requires identical evidence/policy/risk tuple \u2014 conservative by construction"
+    "analysis cache reuse requires identical evidence/policy/risk tuple — conservative by construction"
   ],
   "quality": {
     "note": "QPT/QPC floors enforced inside economy-qpt / economy-evals gates; quality floors gate every economy claim"
@@ -93,7 +93,7 @@
   "remote_ci": "not independently verified",
   "schema": "platformforge/economy-validation-receipt/v1",
   "spec": "prompt_evo_economy.md",
-  "validated_sha": "34e9f6588130b92d02eabea5c17f8f3ab034e1ca",
+  "validated_sha": "4b82edf74a9294de2647378a50499ba84a1becd6",
   "validator": "scripts/validate.py",
   "validator_version": "economy-validation-receipt/v1",
   "verdict": "validated"

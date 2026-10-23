@@ -80,6 +80,11 @@ All notable changes. Format: wave/feature, the "why", key commits.
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-10-23
+
+### Fixed
+- patch — forge.agentic.json synced; project-scope refusal now hints --scope workspace
+
 ## [0.3.0] - 2026-10-23
 
 ### Fixed
