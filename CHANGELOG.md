@@ -80,6 +80,13 @@ All notable changes. Format: wave/feature, the "why", key commits.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-23
+
+### Fixed
+
+- `ui._has_vcs_root`/`_cli_argv`: stray `forge.json` ancestor bound.
+  Regression tests added.
+
 ## [0.1.6] - 2026-10-21
 
 ### Changed
