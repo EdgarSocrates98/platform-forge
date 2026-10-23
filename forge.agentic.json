@@ -1,7 +1,7 @@
 {
   "schema": "forge/SpecialistAgenticManifest/v1",
   "provider": "platform-forge",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "cli": "platformforge",
   "cli_entry": "platformforge.cli.main:main",
   "workflows": [
