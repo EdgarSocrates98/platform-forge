@@ -413,7 +413,9 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
         if scope != "user" and _docs_leftovers(target):
             checks += _unregister_context(target)
         checks.append(_mcp_unset_project(target))
-        return _receipt("uninstall", scope, target, status="completed",
+        return _receipt("uninstall", scope, target,
+                        status="failed" if any(c.get("status") == "BLOCKED" for c in checks)
+                        else "completed",
                         checks=checks,
                         extra={"removed": [], "kept": []})
     with kit.acquire_lock(state):
@@ -431,7 +433,8 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
         checks += _unregister_context(target)
     checks.append(_mcp_unset_project(target))
     return _receipt(
-        "uninstall", scope, target, status="completed",
+        "uninstall", scope, target,
+        status="failed" if any(c.get("status") == "BLOCKED" for c in checks) else "completed",
         checks=checks,
         extra={"removed": removed,
                "kept": out.get("preserved_modified", [])})
@@ -790,6 +793,9 @@ def _register_context(
             {"id": "context-registry", "status": "BLOCKED",
              "detail": f"{exc.kind}: {exc.detail}"}
         )
+        # BLOCKED num componente mandatório não sai exit 0 — os assets
+        # foram escritos mas o contrato install-2.0 falhou.
+        receipt["status"] = "failed"
 
 
 def _unregister_context(target: Path) -> list[dict[str, Any]]:

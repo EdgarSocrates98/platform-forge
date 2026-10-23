@@ -1,6 +1,20 @@
 # CHANGELOG
 
 All notable changes. Format: wave/feature, the "why", key commits.
+## [0.2.2] - 2026-10-29
+
+### Fixed
+
+- `_forgecontext` v1.3.3 + `_installkit` v1.0.3 (vendored): `repair_context`
+  reports malformed capability files per-file instead of crashing;
+  context/install locks carry a unique ownership token; poisoned journals
+  quarantine instead of wedging later ops; asset/ledger paths are
+  validated before disk writes (`FORGE-INSTALL-UNSAFE-PATH`);
+  `_atomic_write` preserves file modes.
+- A `BLOCKED` check on the mandatory context-registry component now marks
+  the receipt `failed` (nonzero exit) — on install AND on both uninstall
+  paths.
+
 ## [0.2.1] - 2026-10-22
 
 ### Fixed
