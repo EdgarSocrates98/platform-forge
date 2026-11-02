@@ -67,7 +67,8 @@ def _scope_choices(ctx: UIContext) -> list[str]:
             _c(
                 ctx,
                 "33",
-                "  No repository detected; choose Entire workspace to use this directory or My user account.",
+                "  No repository detected; choose Entire workspace to use this directory "
+                "or My user account.",
             )
         )
         scopes.remove("project")
