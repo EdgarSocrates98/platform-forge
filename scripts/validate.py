@@ -129,7 +129,7 @@ def gate_evals() -> dict:
     # Assert on verdict counts — a case regressing to `unresolved` or
     # `fail` fails the gate. (Can't use --strict: expected-unresolved
     # rules legitimately appear in passing cases' by_status.)
-    r = _py("import json, subprocess;"
+    r = _py("import json, subprocess, sys;"
             "out = subprocess.run([sys.executable,'-m','platformforge',"
             "'evals','run'],"
             " capture_output=True, text=True).stdout;"
@@ -143,7 +143,7 @@ def gate_evals() -> dict:
 
 def gate_coverage() -> dict:
     # assert, don't just print — uncovered rules fail the gate
-    r = _py("import json, subprocess;"
+    r = _py("import json, subprocess, sys;"
             "out = subprocess.run([sys.executable,'-m','platformforge',"
             "'evals','coverage'],"
             " capture_output=True, text=True).stdout;"
@@ -206,10 +206,10 @@ def gate_self() -> dict:
     finds analyzable artifacts, agents lint is clean, the capability
     manifest builds, collect accounts for every file."""
     r = _py(
-        "import json, subprocess\n"
+        "import json, subprocess, sys\n"
         "def run(*a):\n"
         "    p = subprocess.run([sys.executable, '-m', 'platformforge', *a],\n"
-        "                       text=True)\n"
+        "                       capture_output=True, text=True)\n"
         "    return json.loads(p.stdout[p.stdout.find('{'):]), p.returncode\n"
         "inv, rc1 = run('inspect', '--repo', '.')\n"
         "assert rc1 == 0 and inv.get('artifacts'), 'inspect found nothing'\n"
