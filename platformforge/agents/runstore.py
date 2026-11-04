@@ -13,7 +13,7 @@ continuing (§141–142).
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
 from platformforge.agents.contracts import AgentRunRecord
@@ -25,9 +25,25 @@ class RunStore:
         self.dir.mkdir(parents=True, exist_ok=True)
 
     def _path(self, run_id: str) -> Path:
-        if "/" in run_id or ".." in run_id:
+        # Run ids are data, not path authority.  Check both path syntaxes so
+        # a Windows drive/UNC path or backslash traversal cannot escape when
+        # this code is exercised from another host or by a hostile MCP peer.
+        if (
+            not isinstance(run_id, str)
+            or not run_id
+            or any(char in run_id for char in ("/", "\\", ":", "\x00"))
+            or run_id in {".", ".."}
+            or any(part == ".." for part in PurePosixPath(run_id).parts)
+            or any(part == ".." for part in PureWindowsPath(run_id).parts)
+            or PurePosixPath(run_id).is_absolute()
+            or PureWindowsPath(run_id).is_absolute()
+        ):
             raise ValueError(f"bad run_id {run_id!r}")
-        return self.dir / f"{run_id}.json"
+        path = self.dir / f"{run_id}.json"
+        # Do not follow a pre-existing symlink planted in the run directory.
+        if path.is_symlink():
+            raise ValueError(f"bad run_id {run_id!r}: symlinked record")
+        return path
 
     def save(self, record: AgentRunRecord) -> Path:
         p = self._path(record.run_id)

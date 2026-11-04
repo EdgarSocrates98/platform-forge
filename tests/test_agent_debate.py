@@ -84,5 +84,6 @@ def test_runstore_roundtrip_and_resume(tmp_path):
 def test_runstore_rejects_bad_ids(tmp_path):
     store = RunStore(tmp_path)
     import pytest
-    with pytest.raises(ValueError):
-        store.save(AgentRunRecord(run_id="../escape", task_spec_hash="h"))
+    for bad in ("../escape", r"..\escape", r"C:\\outside", r"\\host\share\outside"):
+        with pytest.raises(ValueError):
+            store.save(AgentRunRecord(run_id=bad, task_spec_hash="h"))
