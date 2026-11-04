@@ -217,7 +217,10 @@ def knowledge_search(
 def knowledge_get(file: str) -> dict[str, Any]:
     root = _knowledge_root().resolve()
     target = (root / file).resolve()
-    if not str(target).startswith(str(root) + "/"):
+    # ``Path.is_relative_to`` is separator-aware on Windows.  The previous
+    # string-prefix check only accepted POSIX separators, so a valid
+    # knowledge reference was rejected on Windows as an apparent path escape.
+    if not target.is_relative_to(root):
         raise DiscoveryError(f"path escapes knowledge root: {file!r}")
     if not target.is_file():
         raise DiscoveryError(f"{file!r} not present in knowledge root {root}")

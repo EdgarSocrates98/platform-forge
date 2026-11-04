@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.3.2] — 2026-11-04
+
+### Fixed
+
+- Synced the hardened Forge Portal runtime and refreshed bundled portal assets.
+
 All notable changes. Format: wave/feature, the "why", key commits.
 ## [0.2.3] - 2026-10-23
 
