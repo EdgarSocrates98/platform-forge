@@ -23,6 +23,22 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 
 
+def _platformforge_cmd(*args: str) -> list[str]:
+    """Run the local CLI through the active interpreter on every platform.
+
+    The console-script executable is not guaranteed to be on PATH when the
+    validator is launched from a source checkout (notably on Windows).  The
+    module entry point is the same CLI and remains available in that mode.
+    """
+    return [sys.executable, "-m", "platformforge", *args]
+
+
+def _portable_cmd(cmd: list[str]) -> list[str]:
+    if cmd and cmd[0] == "platformforge":
+        return _platformforge_cmd(*cmd[1:])
+    return cmd
+
+
 def _display_cmd(cmd: list[str]) -> str:
     # Receipts are committed docs — never embed machine-specific absolute
     # paths (venv/home leak the dev machine layout into evidence).
@@ -38,6 +54,7 @@ def _display_cmd(cmd: list[str]) -> str:
 
 
 def _run(cmd: list[str], cwd: Path = REPO) -> dict:
+    cmd = _portable_cmd(cmd)
     t0 = time.time()
     p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
                        errors="replace", check=False)
@@ -113,7 +130,8 @@ def gate_evals() -> dict:
     # `fail` fails the gate. (Can't use --strict: expected-unresolved
     # rules legitimately appear in passing cases' by_status.)
     r = _py("import json, subprocess;"
-            "out = subprocess.run(['platformforge','evals','run'],"
+            "out = subprocess.run([sys.executable,'-m','platformforge',"
+            "'evals','run'],"
             " capture_output=True, text=True).stdout;"
             "d = json.loads(out[out.find('{'):]);"
             "c = d['counts'];"
@@ -126,7 +144,8 @@ def gate_evals() -> dict:
 def gate_coverage() -> dict:
     # assert, don't just print — uncovered rules fail the gate
     r = _py("import json, subprocess;"
-            "out = subprocess.run(['platformforge','evals','coverage'],"
+            "out = subprocess.run([sys.executable,'-m','platformforge',"
+            "'evals','coverage'],"
             " capture_output=True, text=True).stdout;"
             "d = json.loads(out[out.find('{'):]);"
             "unc = d['counts'].get('uncovered', []);"
@@ -189,7 +208,7 @@ def gate_self() -> dict:
     r = _py(
         "import json, subprocess\n"
         "def run(*a):\n"
-        "    p = subprocess.run(['platformforge', *a], capture_output=True,\n"
+        "    p = subprocess.run([sys.executable, '-m', 'platformforge', *a],\n"
         "                       text=True)\n"
         "    return json.loads(p.stdout[p.stdout.find('{'):]), p.returncode\n"
         "inv, rc1 = run('inspect', '--repo', '.')\n"
@@ -672,20 +691,20 @@ def gate_economy_surface() -> dict:
     expr = (
         "import subprocess, sys\n"
         "cmds = [\n"
-        " ['platformforge','economy','doctor'],\n"
-        " ['platformforge','economy','checkpoint','--run-id','gate',\n"
+        " [sys.executable,'-m','platformforge','economy','doctor'],\n"
+        " [sys.executable,'-m','platformforge','economy','checkpoint','--run-id','gate',\n"
         "  '--spent','{\"tokens\":1}'],\n"
-        " ['platformforge','economy','resume','--run-id','gate'],\n"
-        " ['platformforge','economy','reconcile',\n"
+        " [sys.executable,'-m','platformforge','economy','resume','--run-id','gate'],\n"
+        " [sys.executable,'-m','platformforge','economy','reconcile',\n"
         "  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n"
-        " ['platformforge','economy','explain','--run-id','gate'],\n"
-        " ['platformforge','cache','stats'],\n"
-        " ['platformforge','cache','gc'],\n"
-        " ['platformforge','context','capsule','--task','t',\n"
+        " [sys.executable,'-m','platformforge','economy','explain','--run-id','gate'],\n"
+        " [sys.executable,'-m','platformforge','cache','stats'],\n"
+        " [sys.executable,'-m','platformforge','cache','gc'],\n"
+        " [sys.executable,'-m','platformforge','context','capsule','--task','t',\n"
         "  '--facts','[{\"fact_id\":\"f\"}]'],\n"
-        " ['platformforge','context','gc'],\n"
-        " ['platformforge','routing','explain','--signal','{}'],\n"
-        " ['platformforge','routing','compare',\n"
+        " [sys.executable,'-m','platformforge','context','gc'],\n"
+        " [sys.executable,'-m','platformforge','routing','explain','--signal','{}'],\n"
+        " [sys.executable,'-m','platformforge','routing','compare',\n"
         "  '--champion','{}','--challenger','{}'],\n"
         "]\n"
         "for c in cmds:\n"
@@ -804,11 +823,11 @@ def gate_portable_surface() -> dict:
     r = _py(
         "import subprocess,sys;"
         "cmds=["
-        "['platformforge','install','--help'],"
-        "['platformforge','uninstall','--help'],"
-        "['platformforge','upgrade','--help'],"
-        "['platformforge','portable','--help'],"
-        "['platformforge','workspace','--help']"
+        "[sys.executable,'-m','platformforge','install','--help'],"
+        "[sys.executable,'-m','platformforge','uninstall','--help'],"
+        "[sys.executable,'-m','platformforge','upgrade','--help'],"
+        "[sys.executable,'-m','platformforge','portable','--help'],"
+        "[sys.executable,'-m','platformforge','workspace','--help']"
         "];"
         "bad=[];"
         "[(bad.append(c) if subprocess.run(c,capture_output=True).returncode else None) for c in cmds];"
