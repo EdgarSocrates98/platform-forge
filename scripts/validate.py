@@ -44,8 +44,12 @@ def _display_cmd(cmd: list[str]) -> str:
     # paths (venv/home leak the dev machine layout into evidence).
     home = str(Path.home())
     out = []
-    for part in cmd:
-        if part.startswith(str(REPO)):
+    for index, part in enumerate(cmd):
+        if index == 0 and Path(part).resolve() == Path(sys.executable).resolve():
+            # Keep receipts portable and human-runnable; the validator still
+            # executes the exact active interpreter internally.
+            part = "python"
+        elif part.startswith(str(REPO)):
             part = "<repo>" + part[len(str(REPO)):]
         elif home in part:
             part = part.replace(home, "~")
@@ -64,10 +68,11 @@ def _run(cmd: list[str], cwd: Path = REPO) -> dict:
 
 
 def _py(expr: str) -> dict:
-    import shutil
-    py = "python" if shutil.which("python") else (
-        "python3" if shutil.which("python3") else sys.executable)
-    return _run([py, "-c", expr])
+    # Keep nested gates in the same interpreter/environment as the validator.
+    # Resolving a bare ``python`` from PATH can select uv's standalone
+    # interpreter on Windows, silently dropping project dependencies such as
+    # PyYAML even while the active project venv has them installed.
+    return _run([sys.executable, "-c", expr])
 
 
 def gate_lint() -> dict:
