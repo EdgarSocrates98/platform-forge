@@ -456,9 +456,8 @@ def _capture_pre_state(action: str, params: dict[str, Any],
         for k in ("pre_change_commit", "repo"):
             if params.get(k) is not None:
                 pre[k] = params[k]
-    elif action == "git.delete_branch":
-        if params.get("branch_sha") is not None:
-            pre["branch_sha"] = params["branch_sha"]
+    elif action == "git.delete_branch" and params.get("branch_sha") is not None:
+        pre["branch_sha"] = params["branch_sha"]
     if ctx_state:
         for k, v in ctx_state.items():   # observed wins (§7)
             if v is not None:
