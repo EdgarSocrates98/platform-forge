@@ -12,8 +12,9 @@
     "mcp"
   ],
   "lab": {
+    "extras": [],
     "command": [
-      "{checkout}/.venv/bin/python",
+      "{python}",
       "scripts/lab/platformforge_lab.py",
       "--checkout",
       "{checkout}",
