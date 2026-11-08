@@ -22,6 +22,7 @@ class PackApplicability:
     reason: str
     freshness: str = "unknown"       # current|stale|unresolved
     score: int = 0
+    state: str = "unknown"           # applicable|not_applicable|unknown|requires_review
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -42,30 +43,44 @@ def select_packs(packs: list[Any], *, domain: str = "",
     verdicts: list[PackApplicability] = []
     for p in packs:
         score, reasons = 0, []
+        state = "unknown"
         if domain and getattr(p, "domain", "") == domain:
             score += 2
             reasons.append("domain match")
+            state = "applicable"
         applies = getattr(p, "applies_to", {}) or {}
-        ok_versions = True
+        version_state = "applicable"
         for prod, want in (applies.get("versions") or {}).items():
             # applies_to.versions lists products the pack covers; the
             # task's detected version for that product decides fit.
             want = str(want)
             have = versions.get(prod, "")
-            if prod in versions and _version_ok(have, want):
+            if not have or have.lower() in {"unknown", "n/a", "none"}:
+                version_state = "requires_review"
+                reasons.append(f"{prod} version missing")
+            elif _version_ok(have, want):
                 score += 2
                 reasons.append(f"{prod} {have} matches {want}")
-            elif prod not in versions:
-                pass                       # pack covers more than needed
+            else:
+                version_state = "not_applicable"
+                reasons.append(f"{prod} {have} does not match {want}")
         if domain and getattr(p, "domain", "") and \
                 p.domain != domain:
-            ok_versions = False
+            state = "not_applicable"
             reasons.append("domain mismatch")
+        elif version_state == "not_applicable":
+            state = "not_applicable"
+        elif version_state == "requires_review":
+            state = "requires_review"
+        elif score > 0:
+            state = "applicable"
+        else:
+            state = "unknown"
         verdicts.append(PackApplicability(
             pack_id=getattr(p, "pack_id", "?"),
-            applicable=ok_versions and score > 0,
+            applicable=state == "applicable" and score > 0,
             reason="; ".join(reasons) or "no applicability signal",
-            score=score))
+            score=score, state=state))
 
     applicable = sorted((v for v in verdicts if v.applicable),
                         key=lambda v: -v.score)
@@ -84,24 +99,73 @@ def select_packs(packs: list[Any], *, domain: str = "",
 
 
 def _version_ok(have: str, want: str) -> bool:
-    """Minimal semver-ish range check (>=X.Y, >X.Y, ==X.Y, bare prefix)."""
-    m = re.match(r"^\s*(>=|>|<=|<|==)?\s*([\d.]+)", want)
-    if not m:
-        return have == want
-    op, target = m.groups()
-    h = [int(x) for x in have.split(".") if x.isdigit()]
-    t = [int(x) for x in target.split(".") if x.isdigit()]
-    n = max(len(h), len(t))
-    h += [0] * (n - len(h)); t += [0] * (n - len(t))
-    if op in (None, "=="):
-        return h == t
-    if op == ">=":
-        return h >= t
-    if op == ">":
-        return h > t
-    if op == "<=":
-        return h <= t
-    return h < t
+    """Small semver range evaluator with explicit prerelease ordering.
+
+    It intentionally supports only declarative constraints used by packs:
+    comma-separated comparators, ``^`` and ``~``. Unknown syntax fails closed.
+    """
+    observed = _parse_version(have)
+    if observed is None:
+        return False
+    alternatives = [part.strip() for part in want.split("||") if part.strip()]
+    return any(_range_ok(observed, part) for part in alternatives)
+
+
+def _parse_version(value: str) -> tuple[tuple[int, int, int], tuple[str, ...]] | None:
+    match = re.fullmatch(r"\s*[v=]?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(?:-([0-9A-Za-z.-]+))?\s*", value)
+    if not match:
+        return None
+    major, minor, patch, pre = match.groups()
+    return ((int(major), int(minor or 0), int(patch or 0)),
+            tuple(pre.split(".")) if pre else ())
+
+
+def _compare_version(left, right) -> int:
+    if left[0] != right[0]:
+        return (left[0] > right[0]) - (left[0] < right[0])
+    if not left[1] and right[1]:
+        return 1
+    if left[1] and not right[1]:
+        return -1
+    for a, b in zip(left[1], right[1]):
+        if a == b:
+            continue
+        if a.isdigit() and b.isdigit():
+            return (int(a) > int(b)) - (int(a) < int(b))
+        if a.isdigit() != b.isdigit():
+            return -1 if a.isdigit() else 1
+        return (a > b) - (a < b)
+    return (len(left[1]) > len(right[1])) - (len(left[1]) < len(right[1]))
+
+
+def _range_ok(observed, requirement: str) -> bool:
+    checks = [part.strip() for part in requirement.split(",") if part.strip()]
+    if not checks:
+        return False
+    for check in checks:
+        match = re.fullmatch(r"(\^|~|>=|<=|>|<|==|=)?\s*(.+)", check)
+        if not match:
+            return False
+        op, raw_target = match.groups()
+        target = _parse_version(raw_target)
+        if target is None:
+            return False
+        cmp = _compare_version(observed, target)
+        if op in (None, "=", "==") and cmp != 0:
+            return False
+        if op == ">=" and cmp < 0:
+            return False
+        if op == ">" and cmp <= 0:
+            return False
+        if op == "<=" and cmp > 0:
+            return False
+        if op == "<" and cmp >= 0:
+            return False
+        if op == "~" and (observed[0][0], observed[0][1]) != (target[0][0], target[0][1]):
+            return False
+        if op == "^" and (observed[0][0] != target[0][0] or cmp < 0):
+            return False
+    return True
 
 
 def search_knowledge(packs: list[Any], query: str,

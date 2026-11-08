@@ -14,6 +14,7 @@ SCHEMA = "platformforge/context-capsule/v1"
 
 SCOPES = ("repository", "resource", "cluster", "fleet", "incident",
           "operation", "service")            # §68
+CLASSIFICATIONS = ("public", "internal", "confidential", "restricted")
 
 # §111 — compression/projection may never strip these from a capsule.
 ESSENTIAL_FIELDS = ("facts", "findings", "open_questions")
@@ -26,6 +27,7 @@ class ContextCapsule:
     summary: str = ""
     task: str = ""
     scope: str = "repository"
+    classification: str = "internal"
     facts: list[Any] = field(default_factory=list)
     findings: list[Any] = field(default_factory=list)
     rules: list[str] = field(default_factory=list)
@@ -35,18 +37,24 @@ class ContextCapsule:
     open_questions: list[str] = field(default_factory=list)
     budget: dict[str, Any] = field(default_factory=dict)
     expandable: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
     # section name → context:// uri with full detail (§62)
 
     def __post_init__(self) -> None:
         if self.scope not in SCOPES:
             raise ValueError(f"scope {self.scope!r} not in {SCOPES}")
+        if self.classification not in CLASSIFICATIONS:
+            raise ValueError(
+                f"classification {self.classification!r} not in {CLASSIFICATIONS}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def serialize(self) -> bytes:
         return json.dumps(self.to_dict(), sort_keys=True,
-                          separators=(",", ":"), default=str).encode()
+                          separators=(",", ":"), ensure_ascii=False,
+                          default=str).encode("utf-8")
 
     @property
     def byte_size(self) -> int:

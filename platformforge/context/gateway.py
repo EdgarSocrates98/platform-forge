@@ -12,12 +12,14 @@ Essential evidence that cannot fit the budget is a refusal
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from platformforge.context.capsule import ContextCapsule
+from platformforge.context.capsule import CLASSIFICATIONS, ContextCapsule
 from platformforge.context.refs import ContextRef
 from platformforge.context.sufficiency import ContextSufficiencyResult, Sufficiency, assess
 from platformforge.economy.cache import CacheStore
@@ -45,6 +47,7 @@ ROLE_SECTIONS: dict[str, tuple[str, ...]] = {
 class ContextRequest:
     task: str
     scope: str = "repository"
+    classification: str = "internal"
     budget_bytes: int | None = None          # soft context budget
     essential_bytes: int | None = None       # §235 — must-fit floor
     required_sections: list[str] = field(default_factory=list)
@@ -71,6 +74,13 @@ class ContextGateway:
     # -- build (pipeline §58) ------------------------------------------
     def build(self, req: ContextRequest) -> dict[str, Any]:
         t0 = time.monotonic()
+        if not req.task.strip():
+            return {"refusal": "PF-CONTEXT-SCHEMA", "reason": "task is required"}
+        if req.classification not in CLASSIFICATIONS:
+            return {
+                "refusal": "PF-CONTEXT-SCHEMA",
+                "reason": f"classification must be one of {CLASSIFICATIONS}",
+            }
         # 1–2. task + scope are inputs; 3–4. search/graph expansion is the
         # caller's job (facts/findings arrive already extracted — the
         # gateway assembles, it does not analyze).
@@ -83,15 +93,32 @@ class ContextGateway:
             "finding_id", f.get("rule_id", json.dumps(f, sort_keys=True,
                                                     default=str))))
 
+        safe_facts, fact_redacted = _redact_with_meta(facts)
+        safe_findings, finding_redacted = _redact_with_meta(findings)
+        safe_rules, rules_redacted = _redact_with_meta(req.rules)
+        safe_knowledge, knowledge_redacted = _redact_with_meta(req.knowledge_refs)
+        safe_graph, graph_redacted = _redact_with_meta(req.graph_refs)
+        safe_artifacts, artifacts_redacted = _redact_with_meta(req.artifact_refs)
+        safe_questions, questions_redacted = _redact_with_meta(req.open_questions)
+        redacted = any((fact_redacted, finding_redacted, rules_redacted,
+                        knowledge_redacted, graph_redacted, artifacts_redacted,
+                        questions_redacted))
+        warnings = [
+            "sensitive values were redacted before serialization"
+        ] if redacted else []
+
+        safe_task = _redact(req.task)
         capsule = ContextCapsule(
-            summary=f"{req.task} ({req.scope})",
-            task=req.task, scope=req.scope,
-            facts=facts, findings=findings, rules=req.rules,
-            knowledge_refs=req.knowledge_refs, graph_refs=req.graph_refs,
-            artifact_refs=req.artifact_refs,
-            open_questions=req.open_questions,
+            summary=f"{safe_task} ({req.scope})",
+            task=safe_task, scope=req.scope,
+            classification=req.classification,
+            facts=safe_facts, findings=safe_findings, rules=safe_rules,
+            knowledge_refs=safe_knowledge, graph_refs=safe_graph,
+            artifact_refs=safe_artifacts,
+            open_questions=safe_questions,
             budget={"budget_bytes": req.budget_bytes,
-                    "essential_bytes": req.essential_bytes})
+                    "essential_bytes": req.essential_bytes},
+            warnings=warnings)
 
         # 7. budget — essential evidence must fit or the capsule refuses
         size = capsule.byte_size
@@ -131,11 +158,29 @@ class ContextGateway:
 
     # -- lazy refs (§63–64) ---------------------------------------------
     def _persist(self, capsule: ContextCapsule) -> None:
-        # §224 — redact before persistence (the capsule holds refs; the
-        # payload sections may still carry sensitive text from callers)
-        blob = _redact(capsule.to_dict())
-        (self._store / f"{capsule.content_hash()}.json").write_text(
-            json.dumps(blob, sort_keys=True, default=str))
+        # The capsule is already redacted. Hash exactly the canonical bytes
+        # persisted so a ref is an integrity claim, never an authorization
+        # claim. Replace is atomic on the same filesystem.
+        blob = capsule.to_dict()
+        encoded = _canonical_bytes(blob)
+        digest = _digest(encoded)
+        if digest != capsule.content_hash():
+            raise ValueError("PF-CONTEXT-INTEGRITY: capsule hash is not canonical")
+        destination = self._store / f"{digest}.json"
+        fd, temporary = tempfile.mkstemp(
+            prefix=f".{digest}.", suffix=".tmp", dir=self._store
+        )
+        try:
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(encoded)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, destination)
+        finally:
+            try:
+                os.unlink(temporary)
+            except FileNotFoundError:
+                pass
 
     def inspect(self, ref: str) -> dict[str, Any]:
         """Resolve a `context://sha256/<hash>` ref to its stored capsule."""
@@ -145,14 +190,27 @@ class ContextGateway:
             return {"refusal": "PF-CONTEXT-REF-UNKNOWN",
                     "reason": f"no stored capsule for {ref}",
                     "unlock": "rebuild the context that minted the ref"}
-        return json.loads(p.read_text())
+        try:
+            blob = json.loads(p.read_bytes().decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return {"refusal": "PF-CONTEXT-INTEGRITY",
+                    "reason": f"stored capsule is unreadable for {ref}"}
+        if _digest(_canonical_bytes(blob)) != digest:
+            return {"refusal": "PF-CONTEXT-INTEGRITY",
+                    "reason": f"stored capsule bytes do not match {ref}"}
+        return blob
 
-    def expand(self, ref: str, section: str = "") -> dict[str, Any]:
+    def expand(self, ref: str, section: str = "", *, principal: str = "",
+               allowed_classifications: tuple[str, ...] = ("public", "internal")) -> dict[str, Any]:
         """§63–64 — lazy expansion: return only the requested section
         (or the full capsule when section is empty)."""
         cap = self.inspect(ref)
         if "refusal" in cap:
             return cap
+        if cap.get("classification") in ("confidential", "restricted") and (
+                not principal or cap.get("classification") not in allowed_classifications):
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "protected context requires an authorized principal and classification scope"}
         if section:
             if section not in cap:
                 return {"refusal": "PF-CONTEXT-SECTION-UNKNOWN",
@@ -225,3 +283,40 @@ def _redact(obj: Any) -> Any:
     if isinstance(obj, list):
         return [_redact(v) for v in obj]
     return obj
+
+
+def _redact_with_meta(obj: Any) -> tuple[Any, bool]:
+    """Redact recursively and report degradation instead of hiding it."""
+    if isinstance(obj, dict):
+        out: dict[Any, Any] = {}
+        changed = False
+        for key, value in obj.items():
+            if any(secret in str(key).lower() for secret in _SECRET_KEYS):
+                out[key] = "[REDACTED]"
+                changed = True
+            else:
+                out[key], child_changed = _redact_with_meta(value)
+                changed = changed or child_changed
+        return out, changed
+    if isinstance(obj, list):
+        values = []
+        changed = False
+        for value in obj:
+            safe, child_changed = _redact_with_meta(value)
+            values.append(safe)
+            changed = changed or child_changed
+        return values, changed
+    if isinstance(obj, tuple):
+        values, changed = _redact_with_meta(list(obj))
+        return values, changed
+    return obj, False
+
+
+def _canonical_bytes(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, default=str).encode("utf-8")
+
+
+def _digest(value: bytes) -> str:
+    import hashlib
+    return hashlib.sha256(value).hexdigest()

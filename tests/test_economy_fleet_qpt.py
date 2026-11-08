@@ -107,6 +107,26 @@ def test_select_packs_stale_under_high_risk_flagged():
     assert "review_needed" in r["selected"][0]["reason"]
 
 
+def test_select_packs_reports_version_states_and_fails_closed():
+    packs = [
+        FakePack("exact", "kubernetes", {"versions": {"kubernetes": "==1.29.0"}}),
+        FakePack("future", "kubernetes", {"versions": {"kubernetes": ">=1.30"}}),
+        FakePack("missing", "kubernetes", {"versions": {"kubernetes": ">=1.29"}}),
+    ]
+    result = select_packs(packs, domain="kubernetes", versions={"kubernetes": "1.29.0"})
+    states = {item["pack_id"]: item["state"] for item in result["selected"] + result["skipped"]}
+    assert states == {"exact": "applicable", "future": "not_applicable", "missing": "applicable"}
+    result = select_packs(packs, domain="kubernetes", versions={})
+    states = {item["pack_id"]: item["state"] for item in result["skipped"]}
+    assert states["exact"] == "requires_review"
+
+
+def test_select_packs_handles_prereleases_and_ranges():
+    packs = [FakePack("k8s", "kubernetes", {"versions": {"kubernetes": ">=1.29.0"}})]
+    assert select_packs(packs, domain="kubernetes", versions={"kubernetes": "1.29.0-rc.1"})["skipped"]
+    assert select_packs(packs, domain="kubernetes", versions={"kubernetes": "1.29.1"})["selected"]
+
+
 def test_search_tiers():
     packs = [FakePack("k8s-deps", "kubernetes", claims=["v1beta gone"]),
              FakePack("iam", "aws")]
