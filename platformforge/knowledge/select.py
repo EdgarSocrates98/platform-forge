@@ -49,21 +49,31 @@ def select_packs(packs: list[Any], *, domain: str = "",
             reasons.append("domain match")
             state = "applicable"
         applies = getattr(p, "applies_to", {}) or {}
-        version_state = "applicable"
+        version_states: list[str] = []
         for prod, want in (applies.get("versions") or {}).items():
             # applies_to.versions lists products the pack covers; the
             # task's detected version for that product decides fit.
             want = str(want)
             have = versions.get(prod, "")
             if not have or have.lower() in {"unknown", "n/a", "none"}:
-                version_state = "requires_review"
+                version_states.append("requires_review")
                 reasons.append(f"{prod} version missing")
             elif _version_ok(have, want):
                 score += 2
                 reasons.append(f"{prod} {have} matches {want}")
             else:
-                version_state = "not_applicable"
+                version_states.append("not_applicable")
                 reasons.append(f"{prod} {have} does not match {want}")
+        # An explicit incompatibility is stronger than an unresolved second
+        # requirement.  Otherwise a pack requiring, for example, Kubernetes
+        # 1.30 *and* an unknown runtime could be downgraded to
+        # ``requires_review`` and accidentally look selectable later.
+        if "not_applicable" in version_states:
+            version_state = "not_applicable"
+        elif "requires_review" in version_states:
+            version_state = "requires_review"
+        else:
+            version_state = "applicable"
         if domain and getattr(p, "domain", "") and \
                 p.domain != domain:
             state = "not_applicable"
@@ -161,11 +171,31 @@ def _range_ok(observed, requirement: str) -> bool:
             return False
         if op == "<" and cmp >= 0:
             return False
-        if op == "~" and (observed[0][0], observed[0][1]) != (target[0][0], target[0][1]):
+        if op == "~" and (
+            cmp < 0
+            or (observed[0][0], observed[0][1]) != (target[0][0], target[0][1])
+        ):
             return False
-        if op == "^" and (observed[0][0] != target[0][0] or cmp < 0):
+        if op == "^" and (cmp < 0 or not _caret_upper_bound_ok(observed, target)):
             return False
     return True
+
+
+def _caret_upper_bound_ok(observed, target) -> bool:
+    """Apply npm-style semver caret bounds, including ``0.x`` packages.
+
+    ``^1.2.3`` means ``<2.0.0``; ``^0.2.3`` means ``<0.3.0`` and
+    ``^0.0.3`` means ``<0.0.4``.  A major-only comparison is unsafe for
+    pre-1.0 runtimes because minor releases can contain breaking changes.
+    """
+    major, minor, patch = target[0]
+    if major > 0:
+        upper = ((major + 1, 0, 0), ())
+    elif minor > 0:
+        upper = ((0, minor + 1, 0), ())
+    else:
+        upper = ((0, 0, patch + 1), ())
+    return _compare_version(observed, upper) < 0
 
 
 def search_knowledge(packs: list[Any], query: str,

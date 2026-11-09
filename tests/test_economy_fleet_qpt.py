@@ -127,6 +127,28 @@ def test_select_packs_handles_prereleases_and_ranges():
     assert select_packs(packs, domain="kubernetes", versions={"kubernetes": "1.29.1"})["selected"]
 
 
+def test_select_packs_applies_caret_bounds_to_zero_major_versions():
+    packs = [FakePack("runtime", "kubernetes", {"versions": {"kubernetes": "^0.2.3"}})]
+    assert select_packs(
+        packs, domain="kubernetes", versions={"kubernetes": "0.2.9"}
+    )["selected"]
+    assert select_packs(
+        packs, domain="kubernetes", versions={"kubernetes": "0.3.0"}
+    )["skipped"][0]["state"] == "not_applicable"
+
+
+def test_select_packs_incompatibility_wins_over_another_missing_requirement():
+    packs = [
+        FakePack(
+            "multi-runtime",
+            "kubernetes",
+            {"versions": {"kubernetes": ">=1.30", "spark": ">=3.5"}},
+        )
+    ]
+    result = select_packs(packs, domain="kubernetes", versions={"kubernetes": "1.29"})
+    assert result["skipped"][0]["state"] == "not_applicable"
+
+
 def test_search_tiers():
     packs = [FakePack("k8s-deps", "kubernetes", claims=["v1beta gone"]),
              FakePack("iam", "aws")]

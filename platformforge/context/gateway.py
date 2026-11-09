@@ -19,9 +19,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from platformforge.context.capsule import CLASSIFICATIONS, ContextCapsule
+from platformforge.context.capsule import CLASSIFICATIONS, SCOPES, ContextCapsule
 from platformforge.context.refs import ContextRef
 from platformforge.context.sufficiency import ContextSufficiencyResult, Sufficiency, assess
+from platformforge.core.redaction import redact_text
 from platformforge.economy.cache import CacheStore
 from platformforge.economy.ledger import EconomyLedger, ToolUsageEntry
 
@@ -74,13 +75,11 @@ class ContextGateway:
     # -- build (pipeline §58) ------------------------------------------
     def build(self, req: ContextRequest) -> dict[str, Any]:
         t0 = time.monotonic()
+        schema_error = _validate_request(req)
+        if schema_error:
+            return {"refusal": "PF-CONTEXT-SCHEMA", "reason": schema_error}
         if not req.task.strip():
             return {"refusal": "PF-CONTEXT-SCHEMA", "reason": "task is required"}
-        if req.classification not in CLASSIFICATIONS:
-            return {
-                "refusal": "PF-CONTEXT-SCHEMA",
-                "reason": f"classification must be one of {CLASSIFICATIONS}",
-            }
         # 1–2. task + scope are inputs; 3–4. search/graph expansion is the
         # caller's job (facts/findings arrive already extracted — the
         # gateway assembles, it does not analyze).
@@ -184,7 +183,11 @@ class ContextGateway:
 
     def inspect(self, ref: str) -> dict[str, Any]:
         """Resolve a `context://sha256/<hash>` ref to its stored capsule."""
-        digest = ContextRef.parse(ref).digest
+        try:
+            digest = ContextRef.parse(ref).digest
+        except (TypeError, ValueError):
+            return {"refusal": "PF-CONTEXT-REF-SCHEMA",
+                    "reason": "context reference must be context://sha256/<64 hex>"}
         p = self._store / f"{digest}.json"
         if not p.exists():
             return {"refusal": "PF-CONTEXT-REF-UNKNOWN",
@@ -269,6 +272,32 @@ def _dedup(items: list[dict[str, Any]], key) -> list[dict[str, Any]]:
     return out
 
 
+def _validate_request(req: ContextRequest) -> str:
+    """Validate the request boundary before touching or persisting payloads."""
+    if not isinstance(req.task, str):
+        return "task must be a string"
+    if req.scope not in SCOPES:
+        return f"scope must be one of {SCOPES}"
+    if req.classification not in CLASSIFICATIONS:
+        return f"classification must be one of {CLASSIFICATIONS}"
+    list_fields = (
+        "facts", "findings", "rules", "knowledge_refs", "graph_refs",
+        "artifact_refs", "open_questions", "required_sections",
+    )
+    for name in list_fields:
+        if not isinstance(getattr(req, name), list):
+            return f"{name} must be a list"
+    if not all(isinstance(section, str) and section for section in req.required_sections):
+        return "required_sections must contain non-empty strings"
+    for name in ("budget_bytes", "essential_bytes"):
+        value = getattr(req, name)
+        if value is not None and (
+            isinstance(value, bool) or not isinstance(value, int) or value < 0
+        ):
+            return f"{name} must be a non-negative integer or null"
+    return ""
+
+
 _SECRET_KEYS = ("password", "secret", "token", "api_key", "private_key",
                 "credential")
 
@@ -276,6 +305,8 @@ _SECRET_KEYS = ("password", "secret", "token", "api_key", "private_key",
 def _redact(obj: Any) -> Any:
     """§224 — boundary redaction before capsule persistence. Values whose
     key looks secret-shaped are replaced, never stored."""
+    if isinstance(obj, str):
+        return redact_text(obj)
     if isinstance(obj, dict):
         return {k: ("[REDACTED]" if any(s in str(k).lower()
                                         for s in _SECRET_KEYS)
@@ -287,6 +318,9 @@ def _redact(obj: Any) -> Any:
 
 def _redact_with_meta(obj: Any) -> tuple[Any, bool]:
     """Redact recursively and report degradation instead of hiding it."""
+    if isinstance(obj, str):
+        safe = redact_text(obj)
+        return safe, safe != obj
     if isinstance(obj, dict):
         out: dict[Any, Any] = {}
         changed = False
