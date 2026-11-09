@@ -11,6 +11,7 @@ def test_platform_projection_carries_operations_sections_and_redacts_secrets():
         postmortem={"root_cause": {"status": "unresolved"}},
         runbooks=["replica-drift-restore"],
         kubernetes=[{"namespace": "checkout", "service_account_token": "do-not-write"}],
+        terraform=["credential=do-not-write-text"],
     )
     assert note["schema"] == "theforge/ObsidianNoteRef/v1"
     assert "inc-42" in note["content"]
