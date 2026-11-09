@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import yaml
@@ -77,7 +77,7 @@ def build_obsidian_operations_review(
         "source": "platform-forge",
         "classification": "internal",
         "content_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
-        "updated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "outcome": "projected",
         "provenance": {"adapter": "platform-forge", **_safe(provenance or {})},
         "content": content,
