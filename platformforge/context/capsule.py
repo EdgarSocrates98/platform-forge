@@ -38,6 +38,12 @@ class ContextCapsule:
     budget: dict[str, Any] = field(default_factory=dict)
     expandable: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
+    # Authorization binding is metadata, never an access grant.  A caller
+    # must still present a trusted authority decision before protected
+    # content is resolved.
+    workspace_id: str = ""
+    session_id: str = ""
+    policy_version: str = "platformforge/context-policy/v1"
     # section name → context:// uri with full detail (§62)
 
     def __post_init__(self) -> None:

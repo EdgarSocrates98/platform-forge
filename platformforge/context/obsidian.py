@@ -71,7 +71,7 @@ def build_obsidian_operations_review(
     lines += _section("Security review", security_review)
     content = "\n".join(lines).rstrip() + "\n"
     return {
-        "schema": "theforge/ObsidianNoteRef/v1",
+        "schema": "theforge/ObsidianNoteDraft/v1",
         "version": "v1",
         "workspace": workspace,
         "vault_id": vault_id,
@@ -88,4 +88,15 @@ def build_obsidian_operations_review(
     }
 
 
-__all__ = ["build_obsidian_operations_review"]
+def to_obsidian_note_ref(draft: dict[str, Any]) -> dict[str, Any]:
+    """Project a body-bearing draft to the canonical body-free ref."""
+    if draft.get("schema") != "theforge/ObsidianNoteDraft/v1" or not isinstance(
+        draft.get("content"), str
+    ):
+        raise ValueError("expected theforge/ObsidianNoteDraft/v1 with Markdown content")
+    return {key: value for key, value in draft.items() if key != "content"} | {
+        "schema": "theforge/ObsidianNoteRef/v1"
+    }
+
+
+__all__ = ["build_obsidian_operations_review", "to_obsidian_note_ref"]
