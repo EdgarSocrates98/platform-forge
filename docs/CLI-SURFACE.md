@@ -135,7 +135,7 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `context`
 
 - `context`  
-  `--repo <v> — workspace/repo root (default '.')` · `--task <v> (default '')` · `--input-budget <v>` · `--changed <v>` · `--scope <v> (default 'repository')` · `--budget-bytes <v>` · `--essential-bytes <v>` · `--required <v>` · `--role <v> (default 'specialist')` · `--facts <v> (default '')` · `--findings <v> (default '')` · `--rules <v>` · `--knowledge <v>` · `--domain <v> — §6.2 domain pack (lf-0037) (default '')` · `--rules-limit <v>` · `--knowledge-limit <v>` · `--graph-refs <v>` · `--questions <v>` · `--ref <v> (default '')` · `--section <v> (default '')`
+  `--repo <v> — workspace/repo root (default '.')` · `--task <v> (default '')` · `--input-budget <v>` · `--changed <v>` · `--scope <v> (default 'repository')` · `--budget-bytes <v>` · `--essential-bytes <v>` · `--required <v>` · `--role <v> (default 'specialist')` · `--facts <v> (default '')` · `--findings <v> (default '')` · `--rules <v>` · `--knowledge <v>` · `--domain <v> — §6.2 domain pack (lf-0037) (default '')` · `--rules-limit <v>` · `--knowledge-limit <v>` · `--graph-refs <v>` · `--questions <v>` · `--ref <v> (default '')` · `--section <v> (default '')` · `--principal <v> — host-resolved principal (never an authorization grant) (default '')` · `--workspace-id <v> (default '')` · `--session-id <v> (default '')` · `--allowed-classifications <v>`
 - `context capsule`
 - `context delta`
 - `context expand`

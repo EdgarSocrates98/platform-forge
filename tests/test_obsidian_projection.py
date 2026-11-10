@@ -1,4 +1,4 @@
-from platformforge.context.obsidian import build_obsidian_operations_review
+from platformforge.context.obsidian import build_obsidian_operations_review, to_obsidian_note_ref
 
 
 def test_platform_projection_carries_operations_sections_and_redacts_secrets():
@@ -13,7 +13,10 @@ def test_platform_projection_carries_operations_sections_and_redacts_secrets():
         kubernetes=[{"namespace": "checkout", "service_account_token": "do-not-write"}],
         terraform=["credential=do-not-write-text"],
     )
-    assert note["schema"] == "theforge/ObsidianNoteRef/v1"
+    assert note["schema"] == "theforge/ObsidianNoteDraft/v1"
+    ref = to_obsidian_note_ref(note)
+    assert ref["schema"] == "theforge/ObsidianNoteRef/v1"
+    assert "content" not in ref
     assert "inc-42" in note["content"]
     assert "do-not-write" not in note["content"]
     assert "[REDACTED]" in note["content"]

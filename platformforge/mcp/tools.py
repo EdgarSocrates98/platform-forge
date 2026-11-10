@@ -62,11 +62,26 @@ def _dispatch(handler: str, inp: dict[str, Any], repo: str) -> Any:
                 "ledger": unified_view(repo)}
     if handler == "cli:context_inspect":
         from platformforge.context.gateway import ContextGateway
-        return ContextGateway(repo).inspect(inp["ref"])
+        return ContextGateway(repo).inspect(
+            inp["ref"], principal=str(inp.get("principal") or ""),
+            workspace_id=str(inp.get("workspace_id") or ""),
+            session_id=str(inp.get("session_id") or ""),
+            allowed_classifications=tuple(
+                str(value) for value in (inp.get("allowed_classifications") or ())
+            ),
+        )
     if handler == "cli:context_expand":
         from platformforge.context.gateway import ContextGateway
         return ContextGateway(repo).expand(inp["ref"],
-                                           inp.get("section", ""))
+                                           inp.get("section", ""),
+                                           principal=str(inp.get("principal") or ""),
+                                           workspace_id=str(inp.get("workspace_id") or ""),
+                                           session_id=str(inp.get("session_id") or ""),
+                                           allowed_classifications=tuple(
+                                               str(value) for value in (
+                                                   inp.get("allowed_classifications") or ()
+                                               )
+                                           ))
     if handler == "cli:routing_explain":
         from platformforge.routing.decision import RoutingRequest, decide, receipt
         req = RoutingRequest(task=inp.get("task", ""),
