@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import string
 from dataclasses import dataclass
 from typing import Any
 
@@ -29,7 +30,7 @@ class ContextRef:
     def __post_init__(self) -> None:
         if self.scheme not in REF_SCHEMES:
             raise ValueError(f"unknown ref scheme {self.scheme!r}")
-        if len(self.digest) != 64:
+        if len(self.digest) != 64 or any(c not in string.hexdigits for c in self.digest):
             raise ValueError("ref digest must be sha256 (64 hex)")
 
     @property

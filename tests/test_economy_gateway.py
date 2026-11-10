@@ -82,6 +82,50 @@ class TestGateway:
         ref = gw.build(ContextRequest(**r))["ref"]
         stored = gw.inspect(ref)
         assert stored["facts"][0]["password"] == "[REDACTED]"
+        assert stored["warnings"]
+
+    def test_redaction_covers_secret_patterns_inside_values(self, gw):
+        secret = "AKIAIOSFODNN7EXAMPLE"
+        out = gw.build(ContextRequest(
+            task=f"review key={secret}",
+            facts=[{"fact_id": "x", "value": secret}],
+        ))
+        assert secret not in str(out)
+        assert secret not in gw.inspect(out["ref"]).__repr__()
+        assert gw.inspect(out["ref"])["warnings"]
+
+    def test_ref_hash_matches_persisted_canonical_bytes(self, gw):
+        out = gw.build(ContextRequest(**REQ))
+        path = gw._store / (out["ref"].rsplit("/", 1)[-1] + ".json")
+        import hashlib
+
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == out["ref"].rsplit("/", 1)[-1]
+
+    def test_tampering_is_detected(self, gw):
+        out = gw.build(ContextRequest(**REQ))
+        path = gw._store / (out["ref"].rsplit("/", 1)[-1] + ".json")
+        path.write_text(path.read_text(encoding="utf-8").replace("review iam", "tampered"), encoding="utf-8")
+        assert gw.inspect(out["ref"])["refusal"] == "PF-CONTEXT-INTEGRITY"
+
+    def test_protected_expansion_requires_authorization(self, gw):
+        req = ContextRequest(**REQ, classification="confidential")
+        out = gw.build(req)
+        assert gw.expand(out["ref"], "facts")["refusal"] == "PF-CONTEXT-AUTHORIZATION"
+        assert gw.expand(out["ref"], "facts", principal="reviewer",
+                         allowed_classifications=("confidential",))["content"]
+
+    def test_invalid_context_schema_is_refused(self, gw):
+        out = gw.build(ContextRequest(task="", scope="repository"))
+        assert out["refusal"] == "PF-CONTEXT-SCHEMA"
+
+    def test_invalid_scope_is_refused_without_persisting(self, gw):
+        out = gw.build(ContextRequest(task="review", scope="outside"))
+        assert out["refusal"] == "PF-CONTEXT-SCHEMA"
+        assert not list(gw._store.glob("*.json"))
+
+    def test_malformed_context_ref_is_refused(self, gw):
+        out = gw.inspect("not-a-context-ref")
+        assert out["refusal"] == "PF-CONTEXT-REF-SCHEMA"
 
     def test_ref_parse(self):
         uri = ContextRef.of("evidence", {"a": 1}).uri
