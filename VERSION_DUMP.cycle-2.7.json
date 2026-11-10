@@ -1,0 +1,9 @@
+{
+  "cycle": "2.7",
+  "repository": "platform-forge",
+  "version": "0.3.2",
+  "tag": "v0.3.2",
+  "source_commit": "b53306bc246762666747159429aa0422cb29d700",
+  "version_source": "pyproject.toml and platformforge.__version__",
+  "verified_at": "2026-11-10"
+}
