@@ -17,3 +17,14 @@ def test_platform_projection_carries_operations_sections_and_redacts_secrets():
     assert "inc-42" in note["content"]
     assert "do-not-write" not in note["content"]
     assert "[REDACTED]" in note["content"]
+
+
+def test_platform_projection_redacts_secrets_in_title_and_summary():
+    note = build_obsidian_operations_review(
+        title="Token=do-not-write",
+        summary="password=do-not-write-summary",
+        workspace="platform",
+        vault_id="team-vault",
+    )
+    assert "do-not-write" not in note["content"]
+    assert "[REDACTED]" in note["content"]

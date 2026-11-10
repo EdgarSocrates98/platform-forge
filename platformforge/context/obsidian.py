@@ -51,6 +51,8 @@ def build_obsidian_operations_review(
     confidence: str = "unknown",
     provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    safe_title = str(_safe(title.strip() or "Platform operations review"))
+    safe_summary = str(_safe(summary.strip()))
     metadata = _safe({
         "type": "platform-operations-review",
         "source": "platform-forge",
@@ -59,7 +61,7 @@ def build_obsidian_operations_review(
         "provenance": provenance or {},
     })
     lines = ["---", yaml.safe_dump(metadata, sort_keys=True, allow_unicode=True).rstrip(), "---",
-             f"# {title.strip() or 'Platform operations review'}", "", summary.strip(), ""]
+             f"# {safe_title}", "", safe_summary, ""]
     lines += _section("Incident", incident)
     lines += _section("Postmortem", postmortem)
     lines += _section("Runbooks", runbooks)
