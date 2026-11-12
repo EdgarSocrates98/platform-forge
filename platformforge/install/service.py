@@ -608,6 +608,7 @@ def _context_manifest(
         hosts=hosts,
         forge_json=forge_json,
         agentic=agentic,
+        kind="specialist",
         domains=_PF_DOMAINS,
         skills=skills,
         coordinators=coordinators,
