@@ -122,3 +122,21 @@ def test_ship_happy_path(tmp_path):
     assert g["allowed"], g["failures"]
     r = p.ship("FEAT1")
     assert r["shipped"] is True
+
+
+def test_verify_run_writes_evidence(tmp_path):
+    """--verify "cmd" executes and persists verify.json (wave-1 F6 fix)."""
+    import sys
+
+    from platformforge.cli.main import _sdd_verify_run
+
+    p = SDDProject(tmp_path)
+    p.write_artifact("FEAT1", "define", "# define\n")
+    out = _sdd_verify_run(p, "FEAT1", f"{sys.executable} -c \"print(1)\"")
+    assert out["tests"] == "passed" and out["exit_code"] == 0
+    assert out["artifact"] == "verify.json"
+    doc = yaml.safe_load(p.artifact("FEAT1", "verify").path.read_text())
+    assert doc["tests"] == "passed"
+
+    out2 = _sdd_verify_run(p, "FEAT1", f"{sys.executable} -c \"import sys;sys.exit(4)\"")
+    assert out2["tests"] == "failed" and out2["exit_code"] == 4

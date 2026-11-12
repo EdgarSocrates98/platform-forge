@@ -528,7 +528,7 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `sdd`
 
 - `sdd`  
-  `--repo <v> — workspace/repo root (default '.')` · `--feature <v>` · `--body <v> — artifact body or JSON (default '')` · `--phase <v> — stamp single phase` · `--verify <v> — verify JSON for ship gate (default '')` · `--findings <v> — findings JSON for ship gate (default '')` · `--actor <v> — override actor identity (default '')` · `--risk-accepted` · `--override` · `--override-reason <v> (default '')`
+  `--repo <v> — workspace/repo root (default '.')` · `--feature <v>` · `--body <v> — artifact body or JSON (default '')` · `--phase <v> — stamp single phase` · `--verify <v> — verify JSON for ship gate, or command to run and record as verify evidence on check (default '')` · `--findings <v> — findings JSON for ship gate (default '')` · `--actor <v> — override actor identity (default '')` · `--risk-accepted` · `--override` · `--override-reason <v> (default '')`
 - `sdd build`
 - `sdd check`
 - `sdd contract`

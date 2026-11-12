@@ -833,6 +833,32 @@ def cmd_route(args: argparse.Namespace) -> int:
     return _emit(route(sig), args)
 
 
+def _sdd_verify_run(proj: Any, feature: str, command: str) -> dict[str, Any]:
+    """`sdd check --verify "cmd"` — run the declared command, persist the
+    result as the feature's verify.json evidence (bounded, honest)."""
+    import subprocess
+
+    started = time.monotonic()
+    try:
+        proc = subprocess.run(
+            command, shell=True, cwd=str(proj.root),
+            capture_output=True, text=True, timeout=600, check=False,
+        )
+        result = {
+            "command": command,
+            "exit_code": proc.returncode,
+            "tests": "passed" if proc.returncode == 0 else "failed",
+            "stdout_tail": (proc.stdout or "")[-2000:],
+            "stderr_tail": (proc.stderr or "")[-2000:],
+        }
+    except subprocess.TimeoutExpired:
+        result = {"command": command, "exit_code": None,
+                  "tests": "failed", "error": "timeout_600s"}
+    result["duration_ms"] = int((time.monotonic() - started) * 1000)
+    art = proj.write_artifact(feature, "verify", result)
+    return {**result, "artifact": art.path.name}
+
+
 def cmd_sdd(args: argparse.Namespace) -> int:
     from platformforge.sdd import SDDProject
 
@@ -854,6 +880,8 @@ def cmd_sdd(args: argparse.Namespace) -> int:
         return _emit(proj.status(args.feature), args)
     if sub == "check":
         out = proj.check(args.feature)
+        if args.verify and not args.verify.strip().startswith("{"):
+            out["verify_run"] = _sdd_verify_run(proj, args.feature, args.verify)
         return _emit(out, args, 2 if (args.strict and not out["ok"]) else 0)
     if sub == "stamp":
         return _emit(proj.stamp(args.feature, args.phase), args)
@@ -3214,7 +3242,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--feature", required=True)
     sp.add_argument("--body", default="", help="artifact body or JSON")
     sp.add_argument("--phase", default=None, help="stamp single phase")
-    sp.add_argument("--verify", default="", help="verify JSON for ship gate")
+    sp.add_argument("--verify", default="",
+                    help="verify JSON for ship gate, or command to run and "
+                         "record as verify evidence on check")
     sp.add_argument("--findings", default="", help="findings JSON for ship gate")
     sp.add_argument("--actor", default="", help="override actor identity")
     sp.add_argument("--risk-accepted", action="store_true")
