@@ -92,6 +92,13 @@ All notable changes. Format: wave/feature, the "why", key commits.
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-11-12
+
+SDD consolidation release: `sdd check --verify "<command>"` executes the
+command and persists `verify.json` evidence; canonical schema conformance
+test plus federated CI consuming schemas from the-forge; version pin and
+CLI surface regenerated; economy receipt rebound.
+
 ## [0.3.4] - 2026-11-12
 
 Cycle 2.7 patch release: federated SDD contracts and adapters, forge-context kind taxonomy, universal Obsidian export verbs, portal and install UX improvements, provider context-registry wiring, CI hardening and generated-artifact refresh.
