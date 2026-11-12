@@ -48,7 +48,7 @@ PROTOCOLS: tuple[dict[str, str], ...] = (
 MCP_INTERFACE: dict[str, Any] = {
     "server_name": "platformforge",
     "command": [CLI, "mcp", "serve"],
-    "verify_tool": "pf_status",
+    "verify_tool": "platformforge_inspect",
 }
 
 OPS: dict[str, dict[str, Any]] = {
