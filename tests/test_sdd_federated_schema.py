@@ -1,0 +1,65 @@
+"""Federated contract conformance — adapter output vs canonical schemas.
+
+The canonical JSON Schemas live in the-forge workspace sibling. In a
+full FORJAS workspace this test validates adapter output against them;
+outside the workspace it skips (schema absence is reported, not faked).
+In CI the federated-schemas job checks out the-forge and exports
+FORGE_SDD_SCHEMA_DIR so drift fails instead of skipping.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+
+import pytest
+
+jsonschema = pytest.importorskip("jsonschema")
+
+_SCHEMA_CANDIDATES = [
+    os.environ.get("FORGE_SDD_SCHEMA_DIR", ""),
+    str(Path(__file__).resolve().parents[2] / "the-forge" / "docs"
+        / "portable-installation" / "schemas"),
+]
+
+
+def _schema_dir() -> Path:
+    for cand in _SCHEMA_CANDIDATES:
+        p = Path(cand) if cand else Path("/nonexistent")
+        if p.is_dir() and (p / "ForgeSDDGate.schema.json").is_file():
+            return p
+    pytest.skip("canonical schema dir not available in this workspace")
+    raise AssertionError
+
+
+def _load(name: str) -> dict:
+    return json.loads((_schema_dir() / name).read_text(encoding="utf-8"))
+
+
+def test_gate_conforms():
+    from platformforge.sdd import federated
+    gate = federated.to_gate("F1", "plan", {
+        "ok": False,
+        "refused": [{"code": "c", "feature": "F1", "path": "plan.md",
+                     "field": "x", "unlock": "u"}],
+        "unresolved": [{"code": "g", "feature": "F1", "path": "define.md",
+                        "unlock": "u"}]})
+    jsonschema.validate(gate, _load("ForgeSDDGate.schema.json"))
+
+
+def test_receipt_conforms():
+    from platformforge.sdd import federated
+    r = federated.to_receipt("F1", "ship", "release", "owner",
+                             "2026-04-05T10:00:00Z", verdict="pass",
+                             outputs=["a.txt"])
+    jsonschema.validate(r, _load("ForgeSDDReceipt.schema.json"))
+
+
+def test_evidence_conforms(tmp_path):
+    from platformforge.sdd import federated
+    f = tmp_path / "e.bin"
+    f.write_bytes(b"x")
+    ev = federated.to_evidence(f, kind="test-run", agent="t",
+                               command=["pytest"], covers=["REQ-1"])
+    jsonschema.validate(ev, _load("ForgeEvidence.schema.json"))
