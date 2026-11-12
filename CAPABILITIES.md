@@ -80,6 +80,7 @@ agent_requirements: []     # specialists this capability can dispatch to
 | `platform.portable` | 5 | distribution | yes | `install/uninstall/upgrade/portable/workspace` | FE-003 — plan-first workspace-local distribution; canonical Codex/Claude/Devin/generic agent mirrors + skills, checksum-verified offline bundle, ownership receipt, safe upgrade/uninstall |
 | `platform.freeze` | 1 | freeze | internal | `freeze manifest|snapshot|check|exception` | architecture-freeze governance (prompt_evo_freezing): manifest generated from live registries; drift snapshots over schemas/CLI/MCP/capabilities/agents with knowledge allowlist; FeatureException contract for any freeze-scope change. State machine + unfreeze RFC: `docs/freeze/` |
 | `platform.cases` | 1 | freeze | internal | `cases list|validate|replay|template|ledger|ledger-check|route-audit|route-bench|context-audit` | real-world case corpus under `.platformforge/cases/<golden|holdout>/` — case.yaml contract (§54), deterministic offline replay with canonical result hash, FP/FN accounting + ledgers, routing/context audits; holdout corpus never tuned against |
+| `platform.obsidian` | 1 | distribution | yes | `obsidian status|scan|preview|sync-plan|export|export-note|history` | shared authorized-vault verbs through the vendored `forge_obsidian` engine — writes scoped to the configured vault; preview/history never expose note bodies |
 
 ### Known gaps (declared, not hidden)
 

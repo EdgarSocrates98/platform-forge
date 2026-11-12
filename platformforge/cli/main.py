@@ -839,7 +839,9 @@ def cmd_sdd(args: argparse.Namespace) -> int:
     proj = SDDProject(args.repo)
     sub = args.sdd_cmd
     if sub == "init":
-        return _emit({"initialized": str(proj._feature_dir(args.feature))}, args)
+        d = proj._feature_dir(args.feature)
+        d.mkdir(parents=True, exist_ok=True)
+        return _emit({"initialized": str(d), "created": True}, args)
     if sub in ("discover", "define", "design", "contract", "plan", "review", "learn", "build", "verify"):
         body: object = (
             json.loads(args.body)
@@ -857,12 +859,15 @@ def cmd_sdd(args: argparse.Namespace) -> int:
         return _emit(proj.stamp(args.feature, args.phase), args)
     if sub == "ship":
         verify = json.loads(args.verify) if args.verify else None
+        findings = json.loads(args.findings) if getattr(args, "findings", None) else None
         out = proj.ship(
             args.feature,
             verify=verify,
+            findings=findings,
             risk_accepted=args.risk_accepted,
             override=args.override,
             override_reason=args.override_reason,
+            actor=getattr(args, "actor", "") or "cli",
         )
         return _emit(out, args, 0 if out["shipped"] else 2)
     return _emit({"error": f"unknown sdd verb {sub}"}, args, 1)
@@ -3210,6 +3215,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--body", default="", help="artifact body or JSON")
     sp.add_argument("--phase", default=None, help="stamp single phase")
     sp.add_argument("--verify", default="", help="verify JSON for ship gate")
+    sp.add_argument("--findings", default="", help="findings JSON for ship gate")
+    sp.add_argument("--actor", default="", help="override actor identity")
     sp.add_argument("--risk-accepted", action="store_true")
     sp.add_argument("--override", action="store_true")
     sp.add_argument("--override-reason", default="")
@@ -3905,7 +3912,82 @@ def build_parser() -> argparse.ArgumentParser:
         "--stamp", action="store_true", help="context-audit: write measured context_cost back into case.yaml"
     )
     sp.set_defaults(func=cmd_cases)
+
+    # obsidian — shared authorized-vault verbs (vendored forge_obsidian engine).
+    # Follows the platform convention: payloads flow through _emit, so
+    # --json/--output/--detail-level/--strict and run receipts still apply.
+    ob = sub.add_parser("obsidian", help="Authorized Obsidian vault operations")
+    ob_sub = ob.add_subparsers(dest="obsidian_command", required=True)
+
+    def _ob_leaf(name: str, help_: str, extra=None):
+        lp = ob_sub.add_parser(name, help=help_)
+        _add_common(lp)
+        if extra:
+            extra(lp)
+        lp.set_defaults(func=cmd_obsidian)
+
+    _ob_leaf("status", "report configured/detected vault state")
+    _ob_leaf(
+        "scan",
+        "list Markdown paths without reading bodies",
+        lambda lp: (lp.add_argument("--prefix", default=""), lp.add_argument("--limit", type=int, default=200)),
+    )
+    _ob_leaf("preview", "metadata + projection, never the body", lambda lp: lp.add_argument("path"))
+    _ob_leaf(
+        "sync-plan",
+        "dry-run a sync of FILE into PATH",
+        lambda lp: (
+            lp.add_argument("path"),
+            lp.add_argument("file"),
+            lp.add_argument("--baseline-hash", dest="baseline_hash", default=None),
+            lp.add_argument("--classification", default="internal"),
+        ),
+    )
+    _ob_leaf(
+        "export",
+        "apply a reviewed sync plan (--yes required)",
+        lambda lp: (
+            lp.add_argument("path"),
+            lp.add_argument("file"),
+            lp.add_argument("--baseline-hash", dest="baseline_hash", default=None),
+            lp.add_argument("--classification", default="internal"),
+            lp.add_argument("--yes", action="store_true"),
+            lp.add_argument("--no-moc", dest="moc", action="store_false", default=True),
+        ),
+    )
+    _ob_leaf(
+        "export-note",
+        "export FILE as forges/platform-forge/<name>.md",
+        lambda lp: (
+            lp.add_argument("name"),
+            lp.add_argument("file"),
+            lp.add_argument("--baseline-hash", dest="baseline_hash", default=None),
+            lp.add_argument("--classification", default="internal"),
+            lp.add_argument("--yes", action="store_true"),
+            lp.add_argument("--no-moc", dest="moc", action="store_false", default=True),
+        ),
+    )
+    _ob_leaf(
+        "history",
+        "list Forge sync receipts (body-free)",
+        lambda lp: lp.add_argument("--limit", type=int, default=50),
+    )
     return p
+
+
+def cmd_obsidian(args: argparse.Namespace) -> int:
+    """Dispatch ``platformforge obsidian <verb>`` through the vendored engine."""
+    from platformforge._forge_obsidian.cli import verb_payload
+
+    kw: dict[str, Any] = {}
+    for key in ("path", "name", "file", "prefix", "limit", "baseline_hash", "classification", "yes", "moc"):
+        if hasattr(args, key):
+            kw[key] = getattr(args, key)
+    payload = verb_payload("platform-forge", args.obsidian_command, **kw)
+    refused = payload.get("state") in {"refused", "failed"} or str(
+        payload.get("code", "")
+    ).startswith("OBSIDIAN-")
+    return _emit({"obsidian": payload}, args, exit_code=2 if refused else 0)
 
 
 def _stdio_utf8() -> None:

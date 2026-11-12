@@ -161,11 +161,19 @@ class SDDProject:
 
     # ── gates ─────────────────────────────────────────────────
     def check(self, feature: str) -> dict[str, Any]:
-        st = self.status(feature)
-        return {**st, "ok": not st["stale"]}
+        """Multidimensional validation — see sdd/gates.check()."""
+        from .gates import check as _check
+        out = _check(self, feature)
+        out["phases"] = out.get("phases") or self.status(feature)["phases"]
+        return out
 
     def stamp(self, feature: str, phase: str | None = None) -> dict[str, Any]:
-        """Re-seal upstream hash(es) after intentional change."""
+        """Re-seal upstream hash(es) after intentional change.
+
+        Hash stamping is *integrity binding*, not approval: it never
+        promotes `ship`/`learn` and never demotes `accepted`. Status
+        transitions are a separate decision (`write_artifact`/`set_status`).
+        """
         stamped = []
         targets = [phase] if phase else PHASES[1:]
         for ph in targets:
@@ -176,7 +184,8 @@ class SDDProject:
             if prev.exists:
                 a.meta["upstream"] = {"path": prev.path.name,
                                       "sha256": sha256_file(prev.path)}
-                a.meta["status"] = "ready"
+                if a.meta.get("status") not in ("accepted", "done"):
+                    a.meta["status"] = "ready"
                 a.meta["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ",
                                                      time.gmtime())
                 if a.path.suffix == ".json":
@@ -192,48 +201,33 @@ class SDDProject:
     def ship_gate(self, feature: str, verify: dict[str, Any] | None = None,
                   findings: list[dict[str, Any]] | None = None,
                   risk_accepted: bool = False) -> dict[str, Any]:
-        """Evaluate ship gates. Returns {allowed, failures[], receipt?}."""
-        failures: list[str] = []
-        status = self.status(feature)
-        if status["stale"]:
-            failures.append("upstream_hash_stale")
-        missing = [p["phase"] for p in status["phases"]
-                   if p["phase"] in ("discover", "define", "design", "contract",
-                                     "plan", "build", "review", "verify")
-                   and p["status"] == "missing"]
-        if missing:
-            failures.append(f"evidence_missing:{','.join(missing)}")
-        verify_doc = verify or {}
-        if verify_doc.get("required_failed") or verify_doc.get("tests") == "failed":
-            failures.append("required_test_failed")
-        if verify_doc.get("security") == "failed":
-            failures.append("security_gate_failed")
-        critical = [f for f in (findings or [])
-                    if f.get("severity") == "critical"
-                    and f.get("status") == "violated"]
-        if critical:
-            failures.append("critical_finding_unresolved")
-        high_risk = verify_doc.get("risk") in ("high", "critical")
-        if high_risk and not risk_accepted:
-            failures.append("risk_acceptance_absent")
-        return {"feature": feature, "allowed": not failures,
-                "failures": failures,
-                "rule": "overrides emit a receipt via ship(override=True)"}
+        """Evidence-backed ship evaluation — see sdd/gates.ship_gate()."""
+        from .gates import ship_gate as _gate
+        return _gate(self, feature, verify, findings, risk_accepted)
 
     def ship(self, feature: str, verify: dict[str, Any] | None = None,
              findings: list[dict[str, Any]] | None = None,
              risk_accepted: bool = False, override: bool = False,
-             override_reason: str = "") -> dict[str, Any]:
+             override_reason: str = "", actor: str = "") -> dict[str, Any]:
         gate = self.ship_gate(feature, verify, findings, risk_accepted)
         if not gate["allowed"] and not override:
             return {**gate, "shipped": False}
         meta_extra: dict[str, Any] = {}
         if not gate["allowed"] and override:
-            meta_extra["override_receipt"] = {
-                "overridden_failures": gate["failures"],
-                "reason": override_reason,
-                "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
+            from .gates import UNDISPENSABLE, override_receipt
+            hard = [f for f in gate["failures"]
+                    if f.split(":")[0] in UNDISPENSABLE]
+            if hard:
+                return {**gate, "shipped": False,
+                        "override_denied": hard,
+                        "reason": "undispensable failures cannot be overridden"}
+            if not override_reason or not override_reason.strip():
+                return {**gate, "shipped": False,
+                        "override_denied": ["override_reason_empty"]}
+            meta_extra["override_receipt"] = override_receipt(
+                feature=feature, gate="ship",
+                failures=gate["failures"], reason=override_reason,
+                actor=actor or "cli")
         self.write_artifact(feature, "ship", "Shipped.\n", meta_extra)
         return {**gate, "shipped": True,
                 "override": bool(meta_extra)}
