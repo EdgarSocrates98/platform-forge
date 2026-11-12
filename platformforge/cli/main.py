@@ -1361,9 +1361,27 @@ def cmd_context(args: argparse.Namespace) -> int:
         )
         return _emit(res, args, 2 if "refusal" in res else 0)
     if sub == "inspect":
-        return _emit(gw.inspect(args.ref), args, 2 if "refusal" in gw.inspect(args.ref) else 0)
+        res = gw.inspect(
+            args.ref,
+            principal=getattr(args, "principal", ""),
+            workspace_id=getattr(args, "workspace_id", ""),
+            session_id=getattr(args, "session_id", ""),
+            allowed_classifications=tuple(
+                getattr(args, "allowed_classifications", None) or ()
+            ),
+        )
+        return _emit(res, args, 2 if "refusal" in res else 0)
     if sub == "expand":
-        return _emit(gw.expand(args.ref, args.section or ""), args)
+        return _emit(gw.expand(
+            args.ref,
+            args.section or "",
+            principal=getattr(args, "principal", ""),
+            workspace_id=getattr(args, "workspace_id", ""),
+            session_id=getattr(args, "session_id", ""),
+            allowed_classifications=tuple(
+                getattr(args, "allowed_classifications", None) or ()
+            ),
+        ), args)
     if sub == "delta":
         return _emit(gw.delta(args.ref, None), args)
     if sub == "gc":
@@ -3649,6 +3667,10 @@ def build_parser() -> argparse.ArgumentParser:
             sp.add_argument("--questions", nargs="*"),
             sp.add_argument("--ref", default=""),
             sp.add_argument("--section", default=""),
+            sp.add_argument("--principal", default="", help="host-resolved principal (never an authorization grant)"),
+            sp.add_argument("--workspace-id", default=""),
+            sp.add_argument("--session-id", default=""),
+            sp.add_argument("--allowed-classifications", nargs="*", default=None),
         ),
     )
     verb(

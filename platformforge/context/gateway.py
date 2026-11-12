@@ -15,9 +15,10 @@ import json
 import os
 import tempfile
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from platformforge.context.capsule import CLASSIFICATIONS, SCOPES, ContextCapsule
 from platformforge.context.refs import ContextRef
@@ -27,6 +28,34 @@ from platformforge.economy.cache import CacheStore
 from platformforge.economy.ledger import EconomyLedger, ToolUsageEntry
 
 REFUSAL_ESSENTIAL = "PF-CONTEXT-ESSENTIAL"
+PROTECTED_CLASSIFICATIONS = frozenset(("confidential", "restricted"))
+
+
+@dataclass(frozen=True)
+class AuthorizationDecision:
+    """Trusted host decision consumed by the context boundary.
+
+    Platform Forge deliberately does not mint identities.  Agent Bridge (or
+    another host authority) supplies this shape after authenticating the
+    principal, checking session state/revocation and resolving workspace
+    scope.  A caller-provided principal or classification list is never a
+    grant by itself.
+    """
+
+    allow: bool
+    principal: str = ""
+    workspace_id: str = ""
+    session_id: str = ""
+    classifications: tuple[str, ...] = ()
+    operations: tuple[str, ...] = ()
+    reason: str = ""
+
+
+class ContextAuthorizer(Protocol):
+    def authorize(self, *, principal: str, workspace_id: str,
+                  session_id: str, operation: str, resource: str,
+                  classification: str) -> AuthorizationDecision | Mapping[str, Any]:
+        """Return a decision from a trusted authentication authority."""
 
 # §70–73 — which capsule sections each role receives.
 ROLE_SECTIONS: dict[str, tuple[str, ...]] = {
@@ -62,11 +91,19 @@ class ContextRequest:
     artifact_refs: list[str] = field(default_factory=list)
     open_questions: list[str] = field(default_factory=list)
     deps: dict[str, str] = field(default_factory=dict)
+    workspace_id: str = ""
+    session_id: str = ""
+    principal: str = ""
+    policy_version: str = "platformforge/context-policy/v1"
 
 
 class ContextGateway:
-    def __init__(self, root: str | Path):
+    def __init__(self, root: str | Path,
+                 *, authorizer: ContextAuthorizer | None = None,
+                 workspace_id: str = ""):
         self.root = Path(root)
+        self.authorizer = authorizer
+        self.workspace_id = workspace_id or str(self.root.resolve())
         self.cache = CacheStore(root)
         self.ledger = EconomyLedger(root)
         self._store = self.root / ".platformforge" / "context-store"
@@ -80,6 +117,18 @@ class ContextGateway:
             return {"refusal": "PF-CONTEXT-SCHEMA", "reason": schema_error}
         if not req.task.strip():
             return {"refusal": "PF-CONTEXT-SCHEMA", "reason": "task is required"}
+        workspace_id = req.workspace_id or self.workspace_id
+        if req.classification in PROTECTED_CLASSIFICATIONS:
+            decision = self._authorize(
+                principal=req.principal,
+                workspace_id=workspace_id,
+                session_id=req.session_id,
+                operation="build",
+                resource="context:build",
+                classification=req.classification,
+            )
+            if "refusal" in decision:
+                return decision
         # 1–2. task + scope are inputs; 3–4. search/graph expansion is the
         # caller's job (facts/findings arrive already extracted — the
         # gateway assembles, it does not analyze).
@@ -117,7 +166,10 @@ class ContextGateway:
             open_questions=safe_questions,
             budget={"budget_bytes": req.budget_bytes,
                     "essential_bytes": req.essential_bytes},
-            warnings=warnings)
+            warnings=warnings,
+            workspace_id=workspace_id,
+            session_id=req.session_id,
+            policy_version=req.policy_version)
 
         # 7. budget — essential evidence must fit or the capsule refuses
         size = capsule.byte_size
@@ -138,7 +190,11 @@ class ContextGateway:
                         "budget smaller than essential floor").to_dict()}
 
         # 8. redaction — secrets never persist into the store (§224)
-        self._persist(capsule)
+        try:
+            capsule = self._prepare_capsule(capsule)
+            self._persist(capsule)
+        except (TypeError, ValueError) as exc:
+            return {"refusal": "PF-CONTEXT-SCHEMA", "reason": str(exc)}
 
         # 9. ContextRef + sufficiency + cache receipt
         ref = capsule.ref()
@@ -156,10 +212,45 @@ class ContextGateway:
                 "expandable": capsule.expandable}
 
     # -- lazy refs (§63–64) ---------------------------------------------
+    def _prepare_capsule(self, capsule: ContextCapsule) -> ContextCapsule:
+        """Apply the persistence invariant to every write path.
+
+        ``delta()`` and other internal callers may receive a capsule built by
+        an adapter.  It is therefore unsafe to assume the object was already
+        redacted merely because it is a ``ContextCapsule`` instance.
+        """
+        if not isinstance(capsule, ContextCapsule):
+            raise TypeError("capsule must be a ContextCapsule")
+        if capsule.classification not in CLASSIFICATIONS:
+            raise ValueError("unknown classification is not persistable")
+        safe = ContextCapsule(
+            schema=capsule.schema,
+            capsule_id=capsule.capsule_id,
+            summary=_redact(capsule.summary),
+            task=_redact(capsule.task),
+            scope=capsule.scope,
+            classification=capsule.classification,
+            facts=_redact(capsule.facts),
+            findings=_redact(capsule.findings),
+            rules=_redact(capsule.rules),
+            knowledge_refs=_redact(capsule.knowledge_refs),
+            graph_refs=_redact(capsule.graph_refs),
+            artifact_refs=_redact(capsule.artifact_refs),
+            open_questions=_redact(capsule.open_questions),
+            budget=_redact(capsule.budget),
+            expandable=_redact(capsule.expandable),
+            warnings=list(capsule.warnings),
+            workspace_id=capsule.workspace_id or self.workspace_id,
+            session_id=capsule.session_id,
+            policy_version=capsule.policy_version,
+        )
+        return safe
+
     def _persist(self, capsule: ContextCapsule) -> None:
-        # The capsule is already redacted. Hash exactly the canonical bytes
-        # persisted so a ref is an integrity claim, never an authorization
-        # claim. Replace is atomic on the same filesystem.
+        # _persist is intentionally defensive even though it is private:
+        # hash exactly the sanitized canonical bytes persisted so a ref is an
+        # integrity claim, never an authorization claim.
+        capsule = self._prepare_capsule(capsule)
         blob = capsule.to_dict()
         encoded = _canonical_bytes(blob)
         digest = _digest(encoded)
@@ -175,14 +266,16 @@ class ContextGateway:
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, destination)
+            if _digest(destination.read_bytes()) != digest:
+                raise OSError("persisted context bytes failed verification")
         finally:
             try:
                 os.unlink(temporary)
             except FileNotFoundError:
                 pass
 
-    def inspect(self, ref: str) -> dict[str, Any]:
-        """Resolve a `context://sha256/<hash>` ref to its stored capsule."""
+    def _inspect_storage(self, ref: str) -> dict[str, Any]:
+        """Trusted storage resolver; never expose this as an agent boundary."""
         try:
             digest = ContextRef.parse(ref).digest
         except (TypeError, ValueError):
@@ -203,17 +296,38 @@ class ContextGateway:
                     "reason": f"stored capsule bytes do not match {ref}"}
         return blob
 
-    def expand(self, ref: str, section: str = "", *, principal: str = "",
-               allowed_classifications: tuple[str, ...] = ("public", "internal")) -> dict[str, Any]:
-        """§63–64 — lazy expansion: return only the requested section
-        (or the full capsule when section is empty)."""
-        cap = self.inspect(ref)
+    def inspect(self, ref: str, *, principal: str = "", workspace_id: str = "",
+                session_id: str = "", allowed_classifications: tuple[str, ...] | None = None,
+                authorizer: ContextAuthorizer | None = None) -> dict[str, Any]:
+        """Resolve a ref only after applying the protected-context policy."""
+        cap = self._inspect_storage(ref)
         if "refusal" in cap:
             return cap
-        if cap.get("classification") in ("confidential", "restricted") and (
-                not principal or cap.get("classification") not in allowed_classifications):
-            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
-                    "reason": "protected context requires an authorized principal and classification scope"}
+        decision = self._authorize_for_capsule(
+            ref, cap, principal=principal, workspace_id=workspace_id,
+            session_id=session_id, operation="inspect",
+            allowed_classifications=allowed_classifications,
+            authorizer=authorizer)
+        if "refusal" in decision:
+            return decision
+        return cap
+
+    def expand(self, ref: str, section: str = "", *, principal: str = "",
+               workspace_id: str = "", session_id: str = "",
+               allowed_classifications: tuple[str, ...] | None = None,
+               authorizer: ContextAuthorizer | None = None) -> dict[str, Any]:
+        """§63–64 — lazy expansion: return only the requested section
+        (or the full capsule when section is empty)."""
+        cap = self._inspect_storage(ref)
+        if "refusal" in cap:
+            return cap
+        decision = self._authorize_for_capsule(
+            ref, cap, principal=principal, workspace_id=workspace_id,
+            session_id=session_id, operation="expand",
+            allowed_classifications=allowed_classifications,
+            authorizer=authorizer)
+        if "refusal" in decision:
+            return decision
         if section:
             if section not in cap:
                 return {"refusal": "PF-CONTEXT-SECTION-UNKNOWN",
@@ -224,41 +338,135 @@ class ContextGateway:
                     "content": cap[section]}
         return {"ref": ref, "capsule": cap}
 
-    def delta(self, base_ref: str, capsule: ContextCapsule
+    def delta(self, base_ref: str, capsule: ContextCapsule,
+              *, principal: str = "", workspace_id: str = "",
+              session_id: str = "", authorizer: ContextAuthorizer | None = None
               ) -> dict[str, Any]:
         """§74 — baseline + delta: emit only the sections that changed vs
         the stored baseline capsule. Unchanged sections ship as the ref."""
-        base = self.inspect(base_ref)
+        base = self._inspect_storage(base_ref)
         if "refusal" in base:
             return base
+        prepared = self._prepare_capsule(capsule)
+        auth = self._authorize_for_capsule(
+            base_ref, base, principal=principal,
+            workspace_id=workspace_id or prepared.workspace_id,
+            session_id=session_id or prepared.session_id,
+            operation="delta", allowed_classifications=(prepared.classification,),
+            authorizer=authorizer)
+        if "refusal" in auth:
+            return auth
         delta: dict[str, Any] = {}
         reused: list[str] = []
-        for k, v in capsule.to_dict().items():
+        for k, v in prepared.to_dict().items():
             if k in ("schema",):
                 continue
             if base.get(k) != v:
                 delta[k] = v
             else:
                 reused.append(k)
-        self._persist(capsule)
-        return {"baseline_ref": base_ref, "delta_ref": capsule.ref(),
+        self._persist(prepared)
+        return {"baseline_ref": base_ref, "delta_ref": prepared.ref(),
                 "delta": delta, "reused_sections": reused,
                 "delta_bytes": len(json.dumps(delta, default=str)),
-                "full_bytes": capsule.byte_size}
+                "full_bytes": prepared.byte_size}
 
     # -- role-specific (§70–73) -----------------------------------------
-    def for_role(self, ref: str, role: str) -> dict[str, Any]:
+    def for_role(self, ref: str, role: str, *, principal: str = "",
+                 workspace_id: str = "", session_id: str = "",
+                 authorizer: ContextAuthorizer | None = None) -> dict[str, Any]:
         """Project a stored capsule to the sections a role receives.
         Verifier gets criteria+evidence+outputs — not the transcript."""
         if role not in ROLE_SECTIONS:
             return {"refusal": "PF-CONTEXT-ROLE-UNKNOWN",
                     "reason": f"role {role!r} not in "
                               f"{sorted(ROLE_SECTIONS)}"}
-        cap = self.inspect(ref)
+        cap = self._inspect_storage(ref)
         if "refusal" in cap:
             return cap
+        decision = self._authorize_for_capsule(
+            ref, cap, principal=principal, workspace_id=workspace_id,
+            session_id=session_id, operation="project",
+            allowed_classifications=None, authorizer=authorizer)
+        if "refusal" in decision:
+            return decision
         return {"role": role, "ref": ref,
                 "context": {s: cap.get(s) for s in ROLE_SECTIONS[role]}}
+
+    def _authorize_for_capsule(
+        self, ref: str, cap: Mapping[str, Any], *, principal: str,
+        workspace_id: str, session_id: str, operation: str,
+        allowed_classifications: tuple[str, ...] | None,
+        authorizer: ContextAuthorizer | None,
+    ) -> dict[str, Any]:
+        classification = str(cap.get("classification", "unknown"))
+        if classification not in CLASSIFICATIONS:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "unknown classification is denied by default"}
+        requested_workspace = workspace_id or str(cap.get("workspace_id") or self.workspace_id)
+        requested_session = session_id or str(cap.get("session_id") or "")
+        return self._authorize(
+            principal=principal, workspace_id=requested_workspace,
+            session_id=requested_session, operation=operation,
+            resource=ref, classification=classification,
+            allowed_classifications=allowed_classifications,
+            authorizer=authorizer)
+
+    def _authorize(
+        self, *, principal: str, workspace_id: str, session_id: str,
+        operation: str, resource: str, classification: str,
+        allowed_classifications: tuple[str, ...] | None = None,
+        authorizer: ContextAuthorizer | None = None,
+    ) -> dict[str, Any]:
+        if classification not in PROTECTED_CLASSIFICATIONS:
+            return {}
+        authority = authorizer or self.authorizer
+        if authority is None:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "protected context requires a trusted authorization authority"}
+        if not principal:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "principal is required and must be resolved by the host authority"}
+        try:
+            raw = authority.authorize(
+                principal=principal, workspace_id=workspace_id,
+                session_id=session_id, operation=operation,
+                resource=resource, classification=classification)
+        except Exception as exc:  # noqa: BLE001 - authority failures fail closed
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": f"authorization authority rejected request: {exc}"}
+        if isinstance(raw, AuthorizationDecision):
+            decision = raw
+        elif isinstance(raw, Mapping):
+            decision = AuthorizationDecision(
+                allow=bool(raw.get("allow")),
+                principal=str(raw.get("principal") or ""),
+                workspace_id=str(raw.get("workspace_id") or ""),
+                session_id=str(raw.get("session_id") or ""),
+                classifications=tuple(str(v) for v in raw.get("classifications", ())),
+                operations=tuple(str(v) for v in raw.get("operations", ())),
+                reason=str(raw.get("reason") or ""))
+        else:
+            decision = AuthorizationDecision(allow=False, reason="invalid authority decision")
+        if not decision.allow or not decision.principal or decision.principal != principal:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": decision.reason or "trusted authority denied the request"}
+        if decision.workspace_id and decision.workspace_id != workspace_id:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "workspace does not match the authorized context"}
+        if decision.session_id and decision.session_id != session_id:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "session does not match the authorized context"}
+        if classification not in decision.classifications:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "classification is not in the trusted authority scope"}
+        if decision.operations and operation not in decision.operations:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "operation is not in the trusted authority scope"}
+        if allowed_classifications is not None and classification not in allowed_classifications:
+            return {"refusal": "PF-CONTEXT-AUTHORIZATION",
+                    "reason": "caller classification request exceeds its authorized scope"}
+        return {}
 
 
 def _dedup(items: list[dict[str, Any]], key) -> list[dict[str, Any]]:

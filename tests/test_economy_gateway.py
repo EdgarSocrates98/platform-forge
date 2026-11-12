@@ -5,7 +5,13 @@ from __future__ import annotations
 
 import pytest
 
-from platformforge.context import ContextCapsule, ContextGateway, ContextRequest, Sufficiency
+from platformforge.context import (
+    AuthorizationDecision,
+    ContextCapsule,
+    ContextGateway,
+    ContextRequest,
+    Sufficiency,
+)
 from platformforge.context.refs import ContextRef
 from platformforge.economy.checkpoint import CheckpointStore, EconomyCheckpoint
 from platformforge.economy.reconcile import reconcile, savings_claim
@@ -110,9 +116,36 @@ class TestGateway:
     def test_protected_expansion_requires_authorization(self, gw):
         req = ContextRequest(**REQ, classification="confidential")
         out = gw.build(req)
-        assert gw.expand(out["ref"], "facts")["refusal"] == "PF-CONTEXT-AUTHORIZATION"
-        assert gw.expand(out["ref"], "facts", principal="reviewer",
-                         allowed_classifications=("confidential",))["content"]
+        assert out["refusal"] == "PF-CONTEXT-AUTHORIZATION"
+
+        class Authority:
+            def authorize(self, **kwargs):
+                return AuthorizationDecision(
+                    allow=True,
+                    principal=kwargs["principal"],
+                    workspace_id=kwargs["workspace_id"],
+                    session_id=kwargs["session_id"],
+                    classifications=(kwargs["classification"],),
+                    operations=("build", "inspect", "expand", "project", "delta"),
+                )
+
+        secure = ContextGateway(gw.root, authorizer=Authority(), workspace_id="ws-1")
+        out = secure.build(ContextRequest(
+            **REQ, classification="confidential", principal="reviewer",
+            workspace_id="ws-1", session_id="session-1"))
+        assert secure.inspect(out["ref"])["refusal"] == "PF-CONTEXT-AUTHORIZATION"
+        assert secure.expand(
+            out["ref"], "facts", principal="reviewer", workspace_id="ws-1",
+            session_id="session-1", allowed_classifications=("internal",),
+        )["refusal"] == "PF-CONTEXT-AUTHORIZATION"
+        assert secure.expand(
+            out["ref"], "facts", principal="reviewer", workspace_id="ws-1",
+            session_id="session-1", allowed_classifications=("confidential",),
+        )["content"]
+        assert secure.for_role(out["ref"], "reviewer")["refusal"] == "PF-CONTEXT-AUTHORIZATION"
+        assert secure.for_role(
+            out["ref"], "reviewer", principal="reviewer", workspace_id="ws-1",
+            session_id="session-1")["context"]
 
     def test_invalid_context_schema_is_refused(self, gw):
         out = gw.build(ContextRequest(task="", scope="repository"))
