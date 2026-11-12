@@ -83,5 +83,609 @@
   ],
   "requires_network": false,
   "requires_credentials": false,
-  "read_only_default": true
+  "read_only_default": true,
+  "resources": [
+    {
+      "id": "platformforge-agents",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-agents/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-change",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-change/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-core",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-core/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-economy",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-economy/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-finops",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-finops/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-fleet",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-fleet/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-governance",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-governance/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-graph",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-graph/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-lab",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-lab/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-sdd",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-sdd/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-security",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-security/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platformforge-sre",
+      "kind": "skill",
+      "location": ".claude/skills/platformforge-sre/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-extractor",
+      "kind": "agent",
+      "location": "agents/pf-extractor.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-graph-builder",
+      "kind": "agent",
+      "location": "agents/pf-graph-builder.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-inventory",
+      "kind": "agent",
+      "location": "agents/pf-inventory.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-judge",
+      "kind": "agent",
+      "location": "agents/pf-judge.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-reconciler",
+      "kind": "agent",
+      "location": "agents/pf-reconciler.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-simulator",
+      "kind": "agent",
+      "location": "agents/pf-simulator.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-synthesizer",
+      "kind": "agent",
+      "location": "agents/pf-synthesizer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "pf-verifier",
+      "kind": "agent",
+      "location": "agents/pf-verifier.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-adversarial-critic",
+      "kind": "agent",
+      "location": "agents/platform-adversarial-critic.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-ai-infra-specialist",
+      "kind": "agent",
+      "location": "agents/platform-ai-infra-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-architecture-reviewer",
+      "kind": "agent",
+      "location": "agents/platform-architecture-reviewer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-aws-specialist",
+      "kind": "agent",
+      "location": "agents/platform-aws-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-capacity-specialist",
+      "kind": "agent",
+      "location": "agents/platform-capacity-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-change-coordinator",
+      "kind": "agent",
+      "location": "agents/platform-change-coordinator.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-crossplane-specialist",
+      "kind": "agent",
+      "location": "agents/platform-crossplane-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-debate-referee",
+      "kind": "agent",
+      "location": "agents/platform-debate-referee.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-economy-reviewer",
+      "kind": "agent",
+      "location": "agents/platform-economy-reviewer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-evidence-reviewer",
+      "kind": "agent",
+      "location": "agents/platform-evidence-reviewer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-federation-specialist",
+      "kind": "agent",
+      "location": "agents/platform-federation-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-finops-specialist",
+      "kind": "agent",
+      "location": "agents/platform-finops-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-fleet-coordinator",
+      "kind": "agent",
+      "location": "agents/platform-fleet-coordinator.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-fleet-specialist",
+      "kind": "agent",
+      "location": "agents/platform-fleet-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-gitops-specialist",
+      "kind": "agent",
+      "location": "agents/platform-gitops-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-graph-specialist",
+      "kind": "agent",
+      "location": "agents/platform-graph-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-iac-specialist",
+      "kind": "agent",
+      "location": "agents/platform-iac-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-incident-coordinator",
+      "kind": "agent",
+      "location": "agents/platform-incident-coordinator.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-kubernetes-specialist",
+      "kind": "agent",
+      "location": "agents/platform-kubernetes-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-operations-safety-reviewer",
+      "kind": "agent",
+      "location": "agents/platform-operations-safety-reviewer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-optimization-coordinator",
+      "kind": "agent",
+      "location": "agents/platform-optimization-coordinator.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-orchestrator",
+      "kind": "agent",
+      "location": "agents/platform-orchestrator.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-planner",
+      "kind": "agent",
+      "location": "agents/platform-planner.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-policy-specialist",
+      "kind": "agent",
+      "location": "agents/platform-policy-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-privacy-reviewer",
+      "kind": "agent",
+      "location": "agents/platform-privacy-reviewer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-product-coordinator",
+      "kind": "agent",
+      "location": "agents/platform-product-coordinator.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-product-specialist",
+      "kind": "agent",
+      "location": "agents/platform-product-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-release-guardian",
+      "kind": "agent",
+      "location": "agents/platform-release-guardian.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-security-reviewer",
+      "kind": "agent",
+      "location": "agents/platform-security-reviewer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-security-specialist",
+      "kind": "agent",
+      "location": "agents/platform-security-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-sre-specialist",
+      "kind": "agent",
+      "location": "agents/platform-sre-specialist.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-task-spec-reviewer",
+      "kind": "agent",
+      "location": "agents/platform-task-spec-reviewer.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "platform-verifier",
+      "kind": "agent",
+      "location": "agents/platform-verifier.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "knowledge/aws/eks.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/aws/eks.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/aws/iam.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/aws/iam.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/aws/network-exposure.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/aws/network-exposure.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/aws/organizations.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/aws/organizations.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/crossplane/composition-providers.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/crossplane/composition-providers.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/crossplane/managed-resources.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/crossplane/managed-resources.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/crossplane/v1-v2.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/crossplane/v1-v2.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/kubernetes/api-deprecations.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/kubernetes/api-deprecations.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/kubernetes/autoscaling-rbac.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/kubernetes/autoscaling-rbac.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/kubernetes/gateway-api.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/kubernetes/gateway-api.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/kubernetes/pod-security.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/kubernetes/pod-security.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/sources.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/sources.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/terraform/lifecycle.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/terraform/lifecycle.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "knowledge/terraform/plan-semantics.yaml",
+      "kind": "knowledge",
+      "location": "knowledge/terraform/plan-semantics.yaml",
+      "format": "yaml",
+      "resource_class": "read-only"
+    },
+    {
+      "id": "rules/catalog",
+      "kind": "rule",
+      "location": "rules/catalog",
+      "resource_class": "policy"
+    },
+    {
+      "id": "contracts/agent-handoff.schema.json",
+      "kind": "contract",
+      "location": "contracts/agent-handoff.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/agent-run.schema.json",
+      "kind": "contract",
+      "location": "contracts/agent-run.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/agent-spec.schema.json",
+      "kind": "contract",
+      "location": "contracts/agent-spec.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/capability.schema.json",
+      "kind": "contract",
+      "location": "contracts/capability.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/change-event.schema.json",
+      "kind": "contract",
+      "location": "contracts/change-event.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/change-intent.schema.json",
+      "kind": "contract",
+      "location": "contracts/change-intent.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/change-plan.schema.json",
+      "kind": "contract",
+      "location": "contracts/change-plan.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/collector-receipt.schema.json",
+      "kind": "contract",
+      "location": "contracts/collector-receipt.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/context-pack.schema.json",
+      "kind": "contract",
+      "location": "contracts/context-pack.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/debate.schema.json",
+      "kind": "contract",
+      "location": "contracts/debate.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/distribution-manifest-v1.schema.json",
+      "kind": "contract",
+      "location": "contracts/distribution-manifest-v1.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/drift-event.schema.json",
+      "kind": "contract",
+      "location": "contracts/drift-event.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/fact.schema.json",
+      "kind": "contract",
+      "location": "contracts/fact.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/finding.schema.json",
+      "kind": "contract",
+      "location": "contracts/finding.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/graph-v2.schema.json",
+      "kind": "contract",
+      "location": "contracts/graph-v2.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/graph.schema.json",
+      "kind": "contract",
+      "location": "contracts/graph.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/install-receipt-v1.schema.json",
+      "kind": "contract",
+      "location": "contracts/install-receipt-v1.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/observation.schema.json",
+      "kind": "contract",
+      "location": "contracts/observation.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/receipt.schema.json",
+      "kind": "contract",
+      "location": "contracts/receipt.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/recommendation.schema.json",
+      "kind": "contract",
+      "location": "contracts/recommendation.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/refusal.schema.json",
+      "kind": "contract",
+      "location": "contracts/refusal.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/slo-contract.schema.json",
+      "kind": "contract",
+      "location": "contracts/slo-contract.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/task-spec.schema.json",
+      "kind": "contract",
+      "location": "contracts/task-spec.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "contracts/workspace-manifest-v1.schema.json",
+      "kind": "contract",
+      "location": "contracts/workspace-manifest-v1.schema.json",
+      "format": "json",
+      "resource_class": "validation"
+    },
+    {
+      "id": "evals/cases",
+      "kind": "eval",
+      "location": "evals/cases",
+      "resource_class": "validation"
+    },
+    {
+      "id": "evals/qpt-bench",
+      "kind": "eval",
+      "location": "evals/qpt-bench",
+      "resource_class": "validation"
+    }
+  ]
 }
