@@ -38,7 +38,7 @@ def map_phase(native: str) -> str:
     """Canonical phase for a native phase name. Unknown phases map to
     themselves only when already canonical — anything else is reported
     verbatim by callers (never silently relabeled)."""
-    return PHASE_MAP.get(native, native if native in _PHASES else native)
+    return PHASE_MAP.get(native, native)
 
 
 def _item(raw: dict[str, Any], feature: str) -> dict[str, Any]:
