@@ -92,6 +92,11 @@ All notable changes. Format: wave/feature, the "why", key commits.
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-11-12
+
+Cycle 2.7 patch release: federated SDD contracts and adapters, forge-context kind taxonomy, universal Obsidian export verbs, portal and install UX improvements, provider context-registry wiring, CI hardening and generated-artifact refresh.
+
+
 ## [0.3.1] — 2026-10-23
 
 ### Fixed
