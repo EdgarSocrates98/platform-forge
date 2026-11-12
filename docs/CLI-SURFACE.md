@@ -392,6 +392,30 @@ Global flags on every verb: `--json` · `--output <file>` ·
 - `observe slo-burn`
 - `observe timeline`
 
+## `obsidian`
+
+- `obsidian export`
+- `obsidian export-note`
+- `obsidian history`
+- `obsidian preview`
+- `obsidian scan`
+- `obsidian status`
+- `obsidian sync-plan`
+  - `obsidian export` <path> <file>  
+    `--repo <v> — workspace/repo root (default '.')` · `--baseline-hash <v>` · `--classification <v> (default 'internal')` · `--yes` · `--no-moc`
+  - `obsidian export-note` <name> <file>  
+    `--repo <v> — workspace/repo root (default '.')` · `--baseline-hash <v>` · `--classification <v> (default 'internal')` · `--yes` · `--no-moc`
+  - `obsidian history`  
+    `--repo <v> — workspace/repo root (default '.')` · `--limit <v> (default 50)`
+  - `obsidian preview` <path>  
+    `--repo <v> — workspace/repo root (default '.')`
+  - `obsidian scan`  
+    `--repo <v> — workspace/repo root (default '.')` · `--prefix <v> (default '')` · `--limit <v> (default 200)`
+  - `obsidian status`  
+    `--repo <v> — workspace/repo root (default '.')`
+  - `obsidian sync-plan` <path> <file>  
+    `--repo <v> — workspace/repo root (default '.')` · `--baseline-hash <v>` · `--classification <v> (default 'internal')`
+
 ## `ops`
 
 - `ops` <name_pos> — runbook id or 'list' (default '')  
@@ -504,7 +528,7 @@ Global flags on every verb: `--json` · `--output <file>` ·
 ## `sdd`
 
 - `sdd`  
-  `--repo <v> — workspace/repo root (default '.')` · `--feature <v>` · `--body <v> — artifact body or JSON (default '')` · `--phase <v> — stamp single phase` · `--verify <v> — verify JSON for ship gate (default '')` · `--risk-accepted` · `--override` · `--override-reason <v> (default '')`
+  `--repo <v> — workspace/repo root (default '.')` · `--feature <v>` · `--body <v> — artifact body or JSON (default '')` · `--phase <v> — stamp single phase` · `--verify <v> — verify JSON for ship gate (default '')` · `--findings <v> — findings JSON for ship gate (default '')` · `--actor <v> — override actor identity (default '')` · `--risk-accepted` · `--override` · `--override-reason <v> (default '')`
 - `sdd build`
 - `sdd check`
 - `sdd contract`
