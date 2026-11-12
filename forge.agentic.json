@@ -75,6 +75,7 @@
   "mcp_command": [
     "platformforge-mcp"
   ],
+  "mcp_verify_tool": "platformforge_inspect",
   "host_adapters": [
     "claude",
     "devin",
