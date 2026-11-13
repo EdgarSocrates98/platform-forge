@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.3.6] — 2026-11-13
+
+### Changed
+
+- Unified platform release: version bump + VERSION_DUMP.unified-release.json.
+
 ## [0.3.3] — 2026-11-10
 
 ### Fixed
