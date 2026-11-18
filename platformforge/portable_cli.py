@@ -2,6 +2,20 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+
+def _explicit_root(a) -> Path | None:
+    """The forge/* delegation target: ``--root`` (orchestrator flag) wins;
+    ``--repo`` is the legacy alias — but only when the user actually set it
+    (the ``add_common`` default ``.`` must not masquerade as explicit, or
+    the workspace ancestor walk would be silently disabled)."""
+    root = getattr(a, "root", None)
+    if root:
+        return Path(root)
+    repo = getattr(a, "repo", ".") or "."
+    return Path(repo) if repo != "." else None
+
 
 def run_guided_install() -> int:
     """Run guided install through the shared wizard and real service."""
@@ -26,14 +40,15 @@ def register(sub, add_common, emit):
 
         op = getattr(a, "op", "apply") or "apply"
         hosts = a.host or ["all"]
+        root = _explicit_root(a)
         try:
             if op != "apply":
                 fn = {
-                    "status": lambda: service.status(scope=a.scope, root=a.repo),
-                    "doctor": lambda: service.doctor(scope=a.scope, root=a.repo),
-                    "repair": lambda: service.repair(scope=a.scope, root=a.repo, dry_run=a.dry_run),
+                    "status": lambda: service.status(scope=a.scope, root=root),
+                    "doctor": lambda: service.doctor(scope=a.scope, root=root),
+                    "repair": lambda: service.repair(scope=a.scope, root=root, dry_run=a.dry_run),
                     "uninstall": lambda: service.uninstall(
-                        scope=a.scope, root=a.repo, purge=a.purge, dry_run=a.dry_run
+                        scope=a.scope, root=root, purge=a.purge, dry_run=a.dry_run
                     ),
                     "update": lambda: service.update(to=a.to, repo=None, dry_run=a.dry_run),
                     "mcp-verify": service.mcp_verify,
@@ -49,7 +64,7 @@ def register(sub, add_common, emit):
                 def call(*, yes: bool, dry_run: bool):
                     return service.install(
                         scope=a.scope,
-                        root=a.repo,
+                        root=root,
                         host="all" if hosts == ["all"] else hosts[0] if len(hosts) == 1 else "all",
                         profile=a.profile if a.profile in service.PROFILES else "recommended",
                         gateway_profile=a.gateway_profile,
@@ -155,6 +170,11 @@ def register(sub, add_common, emit):
         "--host", action="append", choices=["agents", "claude", "codex", "devin", "copilot", "all"]
     )
     sp.add_argument("--scope", default="project", choices=["project", "workspace", "user"])
+    sp.add_argument(
+        "--root", default=None,
+        help="install target root — the forge/* delegation flag; wins over "
+             "--repo when both are given (the-forge always sends --root)",
+    )
     sp.add_argument("--yes", "-y", action="store_true", help="explicit approval — required for writes")
     sp.add_argument("--purge", action="store_true", help="uninstall: also remove .platformforge state")
     sp.add_argument("--to", default=None, help="update: pinned version — never 'latest'")

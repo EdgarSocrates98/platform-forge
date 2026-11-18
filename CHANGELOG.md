@@ -1,5 +1,70 @@
 # CHANGELOG
 
+## [Unreleased] — install-2.1 (Cycle-16 Wave-05)
+
+### Added
+
+- `forge.json` declares the typed delegation surface consumed by
+  the-forge's consolidated workspace plan: `installation_kind: "content"`,
+  the `install` block (operations `plan`/`apply`/`status`/`doctor`/
+  `repair`/`update`/`uninstall`/`mcp-verify`, the lifecycle flag family,
+  four hosts, three scopes, three profiles, `approval: "--yes"`) and
+  `depends_on: []`. `forge_bootstrap.py register` propagates the
+  declared fields into the registered manifest; `mcp_verify_tool:
+  "platformforge_inspect"` is declared.
+- `platformforge install --root <dir>` — the flag the-forge's
+  orchestrator always sends (delegation previously died with rc=2).
+  `--repo` remains as the legacy alias; `--root` wins when both are
+  given. An explicit root is authoritative: the ancestor
+  `.platformforge/workspace.json` walk never climbs above it
+  (`kit.resolve_scope` parity).
+- `--profile`/`--components` now drive real writes: the requested profile
+  builds the component options (was hardcoded `recommended`) and a
+  declared `PROFILE_COMPONENTS` table maps profile → asset kinds
+  (`minimal` = config+MCP+state; `recommended`/`full` install the same
+  set today — declared honestly, no invented on-disk difference).
+  `--components` filters asset writes per kind; the selection persists
+  in `components.json` and `repair` replans with the recorded kinds.
+- Gitless project scope: the implicit cwd resolution accepts any
+  `MEMBER_MARKERS` hit (`.git`, `pyproject.toml`, `forge.json`,
+  `forge.agentic.json`, `package.json`); an explicit `--root` is honored
+  verbatim.
+- Dry-run `planned_files` now carry the contract shape
+  `{path, kind, action, sha256}` — the-forge's `_collect_forge_plan`
+  reads exactly this; bare strings made cross-forge conflict detection
+  blind.
+
+### Fixed
+
+- Fail-closed verification: `verification.status` is computed over ALL
+  checks — including post-checks appended after the receipt is built —
+  with FAIL/BLOCKED → FAIL (never PASS for mandatory checks) and
+  UNVERIFIED → UNVERIFIED (was counted as PASS). A BLOCKED `mcp-json`
+  now flips the receipt to `failed` like `context-registry` already did.
+- `--dry-run` writes nothing: the CLI `ReceiptWriter` audit receipt under
+  `.platformforge/receipts/` is suppressed on any dry-run verb — a plan
+  is read-only end to end.
+- Discovery `interfaces.mcp.command` reconciled to the declared
+  `["platformforge-mcp"]` console entry point — same argv as
+  `forge.json mcp_command`, the `.mcp.json` managed key and the
+  forge/context manifest (`platformforge mcp serve` still works but is
+  not the declared surface).
+
+### Changed
+
+- Re-vendored installkit 1.0.4 → 1.0.6 via the canonical vendor
+  mechanism (`the-forge/scripts/installkit/vendor.py`): gitless
+  `MEMBER_MARKERS` member discovery, explicit-root ancestor-walk fix,
+  consolidated-plan managed-path exclusions.
+  `scripts/forge_bootstrap.py` register step propagates
+  `installation_kind`/`install`/`depends_on`.
+- UI sync: `ui/{kit,i18n,wizard}.py` byte-parity with canonical
+  the-forge modulo renames — `forge/WorkspaceInstallation/v2` status
+  rendering and consolidated wizard review rows.
+- `--gateway-profile` remains **recorded-only**: `platformforge-mcp`'s
+  argv has no mode/surface flag today, so the selection persists as
+  `execution_profile` in `components.json` and is never faked into argv.
+
 ## [0.3.6] — 2026-11-13
 
 ### Changed

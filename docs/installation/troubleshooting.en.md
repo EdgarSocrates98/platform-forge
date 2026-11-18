@@ -5,7 +5,7 @@
 | `command not found: platformforge` | run `./setup.sh` again; open a **new** terminal (launcher lands on PATH) |
 | `FORGE-INSTALL-LOCKED` | another install is running or was interrupted; the lock expires and is recovered automatically — retry |
 | `FORGE-INSTALL-PLAN-NOT-APPROVED` | mutations require `--yes` after reviewing `--dry-run` |
-| `FORGE-INSTALL-NOT-A-REPO` | project scope needs a `.git` root or `--root` |
+| `FORGE-INSTALL-NOT-A-REPO` | implicit-cwd project scope needs a project marker (`.git`, `pyproject.toml`, `forge.json`, `package.json`) — or declare the target with `--root` |
 | `FORGE-INSTALL-DRIFT` | managed files changed on disk — run `repair` to heal managed regions, keep your edits |
 | `FORGE-INSTALL-OWNERSHIP` | files managed by another forge/profile — no silent overwrite; use `--force` only deliberately |
 | MCP `FAIL` + `stderr_tail` | missing dependency (e.g. the `mcp` extra) — install it and re-run `mcp-verify` |

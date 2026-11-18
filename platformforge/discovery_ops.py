@@ -47,7 +47,12 @@ PROTOCOLS: tuple[dict[str, str], ...] = (
 
 MCP_INTERFACE: dict[str, Any] = {
     "server_name": "platformforge",
-    "command": [CLI, "mcp", "serve"],
+    # The declared argv — the `platformforge-mcp` console entry point
+    # (pyproject [project.scripts]), same as forge.json mcp_command, the
+    # .mcp.json managed key and the forge/context manifest. The
+    # `platformforge mcp serve` subcommand reaches the same server but
+    # is not the declared surface (install-2.1 reconciliation).
+    "command": ["platformforge-mcp"],
     "verify_tool": "platformforge_inspect",
 }
 
