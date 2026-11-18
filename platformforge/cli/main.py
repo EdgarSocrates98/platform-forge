@@ -167,6 +167,12 @@ def _write_receipt(result: Any, text: str, args: argparse.Namespace, exit_code: 
     """§152/§156 — every operation emits an auditable receipt under
     .platformforge/receipts/. Never breaks the command on failure."""
     try:
+        # install-2.1: a plan writes NOTHING — no receipts dir, no
+        # .platformforge state. Any verb carrying --dry-run is read-only
+        # by contract; persisting an audit receipt would leak state the
+        # plan explicitly promised not to write.
+        if getattr(args, "dry_run", False):
+            return
         repo = getattr(args, "repo", "") or ""
         if not repo:
             return

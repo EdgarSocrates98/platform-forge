@@ -236,7 +236,13 @@ class PlatformForgePortal(fp.PortalAdapter):
             "plan_token": ctx.handler.server.sign_plan(plan_input),
             "receipt": receipt,
             "actions": [
-                {"kind": "file", "path": p, "status": "planned"}
+                {
+                    "kind": "file",
+                    # install-2.1: planned_files are {path,kind,action,sha256}
+                    # dicts (contract shape); tolerate legacy strings.
+                    "path": p.get("path") if isinstance(p, dict) else p,
+                    "status": "planned",
+                }
                 for p in receipt.get("planned_files", [])
             ],
         }

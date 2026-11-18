@@ -14,6 +14,16 @@ import pytest
 from platformforge.install import service
 
 
+@pytest.fixture(autouse=True)
+def _forge_home_isolado(tmp_path: Path,
+                        monkeypatch: pytest.MonkeyPatch) -> None:
+    """install-2.1: successful project/workspace installs re-assert
+    ``~/.forge/installations/platform-forge.json`` — keep the account
+    registry out of the real HOME (kit honors FORGE_HOME_OVERRIDE)."""
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE",
+                       str(tmp_path / "forge-home"))
+
+
 @pytest.fixture()
 def project(tmp_path: Path) -> Path:
     root = tmp_path / "my-project"
@@ -54,12 +64,71 @@ def test_bad_profile_and_host_refused(project: Path) -> None:
     assert exc.value.kind == "FORGE-INSTALL-HOST-UNKNOWN"
 
 
-def test_project_scope_requires_repo(tmp_path: Path) -> None:
+def test_project_scope_requires_repo(tmp_path: Path,
+                                     monkeypatch: pytest.MonkeyPatch) -> None:
+    """install-2.1: refusal only fires on the IMPLICIT cwd path — a bare
+    directory with no member marker. An explicit ``--root`` is
+    authoritative (the caller declared the target; gitless dirs are
+    first-class), matching ``kit.resolve_scope``."""
     plain = tmp_path / "not-a-repo"
     plain.mkdir()
+    monkeypatch.chdir(plain)
     with pytest.raises(service.InstallRefusal) as exc:
-        service.install(scope="project", root=plain, yes=True)
+        service.install(scope="project", root=None, yes=True)
     assert exc.value.kind == "FORGE-INSTALL-NOT-A-REPO"
+
+
+def test_project_scope_explicit_root_needs_no_marker(tmp_path: Path) -> None:
+    """install-2.1 gitless parity: explicit --root to a markerless dir is
+    honored verbatim (kit.resolve_scope: explicit wins)."""
+    plain = tmp_path / "fresh-target"
+    plain.mkdir()
+    doc = service.install(scope="project", root=plain, dry_run=True)
+    assert doc["status"] == "planned"
+    assert doc["target_root"] == str(plain.resolve())
+
+
+def test_project_scope_gitless_markers_accepted(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Implicit cwd resolution accepts any kit MEMBER_MARKERS hit —
+    pyproject.toml/forge.json/package.json without .git (gitless
+    members are first-class, install-2.1)."""
+    for marker in ("pyproject.toml", "forge.json", "package.json"):
+        d = tmp_path / marker.replace(".", "_")
+        d.mkdir()
+        (d / marker).write_text("{}\n" if marker.endswith("json")
+                               else "[project]\nname='x'\n")
+        monkeypatch.chdir(d)
+        doc = service.install(scope="project", root=None, dry_run=True)
+        assert doc["status"] == "planned", marker
+        assert doc["target_root"] == str(d.resolve())
+
+
+def test_workspace_scope_explicit_root_never_climbs(tmp_path: Path) -> None:
+    """install-2.1: the ancestor `.platformforge/workspace.json` walk must
+    never override an explicit --root — a member dir inside a workspace
+    stays the target."""
+    ws = tmp_path / "ws"
+    member = ws / "sub" / "member"
+    member.mkdir(parents=True)
+    (ws / ".platformforge").mkdir(parents=True)
+    (ws / ".platformforge" / "workspace.json").write_text("{}")
+    doc = service.install(scope="workspace", root=member, dry_run=True)
+    assert doc["target_root"] == str(member.resolve())
+
+
+def test_workspace_scope_implicit_walk_still_discovers(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without --root the ancestor walk keeps its discovery semantics —
+    cwd inside a workspace resolves the workspace root."""
+    ws = tmp_path / "ws"
+    member = ws / "sub" / "member"
+    member.mkdir(parents=True)
+    (ws / ".platformforge").mkdir(parents=True)
+    (ws / ".platformforge" / "workspace.json").write_text("{}")
+    monkeypatch.chdir(member)
+    doc = service.install(scope="workspace", root=None, dry_run=True)
+    assert doc["target_root"] == str(ws.resolve())
 
 
 def test_workspace_scope_accepts_fresh_directory(tmp_path: Path) -> None:
@@ -455,3 +524,153 @@ def test_uninstall_sem_estado_limpa_residuo_docs(project: Path) -> None:
     (pristine / ".git").mkdir()
     service.uninstall(scope="project", root=pristine)
     assert not (pristine / ".forge").exists()
+
+
+# --- install-2.1 (cycle-16 wave-05) ----------------------------------------
+
+
+def test_dry_run_planned_files_are_contract_dicts(project: Path) -> None:
+    """planned_files must carry {path,kind,action,sha256} — the-forge's
+    _collect_forge_plan reads exactly this shape; strings make the
+    cross-forge conflict detection blind."""
+    doc = service.install(scope="project", root=project, dry_run=True)
+    assert doc["planned_files"]
+    for f in doc["planned_files"]:
+        assert {"path", "kind", "action", "sha256"} <= set(f)
+        assert f["action"] in ("create", "update", "conflict")
+        assert len(f["sha256"]) == 64
+
+
+def test_cli_root_flag_accepted_and_preferred(
+        project: Path, tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]) -> None:
+    """the-forge's orchestrator always sends --root — the flag must parse
+    (was rc=2) and win over a stray --repo."""
+    import json
+
+    from platformforge.cli.main import main
+
+    work = tmp_path / "cwd"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    other = tmp_path / "other"
+    other.mkdir()
+    rc = main(["install", "--root", str(project), "--repo", str(other),
+               "--dry-run"])
+    assert rc == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["status"] == "planned"
+    assert doc["target_root"] == str(project.resolve())
+
+
+def test_cli_dry_run_writes_no_state(project: Path, tmp_path: Path,
+                                     monkeypatch: pytest.MonkeyPatch,
+                                     capsys: pytest.CaptureFixture[str]) -> None:
+    """A plan writes NOTHING — no .platformforge state at the target and
+    no audit receipt under --repo (ReceiptWriter suppressed on dry-run)."""
+    from platformforge.cli.main import main
+
+    work = tmp_path / "cwd"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    rc = main(["install", "--root", str(project), "--dry-run"])
+    assert rc == 0
+    capsys.readouterr()
+    assert not (project / ".platformforge").exists()
+    assert not (work / ".platformforge").exists()
+
+
+def test_mcp_json_blocked_is_fail_closed(project: Path) -> None:
+    """install-2.1: a BLOCKED mandatory post-check (mcp-json) flips the
+    receipt to failed + verification FAIL — never completed+PASS."""
+    (project / ".mcp.json").write_text("not-json{{{", encoding="utf-8")
+    doc = service.install(scope="project", root=project, yes=True)
+    check = next(c for c in doc["checks"] if c["id"] == "mcp-json")
+    assert check["status"] == "BLOCKED"
+    assert doc["status"] == "failed"
+    assert doc["verification"]["status"] == "FAIL"
+
+
+def test_context_blocked_is_fail_closed(project: Path) -> None:
+    """Same rule for context-registry BLOCKED (ambiguous foreign marker):
+    verification must reflect checks appended after the receipt build."""
+    (project / "AGENT_PROTOCOL.md").write_text("# protocolo proprio\n",
+                                             encoding="utf-8")
+    doc = service.install(scope="project", root=project, yes=True)
+    assert any(c["status"] == "BLOCKED" for c in doc["checks"])
+    assert doc["status"] == "failed"
+    assert doc["verification"]["status"] == "FAIL"
+
+
+def test_dry_run_verification_is_unverified(project: Path) -> None:
+    doc = service.install(scope="project", root=project, dry_run=True)
+    assert doc["verification"]["status"] == "UNVERIFIED"
+
+
+def test_profile_minimal_filters_assets(project: Path) -> None:
+    """PROFILE_COMPONENTS: minimal keeps core+mcp — no skill/agent writes."""
+    doc = service.install(scope="project", root=project,
+                          profile="minimal", yes=True)
+    assert doc["status"] == "completed"
+    assert not (project / ".agents" / "skills").exists()
+    assert not (project / ".agents" / "agents").exists()
+    # mcp is in minimal's kind set — the workspace-local hint is written
+    # and the managed .mcp.json key is asserted.
+    assert (project / ".platformforge" / "mcp.json").is_file()
+    ids = {c["id"] for c in doc["checks"]}
+    assert "mcp-json" in ids
+
+
+def test_components_selection_filters_writes(project: Path) -> None:
+    """--components overrides by kind: skills-only writes no mcp surface."""
+    doc = service.install(scope="project", root=project,
+                          components=("skills",), yes=True)
+    assert doc["status"] == "completed"
+    assert (project / ".agents" / "skills").exists()
+    assert not (project / ".mcp.json").exists()
+    assert "mcp-json" not in {c["id"] for c in doc["checks"]}
+
+
+def test_components_unknown_refused(project: Path) -> None:
+    with pytest.raises(service.InstallRefusal) as exc:
+        service.install(scope="project", root=project,
+                        components=("bogus",), yes=True)
+    assert exc.value.kind == "FORGE-INSTALL-PROFILE-UNKNOWN"
+
+
+def test_install_registers_declared_install_surface(
+        project: Path, tmp_path: Path) -> None:
+    """A completed project install re-asserts the account manifest with
+    the forge.json install-2.1 declarations (verbatim, never
+    fabricated) — sibling parity: aws/azure do the same."""
+    import json
+
+    from platformforge import _installkit as kit
+
+    doc = service.install(scope="project", root=project, yes=True)
+    assert doc["status"] == "completed"
+    manifest = json.loads(
+        (kit.installations_dir() / "platform-forge.json").read_text(
+            encoding="utf-8"))
+    assert manifest["schema"] == "forge/InstallationManifest/v1"
+    assert manifest["installation_kind"] == "content"
+    assert manifest["depends_on"] == []
+    surf = manifest["install"]
+    assert "--root" in surf["flags"] and "--scope" in surf["flags"]
+    assert surf["approval"] == "--yes"
+    assert surf["scopes"] == ["project", "workspace", "user"]
+    assert manifest["mcp"]["command"] == ["platformforge-mcp"]
+    assert manifest["mcp"]["verify_tool"] == "platformforge_inspect"
+
+
+def test_failed_install_does_not_register(project: Path,
+                                          tmp_path: Path) -> None:
+    """Fail-closed: a BLOCKED post-check keeps status=failed — no account
+    manifest is (re-)asserted for an install that did not complete."""
+    from platformforge import _installkit as kit
+
+    (project / ".mcp.json").write_text("not-json{{{", encoding="utf-8")
+    doc = service.install(scope="project", root=project, yes=True)
+    assert doc["status"] == "failed"
+    assert not (kit.installations_dir() / "platform-forge.json").exists()

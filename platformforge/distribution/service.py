@@ -39,7 +39,27 @@ def _host_prefix(host: str) -> str:
     return {"agents": ".agents/agents/", "claude": ".claude/agents/",
             "codex": ".codex/agents/", "devin": ".devin/agents/"}[host]
 
-def portable_assets(hosts: Iterable[str]) -> dict[str, bytes]:
+def _asset_kind(rel: str) -> str:
+    """The vendored installkit's path classifier — kept as the single
+    source so `--components` filtering and dry-run `planned_files` kinds
+    agree with the cross-forge plan contract (install-2.1)."""
+    from platformforge import _installkit as kit
+
+    return kit._asset_kind(rel)
+
+def _filter_kinds(assets: dict[str, bytes],
+                  asset_kinds: Iterable[str] | None) -> dict[str, bytes]:
+    """``--components``/profile kind selection — ``None`` keeps the full
+    asset set (legacy behavior); an explicit set filters writes honestly."""
+    if asset_kinds is None:
+        return assets
+    kinds = set(asset_kinds)
+    return {rel: b for rel, b in assets.items()
+            if _asset_kind(rel) in kinds}
+
+def portable_assets(hosts: Iterable[str],
+                    asset_kinds: Iterable[str] | None = None
+                    ) -> dict[str, bytes]:
     hosts = tuple(dict.fromkeys(hosts))
     bad = set(hosts) - set(HOSTS)
     if bad:
@@ -73,7 +93,7 @@ def portable_assets(hosts: Iterable[str]) -> dict[str, bytes]:
         "command": ["platformforge-mcp"],
         "scope": "workspace-local",
     }, indent=2, sort_keys=True).encode() + b"\n"
-    return out
+    return _filter_kinds(out, asset_kinds)
 
 def _distribution(profile: str, hosts: list[str], assets: dict[str, bytes],
                   source_sha: str = "") -> DistributionManifest:
@@ -100,10 +120,11 @@ def plan_install(
     target: str | Path,
     profile: str = "agentic",
     hosts: list[str] | None = None,
+    asset_kinds: Iterable[str] | None = None,
 ) -> tuple[InstallPlan, DistributionManifest, dict[str, bytes]]:
     root = Path(target).resolve()
     hosts = hosts or ["agents"]
-    assets = portable_assets(hosts)
+    assets = portable_assets(hosts, asset_kinds)
     manifest = _distribution(profile, hosts, assets)
     receipt_path = root / PF_DIR / INSTALL_RECEIPT
     old = {}
@@ -130,8 +151,10 @@ def plan_install(
                        managed_updates, conflicts, network_required=False), manifest, assets
 
 def apply_install(target: str | Path, profile: str = "agentic",
-                  hosts: list[str] | None = None, dry_run: bool = False) -> dict:
-    plan, manifest, assets = plan_install(target, profile, hosts)
+                  hosts: list[str] | None = None, dry_run: bool = False,
+                  asset_kinds: Iterable[str] | None = None) -> dict:
+    plan, manifest, assets = plan_install(target, profile, hosts,
+                                          asset_kinds=asset_kinds)
     if dry_run:
         return {"plan": plan.to_dict(), "distribution": manifest.to_dict()}
     if not plan.safe:

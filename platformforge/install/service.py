@@ -29,6 +29,37 @@ PROFILES: tuple[str, ...] = ("minimal", "recommended", "full")
 GATEWAY_PROFILES: tuple[str, ...] = ("economy", "balanced", "deep")
 SCOPES: tuple[str, ...] = ("project", "workspace", "user")
 CONTRACT_HOSTS: tuple[str, ...] = ("claude", "devin", "codex", "copilot")
+
+# --------------------------------------------------------------------------
+# install-2.1 — declared profile/component semantics (sibling precedent:
+# PROFILE_COMPONENTS in sparkforge_aws/azure + apiforge).
+#
+# `--profile` selects asset-kind SETS — and nothing else. There is no
+# per-kind depth: `recommended` and `full` install the SAME file set
+# today (declared honestly, same as `kit.profile_asset_kinds`); `full` is
+# the slot reserved for heavier optional defaults if they ever ship.
+# `minimal` keeps only core + `mcp` — the .mcp.json managed key is config,
+# not content. `--components` overrides by kind.
+#
+# `--gateway-profile` is an ORTHOGONAL dimension: persisted as
+# `execution_profile` in components.json for the orchestrator/telemetry.
+# platformforge-mcp's argv has NO mode/surface flag today — the profile
+# is recorded-only, never faked into argv (install-2.1 finding §8).
+# --------------------------------------------------------------------------
+
+# Asset kinds (`kit.COMPONENT_KINDS` + core) each `--profile` enables —
+# the same sets as `kit.profile_asset_kinds`, as declared data.
+PROFILE_COMPONENTS: dict[str, tuple[str, ...]] = {
+    "minimal": ("config", "mcp", "marker", "state"),
+    "recommended": (
+        "config", "mcp", "marker", "state",
+        "skill", "agent", "knowledge", "rules", "evals",
+    ),
+    "full": (
+        "config", "mcp", "marker", "state",
+        "skill", "agent", "knowledge", "rules", "evals",
+    ),
+}
 # contract host -> native host prefix(es)
 _HOST_MAP: dict[str, str] = {
     "claude": "claude",
@@ -73,15 +104,26 @@ def _resolve(scope: str, root: Path | None) -> Path:
         return Path.home()
     if scope == "project":
         t = Path(root).resolve() if root else Path.cwd().resolve()
-        if not (t / ".git").exists() and not (
-            (t / "forge.json").exists() and (t / "pyproject.toml").exists()):
+        # install-2.1: an explicit --root is authoritative (the caller
+        # declared the target — gitless project dirs are first-class).
+        # The implicit cwd path still requires a project marker, but the
+        # marker set is the kit's MEMBER_MARKERS — pyproject.toml /
+        # forge.json / package.json count, .git is not mandatory.
+        if root is None and not kit._is_project_root(t):
             raise InstallRefusal(
                 kit.E_NOTREPO,
-                f"{t} is not a repository root (no .git / forge.json+pyproject.toml); fresh dirs are valid --scope workspace targets")
+                f"{t} is not a project root (none of {sorted(kit.MEMBER_MARKERS)}); "
+                "pass --root to declare the target, or use --scope workspace "
+                "for fresh dirs")
         return t
-    # workspace: reuse existing manifest when present. Fresh directories are
-    # valid workspace targets; apply_install creates manifest atomically.
+    # workspace: an explicit --root is authoritative — the ancestor
+    # `.platformforge/workspace.json` walk can never move the target ABOVE
+    # it (install-2.1; parity with kit.resolve_scope). Without --root the
+    # walk discovers an existing workspace manifest from cwd; fresh
+    # directories remain valid targets (apply creates the manifest).
     t = Path(root).resolve() if root else Path.cwd().resolve()
+    if root is not None:
+        return t
     for cand in (t, *t.parents):
         if (cand / ".platformforge" / "workspace.json").is_file():
             return cand
@@ -125,6 +167,35 @@ def _gateway_profile(profile: str) -> str:
     return profile
 
 
+def _verification_status(checks: list[dict[str, Any]]) -> str:
+    """Fail-closed aggregation (install-2.1): a check that could not run is
+    never a pass. FAIL/BLOCKED → FAIL (a BLOCKED mandatory component is a
+    failed verification, not an approved one), UNVERIFIED → UNVERIFIED
+    (honest middle state — same three-state rule the consolidated
+    workspace receipt uses), PASS/NOT_APPLICABLE → PASS."""
+    statuses = {c.get("status") for c in checks}
+    if statuses & {"FAIL", "BLOCKED"}:
+        return "FAIL"
+    if "UNVERIFIED" in statuses:
+        return "UNVERIFIED"
+    return "PASS"
+
+
+def _finalize_verification(doc: dict[str, Any]) -> dict[str, Any]:
+    """Recompute ``verification`` AFTER all post-checks were appended —
+    checks landing after the receipt is built (mcp-json, context-registry,
+    consumer-docs) must move the verdict too. A FAIL/BLOCKED check also
+    flips a ``completed`` status to ``failed`` — the same rule
+    context-registry already applied, now uniform (mcp-json included)."""
+    checks = doc.get("checks") or []
+    doc["verification"] = {"status": _verification_status(checks)}
+    if doc.get("status") == "completed" and any(
+        c.get("status") in ("FAIL", "BLOCKED") for c in checks
+    ):
+        doc["status"] = "failed"
+    return doc
+
+
 def _receipt(operation: str, scope: str, target: Path, *,
              status: str, checks: list[dict[str, Any]],
              managed_files: list[str] | None = None,
@@ -134,15 +205,38 @@ def _receipt(operation: str, scope: str, target: Path, *,
         "operation": operation, "scope": scope,
         "target_root": str(target), "managed_files": managed_files or [],
         "checks": checks,
-        "verification": {"status": "PASS" if all(
-            c["status"] in ("PASS", "NOT_APPLICABLE", "UNVERIFIED", "BLOCKED")
-            for c in checks) else "FAIL"},
+        "verification": {"status": _verification_status(checks)},
         "status": status, "created_at": kit._utc_now(),
         "created_by": f"platformforge/{__version__}",
     }
     if extra:
         doc.update(extra)
     return doc
+
+
+def _planned_files(plan: Any, assets: dict[str, bytes]) -> list[dict[str, Any]]:
+    """Dry-run plan evidence in the contract shape — ``{path, kind,
+    action, sha256}`` dicts (the-forge's ``_collect_forge_plan`` reads
+    exactly this for cross-forge conflict detection; bare strings make
+    it blind). Actions: create / update / conflict (user-modified managed
+    path — still a claim, reported not written)."""
+    out: list[dict[str, Any]] = []
+
+    def _entry(rel: str, action: str) -> dict[str, Any]:
+        return {
+            "path": rel,
+            "kind": kit._asset_kind(rel),
+            "action": action,
+            "sha256": kit._sha(assets[rel]),
+        }
+
+    for rel in sorted(plan.creates):
+        out.append(_entry(rel, "create"))
+    for rel in sorted(plan.managed_updates + plan.identical):
+        out.append(_entry(rel, "update"))
+    for rel in sorted(plan.conflicts):
+        out.append(_entry(rel, "conflict"))
+    return out
 
 
 def install(*, scope: str = "project", root: Path | None = None,
@@ -153,16 +247,27 @@ def install(*, scope: str = "project", root: Path | None = None,
     """``platformforge install`` — governed apply over ``apply_install``."""
     from platformforge.distribution.service import apply_install, plan_install
 
-    _profile(profile)  # validates; native profile is always "agentic"
+    _profile(profile)  # validates; native dist profile stays "agentic"
     _gateway_profile(gateway_profile)
-    opts = kit.component_options("recommended", components)
+    # install-2.1: the REQUESTED profile drives the component options (was
+    # hardcoded "recommended") and the effective asset kinds — declared via
+    # PROFILE_COMPONENTS when no explicit --components selection exists.
+    try:
+        opts = kit.component_options(profile, components)
+    except kit.InstallError as exc:
+        # Normalize to the service refusal type — the CLI catches
+        # InstallRefusal; a raw InstallError would escape as a traceback.
+        raise InstallRefusal(exc.kind, exc.detail) from exc
+    if components is None:
+        opts["asset_kinds"] = list(PROFILE_COMPONENTS[profile])
     opts["execution_profile"] = gateway_profile
     native_hosts = _hosts(host)
     target = _resolve(scope, root)
     state = target / ".platformforge"
     if dry_run:
-        plan, _manifest, _assets = plan_install(target, "agentic",
-                                              native_hosts)
+        plan, _manifest, assets = plan_install(
+            target, "agentic", native_hosts,
+            asset_kinds=opts["asset_kinds"])
         return _receipt(
             "install", scope, target, status="planned",
             checks=[{"id": "plan", "status": "UNVERIFIED",
@@ -170,14 +275,15 @@ def install(*, scope: str = "project", root: Path | None = None,
             extra={"dry_run": True,
                    "components": opts or None,
                    "gateway_profile": gateway_profile,
-                   "planned_files": sorted(plan.creates + plan.managed_updates),
+                   "planned_files": _planned_files(plan, assets),
                    "conflicts": plan.conflicts})
     if not yes:
         raise InstallRefusal(
             kit.E_NOTAPPROVED,
             "install requires --yes or --dry-run; the plan is the contract")
     with kit.acquire_lock(state):
-        out = apply_install(target, "agentic", native_hosts)
+        out = apply_install(target, "agentic", native_hosts,
+                            asset_kinds=opts["asset_kinds"])
     if opts:
         state.mkdir(parents=True, exist_ok=True)
         (kit.components_path(state)).write_text(
@@ -206,6 +312,15 @@ def install(*, scope: str = "project", root: Path | None = None,
         target, doc, scope=scope, profile=profile,
         hosts=contract_hosts, components=opts or None,
     )
+    # Fail-closed (install-2.1): verification is computed over ALL checks —
+    # including the mcp-json/context-registry post-checks appended above —
+    # and a BLOCKED/FAIL post-check flips status to failed.
+    doc = _finalize_verification(doc)
+    if doc["status"] == "completed" and scope != "user":
+        # Re-assert the account manifest so the-forge discovers the
+        # declared install surface without a bootstrap re-run. User scope
+        # installs assets under ~ — not a project runtime.
+        _register(target)
     return doc
 
 
@@ -303,10 +418,17 @@ def repair(*, scope: str = "project", root: Path | None = None,
         )
         old_rec = _read_receipt(target)
         hosts = old_rec.get("hosts") or ["agents"]
-        plan, _manifest, assets = plan_install(target, "agentic", hosts)
+        # Replan with the SAME component selection the install recorded —
+        # an absent `asset_kinds` (pre-selection installs) means the full
+        # set, never a guess.
+        stored_opts = kit.load_components(state)
+        stored_kinds = stored_opts.get("asset_kinds")
+        plan, _manifest, assets = plan_install(
+            target, "agentic", hosts, asset_kinds=stored_kinds)
         restored: list[str] = []
         if not plan.conflicts:
-            out = apply_install(target, "agentic", hosts)
+            out = apply_install(target, "agentic", hosts,
+                                asset_kinds=stored_kinds)
             if "refusal" in out:
                 return _receipt(
                     "repair", scope, target, status="failed",
@@ -378,17 +500,18 @@ def repair(*, scope: str = "project", root: Path | None = None,
             })
     # `.mcp.json` managed key: re-assert when the recorded component set
     # enables mcp and the key is missing/drifted.
-    stored = kit.load_components(state)
-    if _mcp_enabled(stored) and _mcp_current(target) != _MCP_ENTRY:
+    if _mcp_enabled(stored_opts) and _mcp_current(target) != _MCP_ENTRY:
         checks.append(_mcp_set_project(target))
     # Modified managed files are user content by the platform-forge
-    # ownership contract — preserved, never force-rewritten.
-    return _receipt(
+    # ownership contract — preserved, never force-rewritten. Fail-closed:
+    # a BLOCKED post-check (mcp-json/context-registry/consumer-docs) flips
+    # status + verification, never a silent completed+PASS.
+    return _finalize_verification(_receipt(
         "repair", scope, target,
         status="completed" if not remaining else "failed",
         checks=checks,
         extra={"repaired": [r for r in restored if r not in remaining],
-               "kept": kept})
+               "kept": kept}))
 
 
 def uninstall(*, scope: str = "project", root: Path | None = None,
@@ -503,6 +626,101 @@ __all__ = [
 _PKG_DIR = Path(__file__).resolve().parents[1]
 _REPO_DIR = _PKG_DIR.parent
 
+
+def _bundled_json(name: str) -> dict[str, Any] | None:
+    for cand in (_PKG_DIR / "data" / name, _REPO_DIR / name):
+        data = kit._load_json(cand, None)
+        if isinstance(data, dict):
+            return data
+    return None
+
+
+def _installation_manifest() -> dict[str, Any]:
+    path = kit.installations_dir() / f"{FORGE_ID}.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _register(target: Path) -> None:
+    """Re-assert ``~/.forge/installations/platform-forge.json`` after a
+    project/workspace install (install-2.1, sibling parity): when the
+    bootstrap already wrote the manifest the installed runtime stays
+    authoritative — only the declared install fields are refreshed;
+    otherwise a minimal manifest points at the project state."""
+    existing = _installation_manifest()
+    doc = dict(existing) if existing else {}
+    doc.update(
+        {
+            "schema": kit.SCHEMA_MANIFEST,
+            "forge_id": FORGE_ID,
+            "package": "platformforge",
+            "distribution": "platformforge",
+            "cli": {
+                "name": "platformforge",
+                "version_cmd": ["platformforge", "--version"],
+            },
+            "version": __version__,
+            "updated_at": kit._utc_now(),
+            "installed_at": doc.get("installed_at", kit._utc_now()),
+            "installed_by": doc.get(
+                "installed_by",
+                {"agent": "platformforge-cli", "version": __version__},
+            ),
+            "source": doc.get(
+                "source", {"kind": "project-install", "path": str(target)}
+            ),
+        }
+    )
+    doc.setdefault("install_root", str(kit.installs_root() / FORGE_ID))
+    doc.setdefault(
+        "mcp",
+        {
+            "server_name": "platformforge",
+            "command": ["platformforge-mcp"],
+            "verify_tool": "platformforge_inspect",
+            "verified": False,
+        },
+    )
+    doc.update(_declared_install_fields())
+    kit.register_installation(doc)
+
+
+def _declared_install_fields() -> dict[str, Any]:
+    """The install-2.1 declarations of THIS forge's ``forge.json`` —
+    copied verbatim into the registered manifest, never fabricated
+    (mirrors the ``forge_bootstrap`` register step):
+
+    - ``installation_kind``: ``content``|``service``|``control-tool`` —
+      the class the consolidated plan uses for stable ordering.
+    - ``install``: the declared surface (operations/flags/hosts/scopes/
+      profiles/approval) — the orchestrator's argv builder only sends
+      what is declared.
+    - ``depends_on``: forge_ids that must install first — declared even
+      when empty (``[]``): the consolidated plan reads the key's
+      presence as an explicit declaration, not missing data.
+    """
+    cfg = _bundled_json("forge.json")
+    if not cfg:
+        return {}
+    doc: dict[str, Any] = {}
+    if cfg.get("installation_kind"):
+        kind = str(cfg["installation_kind"])
+        if kind not in kit.INSTALLATION_KINDS:
+            raise InstallRefusal(
+                kit.E_UNSUPPORTED,
+                f"forge.json installation_kind {kind!r} — expected "
+                f"{kit.INSTALLATION_KINDS}",
+            )
+        doc["installation_kind"] = kind
+    if cfg.get("install"):
+        doc["install"] = dict(cfg["install"])
+    if "depends_on" in cfg:
+        doc["depends_on"] = [str(d) for d in cfg["depends_on"]]
+    return doc
+
+
 _PF_DOMAINS: tuple[str, ...] = (
     "platform-engineering",
     "infrastructure-as-code",
@@ -528,13 +746,6 @@ def _context_manifest(
     `data_path("portable_skills")` e os grupos de dados do pacote."""
     from platformforge.agents.roster import AGENTS
     from platformforge.resources import data_path
-
-    def _bundled_json(name: str) -> dict[str, Any] | None:
-        for cand in (_PKG_DIR / "data" / name, _REPO_DIR / name):
-            data = kit._load_json(cand, None)
-            if isinstance(data, dict):
-                return data
-        return None
 
     forge_json = _bundled_json("forge.json")
     agentic = _bundled_json("forge.agentic.json")
