@@ -8,6 +8,51 @@
   "mcp_command": [
     "platformforge-mcp"
   ],
+  "mcp_verify_tool": "platformforge_inspect",
+  "installation_kind": "content",
+  "install": {
+    "operations": [
+      "plan",
+      "apply",
+      "status",
+      "doctor",
+      "repair",
+      "update",
+      "uninstall",
+      "mcp-verify"
+    ],
+    "flags": [
+      "--scope",
+      "--root",
+      "--host",
+      "--profile",
+      "--components",
+      "--gateway-profile",
+      "--yes",
+      "--dry-run",
+      "--purge",
+      "--to",
+      "--repo"
+    ],
+    "hosts": [
+      "claude",
+      "devin",
+      "codex",
+      "copilot"
+    ],
+    "scopes": [
+      "project",
+      "workspace",
+      "user"
+    ],
+    "profiles": [
+      "minimal",
+      "recommended",
+      "full"
+    ],
+    "approval": "--yes"
+  },
+  "depends_on": [],
   "extras": [
     "mcp"
   ],
