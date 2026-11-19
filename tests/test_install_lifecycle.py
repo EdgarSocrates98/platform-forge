@@ -674,3 +674,106 @@ def test_failed_install_does_not_register(project: Path,
     doc = service.install(scope="project", root=project, yes=True)
     assert doc["status"] == "failed"
     assert not (kit.installations_dir() / "platform-forge.json").exists()
+
+
+# --- cycle-16.1 wave-06: forge/InstallLifecycle/v1 + incremental reinstall ---
+
+
+def test_receipt_carries_install_lifecycle_block(project: Path) -> None:
+    """forge/InstallLifecycle/v1 — every emitted receipt carries the
+    derived lifecycle view: dry-run plans are `planned`, a verified
+    apply is `verified` (never `completed` — that stays in status)."""
+    plan = service.install(scope="project", root=project, dry_run=True)
+    assert plan["lifecycle"]["schema"] == "forge/InstallLifecycle/v1"
+    assert plan["lifecycle"]["state"] == "planned"
+
+    doc = service.install(scope="project", root=project, yes=True)
+    assert doc["status"] == "completed"
+    assert doc["verification"]["status"] == "PASS"
+    assert doc["lifecycle"]["state"] == "verified"
+
+
+def test_failed_install_lifecycle_is_failed(project: Path) -> None:
+    """A BLOCKED mandatory post-check flips status to failed — and the
+    derived lifecycle follows the FINAL verdict, not the first build."""
+    (project / ".mcp.json").write_text("not-json{{{", encoding="utf-8")
+    doc = service.install(scope="project", root=project, yes=True)
+    assert doc["status"] == "failed"
+    assert doc["lifecycle"]["state"] == "failed"
+
+
+def test_health_docs_carry_lifecycle_block(project: Path) -> None:
+    """InstallationHealth docs map onto the same lifecycle: healthy →
+    ready, degraded → partially_applied, no evidence → unverified."""
+    st = service.status(scope="project", root=project)
+    assert st["lifecycle"]["schema"] == "forge/InstallLifecycle/v1"
+    assert st["lifecycle"]["state"] == "unverified"
+
+    doc = service.install(scope="project", root=project, yes=True)
+    st = service.status(scope="project", root=project)
+    assert st["status"] == "healthy"
+    assert st["lifecycle"]["state"] == "ready"
+    dr = service.doctor(scope="project", root=project)
+    assert dr["lifecycle"]["state"] in ("ready", "partially_applied",
+                                       "unverified", "failed")
+
+    victim = project / next(p for p in doc["managed_files"]
+                            if "skills/" in p)
+    victim.write_text("user drift\n", encoding="utf-8")
+    st = service.status(scope="project", root=project)
+    assert st["status"] == "degraded"
+    assert st["lifecycle"]["state"] == "partially_applied"
+
+
+def test_lifecycle_derivation_closed_vocabulary() -> None:
+    """Derivation unit checks — every output stays inside the closed
+    v1 vocabulary; declined/refused receipts derive ``blocked``."""
+    from platformforge.install import lifecycle as lc
+
+    for doc, want in (
+        ({"status": "planned"}, "planned"),
+        ({"status": "declined"}, "blocked"),
+        ({"status": "refused"}, "blocked"),
+        ({"status": "completed",
+          "verification": {"status": "PASS"}}, "verified"),
+        ({"status": "completed",
+          "verification": {"status": "FAIL"}}, "failed"),
+        ({"status": "completed"}, "applied"),
+        ({"status": "failed"}, "failed"),
+        ({"status": "unverified"}, "unverified"),
+        ({"forges": [{"status": "completed"}, {"status": "failed"}],
+          "status": "completed",
+          "verification": {"status": "PASS"}}, "partially_applied"),
+    ):
+        state, _detail = lc.receipt_state(doc)
+        assert state == want, (doc, state)
+        assert state in lc.STATES
+    for doc, want in (
+        ({"status": "healthy"}, "ready"),
+        ({"status": "degraded"}, "partially_applied"),
+        ({"status": "broken"}, "failed"),
+        ({"status": "unverified"}, "unverified"),
+    ):
+        state, _detail = lc.health_state(doc)
+        assert state == want, (doc, state)
+        assert state in lc.STATES
+
+
+def test_reinstall_does_not_rewrite_identical_assets(project: Path) -> None:
+    """Incremental reinstall (cycle 16.1 §7.4): a second install plans
+    every byte-identical asset as `identical` — and does NOT re-write
+    them on disk (mtimes stay untouched)."""
+    doc = service.install(scope="project", root=project, yes=True)
+    managed = doc["managed_files"]
+    assert managed
+    mtimes = {p: (project / p).stat().st_mtime_ns for p in managed}
+
+    again = service.install(scope="project", root=project, yes=True)
+    plan = again["plan"]
+    assert not plan["creates"], plan["creates"]
+    assert not plan["managed_updates"], plan["managed_updates"]
+    assert not plan["conflicts"], plan["conflicts"]
+    assert sorted(plan["identical"]) == sorted(managed)
+    for rel, before in mtimes.items():
+        after = (project / rel).stat().st_mtime_ns
+        assert after == before, f"{rel} was re-written"

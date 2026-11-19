@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## [Unreleased] — cycle-16.1 wave-06
+
+### Added
+
+- `forge/InstallLifecycle/v1` on every emitted install document:
+  receipts (`install`/`repair`/`uninstall`/`update`, dry-runs and
+  refusals) and health docs (`install status`, `install doctor`) now
+  carry a derived `lifecycle` block —
+  `planned|blocked|failed|applied|partially_applied|verified|unverified|
+  ready|certified` — computed from the FINAL `status` + `verification`
+  (never a stored verdict; `completed` stays in `status` for
+  compatibility). New module `platformforge/install/lifecycle.py`;
+  derivation mirrors the-forge's, with `declined` mapped to `blocked`
+  (user-declined plan = approval-gate refusal).
+- Incremental-reinstall evidence: `tests/test_install_lifecycle.py`
+  proves a second `install` plans every byte-identical asset as
+  `identical` and does NOT re-write it (mtime-stable). Reinstall plans
+  report `creates`/`managed_updates`/`identical`/`conflicts` — honest
+  accounting, no silent rewrites.
+
+### Changed
+
+- Re-vendored canonical installkit (`the-forge` cycle-16.1):
+  `platformforge/_installkit.py` + `scripts/forge_installkit.py` —
+  incremental-install accounting (`counts` + `written_bytes` on apply
+  receipts), resolved-argv managed `.mcp.json` entries
+  (`mcp_command_resolved`, absolute interpreter/shim instead of a PATH
+  guess on the kit's own apply path), `argv` recorded on mcp receipt
+  entries.
+- Re-vendored canonical `_forgecontext.py` — the per-forge consumer
+  block written into `AGENTS.md` is now the compact L0 form (identity +
+  domains + capability-manifest pointer + `AGENT_PROTOCOL.md` pointer);
+  CLI/MCP/discovery detail lives in the manifest it points to (cycle
+  16.1 §8.1 — verifiable pointers, not duplicated instruction).
+
 ## [Unreleased] — install-2.1 (Cycle-16 Wave-05)
 
 ### Added
