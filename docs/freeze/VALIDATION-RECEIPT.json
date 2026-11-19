@@ -1,13 +1,13 @@
 {
   "gates": {
     "cmd": "<repo>/.venv/bin/python scripts/validate.py",
-    "ms": 121024.6,
-    "rc": 2,
+    "ms": 120210.2,
+    "rc": 0,
     "tail": [
       "}"
     ]
   },
-  "gates_ok": false,
+  "gates_ok": true,
   "note": "sha is the HEAD the suite ran against; the commit that lands this receipt is docs-only",
   "receipts_present": {
     "AGENTIC-RECEIPT.json": true,
@@ -20,6 +20,6 @@
     "SOAK-RECEIPT.json": true
   },
   "schema": "platformforge/validation-receipt/v1",
-  "sha": "398d6bc2424345e46f996f40ae4e24ce4e4c4803",
-  "verdict": "fail"
+  "sha": "37eddac3d90d0c54a816baad2a0a563396d045b2",
+  "verdict": "pass"
 }
