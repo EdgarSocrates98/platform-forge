@@ -216,6 +216,16 @@ def _receipt(operation: str, scope: str, target: Path, *,
     }
     if extra:
         doc.update(extra)
+    # ``receipt_id`` is required by ``forge/InstallReceipt/v1`` — a digest
+    # over the operation's evidence, matching the canonical installkit
+    # semantics: install/repair bind ``{f: files, m: markers}``; uninstall
+    # binds ``{r: removed, k: kept}``.
+    if doc["operation"] == "uninstall":
+        evidence = {"r": doc.get("removed") or [], "k": doc.get("kept") or []}
+    else:
+        evidence = {"f": doc.get("managed_files") or [],
+                    "m": doc.get("managed_markers") or []}
+    doc["receipt_id"] = f"sha256:{kit._sha(kit._json_bytes(evidence))}"
     # Derived ``forge/InstallLifecycle/v1`` view — additive; older parsers
     # keep working (contract §2). Computed after ``extra`` so batch
     # ``forges`` rows inform partially_applied.
