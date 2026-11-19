@@ -325,6 +325,11 @@ def install(*, scope: str = "project", root: Path | None = None,
     # including the mcp-json/context-registry post-checks appended above —
     # and a BLOCKED/FAIL post-check flips status to failed.
     doc = _finalize_verification(doc)
+    # Persist the contract receipt — emitted JSON alone is not auditable
+    # (E2E F2): siblings write ``forge/InstallReceipt/v1`` under
+    # ``<state>/receipts/``; ``_write_receipt`` re-derives lifecycle at
+    # write time, after final status.
+    kit._write_receipt(state, doc)
     if doc["status"] == "completed" and scope != "user":
         # Re-assert the account manifest so the-forge discovers the
         # declared install surface without a bootstrap re-run. User scope
@@ -521,12 +526,14 @@ def repair(*, scope: str = "project", root: Path | None = None,
     # ownership contract — preserved, never force-rewritten. Fail-closed:
     # a BLOCKED post-check (mcp-json/context-registry/consumer-docs) flips
     # status + verification, never a silent completed+PASS.
-    return _finalize_verification(_receipt(
+    doc = _finalize_verification(_receipt(
         "repair", scope, target,
         status="completed" if not remaining else "failed",
         checks=checks,
         extra={"repaired": [r for r in restored if r not in remaining],
                "kept": kept}))
+    kit._write_receipt(state, doc)
+    return doc
 
 
 def uninstall(*, scope: str = "project", root: Path | None = None,
@@ -571,12 +578,14 @@ def uninstall(*, scope: str = "project", root: Path | None = None,
     if scope != "user" and _docs_leftovers(target):
         checks += _unregister_context(target)
     checks.append(_mcp_unset_project(target))
-    return _receipt(
+    doc = _receipt(
         "uninstall", scope, target,
         status="failed" if any(c.get("status") == "BLOCKED" for c in checks) else "completed",
         checks=checks,
         extra={"removed": removed,
                "kept": out.get("preserved_modified", [])})
+    kit._write_receipt(state, doc)
+    return doc
 
 
 def update(*, to: str | None = None, repo: Path | None = None,
@@ -605,12 +614,14 @@ def update(*, to: str | None = None, repo: Path | None = None,
                         extra={"dry_run": True})
     proc = subprocess.run(
         cmd, capture_output=True, text=True, timeout=900, check=False)
-    return _receipt(
+    doc = _receipt(
         "update", "user", Path.home(),
         status="completed" if proc.returncode == 0 else "failed",
         checks=[{"id": "pip",
                  "status": "PASS" if proc.returncode == 0 else "FAIL",
                  "detail": (proc.stdout or proc.stderr)[-300:]}])
+    kit._write_receipt(Path.home() / ".platformforge", doc)
+    return doc
 
 
 def mcp_verify() -> dict[str, Any]:
