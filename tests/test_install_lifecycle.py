@@ -401,7 +401,7 @@ def test_install_escreve_consumer_docs_e_mcp(project: Path) -> None:
         assert sec in proto
 
     mcp = json.loads((project / ".mcp.json").read_text(encoding="utf-8"))
-    assert mcp["mcpServers"]["platformforge"]["command"] == "platformforge-mcp"
+    assert Path(mcp["mcpServers"]["platformforge"]["command"]).is_absolute()
     assert "platform-forge" in mcp["_forge_managed"]
 
 
@@ -501,7 +501,7 @@ def test_repair_reconstroi_doc_e_mcp(project: Path) -> None:
         project / "AGENTS.md").read_text(encoding="utf-8")
     import json
     mcp = json.loads((project / ".mcp.json").read_text(encoding="utf-8"))
-    assert mcp["mcpServers"]["platformforge"]["command"] == "platformforge-mcp"
+    assert Path(mcp["mcpServers"]["platformforge"]["command"]).is_absolute()
 
 
 def test_uninstall_sem_estado_limpa_residuo_docs(project: Path) -> None:

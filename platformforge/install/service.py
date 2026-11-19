@@ -515,7 +515,7 @@ def repair(*, scope: str = "project", root: Path | None = None,
             })
     # `.mcp.json` managed key: re-assert when the recorded component set
     # enables mcp and the key is missing/drifted.
-    if _mcp_enabled(stored_opts) and _mcp_current(target) != _MCP_ENTRY:
+    if _mcp_enabled(stored_opts) and _mcp_current(target) != _mcp_entry():
         checks.append(_mcp_set_project(target))
     # Modified managed files are user content by the platform-forge
     # ownership contract — preserved, never force-rewritten. Fail-closed:
@@ -1070,7 +1070,19 @@ _LEGACY_DOC_TAGS: tuple[str, ...] = ()
 _CONSUMER_DOCS: tuple[str, ...] = (
     "AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md")
 _MCP_NAME = "platformforge"
-_MCP_ENTRY: dict[str, Any] = {"command": "platformforge-mcp", "args": []}
+
+
+def _mcp_entry() -> dict[str, Any]:
+    """Managed ``.mcp.json`` entry — PATH-independent argv (§9.3).
+
+    Resolves through the installkit (declared absolute argv → manifest
+    shim/sibling script → entry-point module), so hosts never depend on
+    the installer's PATH."""
+    ctx = kit.InstallContext(
+        spec=_spec(), scope="project", root=Path.cwd(),
+        state_dir=Path.cwd(), profile="", hosts=())
+    argv = kit._mcp_argv_resolved(ctx) or _spec().mcp_command
+    return {"command": argv[0], "args": list(argv[1:])}
 
 
 def _docs_leftovers(target: Path) -> bool:
@@ -1124,7 +1136,7 @@ def _mcp_set_project(target: Path) -> dict[str, Any]:
         if not isinstance(cur, dict):
             return {"id": "mcp-json", "status": "BLOCKED",
                     "detail": ".mcp.json exists but is not a JSON object"}
-    new = kit.mcp_set(cur, _MCP_NAME, _MCP_ENTRY, FORGE_ID)
+    new = kit.mcp_set(cur, _MCP_NAME, _mcp_entry(), FORGE_ID)
     payload = kit._json_bytes(new)
     if path.exists() and path.read_bytes() == payload:
         return {"id": "mcp-json", "status": "PASS",

@@ -1,398 +1,100 @@
 {
-  "failed": [
-    "tests",
-    "freeze-contracts",
-    "economy-receipt",
-    "economy-closure"
-  ],
+  "benchmarks": {
+    "control_plane_overhead": "docs/economy-parity/ECONOMY-BENCHMARKS.md",
+    "end_to_end": "insufficient evidence — no production corpus claimed"
+  },
+  "closure_sha": null,
+  "cycle": "economy-parity",
+  "exception": "FE-002",
+  "failed": [],
   "gates": {
-    "adversarial": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_fleet_adversarial.py",
-      "seconds": 0.63
-    },
-    "agents-contract": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_agent_protocol.py tests/test_agent_handoffs.py tests/test_agent_budget.py tests/test_orchestrator.py tests/test_coordinators.py tests/test_specialists.py tests/test_reviewers.py tests/test_executors.py tests/test_agent_routing.py tests/test_agent_mirrors.py",
-      "seconds": 1.39
-    },
-    "agents-debate": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_agent_debate.py",
-      "seconds": 0.71
-    },
-    "agents-economy": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_agent_economy.py",
-      "seconds": 0.6
-    },
-    "agents-evals": {
-      "ok": true,
-      "reproduce": "python -m platformforge evals run",
-      "seconds": 4.59
-    },
-    "agents-independence": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_agent_adversarial.py",
-      "seconds": 0.95
-    },
-    "agents-mirrors": {
-      "ok": true,
-      "reproduce": "python -m platformforge agents check",
-      "seconds": 0.36
-    },
-    "agents-routing": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.routing import validate_routing;r = validate_routing();assert r['ok'], r['problems'];print(r['routes'], 'routes,', r['agents'], 'agents \u2014 no drift')",
-      "seconds": 0.16
-    },
-    "ai-platform": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.aiplat.models import (ai_unit_economics,\n    detect_ai_workloads)\nassert 'cost_per_1m_tokens' not in ai_unit_economics(100)\nassert ai_unit_economics(100, tokens=1000000)['cost_per_1m_tokens'] == 100.0\nw = detect_ai_workloads([{'resources':{'limits':{'nvidia.com/gpu':1}}}])\nassert w\nprint('ai awareness: denominators required')",
-      "seconds": 0.07
-    },
-    "analytics": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.analytics.dx import dx_metrics\nfrom platformforge.analytics.goldenpath import golden_path_analytics\nfrom platformforge.analytics.finops_v4 import cost_hierarchy\nfrom platformforge.analytics.capacity import capacity_risk, CapacitySnapshot\nassert dx_metrics([])['scope'].startswith('team')\nassert 'paths' in golden_path_analytics([])\nassert 'unallocated' in cost_hierarchy([])\nassert capacity_risk(CapacitySnapshot(member_id='m'))['risk']\nprint('analytics engines answer on empty input without crash')",
-      "seconds": 0.28
-    },
-    "coverage": {
-      "ok": true,
-      "reproduce": "python -c import json, subprocess, sys;out = subprocess.run([sys.executable,'-m','platformforge','evals','coverage'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);unc = d['counts'].get('uncovered', []);assert not unc, f'uncovered rules: {unc}';print(d['counts']['rules'], 'rules, 0 uncovered')",
-      "seconds": 0.76
-    },
-    "docs": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_docs_drift.py",
-      "seconds": 1.08
-    },
     "economy-agentic": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_agents_waste.py tests/test_economy_evals.py -k uniqueness or debate or duplication or fanout or waste or stagnant",
-      "seconds": 0.41
+      "seconds": 0.38
     },
     "economy-budget": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py -k budget or limit or protected or dimension",
-      "seconds": 0.35
+      "seconds": 0.29
     },
     "economy-cache": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_cache.py",
-      "seconds": 0.35
+      "seconds": 0.32
     },
     "economy-closure": {
-      "ok": false,
+      "ok": true,
       "reproduce": "python -c import sys\nfrom pathlib import Path\nreq = {'docs/economy-parity/FINAL-REPORT.md':\n         ['validated_sha', 'remote_ci', 'known gap'],\n       'docs/economy-parity/FINAL-MATRIX.md':\n         ['validated', 'externally-unverified'],\n       'docs/economy-parity/ECONOMY-BENCHMARKS.md':\n         ['Control Plane Overhead', 'End-to-End'],\n       'docs/economy/ROUTING.md':\n         ['decide', 'advisory'],\n       'docs/economy-parity/POLISH-BASELINE.md': ['drift']}\nbad = []\nfor f, needles in req.items():\n    p = Path(f)\n    if not p.is_file(): bad.append(('missing', f)); continue\n    txt = p.read_text()\n    for n in needles:\n        if n not in txt: bad.append((f, n))\nm = Path('docs/economy-parity/FINAL-MATRIX.md').read_text()\nif '\\n' + '|' in m and ' fully-production' in m:\n    bad.append(('matrix', 'overclaimed status'))\nif bad: print(bad); sys.exit(1)\nprint('closure docs coherent')\n && pytest -q tests/test_economy_closure.py",
-      "seconds": 0.5,
-      "unlock": "fix closure docs/statuses or the failing tests/test_economy_closure.py case",
-      "why": [
-        "        bound = _bound_shas()",
-        ">       assert vs in bound, \\",
-        "            f\"receipt binds {vs[:12]} but HEAD is {_head()[:12]}\"",
-        "E       AssertionError: receipt binds 3f9f5813b727 but HEAD is 64a471555f74",
-        "E       assert '3f9f5813b727abbfa2b111f8ae2be4582ade133d' in ('db2e7e19fc25a2957a42c58059341b10145952c2', 'dc07f0b11a00e2873db0a008fdda00c18bde3a05')",
-        "",
-        "tests/test_economy_closure.py:70: AssertionError",
-        "_________ TestAdversarial.test_p1_receipt_cannot_claim_different_head __________",
-        "",
-        "self = <tests.test_economy_closure.TestAdversarial object at 0x7f33e97f4190>",
-        "",
-        "    def test_p1_receipt_cannot_claim_different_head(self):",
-        "        \"\"\"P1 \u2014 a receipt bound to a foreign SHA fails the gate's",
-        "        sha check (validated_sha \u2209 {HEAD, HEAD~1}).\"\"\"",
-        "        r = _receipt()",
-        "        foreign = \"0\" * 40",
-        "        assert r[\"validated_sha\"] != foreign",
-        ">       assert r[\"validated_sha\"] in _bound_shas()",
-        "E       AssertionError: assert '3f9f5813b727abbfa2b111f8ae2be4582ade133d' in ('db2e7e19fc25a2957a42c58059341b10145952c2', 'dc07f0b11a00e2873db0a008fdda00c18bde3a05')",
-        "E        +  where ('db2e7e19fc25a2957a42c58059341b10145952c2', 'dc07f0b11a00e2873db0a008fdda00c18bde3a05') = _bound_shas()",
-        "",
-        "tests/test_economy_closure.py:273: AssertionError",
-        "=========================== short test summary info ============================",
-        "FAILED tests/test_economy_closure.py::TestReceiptSemantics::test_validated_sha_binds_head_or_parent",
-        "FAILED tests/test_economy_closure.py::TestAdversarial::test_p1_receipt_cannot_claim_different_head"
-      ]
+      "seconds": 0.43
     },
     "economy-context": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k TestGateway or TestLazy or TestRole or Suff",
-      "seconds": 0.41
+      "seconds": 0.38
     },
     "economy-contracts": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_contracts.py tests/test_economy_v2.py",
-      "seconds": 0.67
+      "seconds": 0.6
     },
     "economy-evals": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py",
-      "seconds": 0.49
+      "seconds": 0.41
     },
     "economy-qpt": {
       "ok": true,
       "reproduce": "pytest -q tests/test_qpt_v2.py tests/test_economy_fleet_qpt.py",
-      "seconds": 1.36
+      "seconds": 1.2
     },
     "economy-receipt": {
-      "ok": false,
-      "reproduce": "python -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\n# PR merge ref: HEAD^2 is the pushed branch tip \u2014 the Option-A\n# pair (functional commit + receipt commit) sits one level down.\nhead2 = subprocess.run(['git','rev-parse','HEAD^2'],\n    capture_output=True, text=True).stdout.strip()\nbase = head2 if __import__('re').fullmatch(r'[0-9a-f]{40}', head2) else head\nhead1 = subprocess.run(['git','rev-parse', base + '~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (base, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
-      "seconds": 0.05,
-      "unlock": "regenerate via python scripts/validate.py --economy-receipt docs/economy-parity/VALIDATION-RECEIPT.json",
-      "why": [
-        "[('validated_sha-stale', '3f9f5813b727abbfa2b111f8ae2be4582ade133d', '64a471555f74e6f860473c3bc7828f91ea3dac2e')]"
-      ]
+      "ok": true,
+      "reproduce": "python -c import json, re, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts')\nimport validate as V\np = Path(V.ECONOMY_RECEIPT_PATH)\nif not p.is_file():\n    print('missing receipt:', p); sys.exit(1)\nr = json.loads(p.read_text())\nbad = []\nif r.get('schema') != V.ECONOMY_RECEIPT_SCHEMA:\n    bad.append(('schema', r.get('schema')))\nvs = r.get('validated_sha') or ''\nok_sha = subprocess.run(['git','cat-file','-e',\n    vs + '^{commit}'], capture_output=True).returncode == 0\nif not ok_sha: bad.append(('validated_sha-not-a-commit', vs))\nhead = subprocess.run(['git','rev-parse','HEAD'],\n    capture_output=True, text=True).stdout.strip()\n# PR merge ref: HEAD^2 is the pushed branch tip — the Option-A\n# pair (functional commit + receipt commit) sits one level down.\nhead2 = subprocess.run(['git','rev-parse','HEAD^2'],\n    capture_output=True, text=True).stdout.strip()\nbase = head2 if __import__('re').fullmatch(r'[0-9a-f]{40}', head2) else head\nhead1 = subprocess.run(['git','rev-parse', base + '~1'],\n    capture_output=True, text=True).stdout.strip()\nif vs not in (base, head1):\n    bad.append(('validated_sha-stale', vs, head))\ncanon = set(V._economy_gate_names())\nextra = set(r.get('gates', {})) - canon\nif extra: bad.append(('noncanonical-gates', sorted(extra)))\npat = re.compile('tests/' + r'\\S+' + r'\\.py')\nfor g, e in r.get('gates', {}).items():\n    for t in pat.findall(e.get('reproduce') or ''):\n        if not Path(t).is_file():\n            bad.append(('dead-reproduce-path', g, t))\nif r.get('verdict') not in ('validated', 'failed'):\n    bad.append(('verdict', r.get('verdict')))\nif bad: print(bad); sys.exit(1)\nprint('receipt coherent:', len(r['gates']), 'gates,',\n      'sha bound')\n",
+      "seconds": 0.04
     },
     "economy-reconcile": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py tests/test_economy_evals.py -k reconcil or mismatch or unobserved",
-      "seconds": 0.4
+      "seconds": 0.36
     },
     "economy-resume": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_gateway.py -k resume or checkpoint",
-      "seconds": 0.33
+      "seconds": 0.3
     },
     "economy-routing": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_evals.py -k routing or profile or champion or simple_task",
-      "seconds": 0.39
+      "seconds": 0.34
     },
     "economy-surface": {
       "ok": true,
       "reproduce": "python -c import subprocess, sys\ncmds = [\n [sys.executable,'-m','platformforge','economy','doctor'],\n [sys.executable,'-m','platformforge','economy','checkpoint','--run-id','gate',\n  '--spent','{\"tokens\":1}'],\n [sys.executable,'-m','platformforge','economy','resume','--run-id','gate'],\n [sys.executable,'-m','platformforge','economy','reconcile',\n  '--planned','{\"tokens\":1}','--observed','{\"tokens\":2}'],\n [sys.executable,'-m','platformforge','economy','explain','--run-id','gate'],\n [sys.executable,'-m','platformforge','cache','stats'],\n [sys.executable,'-m','platformforge','cache','gc'],\n [sys.executable,'-m','platformforge','context','capsule','--task','t',\n  '--facts','[{\"fact_id\":\"f\"}]'],\n [sys.executable,'-m','platformforge','context','gc'],\n [sys.executable,'-m','platformforge','routing','explain','--signal','{}'],\n [sys.executable,'-m','platformforge','routing','compare',\n  '--champion','{}','--challenger','{}'],\n]\nfor c in cmds:\n    r = subprocess.run(c, capture_output=True)\n    if r.returncode not in (0, 2):\n        print('FAIL', c, r.returncode, r.stderr[-300:])\n        sys.exit(1)\nprint('all economy verbs respond')\n",
-      "seconds": 2.04
+      "seconds": 1.76
     },
     "economy-verification": {
       "ok": true,
       "reproduce": "pytest -q tests/test_economy_pricing_verify.py",
-      "seconds": 0.41
-    },
-    "evals": {
-      "ok": true,
-      "reproduce": "python -c import json, subprocess, sys;out = subprocess.run([sys.executable,'-m','platformforge','evals','run'], capture_output=True, text=True).stdout;d = json.loads(out[out.find('{'):]);c = d['counts'];assert c.get('fail', 0) == 0 and c.get('unresolved', 0) == 0, c;print(c)",
-      "seconds": 4.81
-    },
-    "federation": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.federation.node import NodeManifest, export_summary\nfrom platformforge.ops.registry import delegation_contract, validate_delegate_request\nnode = NodeManifest(node_id='n')\nassert export_summary(node, {'api_key':'AKIAIOSFODNN7EXAMPLE'}, 'public')['action'] == 'deny'\nassert export_summary(node, {'x':1}, 'restricted')['action'] == 'deny'\nfor bad in ('direct-execution','approval-minting',\n            'full-fleet-dump'):\n    assert bad in delegation_contract()['refuses']\nassert validate_delegate_request({'kind':'shell-command'})['refusal'].startswith('PF-OPS')\nprint('federation bounded; exec refused')",
-      "seconds": 0.22
-    },
-    "fleet-contracts": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.fleet.models import (\n    Fleet, FleetSnapshot, MemberObservation, member_key)\nfrom platformforge.analytics.models import (\n    PlatformMetric, AnalyticsDataQuality, HistoricalPattern)\nf = Fleet.from_dict({'fleet_id':'f','members':{'clusters':[{'kind':'cluster','canonical_id':'c1'}]}})\nassert member_key('cluster','c1') == 'cluster:c1'\ns = FleetSnapshot(fleet_id='f', member_observations=[\n    MemberObservation(member_id='cluster:c1', status='observed')])\nassert s.to_dict()['fleet_id'] == 'f'\nassert PlatformMetric(metric_id='m', dimension='reliability',\n    scope={'fleet':'f'}, value=1, unit='u').to_dict()\nassert AnalyticsDataQuality().confidence_cap in ('low','medium','high')\nassert HistoricalPattern(pattern_id='p', window='90d').to_dict()\nprint('fleet contracts round-trip')",
-      "seconds": 0.22
-    },
-    "fleet-evals": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.evals.runner import run_all\nout = run_all()\nfl = [r for r in out['results']\n      if r['id'].startswith('fleet-inv-')]\nassert len(fl) >= 10, len(fl)\nbad = [r['id'] for r in fl if r['verdict'] != 'pass']\nassert not bad, bad\nprint(len(fl), 'fleet invariant evals pass')",
-      "seconds": 4.16
-    },
-    "fleet-graph": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_fleet.py",
-      "seconds": 0.9
-    },
-    "fleet-lab": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.lab.runner import run_all\nout = run_all()\nres = out.get('scenarios') or out.get('results') or []\nfl = [r for r in res if str(r.get('scenario') or '').startswith('fleet-')]\nassert len(fl) >= 10, len(fl)\nbad = [r['scenario'] for r in fl if not r.get('passed', True)]\nassert not bad, bad\nprint(len(fl), 'fleet lab scenarios pass')",
-      "seconds": 3.0
-    },
-    "freeze-contracts": {
-      "ok": false,
-      "reproduce": "python -m platformforge freeze check",
-      "seconds": 0.38,
-      "unlock": "drift vs docs/freeze/snapshots \u2014 re-snapshot (freeze snapshot) only through a reviewed FeatureException",
-      "why": [
-        "{",
-        "  \"allowed\": [],",
-        "  \"breaking\": [",
-        "    \"added cli:capabilities\",",
-        "    \"added cli:obsidian\"",
-        "  ],",
-        "  \"missing\": [],",
-        "  \"schema\": \"platformforge/freeze-check/v1\",",
-        "  \"verdict\": \"fail\"",
-        "}"
-      ]
-    },
-    "freeze-docs": {
-      "ok": true,
-      "reproduce": "python -c from pathlib import Path\nreq = ['FREEZE-MANIFEST.md', 'REAL-WORLD-ISSUES.md',\n       'ARCHITECTURE-FREEZE-REVIEW.md', 'FINAL-REPORT.md',\n       'FINAL-MATRIX.md']\nmissing = [f for f in req\n           if not Path('docs/freeze', f).exists()]\nimport sys\nif missing:\n    print('missing:', missing); sys.exit(1)\n",
-      "seconds": 0.04
-    },
-    "freeze-exceptions": {
-      "ok": true,
-      "reproduce": "python -c import json, sys\nfrom pathlib import Path\nfrom platformforge.freeze.exceptions import exception_errors\nbad = []\nfor f in Path('docs/freeze/exceptions').glob('*.json'):\n    errs = exception_errors(json.loads(f.read_text()))\n    if errs: bad.append((f.name, errs))\nif bad: print(bad); sys.exit(1)\n",
-      "seconds": 0.05
-    },
-    "freeze-replay": {
-      "ok": true,
-      "reproduce": "python -m platformforge cases replay",
-      "seconds": 2.9
-    },
-    "history": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.analytics.history import HistoryEngine, WINDOWS\neng = HistoryEngine()\nassert set(WINDOWS) >= {'24h','7d','30d','90d'}\nassert eng.patterns('90d') == []\neng.ingest_events('incident', [{'ts':'bad-ts'}], 't')\nassert eng.patterns('90d') == []  # unparseable never counted\nprint('history windows + insufficient-history honest')",
-      "seconds": 0.26
-    },
-    "knowledge": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.knowledge.registry import (SourceRegistry, SOURCE_AUTHORITIES);reg = SourceRegistry.default();c = reg.contract_check(); assert c['ok'], c;bad = [e.id for e in reg.entries.values()      if e.source_authority not in SOURCE_AUTHORITIES];assert not bad, f'unknown authority: {bad}';print(len(reg.entries), 'sources valid')",
       "seconds": 0.31
-    },
-    "lab": {
-      "ok": true,
-      "reproduce": "python -m platformforge lab run-all",
-      "seconds": 4.96
-    },
-    "linkage": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.knowledge.registry import SourceRegistry;from platformforge.resources import data_path;r = SourceRegistry.default().link_rules(data_path('rules','catalog'));assert not r['unlinked'], r['unlinked'];assert not r['bad_refs'], r['bad_refs'];print(r['coverage'], 'exact-id linked')",
-      "seconds": 0.43
-    },
-    "lint": {
-      "ok": true,
-      "reproduce": "ruff check .",
-      "seconds": 0.03
-    },
-    "mcp-parity": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.mcp.registry import tool_descriptors;t = tool_descriptors(); assert len(t) >= 20, len(t);print(len(t), 'mcp tools')",
-      "seconds": 0.11
-    },
-    "ops-approval": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_ops_approval.py tests/test_ops_models.py",
-      "seconds": 1.06
-    },
-    "ops-contracts": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.ops.actions import (catalog, spec_for,\n    validate_action, FORBIDDEN_ACTIONS)\nfrom platformforge.ops.rollback_builders import BUILDERS\ncat = catalog()\nbad = []\nfor name, s in cat.items():\n    if not s['mutating']:\n        continue\n    if not s['rollback_strategy']:\n        bad.append(f'{name}:no-strategy')\n    if s['rollback_strategy'] in ('direct-inverse',\n            'previous-revision', 'source-revert',\n            'compensating-operation') and not s['rollback_builder']:\n        bad.append(f'{name}:no-builder')\n    if s['rollback_builder'] and \\\n            s['rollback_builder'] not in BUILDERS:\n        bad.append(f'{name}:builder-missing')\nassert not bad, bad\nfor f in FORBIDDEN_ACTIONS:\n    assert validate_action(f, {}) is not None, f\nprint(len(cat), 'actions, contracts ok')",
-      "seconds": 0.12
-    },
-    "ops-evals": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.evals.runner import run_all\nout = run_all()\nops = [r for r in out['results'] if r['id'].startswith('ops-')]\nassert len(ops) >= 8, len(ops)\nbad = [r['id'] for r in ops if r['verdict'] != 'pass']\nassert not bad, bad\nprint(len(ops), 'ops evals pass')",
-      "seconds": 4.9
-    },
-    "ops-execution": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_ops_executors.py tests/test_ops_operation.py tests/test_ops_pipeline.py tests/test_cli_ops.py",
-      "seconds": 2.27
-    },
-    "ops-lab": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.lab.runner import run_all\nout = run_all()\nres = out.get('scenarios') or out.get('results') or []\nops = [r for r in res if 'ops-' in (r.get('scenario') or\n       r.get('id') or '')]\nassert len(ops) >= 10, len(ops)\nbad = [r for r in ops if not r.get('passed', True)]\nassert not bad, [r.get('failures') for r in bad]\nprint(len(ops), 'ops lab scenarios pass')",
-      "seconds": 3.39
-    },
-    "ops-policy": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_ops_policy.py tests/test_ops_autorem.py tests/test_ops_property.py",
-      "seconds": 1.0
-    },
-    "ops-rollback": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_ops_rollback.py tests/test_ops_gapwave.py",
-      "seconds": 2.14
-    },
-    "ops-verification": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_ops_verify.py",
-      "seconds": 0.9
-    },
-    "optimization": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.optimize.engine import OptimizationEngine\nfrom platformforge.optimize.models import (\n    OptimizationOpportunity, OptimizationRecommendation)\nfrom platformforge.ops.models import ChangeIntent\neng = OptimizationEngine()\neng.add_opportunity(OptimizationOpportunity(\n    opportunity_id='o', type='cost', scope={}, evidence=[],\n    uncertainty='high'))\nassert eng.recommendations() == []  # suppressed\nci = OptimizationEngine.plan(OptimizationRecommendation(\n    recommendation_id='r', type='c', scope={'s':'x'}))\nassert isinstance(ci, ChangeIntent)\nassert ci.reason.type == 'recommendation'\nprint('optimization boundary: suppressed + ChangeIntent only')",
-      "seconds": 0.23
-    },
-    "package": {
-      "ok": true,
-      "reproduce": "python -c import zipfile, glob;w = zipfile.ZipFile(glob.glob('dist/*.whl')[0]);names = w.namelist();need = ('platformforge/data/rules/catalog/',        'platformforge/data/knowledge/sources.yaml',        'platformforge/data/contracts/fact.schema.json',        'platformforge/data/lab/scenarios/',        'platformforge/data/evals/cases/');miss = [n for n in need         if not any(x.startswith(n) for x in names)];assert not miss, miss;print(sum(1 for x in names if '/data/' in x), 'data files')",
-      "seconds": 0.07
-    },
-    "packs": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.knowledge.packs import PackRegistry;c = PackRegistry.default().contract_check();assert c['ok'], c;print(c['packs'], 'packs,', c['consumed'], 'consumed')",
-      "seconds": 0.53
-    },
-    "portable-contracts": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_portable_distribution.py tests/test_portable_workspace.py",
-      "seconds": 0.55
-    },
-    "portable-offline": {
-      "ok": true,
-      "reproduce": "python -c import tempfile;from pathlib import Path;from platformforge.distribution.bundle import build_bundle,verify_bundle;p=Path(tempfile.mkdtemp())/'bundle';build_bundle(p,hosts=['codex'],offline=True);assert verify_bundle(p)['valid'];print('offline bundle verifies')",
-      "seconds": 0.11
-    },
-    "portable-security": {
-      "ok": true,
-      "reproduce": "python -c import tempfile;from pathlib import Path;from platformforge.distribution.service import _safe_target;root=Path(tempfile.mkdtemp());ok=False;\ntry:_safe_target(root,'../escape')\nexcept ValueError:ok=True\nassert ok;print('path containment ok')",
-      "seconds": 0.1
-    },
-    "portable-surface": {
-      "ok": true,
-      "reproduce": "python -c import subprocess,sys;cmds=[[sys.executable,'-m','platformforge','install','--help'],[sys.executable,'-m','platformforge','uninstall','--help'],[sys.executable,'-m','platformforge','upgrade','--help'],[sys.executable,'-m','platformforge','portable','--help'],[sys.executable,'-m','platformforge','workspace','--help']];bad=[];[(bad.append(c) if subprocess.run(c,capture_output=True).returncode else None) for c in cmds];assert not bad,bad;print('portable CLI surface ok')",
-      "seconds": 0.87
-    },
-    "privacy": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.analytics.dx import (FORBIDDEN_METRICS,\n    dx_metrics, guard_no_person_metrics)\nfrom platformforge.ops.config import validate_config\nm = dx_metrics([{'path':'p','status':'ok','person':'x'}])\nassert guard_no_person_metrics(m) == []\nv = validate_config({'privacy':{'dx_metrics':'per-person'},\n                   'retention':{'telemetry':'local-only'}})\nassert any(x['refusal']=='PF-OPS-CONFIG-PRIVACY' for x in v)\nprint('dx team-level only; privacy pinned')",
-      "seconds": 0.07
-    },
-    "provenance": {
-      "ok": true,
-      "reproduce": "python -c from platformforge.rules.engine import catalog_provenance_report;from platformforge.resources import data_path;r = catalog_provenance_report(data_path('rules','catalog'));assert r['coverage'] == 1.0, r; print(r)",
-      "seconds": 0.32
-    },
-    "security": {
-      "ok": true,
-      "reproduce": "pytest -q tests/test_redaction.py tests/test_offline.py",
-      "seconds": 1.55
-    },
-    "self": {
-      "ok": true,
-      "reproduce": "python -c import json, subprocess, sys\ndef run(*a):\n    p = subprocess.run([sys.executable, '-m', 'platformforge', *a],\n                       capture_output=True, text=True)\n    return json.loads(p.stdout[p.stdout.find('{'):]), p.returncode\ninv, rc1 = run('inspect', '--repo', '.')\nassert rc1 == 0 and inv.get('artifacts'), 'inspect found nothing'\nlint, rc2 = run('agents', 'lint')\nassert rc2 == 0 and lint.get('ok', True), 'agents lint failed'\nman, rc3 = run('capability', 'manifest')\nassert rc3 == 0 and (man.get('capabilities_v2') or man.get('capabilities')), 'manifest empty'\nprint('self-gate: inspect+agents+manifest ok')",
-      "seconds": 2.59
-    },
-    "tests": {
-      "ok": false,
-      "reproduce": "pytest -q",
-      "seconds": 136.02,
-      "unlock": "reproduce: pytest -q; fix the failing test or the code",
-      "why": [
-        "tests/test_economy_closure.py:70: AssertionError",
-        "_________ TestAdversarial.test_p1_receipt_cannot_claim_different_head __________",
-        "",
-        "self = <tests.test_economy_closure.TestAdversarial object at 0x774c29fc25d0>",
-        "",
-        "    def test_p1_receipt_cannot_claim_different_head(self):",
-        "        \"\"\"P1 \u2014 a receipt bound to a foreign SHA fails the gate's",
-        "        sha check (validated_sha \u2209 {HEAD, HEAD~1}).\"\"\"",
-        "        r = _receipt()",
-        "        foreign = \"0\" * 40",
-        "        assert r[\"validated_sha\"] != foreign",
-        ">       assert r[\"validated_sha\"] in _bound_shas()",
-        "E       AssertionError: assert '3f9f5813b727abbfa2b111f8ae2be4582ade133d' in ('db2e7e19fc25a2957a42c58059341b10145952c2', 'dc07f0b11a00e2873db0a008fdda00c18bde3a05')",
-        "E        +  where ('db2e7e19fc25a2957a42c58059341b10145952c2', 'dc07f0b11a00e2873db0a008fdda00c18bde3a05') = _bound_shas()",
-        "",
-        "tests/test_economy_closure.py:273: AssertionError",
-        "=============================== warnings summary ===============================",
-        "tests/test_wave_l.py::test_doctor_deep",
-        "  /home/edgar/Documentos/projetos/forjas/platform-forge/platformforge/forge/manifest.py:20: UserWarning: catalog dir missing: /tmp/pytest-of-edgar/pytest-344/test_doctor_deep0/rules/catalog",
-        "    rules = load_catalog(root / \"rules\" / \"catalog\")",
-        "",
-        "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
-        "=========================== short test summary info ============================",
-        "FAILED tests/test_economy_closure.py::TestReceiptSemantics::test_validated_sha_binds_head_or_parent",
-        "FAILED tests/test_economy_closure.py::TestAdversarial::test_p1_receipt_cannot_claim_different_head"
-      ]
     }
   },
-  "kind": "platformforge/validation-receipt/1",
-  "sha": [
-    "64a471555f74e6f860473c3bc7828f91ea3dac2e"
+  "generated_at": "2026-11-19T12:58:02Z",
+  "kind": "platformforge/economy-validation-receipt/1",
+  "known_gaps": [
+    "real provider pricing catalog not bundled (declared-rates engine only, by design)",
+    "money axis lacks a real model-call corpus — QPC money is unresolved without declared pricing + measured usage",
+    "production savings unproven; microbench overhead only",
+    "analysis cache reuse requires identical evidence/policy/risk tuple — conservative by construction"
   ],
-  "verdict": "failed"
+  "quality": {
+    "note": "QPT/QPC floors enforced inside economy-qpt / economy-evals gates; quality floors gate every economy claim"
+  },
+  "remote_ci": "github-actions remediation branch",
+  "schema": "platformforge/economy-validation-receipt/v1",
+  "spec": "prompt_evo_economy.md",
+  "validated_sha": "37c26958df0f120605f30078c5e1793cfdeb3b6a",
+  "validator": "scripts/validate.py",
+  "validator_version": "economy-validation-receipt/v1",
+  "verdict": "validated"
 }
