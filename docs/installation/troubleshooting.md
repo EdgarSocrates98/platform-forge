@@ -9,3 +9,6 @@
 | doctor FAIL em mcp-handshake | `platformforge mcp-verify` mostra stderr_tail — geralmente dependência ausente |
 | arquivo seu sumiu? | não deveria — instalação nunca sobrescreve conteúdo do usuário; backups em `<state_dir>/backups/` |
 | drift detectado | `platformforge install repair` restaura regiões gerenciadas mantendo o resto |
+| `status` `unverified` / `lifecycle.state` `unverified` | sem receipt no escopo — `platformforge install --yes` |
+| `lifecycle.state` `applied` | escrita feita mas verificação pendente/ausente — rode `install doctor` |
+| `lifecycle.state` `partially_applied` | drift numa parte do conjunto gerenciado — `install repair` cura |

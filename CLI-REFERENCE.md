@@ -234,6 +234,16 @@ Shared lifecycle surface, same verbs as every sibling Forge
 distribution engine — receipts `forge/InstallReceipt/v1`, health
 `forge/InstallationHealth/v1`.
 
+Every emitted document also carries a derived `lifecycle` block
+(`forge/InstallLifecycle/v1`): `status` stays the coarse verdict
+(`completed` = writer finished, never "production-ready") while
+`lifecycle.state` is the finer position — `planned` → `applied` →
+`verified` → `ready`, with `blocked`/`failed`/`partially_applied`/
+`unverified` for refusals, errors, subset writes and evidence gaps.
+Reinstalls are incremental: byte-identical assets are planned as
+`identical` and never re-written — `plan` reports
+`creates`/`managed_updates`/`identical`/`conflicts` honestly.
+
 | Verb | What it does |
 |---|---|
 | `install` (apply) | Write managed assets: host-mirror agents + `platformforge-*` skill mirrors + `.platformforge/mcp.json`. Requires `--yes` (the plan is the contract) or `--dry-run`. |
@@ -244,7 +254,8 @@ distribution engine — receipts `forge/InstallReceipt/v1`, health
 | `install update` | `pip install --upgrade` of the registered checkout (`~/.forge/installations`); `--to` pins, `latest` refused. |
 | `install mcp-verify` | Real JSON-RPC stdio handshake against `platformforge-mcp`. |
 
-Flags: `--scope project|workspace|user`, `--repo <dir>` (target root),
+Flags: `--scope project|workspace|user`, `--root <dir>` (delegation
+target — wins over `--repo`), `--repo <dir>` (legacy alias),
 `--host claude|devin|codex|copilot|agents|all` (copilot → generic
 `.agents/` mirror), `--profile minimal|recommended|full` (contract
 profile recorded on the receipt), `--dry-run`. Refusals carry the

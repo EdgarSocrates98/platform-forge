@@ -23,6 +23,7 @@ from typing import Any
 from platformforge import __version__, discovery_ops
 from platformforge import _forgecontext as fctx
 from platformforge import _installkit as kit
+from platformforge.install import lifecycle as _lc
 
 FORGE_ID = "platform-forge"
 PROFILES: tuple[str, ...] = ("minimal", "recommended", "full")
@@ -193,6 +194,10 @@ def _finalize_verification(doc: dict[str, Any]) -> dict[str, Any]:
         c.get("status") in ("FAIL", "BLOCKED") for c in checks
     ):
         doc["status"] = "failed"
+    # The lifecycle view is derived evidence — recompute it AFTER the
+    # final status/verification so it never goes stale (install-2.1 +
+    # forge/InstallLifecycle/v1, cycle 16.1).
+    doc["lifecycle"] = _lc.receipt_block(doc)
     return doc
 
 
@@ -211,6 +216,10 @@ def _receipt(operation: str, scope: str, target: Path, *,
     }
     if extra:
         doc.update(extra)
+    # Derived ``forge/InstallLifecycle/v1`` view — additive; older parsers
+    # keep working (contract §2). Computed after ``extra`` so batch
+    # ``forges`` rows inform partially_applied.
+    doc["lifecycle"] = _lc.receipt_block(doc)
     return doc
 
 
@@ -338,7 +347,7 @@ def status(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
     target = _resolve(scope, root)
     rec = _read_receipt(target)
     if not rec:
-        return {
+        doc = {
             "schema": kit.SCHEMA_HEALTH, "forge_id": FORGE_ID,
             "status": "unverified", "target_root": str(target),
             "checks": [{"id": "receipt", "status": "UNVERIFIED",
@@ -346,12 +355,14 @@ def status(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
             "checked_at": kit._utc_now(),
             "repair_hint": "platformforge install --yes",
         }
+        doc["lifecycle"] = _lc.health_block(doc)
+        return doc
     from platformforge.distribution.service import doctor as dist_doctor
 
     doc = dist_doctor(target)
     healthy = doc.get("state") == "healthy"
     drifted = bool(doc.get("drift") or doc.get("missing"))
-    return {
+    out = {
         "schema": kit.SCHEMA_HEALTH, "forge_id": FORGE_ID,
         "status": "healthy" if healthy else "degraded",
         "target_root": str(target),
@@ -361,6 +372,8 @@ def status(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
         "checked_at": kit._utc_now(),
         "repair_hint": "platformforge install repair" if drifted else None,
     }
+    out["lifecycle"] = _lc.health_block(out)
+    return out
 
 
 def doctor(*, scope: str = "project", root: Path | None = None) -> dict[str, Any]:
@@ -378,7 +391,7 @@ def doctor(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
                        "detail": "managed file modified"})
     checks.append(kit.mcp_verify(_spec()))
     failed = any(c["status"] == "FAIL" for c in checks)
-    return {
+    out = {
         "schema": kit.SCHEMA_HEALTH, "forge_id": FORGE_ID,
         "status": "degraded" if failed else (
             "healthy" if doc.get("state") == "healthy" else "unverified"),
@@ -387,6 +400,8 @@ def doctor(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
         "checked_at": kit._utc_now(),
         "repair_hint": "platformforge install repair" if failed else None,
     }
+    out["lifecycle"] = _lc.health_block(out)
+    return out
 
 
 def repair(*, scope: str = "project", root: Path | None = None,

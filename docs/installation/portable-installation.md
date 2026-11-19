@@ -18,6 +18,22 @@ O que acontece: assets gerenciados vão para `.agents/`, `.claude/`,
 entrada gerenciada; `AGENTS.md` recebe um bloco delimitado — conteúdo seu
 nunca é sobrescrito.
 
+Reinstalação é incremental: o plano compara sha256 de cada asset — o que
+já está byte-idêntico é classificado `identical` e **não é reescrito**
+(o `plan` do receipt reporta `creates`/`managed_updates`/`identical`/
+`conflicts`). O bloco `forge:platform-forge` no `AGENTS.md` é a forma
+compacta: identidade + domínios + ponteiros para o manifesto de
+capacidade e o `AGENT_PROTOCOL.md` — detalhe de CLI/MCP/discovery fica
+nos documentos apontados, não duplicado.
+
+Todo documento emitido (`forge/InstallReceipt/v1`,
+`forge/InstallationHealth/v1`) carrega um bloco `lifecycle`
+(`forge/InstallLifecycle/v1`) **derivado** do `status`+`verification`
+finais: `status: completed` significa "o escritor terminou" — a posição
+fina é `planned → applied → verified → ready`, com `blocked`, `failed`,
+`partially_applied` e `unverified` para recusas, erros, escritas
+parciais e lacunas de evidência.
+
 Perfis: `--profile` seleciona CONJUNTOS de componentes — e nada mais.
 `minimal` = config+mcp+state; `recommended` = o conjunto completo
 (padrão); `full` instala **o mesmo conjunto de `recommended` hoje** —

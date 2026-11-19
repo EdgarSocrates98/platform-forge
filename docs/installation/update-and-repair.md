@@ -1,5 +1,12 @@
 # Update e repair — platform-forge
 
+Reinstalar (`platformforge install --yes` num alvo já instalado) é
+incremental: assets byte-idênticos entram no plano como `identical` e
+não são reescritos — só `creates` e `managed_updates` tocam o disco.
+O receipt registra o plano; o bloco `lifecycle`
+(`forge/InstallLifecycle/v1`) deriva a posição honesta da instalação
+(`verified` quando as verificações passam, nunca só "completed").
+
 ## Update
 
 ```bash

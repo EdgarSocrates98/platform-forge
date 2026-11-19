@@ -36,6 +36,7 @@ def register(sub, add_common, emit):
         # forge/* contract surface: `install <op>` routes the shared
         # lifecycle verbs; `apply` (default) keeps the legacy flags too —
         # `--profile agentic` and `--host agents` pass straight through.
+        from platformforge.install import lifecycle as _lc
         from platformforge.install import service
 
         op = getattr(a, "op", "apply") or "apply"
@@ -96,6 +97,8 @@ def register(sub, add_common, emit):
                             "checks": [],
                             "managed_files": [],
                             "verification": {"status": "UNVERIFIED"},
+                            "lifecycle": _lc.block(
+                                "blocked", "declined — nothing written"),
                             "error": {"kind": "PF-INSTALL-DECLINED", "detail": "declined — nothing written"},
                         }
                     )
