@@ -777,3 +777,34 @@ def test_reinstall_does_not_rewrite_identical_assets(project: Path) -> None:
     for rel, before in mtimes.items():
         after = (project / rel).stat().st_mtime_ns
         assert after == before, f"{rel} was re-written"
+
+
+def test_setup_sh_python_ausente_recusa_nomeada(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """cycle-16.1.1 wave-05: `setup.sh` sob `set -e` — sem python no PATH
+    deve emitir FORGE-PYTHON-NOT-FOUND + rc=2, nunca rc=1 silencioso
+    (mesmo defect vendored corrigido no canônico the-forge)."""
+    import shutil
+    import subprocess
+
+    bash = shutil.which("bash")
+    if not bash:
+        pytest.skip("bash indisponivel")
+    stub = tmp_path / "stubbin"
+    stub.mkdir()
+    real_dirname = shutil.which("dirname")
+    if real_dirname:
+        (stub / "dirname").symlink_to(real_dirname)
+    repo = Path(__file__).resolve().parents[1]
+    out = subprocess.run(
+        [bash, "setup.sh"],
+        cwd=repo,
+        env={"PATH": str(stub), "HOME": str(tmp_path)},
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert out.returncode == 2
+    assert "FORGE-PYTHON-NOT-FOUND" in out.stderr
