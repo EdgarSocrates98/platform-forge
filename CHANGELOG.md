@@ -2,6 +2,15 @@
 
 ## [Unreleased] — cycle-16.1 wave-06
 
+### Fixed
+
+- `setup.sh` (cycle-16.1.1): python probe tolerates all-missing
+  (`|| true`) — under `set -euo pipefail` the unguarded substitution
+  exited `rc=1` silently before `FORGE-PYTHON-NOT-FOUND` could print
+  (vendored defect; canonical fix in the-forge wave-01). Now emits the
+  named refusal + `rc=2`. Regression covered in
+  `tests/test_install_lifecycle.py`; troubleshooting docs updated.
+
 ### Added
 
 - `forge/InstallLifecycle/v1` on every emitted install document:

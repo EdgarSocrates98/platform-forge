@@ -3,6 +3,7 @@
 | Symptom | Action |
 |---|---|
 | `command not found: platformforge` | run `./setup.sh` again; open a **new** terminal (launcher lands on PATH) |
+| `setup: FORGE-PYTHON-NOT-FOUND` | no python on PATH — install Python >=3.10 and reopen the shell (rc=2; previously the script exited 1 silently) |
 | `FORGE-INSTALL-LOCKED` | another install is running or was interrupted; the lock expires and is recovered automatically — retry |
 | `FORGE-INSTALL-PLAN-NOT-APPROVED` | mutations require `--yes` after reviewing `--dry-run` |
 | `FORGE-INSTALL-NOT-A-REPO` | implicit-cwd project scope needs a project marker (`.git`, `pyproject.toml`, `forge.json`, `package.json`) — or declare the target with `--root` |
